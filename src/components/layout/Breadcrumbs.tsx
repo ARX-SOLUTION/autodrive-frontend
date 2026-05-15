@@ -1,41 +1,36 @@
 import { ChevronRight, Home } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
-/**
- * Map URL slug → human label. Keep this colocated with routes — every page
- * the sidebar links to should have an entry here. Unknown segments fall
- * back to title-case of the slug, so a missing entry still renders something
- * sensible (just less polished).
- */
-const SEGMENT_LABELS: Record<string, string> = {
-  dashboard: "Dashboard",
-  filiallar: "Filiallar",
-  guruhlar: "Guruhlar",
-  talabalar: "Talabalar",
-  tolovlar: "To'lovlar",
-  hujjatlar: "Hujjatlar",
-  operatorlar: "Operatorlar",
-  oqituvchilar: "O'qituvchilar",
-  foydalanuvchilar: "Foydalanuvchilar",
-  audit: "Audit log",
-  profile: "Profil",
+/** Slug → translation key. Unknown slugs fall back to title-cased slug. */
+const SEGMENT_KEYS: Record<string, string> = {
+  dashboard: "nav.dashboard",
+  filiallar: "nav.branches",
+  guruhlar: "nav.groups",
+  talabalar: "nav.students",
+  tolovlar: "nav.payments",
+  hujjatlar: "nav.documents",
+  operatorlar: "nav.operators",
+  oqituvchilar: "nav.teachers",
+  foydalanuvchilar: "nav.users",
+  audit: "nav.audit",
+  profile: "nav.profile",
 };
 
-const labelFor = (segment: string): string =>
-  SEGMENT_LABELS[segment] ??
-  segment
-    .replace(/[-_]+/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+const titleCase = (s: string) =>
+  s.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 export const Breadcrumbs = () => {
   const { pathname } = useLocation();
+  const { t } = useTranslation();
   const segments = pathname.split("/").filter(Boolean);
 
   if (segments.length === 0 || segments[0] === "login") return null;
 
   const crumbs = segments.map((segment, idx) => {
     const href = "/" + segments.slice(0, idx + 1).join("/");
-    return { segment, href, label: labelFor(segment) };
+    const key = SEGMENT_KEYS[segment];
+    return { segment, href, label: key ? t(key) : titleCase(segment) };
   });
 
   return (
@@ -43,7 +38,7 @@ export const Breadcrumbs = () => {
       <Link
         to="/dashboard"
         className="inline-flex items-center text-muted-foreground hover:text-foreground"
-        aria-label="Bosh sahifa"
+        aria-label={t("actions.home")}
       >
         <Home className="h-3.5 w-3.5" />
       </Link>
