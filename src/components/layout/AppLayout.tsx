@@ -19,7 +19,13 @@ export const AppLayout = () => {
         <Topbar onMobileMenuClick={() => setMobileSidebarOpen(true)} />
         <main className="flex-1 p-3 sm:p-4 md:p-6">
           <Breadcrumbs />
-          <Outlet />
+          {/* key forces a remount on route change so the fade-in plays */}
+          <div
+            key={location.pathname}
+            className="animate-in fade-in duration-200"
+          >
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
