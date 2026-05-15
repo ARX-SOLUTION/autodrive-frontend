@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { ThemeToggle } from "./ThemeToggle";
 
 const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, ownerOnly: false },
@@ -87,7 +88,7 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
             </p>
           </div>
         )}
-        <div className="flex items-center justify-between px-1">
+        <div className="flex items-center justify-between gap-1 px-1">
           <button
             onClick={() => {
               onNavigate?.();
@@ -98,6 +99,7 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
             <LogOut className="h-4 w-4" />
             {!collapsed && <span>Chiqish</span>}
           </button>
+          <ThemeToggle collapsed={collapsed} />
         </div>
       </div>
     </>

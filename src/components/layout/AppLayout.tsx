@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+import { Breadcrumbs } from "./Breadcrumbs";
 
 export const AppLayout = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -17,6 +18,7 @@ export const AppLayout = () => {
       <div className="flex min-h-screen flex-col transition-all duration-300 md:ml-60">
         <Topbar onMobileMenuClick={() => setMobileSidebarOpen(true)} />
         <main className="flex-1 p-3 sm:p-4 md:p-6">
+          <Breadcrumbs />
           <Outlet />
         </main>
       </div>
