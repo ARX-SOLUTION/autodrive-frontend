@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="uz" class="dark">
+<html lang="uz">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -27,6 +27,17 @@
       name="twitter:description"
       content="Auto Maktab CRM — O&#39;zbekistondagi avtomaktablar uchun zamonaviy boshqaruv tizimi"
     />
+    <script>
+      // Apply theme before React mounts to avoid FOUC
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme = stored || (prefersDark ? 'dark' : 'light');
+          if (theme === 'dark') document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
   </head>
 
   <body>

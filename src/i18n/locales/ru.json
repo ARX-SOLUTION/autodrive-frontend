@@ -1,0 +1,32 @@
+{
+  "app": {
+    "title": "Auto Maktab"
+  },
+  "nav": {
+    "dashboard": "Панель",
+    "branches": "Филиалы",
+    "groups": "Группы",
+    "students": "Студенты",
+    "payments": "Платежи",
+    "documents": "Документы",
+    "operators": "Операторы",
+    "teachers": "Преподаватели",
+    "users": "Пользователи",
+    "audit": "Аудит",
+    "profile": "Профиль"
+  },
+  "actions": {
+    "logout": "Выйти",
+    "theme_dark": "Тёмная тема",
+    "theme_light": "Светлая тема",
+    "language": "Язык",
+    "sidebar": "Меню",
+    "home": "Главная"
+  },
+  "roles": {
+    "owner": "Владелец",
+    "manager": "Менеджер",
+    "operator": "Оператор",
+    "teacher": "Преподаватель"
+  }
+}

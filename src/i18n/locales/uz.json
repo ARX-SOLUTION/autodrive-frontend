@@ -1,0 +1,32 @@
+{
+  "app": {
+    "title": "Auto Maktab"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "branches": "Filiallar",
+    "groups": "Guruhlar",
+    "students": "Talabalar",
+    "payments": "To'lovlar",
+    "documents": "Hujjatlar",
+    "operators": "Operatorlar",
+    "teachers": "O'qituvchilar",
+    "users": "Foydalanuvchilar",
+    "audit": "Audit log",
+    "profile": "Profil"
+  },
+  "actions": {
+    "logout": "Chiqish",
+    "theme_dark": "Tungi rejim",
+    "theme_light": "Yorug' rejim",
+    "language": "Til",
+    "sidebar": "Yon menyu",
+    "home": "Bosh sahifa"
+  },
+  "roles": {
+    "owner": "Biznes egasi",
+    "manager": "Manager",
+    "operator": "Operator",
+    "teacher": "O'qituvchi"
+  }
+}

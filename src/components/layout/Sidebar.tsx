@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/store/authStore";
 import {
   LayoutDashboard,
@@ -17,18 +18,27 @@ import {
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { ThemeToggle } from "./ThemeToggle";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
-const navItems = [
-  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, ownerOnly: false },
-  { path: "/filiallar", label: "Filiallar", icon: Building2, ownerOnly: true },
-  { path: "/guruhlar", label: "Guruhlar", icon: Layers, ownerOnly: false },
-  { path: "/talabalar", label: "Talabalar", icon: GraduationCap, ownerOnly: false },
-  { path: "/tolovlar", label: "To'lovlar", icon: CreditCard, ownerOnly: false },
-  { path: "/operatorlar", label: "Operatorlar", icon: Headphones, ownerOnly: false },
-  { path: "/oqituvchilar", label: "O'qituvchilar", icon: Users, ownerOnly: false },
-  { path: "/foydalanuvchilar", label: "Foydalanuvchilar", icon: UserCog, ownerOnly: true },
-  { path: "/audit", label: "Audit log", icon: ShieldCheck, ownerOnly: true },
-  { path: "/profile", label: "Profil", icon: User, ownerOnly: false },
+type NavItem = {
+  path: string;
+  labelKey: string;
+  icon: typeof LayoutDashboard;
+  ownerOnly: boolean;
+};
+
+const navItems: NavItem[] = [
+  { path: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, ownerOnly: false },
+  { path: "/filiallar", labelKey: "nav.branches", icon: Building2, ownerOnly: true },
+  { path: "/guruhlar", labelKey: "nav.groups", icon: Layers, ownerOnly: false },
+  { path: "/talabalar", labelKey: "nav.students", icon: GraduationCap, ownerOnly: false },
+  { path: "/tolovlar", labelKey: "nav.payments", icon: CreditCard, ownerOnly: false },
+  { path: "/operatorlar", labelKey: "nav.operators", icon: Headphones, ownerOnly: false },
+  { path: "/oqituvchilar", labelKey: "nav.teachers", icon: Users, ownerOnly: false },
+  { path: "/foydalanuvchilar", labelKey: "nav.users", icon: UserCog, ownerOnly: true },
+  { path: "/audit", labelKey: "nav.audit", icon: ShieldCheck, ownerOnly: true },
+  { path: "/profile", labelKey: "nav.profile", icon: User, ownerOnly: false },
 ];
 
 interface SidebarContentProps {
@@ -38,8 +48,11 @@ interface SidebarContentProps {
 
 const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
   const location = useLocation();
+  const { t } = useTranslation();
   const { user, logout, isOwner } = useAuthStore();
   const filteredItems = navItems.filter((item) => !item.ownerOnly || isOwner());
+
+  const roleLabel = user?.role === "owner" ? t("roles.owner") : user?.branch_name;
 
   return (
     <>
@@ -49,7 +62,7 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
         </div>
         {!collapsed && (
           <span className="font-heading text-lg font-bold text-foreground">
-            Auto Maktab
+            {t("app.title")}
           </span>
         )}
       </div>
@@ -70,7 +83,7 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
               )}
             >
               <item.icon className="h-[18px] w-[18px] shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
+              {!collapsed && <span>{t(item.labelKey)}</span>}
             </Link>
           );
         })}
@@ -82,12 +95,10 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
             <p className="text-sm font-medium text-foreground truncate">
               {user?.name || user?.email}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {user?.role === "owner" ? "Biznes egasi" : user?.branch_name}
-            </p>
+            <p className="text-xs text-muted-foreground">{roleLabel}</p>
           </div>
         )}
-        <div className="flex items-center justify-between px-1">
+        <div className="flex flex-wrap items-center justify-between gap-1 px-1">
           <button
             onClick={() => {
               onNavigate?.();
@@ -96,8 +107,12 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
             className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:text-destructive transition-colors"
           >
             <LogOut className="h-4 w-4" />
-            {!collapsed && <span>Chiqish</span>}
+            {!collapsed && <span>{t("actions.logout")}</span>}
           </button>
+          <div className="flex items-center gap-1">
+            <ThemeToggle collapsed={collapsed} />
+            <LanguageSwitcher />
+          </div>
         </div>
       </div>
     </>
@@ -111,6 +126,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <>
@@ -123,7 +139,7 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
         <SidebarContent collapsed={collapsed} />
         <button
           onClick={() => setCollapsed(!collapsed)}
-          aria-label={collapsed ? "Yon menyuni ochish" : "Yon menyuni yopish"}
+          aria-label={t("actions.sidebar")}
           className="absolute -right-3 top-20 z-10 rounded-full border border-border bg-background p-1 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
         >
           <ChevronLeft

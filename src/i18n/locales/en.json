@@ -1,0 +1,32 @@
+{
+  "app": {
+    "title": "Auto Maktab"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "branches": "Branches",
+    "groups": "Groups",
+    "students": "Students",
+    "payments": "Payments",
+    "documents": "Documents",
+    "operators": "Operators",
+    "teachers": "Teachers",
+    "users": "Users",
+    "audit": "Audit log",
+    "profile": "Profile"
+  },
+  "actions": {
+    "logout": "Sign out",
+    "theme_dark": "Dark mode",
+    "theme_light": "Light mode",
+    "language": "Language",
+    "sidebar": "Menu",
+    "home": "Home"
+  },
+  "roles": {
+    "owner": "Owner",
+    "manager": "Manager",
+    "operator": "Operator",
+    "teacher": "Teacher"
+  }
+}
