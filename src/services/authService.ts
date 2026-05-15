@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "@/api/axiosInstance";
 import { useAuthStore } from "@/store/authStore";
@@ -16,11 +17,20 @@ export const useLogin = () => {
   });
 };
 
-// On page refresh: token is gone (not persisted) but cookie is valid.
-// Call /auth/me to get fresh user data and re-hydrate in-memory token sentinel.
+// On page refresh: in-memory token is gone but the httpOnly cookie is
+// still valid. Call /auth/me to pull fresh user data and re-hydrate the
+// token sentinel so axios adds a Bearer header alongside the cookie.
+//
+// `useQuery` v5 removed the `onSuccess` / `onError` options, so we wire
+// the side effects through `useEffect` watching `data` / `error` — the
+// old cast-and-pray pattern silently dropped both branches.
 export const useRestoreSession = () => {
-  const { isAuthenticated, token, setAuth, logout } = useAuthStore();
-  return useQuery<User>({
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const token = useAuthStore((s) => s.token);
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const logout = useAuthStore((s) => s.logout);
+
+  const query = useQuery<User>({
     queryKey: ["me"],
     queryFn: async () => {
       const { data } = await axiosInstance.get("/auth/me");
@@ -28,9 +38,17 @@ export const useRestoreSession = () => {
     },
     enabled: isAuthenticated && !token,
     retry: false,
-    onSuccess: (user: User) => setAuth("cookie", user),
-    onError: () => logout(),
-  } as Parameters<typeof useQuery<User>>[0]);
+  });
+
+  useEffect(() => {
+    if (query.data) setAuth("cookie", query.data);
+  }, [query.data, setAuth]);
+
+  useEffect(() => {
+    if (query.error) logout();
+  }, [query.error, logout]);
+
+  return query;
 };
 
 export const useLogout = () => {
