@@ -21,7 +21,11 @@
     "theme_light": "Светлая тема",
     "language": "Язык",
     "sidebar": "Меню",
-    "home": "Главная"
+    "home": "Главная",
+    "search": "Поиск",
+    "search_placeholder": "Поиск страницы...",
+    "search_empty": "Ничего не найдено",
+    "search_pages": "Страницы"
   },
   "roles": {
     "owner": "Владелец",
