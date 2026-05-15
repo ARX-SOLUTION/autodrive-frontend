@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Pencil, Trash2, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, ChevronUp, ChevronDown, ChevronsUpDown, Users } from 'lucide-react';
+import { DataCard } from '@/components/ui/DataCard';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { usePagination } from '@/hooks/usePagination';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -119,6 +121,7 @@ const TeachersPage = () => {
         <Input placeholder="Qidirish..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 bg-secondary border-border" />
       </div>
       <div className="glass-card overflow-hidden">
+        <div className="hidden md:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/30">
@@ -170,8 +173,32 @@ const TeachersPage = () => {
               ))}
           </tbody>
         </table>
+        </div>
+        <div className="md:hidden grid gap-3 p-3">
+          {isLoading
+            ? [...Array(3)].map((_, i) => <Skeleton key={i} className="h-28 w-full" />)
+            : paginatedItems.map((t) => (
+                <DataCard
+                  key={t.id}
+                  title={t.name || '—'}
+                  subtitle={t.phone}
+                  fields={[
+                    { label: 'Mutaxassisligi', value: t.specialization ? (specLabels[t.specialization] || t.specialization) : '—' },
+                    { label: 'Email', value: t.email || '—' },
+                    { label: 'Filial', value: t.branch_name || getBranchName(t.branch_id || '') },
+                    { label: 'Yaratilgan', value: t.created_at ? new Date(t.created_at).toLocaleDateString('uz-UZ') : '—' },
+                  ]}
+                  actions={
+                    <>
+                      <button onClick={() => openEdit(t)} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => setDeleteId(t.id)} className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
+                    </>
+                  }
+                />
+              ))}
+        </div>
         {filtered.length === 0 && !isLoading && (
-          <div className="py-12 text-center text-muted-foreground">O'qituvchilar topilmadi</div>
+          <EmptyState icon={Users} title="O'qituvchilar topilmadi" />
         )}
       </div>
 

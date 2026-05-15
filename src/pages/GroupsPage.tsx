@@ -18,11 +18,13 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Pencil, Trash2, ChevronDown, ChevronRight, Eye, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, ChevronDown, ChevronRight, Eye, ChevronUp, ChevronsUpDown, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { useAuthStore } from "@/store/authStore";
+import { DataCard } from "@/components/ui/DataCard";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 const formatDate = (d: string) => {
   try { return format(new Date(d), "dd.MM.yyyy"); } catch { return d; }
@@ -215,7 +217,7 @@ const GroupsPage = () => {
 
       {/* Table */}
       <div className="glass-card overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
@@ -282,10 +284,40 @@ const GroupsPage = () => {
                   ))}
             </tbody>
           </table>
-          {filteredGroups.length === 0 && !isLoading && (
-            <div className="py-12 text-center text-muted-foreground">Guruhlar topilmadi</div>
-          )}
         </div>
+        <div className="md:hidden grid gap-3 p-3">
+          {isLoading
+            ? [...Array(3)].map((_, i) => <Skeleton key={i} className="h-28 w-full" />)
+            : filtered.map((g) => (
+                <DataCard
+                  key={g.id}
+                  title={g.name}
+                  subtitle={g.branch_name || getBranchName(g.branch_id)}
+                  onClick={() => setDetailGroup(g)}
+                  fields={[
+                    { label: "Kurs turi", value: g.course_type === "avto_maktab" ? "Avto maktab" : "Tezkor" },
+                    { label: "Talabalar soni", value: g.active_students },
+                    { label: "Yaratilgan", value: formatDate(g.created_at) },
+                    { label: "Holat", value: g.is_active ? "Faol" : "Nofaol" },
+                  ]}
+                  actions={
+                    <>
+                      <button onClick={(e) => { e.stopPropagation(); openEdit(g); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      {isOwner() && (
+                        <button onClick={(e) => { e.stopPropagation(); setDeleteId(g.id); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </>
+                  }
+                />
+              ))}
+        </div>
+        {filteredGroups.length === 0 && !isLoading && (
+          <EmptyState icon={Layers} title="Guruhlar topilmadi" />
+        )}
       </div>
 
       <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />

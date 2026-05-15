@@ -5,75 +5,46 @@ import {
   Building2,
   GraduationCap,
   CreditCard,
-  FileText,
   Headphones,
   Users,
   User,
   LogOut,
   ChevronLeft,
-  Car,
   Layers,
   UserCog,
   ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 const navItems = [
-  {
-    path: "/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    ownerOnly: false,
-  },
+  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, ownerOnly: false },
   { path: "/filiallar", label: "Filiallar", icon: Building2, ownerOnly: true },
   { path: "/guruhlar", label: "Guruhlar", icon: Layers, ownerOnly: false },
-  {
-    path: "/talabalar",
-    label: "Talabalar",
-    icon: GraduationCap,
-    ownerOnly: false,
-  },
+  { path: "/talabalar", label: "Talabalar", icon: GraduationCap, ownerOnly: false },
   { path: "/tolovlar", label: "To'lovlar", icon: CreditCard, ownerOnly: false },
-  // { path: "/hujjatlar", label: "Hujjatlar", icon: FileText, ownerOnly: false },
-  {
-    path: "/operatorlar",
-    label: "Operatorlar",
-    icon: Headphones,
-    ownerOnly: false,
-  },
-  {
-    path: "/oqituvchilar",
-    label: "O'qituvchilar",
-    icon: Users,
-    ownerOnly: false,
-  },
-  {
-    path: "/foydalanuvchilar",
-    label: "Foydalanuvchilar",
-    icon: UserCog,
-    ownerOnly: true,
-  },
+  { path: "/operatorlar", label: "Operatorlar", icon: Headphones, ownerOnly: false },
+  { path: "/oqituvchilar", label: "O'qituvchilar", icon: Users, ownerOnly: false },
+  { path: "/foydalanuvchilar", label: "Foydalanuvchilar", icon: UserCog, ownerOnly: true },
   { path: "/audit", label: "Audit log", icon: ShieldCheck, ownerOnly: true },
   { path: "/profile", label: "Profil", icon: User, ownerOnly: false },
 ];
 
-export const Sidebar = () => {
+interface SidebarContentProps {
+  collapsed: boolean;
+  onNavigate?: () => void;
+}
+
+const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
   const location = useLocation();
   const { user, logout, isOwner } = useAuthStore();
-  const [collapsed, setCollapsed] = useState(false);
-
   const filteredItems = navItems.filter((item) => !item.ownerOnly || isOwner());
 
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-border bg-sidebar transition-all duration-300",
-        collapsed ? "w-[68px]" : "w-60",
-      )}
-    >
+    <>
       <div className="flex h-16 items-center gap-3 border-b border-border px-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center ">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center">
           <img src="/favicon.png" alt="Logo" className="h-full w-full" />
         </div>
         {!collapsed && (
@@ -90,6 +61,7 @@ export const Sidebar = () => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 active
@@ -117,25 +89,59 @@ export const Sidebar = () => {
         )}
         <div className="flex items-center justify-between px-1">
           <button
-            onClick={logout}
+            onClick={() => {
+              onNavigate?.();
+              logout();
+            }}
             className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:text-destructive transition-colors"
           >
             <LogOut className="h-4 w-4" />
             {!collapsed && <span>Chiqish</span>}
           </button>
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="rounded-lg p-2 text-muted-foreground hover:bg-sidebar-accent transition-colors"
-          >
-            <ChevronLeft
-              className={cn(
-                "h-4 w-4 transition-transform",
-                collapsed && "rotate-180",
-              )}
-            />
-          </button>
         </div>
       </div>
-    </aside>
+    </>
+  );
+};
+
+interface SidebarProps {
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
+}
+
+export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <>
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-border bg-sidebar transition-all duration-300 md:flex",
+          collapsed ? "w-[68px]" : "w-60",
+        )}
+      >
+        <SidebarContent collapsed={collapsed} />
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? "Yon menyuni ochish" : "Yon menyuni yopish"}
+          className="absolute -right-3 top-20 z-10 rounded-full border border-border bg-background p-1 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+        >
+          <ChevronLeft
+            className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")}
+          />
+        </button>
+      </aside>
+
+      <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
+        <SheetContent
+          side="left"
+          className="w-72 bg-sidebar p-0 [&>button]:text-sidebar-foreground"
+        >
+          <div className="flex h-full flex-col">
+            <SidebarContent collapsed={false} onNavigate={() => onMobileOpenChange(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 };

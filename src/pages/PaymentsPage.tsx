@@ -3,6 +3,8 @@ import PaymentModal, {
   CreatePaymentPayload,
 } from "@/components/ui/PaymentModal";
 import { SummaryCard } from "@/components/ui/SummaryCard";
+import { DataCard } from "@/components/ui/DataCard";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -40,6 +42,7 @@ import
     ChevronDown,
     ChevronsUpDown,
     ChevronUp,
+    CreditCard,
     Download,
     Loader2,
     Plus,
@@ -535,8 +538,9 @@ const PaymentsPage = () => {
             </div>
           )}
         <div className={cn("glass-card overflow-hidden transition-opacity duration-200", isFetching && !isLoading && "opacity-50")}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="hidden md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
                   <th className="px-4 py-3 text-center font-medium text-muted-foreground">
@@ -594,11 +598,12 @@ const PaymentsPage = () => {
                   ))
                 ) : paginatedItems?.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={10}
-                      className="py-12 text-center text-muted-foreground"
-                    >
-                      To'lovlar topilmadi
+                    <td colSpan={10} className="p-0">
+                      <EmptyState
+                        icon={CreditCard}
+                        title="To'lovlar topilmadi"
+                        description="Filtrlarni o'zgartiring yoki yangi to'lov qo'shing."
+                      />
                     </td>
                   </tr>
                 ) : (
@@ -656,6 +661,47 @@ const PaymentsPage = () => {
                 )}
               </tbody>
             </table>
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:hidden p-3">
+            {isLoading ? (
+              [...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-lg" />
+              ))
+            ) : paginatedItems && paginatedItems.length > 0 ? (
+              paginatedItems.map((p) => (
+                <DataCard
+                  key={p.id}
+                  title={p.student_name}
+                  subtitle={p.branch_name}
+                  fields={[
+                    { label: "Sana", value: formatDate(p.date) },
+                    { label: "Summa", value: formatMoney(p.amount_paid) },
+                    {
+                      label: "To'lov turi",
+                      value:
+                        p.payment_method === "naqd"
+                          ? "Naqd"
+                          : p.payment_method === "karta"
+                            ? "Karta"
+                            : "Perechisleniya",
+                    },
+                    { label: "Operator", value: p.recorded_by || "—" },
+                    {
+                      label: "Kurs turi",
+                      value: p.course_type === "tezkor" ? "Tezkor" : "Avto maktab",
+                    },
+                  ]}
+                />
+              ))
+            ) : (
+              <EmptyState
+                icon={CreditCard}
+                title="To'lovlar topilmadi"
+                description="Filtrlarni o'zgartiring yoki yangi to'lov qo'shing."
+              />
+            )}
           </div>
         </div>
         </div>

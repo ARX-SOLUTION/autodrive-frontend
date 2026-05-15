@@ -29,7 +29,9 @@ import {
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import StudentModal from "@/components/ui/StudentModal";
-import { Plus, Search, Pencil, Trash2, CalendarIcon, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { DataCard } from "@/components/ui/DataCard";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Plus, Search, Pencil, Trash2, CalendarIcon, ChevronUp, ChevronDown, ChevronsUpDown, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { usePagination } from "@/hooks/usePagination";
@@ -305,8 +307,9 @@ const StudentsPage = () => {
 
       {/* Table */}
       <div className="glass-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="hidden md:block">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
                 <th className="px-4 py-3 text-center font-medium text-muted-foreground">
@@ -576,12 +579,77 @@ const StudentsPage = () => {
                       </td>
                     </tr>
                   ))}
-            </tbody>
-          </table>
-          {filtered?.length === 0 && !isLoading && (
-            <div className="py-12 text-center text-muted-foreground">
-              Talabalar topilmadi
-            </div>
+              {!isLoading && filtered?.length === 0 && (
+                <tr>
+                  <td colSpan={16} className="p-0">
+                    <EmptyState
+                      icon={GraduationCap}
+                      title="Talabalar topilmadi"
+                      description="Filtrlarni o'zgartiring yoki yangi talaba qo'shing."
+                    />
+                  </td>
+                </tr>
+              )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:hidden p-3">
+          {isLoading ? (
+            [...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-28 w-full rounded-lg" />
+            ))
+          ) : paginatedItems && paginatedItems.length > 0 ? (
+            paginatedItems.map((s) => {
+              const fields = [
+                { label: "Filial", value: s.branch_name || "—" },
+                { label: "Guruh", value: s.group_name ?? "—" },
+                { label: "Kurs", value: s.course_type === "tezkor" ? "Tezkor" : "Avto maktab" },
+                {
+                  label: "Qarz",
+                  value: (
+                    <span className={s.debt > 0 ? "text-destructive" : "text-success"}>
+                      {s.debt > 0 ? formatMoney(s.debt) : "—"}
+                    </span>
+                  ),
+                },
+                { label: "Holat", value: s.result || "—" },
+                { label: "Sana", value: formatDate(s.created_at) },
+              ];
+              return (
+                <DataCard
+                  key={s.id}
+                  title={`${capitalize(s.first_name)} ${capitalize(s.last_name)}`}
+                  subtitle={formatPhone(s.phone)}
+                  fields={fields}
+                  actions={
+                    <>
+                      <button
+                        onClick={() => openEdit(s)}
+                        className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      {isOwner() && (
+                        <button
+                          onClick={() => setDeleteId(s.id)}
+                          className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </>
+                  }
+                />
+              );
+            })
+          ) : (
+            <EmptyState
+              icon={GraduationCap}
+              title="Talabalar topilmadi"
+              description="Filtrlarni o'zgartiring yoki yangi talaba qo'shing."
+            />
           )}
         </div>
       </div>

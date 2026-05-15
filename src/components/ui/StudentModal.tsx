@@ -274,7 +274,7 @@ const StudentModal = ({
 
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
               <FormField
                 control={form.control}
                 name="last_name"
@@ -363,7 +363,7 @@ const StudentModal = ({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
               <FormField
                 control={form.control}
                 name="total_price"
@@ -417,7 +417,7 @@ const StudentModal = ({
 
             {courseType === "tezkor" ? (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
                   <FormField
                     control={form.control}
                     name="amount_paid"
@@ -453,7 +453,7 @@ const StudentModal = ({
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
                   <FormField
                     control={form.control}
                     name="group_id"
@@ -485,7 +485,7 @@ const StudentModal = ({
               </>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
                   <FormField
                     control={form.control}
                     name="initial_payment"
@@ -658,7 +658,7 @@ const StudentModal = ({
               />
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
               <FormField
                 control={form.control}
                 name="result"

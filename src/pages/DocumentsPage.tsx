@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, FileText } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import PaginationControls from '@/components/ui/PaginationControls';
+import { DataCard } from '@/components/ui/DataCard';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const demoDocuments = [
   { id: '1', student_name: 'Karimov Jasur', doc_type: 'Haydovchilik guvohnomasi', status: '+', branch: 'Minor', date: '2024-03-01' },
@@ -36,7 +38,7 @@ const DocumentsPage = () => {
         <Input placeholder="Qidirish..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 bg-secondary border-border" />
       </div>
 
-      <div className="glass-card overflow-hidden">
+      <div className="hidden md:block glass-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/30">
@@ -64,7 +66,27 @@ const DocumentsPage = () => {
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <div className="py-12 text-center text-muted-foreground">Hujjatlar topilmadi</div>
+          <EmptyState icon={FileText} title="Hujjatlar topilmadi" />
+        )}
+      </div>
+
+      <div className="md:hidden grid gap-3">
+        {paginatedItems.length === 0 ? (
+          <EmptyState icon={FileText} title="Hujjatlar topilmadi" />
+        ) : (
+          paginatedItems.map((d) => (
+            <DataCard
+              key={d.id}
+              title={d.doc_type}
+              subtitle={d.student_name}
+              fields={[
+                { label: "Turi", value: d.doc_type },
+                { label: "Sana", value: d.date },
+                { label: "Filial", value: d.branch ?? "—" },
+                { label: "Holat", value: <span className={d.status === '+' ? 'text-success' : 'text-destructive'}>{d.status === '+' ? '✓' : '✗'}</span> },
+              ]}
+            />
+          ))
         )}
       </div>
 

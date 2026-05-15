@@ -147,7 +147,7 @@ const DashboardPage = () => {
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-9 w-64" />
         </div>
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {[...Array(8)].map((_, i) => (
             <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
@@ -208,7 +208,7 @@ const DashboardPage = () => {
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
           Talabalar
         </h2>
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           <SummaryCard
             title="Faol talabalar"
             value={analytics.total_students}
@@ -240,7 +240,7 @@ const DashboardPage = () => {
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
           Moliya
         </h2>
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {owner && (
             <SummaryCard
               title="Bu oy daromad"
