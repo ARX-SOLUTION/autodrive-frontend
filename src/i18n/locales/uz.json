@@ -21,7 +21,11 @@
     "theme_light": "Yorug' rejim",
     "language": "Til",
     "sidebar": "Yon menyu",
-    "home": "Bosh sahifa"
+    "home": "Bosh sahifa",
+    "search": "Qidirish",
+    "search_placeholder": "Sahifa qidirish...",
+    "search_empty": "Hech narsa topilmadi",
+    "search_pages": "Sahifalar"
   },
   "roles": {
     "owner": "Biznes egasi",

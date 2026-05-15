@@ -21,7 +21,11 @@
     "theme_light": "Light mode",
     "language": "Language",
     "sidebar": "Menu",
-    "home": "Home"
+    "home": "Home",
+    "search": "Search",
+    "search_placeholder": "Search pages...",
+    "search_empty": "Nothing found",
+    "search_pages": "Pages"
   },
   "roles": {
     "owner": "Owner",
