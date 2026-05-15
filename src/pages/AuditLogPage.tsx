@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/dialog";
 import { Search, CalendarIcon, X, ShieldCheck, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DataCard } from "@/components/ui/DataCard";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 const formatDate = (d: string) => {
   try {
@@ -408,7 +410,7 @@ const AuditLogPage = () => {
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">O'zgarishlar ro'yxati</h2>
           <span className="text-xs text-muted-foreground">{total} ta yozuv</span>
         </div>
-        <div className="glass-card overflow-hidden">
+        <div className="hidden md:block glass-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -431,7 +433,9 @@ const AuditLogPage = () => {
                   ))
                 ) : sorted.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-muted-foreground">Yozuvlar topilmadi</td>
+                    <td colSpan={7} className="p-0">
+                      <EmptyState icon={ShieldCheck} title="Yozuvlar topilmadi" />
+                    </td>
                   </tr>
                 ) : (
                   sorted.map((log, idx) => (
@@ -457,6 +461,29 @@ const AuditLogPage = () => {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="md:hidden grid gap-3">
+          {isLoading ? (
+            [...Array(5)].map((_, i) => <Skeleton key={i} className="h-24 w-full" />)
+          ) : sorted.length === 0 ? (
+            <EmptyState icon={ShieldCheck} title="Yozuvlar topilmadi" />
+          ) : (
+            sorted.map((log) => (
+              <DataCard
+                key={log.id}
+                onClick={() => setSelectedLog(log)}
+                title={`${log.action} · ${log.entity}`}
+                subtitle={log.user?.name || "—"}
+                fields={[
+                  { label: "Sana", value: formatDate(log.createdAt) },
+                  { label: "Entity ID", value: <span className="font-mono">{log.entityId?.slice(0, 8) || "—"}</span> },
+                  { label: "Filial", value: "—" },
+                  { label: "Detallar", value: "—" },
+                ]}
+              />
+            ))
+          )}
         </div>
 
         {totalPages > 1 && (
