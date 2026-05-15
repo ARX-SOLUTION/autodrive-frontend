@@ -1,5 +1,6 @@
 export type UserRole = 'dev' | 'owner' | 'manager' | 'operator' | 'teacher';
 export type Specialization = 'THEORY' | 'PRACTICE';
+export type CompanyStatus = 'pending' | 'active' | 'suspended';
 export interface User {
   id: string;
   name?: string;
@@ -7,6 +8,8 @@ export interface User {
   role: UserRole;
   branch_id?: string;
   branch_name?: string;
+  company_id?: string;
+  company_status?: CompanyStatus;
   phone?: string;
   avatar?: string;
   specialization?: Specialization;
