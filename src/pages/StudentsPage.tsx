@@ -31,12 +31,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import StudentModal from "@/components/ui/StudentModal";
 import { DataCard } from "@/components/ui/DataCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Plus, Search, Pencil, Trash2, CalendarIcon, ChevronUp, ChevronDown, ChevronsUpDown, GraduationCap } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, CalendarIcon, ChevronUp, ChevronDown, ChevronsUpDown, GraduationCap, Download } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { formatPhone } from "@/lib/phoneFormater";
+import * as XLSX from "xlsx";
 
 const formatMoney = (n: number) => new Intl.NumberFormat("uz-UZ").format(n);
 const capitalize = (str?: string) =>
@@ -130,6 +131,24 @@ const StudentsPage = () => {
   const { currentPage, totalPages, paginatedItems, setCurrentPage } =
     usePagination(sorted);
 
+  const exportToExcel = () => {
+    const rows = sorted.map((s, idx) => ({
+      "#": idx + 1,
+      Ism: s.first_name,
+      Familiya: s.last_name,
+      Telefon: formatPhone(s.phone),
+      Kurs: s.course_type === "tezkor" ? "Tezkor" : "Avto maktab",
+      Filial: s.branch_name ?? "—",
+      Guruh: s.group_name ?? "—",
+      "Umumiy narx": s.total_price,
+      Qarz: s.debt,
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Talabalar");
+    XLSX.writeFile(wb, `talabalar_${format(new Date(), "dd-MM-yyyy")}.xlsx`);
+  };
+
   const handleDelete = () => {
     if (!deleteId) return;
     deleteMutation.mutate(deleteId, {
@@ -187,9 +206,19 @@ const StudentsPage = () => {
             {filtered?.length || 0} ta talaba topildi
           </p>
         </div>
-        <Button className="gap-2" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> Talaba qo'shish
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={exportToExcel}
+            disabled={sorted.length === 0}
+          >
+            <Download className="h-4 w-4" /> Excel
+          </Button>
+          <Button className="gap-2" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> Talaba qo'shish
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
