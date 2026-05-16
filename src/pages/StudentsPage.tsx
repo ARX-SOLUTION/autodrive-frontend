@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { useAuthStore } from "@/store/authStore";
 import {
@@ -64,19 +65,55 @@ export const formatDateTime = (d: string) => {
 
 const StudentsPage = () => {
   const { isOwner, user } = useAuthStore();
-  const [courseType, setCourseType] = useState<CourseType>("tezkor");
-  const [branchId, setBranchId] = useState<string | undefined>(
-    isOwner() ? undefined : user?.branch_id || undefined,
-  );
-  const [search, setSearch] = useState("");
+
+  // Filter state lives in the URL so reload / share / bookmark preserves
+  // it (ROADMAP §2.2). `searchParams` is the source of truth; each
+  // setter rewrites the URL and React-Router re-renders. `replace: true`
+  // keeps the browser-history short — every keystroke in the search box
+  // would otherwise push a history entry.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const setParam = (key: string, value: string | undefined) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (!value) next.delete(key);
+        else next.set(key, value);
+        return next;
+      },
+      { replace: true },
+    );
+  };
+
+  const courseType = (searchParams.get("course_type") ?? "tezkor") as CourseType;
+  const setCourseType = (v: CourseType) =>
+    setParam("course_type", v === "tezkor" ? undefined : v);
+
+  const defaultBranchId = isOwner() ? undefined : user?.branch_id || undefined;
+  const branchId = searchParams.get("branch_id") ?? defaultBranchId;
+  const setBranchId = (v: string | undefined) => setParam("branch_id", v);
+
+  const search = searchParams.get("q") ?? "";
+  const setSearch = (v: string) => setParam("q", v || undefined);
+
+  const rawDateFrom = searchParams.get("date_from");
+  const dateFrom = rawDateFrom ? new Date(rawDateFrom) : undefined;
+  const setDateFrom = (v: Date | undefined) =>
+    setParam("date_from", v ? v.toISOString().slice(0, 10) : undefined);
+
+  const rawDateTo = searchParams.get("date_to");
+  const dateTo = rawDateTo ? new Date(rawDateTo) : undefined;
+  const setDateTo = (v: Date | undefined) =>
+    setParam("date_to", v ? v.toISOString().slice(0, 10) : undefined);
+
+  const operatorId = searchParams.get("operator_id") ?? undefined;
+  const setOperatorId = (v: string | undefined) => setParam("operator_id", v);
+
+  // Local-only state (modal + sort UX — not worth persisting).
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
   const [sortField, setSortField] = useState("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [operatorId, setOperatorId] = useState<string | undefined>();
 
   const { data: branches } = useBranches();
   const { data: operators } = useOperators();
