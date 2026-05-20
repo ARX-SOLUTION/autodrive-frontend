@@ -64,6 +64,7 @@ export interface CreateStudentPayload {
 const paymentMethodLabels: Record<PaymentMethod, string> = {
   naqd: "Naqd",
   karta: "Karta",
+  perechisleniya: "Perechisleniya",
 };
 
 const resultLabels: Record<ResultStatus, string> = {
@@ -82,7 +83,7 @@ const studentFormSchema = z
       .regex(/^\+?\d{9,15}$/, "Telefon raqami noto'g'ri"),
     course_type: z.enum(["tezkor", "avto_maktab"]),
     branch_id: z.string().min(1, "Filial tanlanmagan! Iltimos filial tanlang."),
-    payment_method: z.enum(["naqd", "karta"]).optional(),
+    payment_method: z.enum(["naqd", "karta", "perechisleniya"]).optional(),
     result: z.enum(["oqimoqda", "topshirdi", "yiqildi"]).optional(),
     has_document: z.boolean().optional(),
     o83: z.boolean().optional(),
@@ -93,7 +94,7 @@ const studentFormSchema = z
     completion_date: z.string().optional(),
     contract_number: z.string().optional(),
     notes: z.string().optional(),
-    status: z.enum(["active", "completed", "dropped", "frozen"]).optional(),
+    status: z.enum(["active", "completed", "dropped", "suspended"]).optional(),
     registered_by: z.string().optional(),
   })
   .superRefine((data, ctx) => {
@@ -136,10 +137,6 @@ const StudentModal = ({
   const { data: groups } = useGroups();
 
   const branchList = branches || [];
-  // Show all groups regardless of branch for managers (cross-branch assignment)
-  const groupList = (groups || []).filter(
-    (g) => g.course_type === courseType || !g.course_type,
-  );
 
   const defaultFormValues = (): StudentFormValues => ({
     first_name: "",
@@ -173,6 +170,17 @@ const StudentModal = ({
   const watchedAmountPaid = form.watch("amount_paid");
   const watchedInitialPayment = form.watch("initial_payment");
   const watchedBranchId = form.watch("branch_id");
+  const watchedGroupId = form.watch("group_id");
+  const watchedRegisteredBy = form.watch("registered_by");
+
+  const groupList = (groups || []).filter(
+    (g) =>
+      (g.course_type === courseType || !g.course_type) &&
+      (!watchedBranchId || g.branch_id === watchedBranchId),
+  );
+  const operatorList = operators.filter(
+    (op) => !watchedBranchId || op.branch_id === watchedBranchId,
+  );
 
   useEffect(() => {
     if (open) {
@@ -220,6 +228,18 @@ const StudentModal = ({
       setDebt(Math.max(0, total - paid));
     }
   }, [watchedTotalPrice, watchedAmountPaid, watchedInitialPayment, courseType, student]);
+
+  useEffect(() => {
+    if (watchedGroupId && !groupList.some((g) => g.id === watchedGroupId)) {
+      form.setValue("group_id", "");
+    }
+    if (
+      watchedRegisteredBy &&
+      !operatorList.some((op) => op.id === watchedRegisteredBy)
+    ) {
+      form.setValue("registered_by", "");
+    }
+  }, [form, groupList, operatorList, watchedGroupId, watchedRegisteredBy]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const payload: CreateStudentPayload = {
@@ -645,7 +665,7 @@ const StudentModal = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {operators.map((op) => (
+                        {operatorList.map((op) => (
                           <SelectItem key={op.id} value={op.id}>
                             {op.name || op.email}
                           </SelectItem>

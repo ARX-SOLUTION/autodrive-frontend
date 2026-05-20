@@ -66,6 +66,7 @@ interface PaymentModalProps {
 const paymentMethodLabels: Record<PaymentMethod, string> = {
   naqd: "Naqd",
   karta: "Karta",
+  perechisleniya: "Perechisleniya",
 };
 
 const paymentSchema = z.object({
@@ -73,7 +74,7 @@ const paymentSchema = z.object({
   amount: z.coerce
     .number({ invalid_type_error: "To'lov miqdorini kiriting" })
     .positive("To'lov miqdori 0 dan katta bo'lishi kerak"),
-  payment_method: z.enum(["naqd", "karta"], {
+  payment_method: z.enum(["naqd", "karta", "perechisleniya"], {
     required_error: "To'lov turini tanlang",
   }),
 });

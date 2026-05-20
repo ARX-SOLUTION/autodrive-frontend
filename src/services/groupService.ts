@@ -47,12 +47,13 @@ export const useGroupsOverview = () => {
 
 export const useGroupsById = ({ id }: { id: string }) =>
   useQuery<GroupsById>({
-    queryKey: ["groups", id],
+    queryKey: ["groups", "detail", id],
     queryFn: async () =>
       axiosInstance
         .get(`/groups/${id}`)
         .then(({ data }) => data?.data || data)
         .catch(() => null),
+    enabled: !!id,
   });
 
 export const useCreateGroup = () => {
