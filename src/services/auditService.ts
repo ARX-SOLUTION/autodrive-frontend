@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/api/axiosInstance";
+import { useAuthStore } from "@/store/authStore";
 import { AuditLogsResponse } from "@/types/audit";
 
 const toLocalDateStr = (d: Date): string =>
@@ -13,9 +14,13 @@ export const useAuditLogs = (params: {
   endDate?: Date;
   page?: number;
   limit?: number;
-}) =>
-  useQuery<AuditLogsResponse>({
-    queryKey: ["audit-logs", params],
+}) => {
+  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const role = useAuthStore((s) => s.user?.role);
+  const isOwnerOrDev = role === 'owner' || role === 'dev';
+  return useQuery<AuditLogsResponse>({
+    queryKey: ["audit-logs", { ...params, branchId }],
+    enabled: !!branchId || isOwnerOrDev,
     queryFn: async () => {
       try {
         const { data: res } = await axiosInstance.get("/audit-logs", {
@@ -27,6 +32,7 @@ export const useAuditLogs = (params: {
             endDate: params.endDate ? toLocalDateStr(params.endDate) : undefined,
             page: params.page,
             limit: params.limit,
+            branch_id: branchId,
           },
         });
         return res?.data || res;
@@ -35,3 +41,4 @@ export const useAuditLogs = (params: {
       }
     },
   });
+};

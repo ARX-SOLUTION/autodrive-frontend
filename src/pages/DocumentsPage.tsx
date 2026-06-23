@@ -27,7 +27,7 @@ const DocumentsPage = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl font-bold">Hujjatlar</h1>
+          <h1 className="font-heading text-2xl font-bold text-balance">Hujjatlar</h1>
           <p className="text-sm text-muted-foreground">Talabalar hujjatlarini boshqarish</p>
         </div>
         <Button className="gap-2"><Plus className="h-4 w-4" /> Hujjat qo'shish</Button>

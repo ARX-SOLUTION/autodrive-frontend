@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/store/authStore";
+import { useLogout } from "@/services/authService";
 import {
   LayoutDashboard,
   Building2,
@@ -14,6 +15,8 @@ import {
   Layers,
   UserCog,
   ShieldCheck,
+  Calendar,
+  ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -31,6 +34,8 @@ type NavItem = {
 const navItems: NavItem[] = [
   { path: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, ownerOnly: false },
   { path: "/filiallar", labelKey: "nav.branches", icon: Building2, ownerOnly: true },
+  { path: "/jadval", labelKey: "nav.schedule", icon: Calendar, ownerOnly: false },
+  { path: "/davomat", labelKey: "nav.attendance", icon: ClipboardCheck, ownerOnly: false },
   { path: "/guruhlar", labelKey: "nav.groups", icon: Layers, ownerOnly: false },
   { path: "/talabalar", labelKey: "nav.students", icon: GraduationCap, ownerOnly: false },
   { path: "/tolovlar", labelKey: "nav.payments", icon: CreditCard, ownerOnly: false },
@@ -49,7 +54,10 @@ interface SidebarContentProps {
 const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
   const location = useLocation();
   const { t } = useTranslation();
-  const { user, logout, isOwner } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+
+  const isOwner = useAuthStore((s) => s.isOwner);
+  const logoutMutation = useLogout();
   const filteredItems = navItems.filter((item) => !item.ownerOnly || isOwner());
 
   const roleLabel = user?.role === "owner" ? t("roles.owner") : user?.branch_name;
@@ -76,9 +84,12 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
               to={item.path}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex items-center text-sm font-medium transition-colors rounded-lg",
+                collapsed
+                  ? "justify-center mx-auto w-10 h-10"
+                  : "gap-3 px-3 py-2.5",
                 active
-                  ? "bg-primary/10 text-primary"
+                  ? "bg-primary/10 text-primary neon-glow-sm"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
               )}
             >
@@ -98,20 +109,23 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
             <p className="text-xs text-muted-foreground">{roleLabel}</p>
           </div>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-1 px-1">
+        <div className={cn("flex items-center", collapsed ? "flex-col gap-2 justify-center" : "flex-wrap justify-between gap-1 px-1")}>
           <button
             onClick={() => {
               onNavigate?.();
-              logout();
+              logoutMutation.mutate();
             }}
-            className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:text-destructive transition-colors"
+            className={cn(
+              "flex items-center rounded-lg text-sm text-muted-foreground hover:text-destructive transition-colors",
+              collapsed ? "justify-center w-10 h-10" : "gap-2 px-2 py-2",
+            )}
           >
             <LogOut className="h-4 w-4" />
             {!collapsed && <span>{t("actions.logout")}</span>}
           </button>
-          <div className="flex items-center gap-1">
+          <div className={cn("flex items-center", collapsed ? "flex-col gap-1" : "gap-1")}>
             <ThemeToggle collapsed={collapsed} />
-            <LanguageSwitcher />
+            <LanguageSwitcher collapsed={collapsed} />
           </div>
         </div>
       </div>
@@ -120,25 +134,27 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
 };
 
 interface SidebarProps {
+  collapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
 }
 
-export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
-  const [collapsed, setCollapsed] = useState(false);
+export const Sidebar = ({ collapsed, onCollapsedChange, mobileOpen, onMobileOpenChange }: SidebarProps) => {
   const { t } = useTranslation();
 
   return (
     <>
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-border bg-sidebar transition-all duration-300 md:flex",
+          "fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-glass-border-light backdrop-blur-2xl transition-all duration-300 md:flex",
           collapsed ? "w-[68px]" : "w-60",
         )}
+        style={{ background: 'hsl(var(--sidebar-background))' }}
       >
         <SidebarContent collapsed={collapsed} />
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={() => onCollapsedChange(!collapsed)}
           aria-label={t("actions.sidebar")}
           className="absolute -right-3 top-20 z-10 rounded-full border border-border bg-background p-1 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
         >

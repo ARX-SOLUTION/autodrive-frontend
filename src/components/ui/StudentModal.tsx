@@ -132,7 +132,8 @@ const StudentModal = ({
   disabledFields = [],
   defaultBranchId,
 }: StudentModalProps) => {
-  const { isOwner, user } = useAuthStore();
+  const isOwner = useAuthStore((s) => s.isOwner);
+  const user = useAuthStore((s) => s.user);
   const { data: branches } = useBranches();
   const { data: groups } = useGroups();
 

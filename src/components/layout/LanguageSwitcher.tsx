@@ -14,7 +14,7 @@ const labels: Record<string, string> = {
   en: "English",
 };
 
-export const LanguageSwitcher = () => {
+export const LanguageSwitcher = ({ collapsed }: { collapsed?: boolean } = {}) => {
   const { i18n, t } = useTranslation();
   const current = (i18n.resolvedLanguage ?? i18n.language ?? "uz").slice(0, 2);
 
@@ -25,7 +25,7 @@ export const LanguageSwitcher = () => {
         className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors"
       >
         <Languages className="h-4 w-4" />
-        <span className="uppercase">{current}</span>
+        {!collapsed && <span className="uppercase">{current}</span>}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[8rem]">
         {SUPPORTED_LANGS.map((code) => (

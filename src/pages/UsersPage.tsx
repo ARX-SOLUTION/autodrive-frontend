@@ -42,7 +42,7 @@ const UsersPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold">Foydalanuvchilar</h1>
+        <h1 className="font-heading text-2xl font-bold text-balance">Foydalanuvchilar</h1>
         <p className="text-sm text-muted-foreground">{(users || []).length} ta foydalanuvchi</p>
       </div>
 
@@ -111,7 +111,7 @@ const UsersPage = () => {
                           {u.is_active ? "Faol" : "Nofaol"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{formatDate(u.created_at)}</td>
+                      <td className="px-4 py-3 text-muted-foreground tabular-nums">{formatDate(u.created_at)}</td>
                     </tr>
                   ))}
             </tbody>

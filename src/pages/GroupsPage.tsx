@@ -41,7 +41,7 @@ const GroupsPage = () => {
   const updateMutation = useUpdateGroup();
   const deleteMutation = useDeleteGroup();
   const updateStudentMutation = useUpdateStudent();
-  const { isOwner } = useAuthStore();
+  const isOwner = useAuthStore((s) => s.isOwner);
 
   const [search, setSearch] = useState("");
   const [courseTypeFilter, setCourseTypeFilter] = useState("all");
@@ -156,7 +156,7 @@ const GroupsPage = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl font-bold">Guruhlar</h1>
+          <h1 className="font-heading text-2xl font-bold text-balance">Guruhlar</h1>
           <p className="text-sm text-muted-foreground">{(groups || []).length} ta guruh</p>
         </div>
         <Button className="gap-2" onClick={openCreate}>
@@ -167,7 +167,7 @@ const GroupsPage = () => {
       {/* Overview */}
       {overview && overview.length > 0 && (
         <div className="space-y-2">
-          <h2 className="font-heading text-sm font-semibold text-muted-foreground">Filiallar bo'yicha</h2>
+          <h2 className="font-heading text-sm font-semibold text-muted-foreground text-balance">Filiallar bo'yicha</h2>
           <div className="space-y-2">
             {overview.map((ov) => (
               <div key={ov.branch_id} className="glass-card overflow-hidden">
@@ -269,17 +269,17 @@ const GroupsPage = () => {
                           {g.is_active ? "Faol" : "Nofaol"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{formatDate(g.created_at)}</td>
+                      <td className="px-4 py-3 text-muted-foreground tabular-nums">{formatDate(g.created_at)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
-                          <button onClick={(e) => { e.stopPropagation(); setDetailGroup(g); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+                          <button aria-label="Ko'rish" onClick={(e) => { e.stopPropagation(); setDetailGroup(g); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
                             <Eye className="h-3.5 w-3.5" />
                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); openEdit(g); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+                          <button aria-label="Tahrirlash" onClick={(e) => { e.stopPropagation(); openEdit(g); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
                           {isOwner() && (
-                            <button onClick={(e) => { e.stopPropagation(); setDeleteId(g.id); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
+                            <button aria-label="O'chirish" onClick={(e) => { e.stopPropagation(); setDeleteId(g.id); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           )}
@@ -307,11 +307,11 @@ const GroupsPage = () => {
                   ]}
                   actions={
                     <>
-                      <button onClick={(e) => { e.stopPropagation(); openEdit(g); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+                      <button aria-label="Tahrirlash" onClick={(e) => { e.stopPropagation(); openEdit(g); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       {isOwner() && (
-                        <button onClick={(e) => { e.stopPropagation(); setDeleteId(g.id); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
+                        <button aria-label="O'chirish" onClick={(e) => { e.stopPropagation(); setDeleteId(g.id); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       )}
@@ -387,7 +387,7 @@ const GroupsPage = () => {
                       <td className="px-3 py-3 font-medium">{s?.last_name}</td>
                       <td className="px-3 py-3">{s?.first_name}</td>
                       <td className="px-3 py-3 text-muted-foreground">{s?.phone}</td>
-                      <td className="px-3 py-3 text-right">{formatMoney(s?.total_price)}</td>
+                      <td className="px-3 py-3 text-right tabular-nums">{formatMoney(s?.total_price)}</td>
                       <td className="px-3 py-3 text-right">
                         {detailGroup?.course_type === "tezkor"
                           ? formatMoney(s?.amount_paid || 0)
@@ -420,7 +420,7 @@ const GroupsPage = () => {
                         {s?.result === "topshirdi" ? <span className="text-success">✓</span> : s?.result === "yiqildi" ? <span className="text-destructive">✗</span> : <span className="text-muted-foreground">—</span>}
                       </td>
                       <td className="px-3 py-3 text-muted-foreground">{s?.registered_by || "—"}</td>
-                      <td className="px-3 py-3 text-muted-foreground">{formatDate(s?.created_at)}</td>
+                      <td className="px-3 py-3 text-muted-foreground tabular-nums">{formatDate(s?.created_at)}</td>
                       <td className="px-3 py-3 text-center">
                         <button
                           onClick={() => setEditStudent(s)}

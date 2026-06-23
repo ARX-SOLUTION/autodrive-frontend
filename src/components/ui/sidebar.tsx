@@ -575,7 +575,7 @@ const SidebarMenuSub = React.forwardRef<HTMLUListElement, React.ComponentProps<"
 SidebarMenuSub.displayName = "SidebarMenuSub";
 
 const SidebarMenuSubItem = React.forwardRef<HTMLLIElement, React.ComponentProps<"li">>(({ ...props }, ref) => (
-  <li ref={ref} {...props} />
+  <li ref={ref} {...props} / className="scroll-animate">
 ));
 SidebarMenuSubItem.displayName = "SidebarMenuSubItem";
 

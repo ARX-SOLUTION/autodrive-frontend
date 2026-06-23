@@ -46,7 +46,7 @@ export const DataCard = ({
       )}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="truncate font-heading text-sm font-semibold text-foreground">{title}</div>
+          <div className="truncate font-heading text-sm font-semibold text-foreground text-balance">{title}</div>
           {subtitle && <div className="mt-0.5 truncate text-xs text-muted-foreground">{subtitle}</div>}
         </div>
         {actions && <div className="flex items-center gap-1">{actions}</div>}
@@ -56,7 +56,7 @@ export const DataCard = ({
           {fields.map((f, i) => (
             <div key={i} className="min-w-0">
               <dt className="truncate text-[10px] uppercase tracking-wider text-muted-foreground/70">{f.label}</dt>
-              <dd className="mt-0.5 truncate text-foreground">{f.value}</dd>
+              <dd className="mt-0.5 truncate text-foreground tabular-nums">{f.value}</dd>
             </div>
           ))}
         </dl>

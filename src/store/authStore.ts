@@ -10,6 +10,7 @@ interface AuthState {
   setAuth: (token: string, user: User) => void;
   logout: () => void;
   isOwner: () => boolean;
+  setHasHydrated: (state: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -22,6 +23,7 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (token, user) => set({ token, user, isAuthenticated: true, hasHydrated: true }),
       logout: () => set({ token: null, user: null, isAuthenticated: false, hasHydrated: true }),
       isOwner: () => get().user?.role === 'owner',
+      setHasHydrated: (state) => set({ hasHydrated: state }),
     }),
     {
       name: 'autodrive-auth',
@@ -33,8 +35,10 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
         hasHydrated: state.hasHydrated,
       }),
-      onRehydrateStorage: () => () => {
-        set({ hasHydrated: true });
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.setHasHydrated(true);
+        }
       },
     }
   )

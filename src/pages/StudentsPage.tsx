@@ -38,7 +38,6 @@ import { cn } from "@/lib/utils";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationControls from "@/components/ui/PaginationControls";
 import { formatPhone } from "@/lib/phoneFormater";
-import * as XLSX from "xlsx";
 
 const formatMoney = (n: number) => new Intl.NumberFormat("uz-UZ").format(n);
 const capitalize = (str?: string) =>
@@ -64,7 +63,8 @@ export const formatDateTime = (d: string) => {
 };
 
 const StudentsPage = () => {
-  const { isOwner, user } = useAuthStore();
+  const isOwner = useAuthStore((s) => s.isOwner);
+  const user = useAuthStore((s) => s.user);
 
   // Filter state lives in the URL so reload / share / bookmark preserves
   // it (ROADMAP §2.2). `searchParams` is the source of truth; each
@@ -168,7 +168,8 @@ const StudentsPage = () => {
   const { currentPage, totalPages, paginatedItems, setCurrentPage } =
     usePagination(sorted);
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
+    const XLSX = await import("xlsx");
     const rows = sorted.map((s, idx) => ({
       "#": idx + 1,
       Ism: s.first_name,
@@ -238,7 +239,7 @@ const StudentsPage = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl font-bold">Talabalar</h1>
+          <h1 className="font-heading text-2xl font-bold text-balance">Talabalar</h1>
           <p className="text-sm text-muted-foreground">
             {filtered?.length || 0} ta talaba topildi
           </p>
@@ -513,12 +514,12 @@ const StudentsPage = () => {
                       <td className="px-4 py-3 text-muted-foreground">
                         {formatPhone(s.phone)}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right tabular-nums">
                         {formatMoney(s.total_price)}
                       </td>
                       {courseType === "tezkor" ? (
                         <>
-                          <td className="px-4 py-3 text-right">
+                          <td className="px-4 py-3 text-right tabular-nums">
                             {formatMoney(s.amount_paid || 0)}
                           </td>
                           <td className="px-4 py-3 text-right">
@@ -561,13 +562,13 @@ const StudentsPage = () => {
                         </>
                       ) : (
                         <>
-                          <td className="px-4 py-3 text-right">
+                          <td className="px-4 py-3 text-right tabular-nums">
                             {formatMoney(s.initial_payment || 0)}
                           </td>
-                          <td className="px-4 py-3 text-right">
+                          <td className="px-4 py-3 text-right tabular-nums">
                             {formatMoney(s.second_payment || 0)}
                           </td>
-                          <td className="px-4 py-3 text-right">
+                          <td className="px-4 py-3 text-right tabular-nums">
                             {formatMoney(s.third_payment || 0)}
                           </td>
                           <td className="px-4 py-3 text-right">
@@ -587,7 +588,7 @@ const StudentsPage = () => {
                                 : "Transfer"}
                           </td>
                           <td className="px-4 py-3">{s.group_name}</td>
-                          <td className="px-4 py-3 text-muted-foreground">
+                          <td className="px-4 py-3 text-muted-foreground tabular-nums">
                             {formatDate(s.completion_date)}
                           </td>
                           <td className="px-4 py-3 text-center">
@@ -622,7 +623,7 @@ const StudentsPage = () => {
                           </td>
                         </>
                       )}
-                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap tabular-nums">
                         {formatDateTime(s.created_at)}
                       </td>
                       <td className="px-4 py-3">

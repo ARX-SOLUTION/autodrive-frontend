@@ -4,7 +4,9 @@ import { Loader2 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, token, hasHydrated } = useAuthStore();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const token = useAuthStore((s) => s.token);
+  const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const { isLoading } = useRestoreSession();
 
   if (!hasHydrated) {
