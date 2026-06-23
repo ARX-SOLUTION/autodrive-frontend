@@ -1,0 +1,76 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import axiosInstance from '@/api/axiosInstance';
+import { useAuthStore } from '@/store/authStore';
+import {
+  Lesson,
+  CreateLessonPayload,
+  BatchAttendancePayload,
+} from '@/types/attendance';
+
+export const useLessons = () => {
+  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const role = useAuthStore((s) => s.user?.role);
+  const isCrossTenantRole = role === 'owner' || role === 'dev';
+  return useQuery<Lesson[]>({
+    queryKey: ['lessons', branchId],
+    queryFn: async () => {
+      const { data: res } = await axiosInstance.get('/lessons');
+      if (Array.isArray(res?.data)) return res.data;
+      if (Array.isArray(res)) return res;
+      return [];
+    },
+    enabled: !!branchId || isCrossTenantRole,
+  });
+};
+
+export const useLessonById = ({ id }: { id: string }) =>
+  useQuery<Lesson | null>({
+    queryKey: ['lessons', 'detail', id],
+    queryFn: async () =>
+      axiosInstance
+        .get(`/lessons/${id}`)
+        .then(({ data }) => data?.data || data)
+        .catch(() => null),
+    enabled: !!id,
+  });
+
+export const useCreateLesson = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: CreateLessonPayload) => {
+      const { data } = await axiosInstance.post('/lessons', payload);
+      return data?.data || data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['lessons'] });
+    },
+  });
+};
+
+export const useBatchAttendance = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: BatchAttendancePayload) => {
+      const { data } = await axiosInstance.post('/attendance/batch', payload);
+      return data?.data || data;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['lessons'] });
+      qc.invalidateQueries({
+        queryKey: ['lessons', 'detail', variables.lessonId],
+      });
+    },
+  });
+};
+
+export const useDeleteLesson = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await axiosInstance.delete(`/lessons/${id}`);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['lessons'] });
+    },
+  });
+};
