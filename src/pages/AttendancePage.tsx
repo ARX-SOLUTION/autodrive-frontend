@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import {
   useLessons,
   useLessonById,
@@ -47,13 +48,6 @@ const formatDate = (d: string) => {
   }
 };
 
-const statusLabels: Record<AttendanceStatus, string> = {
-  present: 'Keldi',
-  absent: 'Kelmadi',
-  late: 'Kechikdi',
-  excused: 'Uzrli',
-};
-
 const statusColors: Record<AttendanceStatus, string> = {
   present: 'text-green-600 bg-green-50',
   absent: 'text-red-600 bg-red-50',
@@ -62,11 +56,19 @@ const statusColors: Record<AttendanceStatus, string> = {
 };
 
 const AttendancePage = () => {
+  const { t } = useTranslation();
   const { data: lessons, isLoading } = useLessons();
   const { data: groups } = useGroups();
   const createLesson = useCreateLesson();
   const batchAttendance = useBatchAttendance();
   const deleteLesson = useDeleteLesson();
+
+  const statusLabels: Record<AttendanceStatus, string> = {
+    present: t('attendance.status.present'),
+    absent: t('attendance.status.absent'),
+    late: t('attendance.status.late'),
+    excused: t('attendance.status.excused'),
+  };
 
   const role = useAuthStore((s) => s.user?.role);
   const canEdit =
@@ -103,7 +105,7 @@ const AttendancePage = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim() || !formDate || !formGroupId) {
-      toast.error("Barcha maydonlarni to'ldiring");
+      toast.error(t('common.fill_required'));
       return;
     }
     try {
@@ -113,10 +115,10 @@ const AttendancePage = () => {
         lessonType: formLessonType,
         groupId: formGroupId,
       });
-      toast.success('Dars yaratildi');
+      toast.success(t('attendance.created'));
       setCreateOpen(false);
     } catch {
-      toast.error('Dars yaratishda xatolik');
+      toast.error(t('attendance.create_error'));
     }
   };
 
@@ -133,9 +135,9 @@ const AttendancePage = () => {
         status: attendanceState[rec.id] || rec.status,
       }));
       await batchAttendance.mutateAsync({ lessonId, records });
-      toast.success('Davomat saqlandi');
+      toast.success(t('attendance.saved'));
     } catch {
-      toast.error('Davomatni saqlashda xatolik');
+      toast.error(t('attendance.save_error'));
     }
   };
 
@@ -143,20 +145,20 @@ const AttendancePage = () => {
     if (!deleteId) return;
     try {
       await deleteLesson.mutateAsync(deleteId);
-      toast.success("Dars o'chirildi");
+      toast.success(t('attendance.deleted'));
       setDeleteId(null);
     } catch {
-      toast.error("Darsni o'chirishda xatolik");
+      toast.error(t('attendance.delete_error'));
     }
   };
 
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Davomat</h1>
+        <h1 className="text-2xl font-bold">{t('attendance.title')}</h1>
         {canEdit && (
           <Button onClick={openCreate}>
-            <Plus className="mr-2 h-4 w-4" /> Yangi dars
+            <Plus className="mr-2 h-4 w-4" /> {t('attendance.add_lesson')}
           </Button>
         )}
       </div>
@@ -169,8 +171,8 @@ const AttendancePage = () => {
         </div>
       ) : !lessons?.length ? (
         <EmptyState
-          title="Darslar mavjud emas"
-          description="Yangi dars yaratish uchun tugmani bosing"
+          title={t('attendance.not_found')}
+          description={t('attendance.not_found_desc')}
         />
       ) : (
         <div className="space-y-2">
@@ -183,7 +185,7 @@ const AttendancePage = () => {
                     <p className="font-medium">{lesson.title}</p>
                     <p className="text-sm text-gray-500">
                       {formatDate(lesson.date)} —{' '}
-                      {lesson.group_name || "Noma'lum guruh"}
+                      {lesson.group_name || t('attendance.unknown_group')}
                       <span className="ml-2 text-xs uppercase text-gray-400">
                         {lesson.lesson_type === 'theory' ? 'Teoriya' : 'Amaliy'}
                       </span>
@@ -231,14 +233,18 @@ const AttendancePage = () => {
                 <div className="border-t px-4 pb-4 pt-2">
                   {detailLesson.attendance.length === 0 ? (
                     <p className="py-4 text-center text-sm text-gray-400">
-                      Bu darsda talabalar yo'q
+                      {t('attendance.no_students')}
                     </p>
                   ) : (
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b text-left text-gray-500">
-                          <th className="pb-2 font-medium">Talaba</th>
-                          <th className="pb-2 font-medium">Holat</th>
+                          <th className="pb-2 font-medium">
+                            {t('attendance.table_student')}
+                          </th>
+                          <th className="pb-2 font-medium">
+                            {t('attendance.table_status')}
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -295,8 +301,8 @@ const AttendancePage = () => {
                         disabled={batchAttendance.isPending}
                       >
                         {batchAttendance.isPending
-                          ? 'Saqlanmoqda...'
-                          : 'Saqlash'}
+                          ? t('common.saving')
+                          : t('attendance.save')}
                       </Button>
                     </div>
                   )}
@@ -311,19 +317,19 @@ const AttendancePage = () => {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Yangi dars</DialogTitle>
+            <DialogTitle>{t('attendance.add_lesson')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <Label>Dars nomi</Label>
+              <Label>{t('attendance.lesson_title')}</Label>
               <Input
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
-                placeholder="Masalan: 1-dars teoriya"
+                placeholder={t('attendance.title_placeholder')}
               />
             </div>
             <div>
-              <Label>Sana va vaqt</Label>
+              <Label>{t('attendance.lesson_date')}</Label>
               <Input
                 type="datetime-local"
                 value={formDate}
@@ -331,10 +337,12 @@ const AttendancePage = () => {
               />
             </div>
             <div>
-              <Label>Guruh</Label>
+              <Label>{t('attendance.lesson_group')}</Label>
               <Select value={formGroupId} onValueChange={setFormGroupId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Guruhni tanlang" />
+                  <SelectValue
+                    placeholder={t('attendance.group_placeholder')}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {(groups || []).map((g) => (
@@ -346,7 +354,7 @@ const AttendancePage = () => {
               </Select>
             </div>
             <div>
-              <Label>Dars turi</Label>
+              <Label>{t('attendance.lesson_type')}</Label>
               <Select
                 value={formLessonType}
                 onValueChange={(v: LessonType) => setFormLessonType(v)}
@@ -355,8 +363,12 @@ const AttendancePage = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="theory">Teoriya</SelectItem>
-                  <SelectItem value="practice">Amaliy</SelectItem>
+                  <SelectItem value="theory">
+                    {t('attendance.type_theory')}
+                  </SelectItem>
+                  <SelectItem value="practice">
+                    {t('attendance.type_practice')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -366,10 +378,12 @@ const AttendancePage = () => {
                 variant="outline"
                 onClick={() => setCreateOpen(false)}
               >
-                Bekor qilish
+                {t('attendance.cancel')}
               </Button>
               <Button type="submit" disabled={createLesson.isPending}>
-                {createLesson.isPending ? 'Yaratilmoqda...' : 'Yaratish'}
+                {createLesson.isPending
+                  ? t('common.creating')
+                  : t('attendance.create')}
               </Button>
             </div>
           </form>
@@ -381,8 +395,8 @@ const AttendancePage = () => {
         open={!!deleteId}
         onOpenChange={() => setDeleteId(null)}
         onConfirm={handleDelete}
-        title="Darsni o'chirish"
-        description="Bu dars va uning davomat yozuvlari o'chiriladi. Davom etasizmi?"
+        title={t('attendance.delete_title')}
+        description={t('attendance.delete_desc')}
       />
     </div>
   );

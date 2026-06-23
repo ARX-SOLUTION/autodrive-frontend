@@ -1,53 +1,65 @@
-import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { format } from "date-fns";
-import { useAuthStore } from "@/store/authStore";
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
+import { format } from 'date-fns';
+import { useAuthStore } from '@/store/authStore';
 import {
   useStudents,
   useCreateStudent,
   useUpdateStudent,
   useDeleteStudent,
-} from "@/services/studentService";
-import { useBranches } from "@/services/branchService";
-import { useOperators } from "@/services/operatorService";
-import { CourseType, Student } from "@/types/student";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from '@/services/studentService';
+import { useBranches } from '@/services/branchService';
+import { useOperators } from '@/services/operatorService';
+import { CourseType, Student } from '@/types/student';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import StudentModal from "@/components/ui/StudentModal";
-import { DataCard } from "@/components/ui/DataCard";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Plus, Search, Pencil, Trash2, CalendarIcon, ChevronUp, ChevronDown, ChevronsUpDown, GraduationCap, Download } from "lucide-react";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { usePagination } from "@/hooks/usePagination";
-import PaginationControls from "@/components/ui/PaginationControls";
-import { formatPhone } from "@/lib/phoneFormater";
+} from '@/components/ui/popover';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import StudentModal from '@/components/ui/StudentModal';
+import { DataCard } from '@/components/ui/DataCard';
+import { EmptyState } from '@/components/ui/EmptyState';
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  CalendarIcon,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  GraduationCap,
+  Download,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { usePagination } from '@/hooks/usePagination';
+import PaginationControls from '@/components/ui/PaginationControls';
+import { formatPhone } from '@/lib/phoneFormater';
 
-const formatMoney = (n: number) => new Intl.NumberFormat("uz-UZ").format(n);
+const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
 const capitalize = (str?: string) =>
-  str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "";
+  str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
 
 export const formatDate = (d: string) => {
   try {
-    if (!d) return "—";
+    if (!d) return '—';
     const date = new Date(d);
-    return format(date, "dd.MM.yyyy");
+    return format(date, 'dd.MM.yyyy');
   } catch {
     return d;
   }
@@ -55,14 +67,15 @@ export const formatDate = (d: string) => {
 
 export const formatDateTime = (d: string) => {
   try {
-    if (!d) return "—";
-    return format(new Date(d), "dd.MM.yyyy HH:mm:ss");
+    if (!d) return '—';
+    return format(new Date(d), 'dd.MM.yyyy HH:mm:ss');
   } catch {
     return d;
   }
 };
 
 const StudentsPage = () => {
+  const { t } = useTranslation();
   const isOwner = useAuthStore((s) => s.isOwner);
   const user = useAuthStore((s) => s.user);
 
@@ -84,36 +97,37 @@ const StudentsPage = () => {
     );
   };
 
-  const courseType = (searchParams.get("course_type") ?? "tezkor") as CourseType;
+  const courseType = (searchParams.get('course_type') ??
+    'tezkor') as CourseType;
   const setCourseType = (v: CourseType) =>
-    setParam("course_type", v === "tezkor" ? undefined : v);
+    setParam('course_type', v === 'tezkor' ? undefined : v);
 
   const defaultBranchId = isOwner() ? undefined : user?.branch_id || undefined;
-  const branchId = searchParams.get("branch_id") ?? defaultBranchId;
-  const setBranchId = (v: string | undefined) => setParam("branch_id", v);
+  const branchId = searchParams.get('branch_id') ?? defaultBranchId;
+  const setBranchId = (v: string | undefined) => setParam('branch_id', v);
 
-  const search = searchParams.get("q") ?? "";
-  const setSearch = (v: string) => setParam("q", v || undefined);
+  const search = searchParams.get('q') ?? '';
+  const setSearch = (v: string) => setParam('q', v || undefined);
 
-  const rawDateFrom = searchParams.get("date_from");
+  const rawDateFrom = searchParams.get('date_from');
   const dateFrom = rawDateFrom ? new Date(rawDateFrom) : undefined;
   const setDateFrom = (v: Date | undefined) =>
-    setParam("date_from", v ? v.toISOString().slice(0, 10) : undefined);
+    setParam('date_from', v ? v.toISOString().slice(0, 10) : undefined);
 
-  const rawDateTo = searchParams.get("date_to");
+  const rawDateTo = searchParams.get('date_to');
   const dateTo = rawDateTo ? new Date(rawDateTo) : undefined;
   const setDateTo = (v: Date | undefined) =>
-    setParam("date_to", v ? v.toISOString().slice(0, 10) : undefined);
+    setParam('date_to', v ? v.toISOString().slice(0, 10) : undefined);
 
-  const operatorId = searchParams.get("operator_id") ?? undefined;
-  const setOperatorId = (v: string | undefined) => setParam("operator_id", v);
+  const operatorId = searchParams.get('operator_id') ?? undefined;
+  const setOperatorId = (v: string | undefined) => setParam('operator_id', v);
 
   // Local-only state (modal + sort UX — not worth persisting).
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
-  const [sortField, setSortField] = useState("created_at");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [sortField, setSortField] = useState('created_at');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   const { data: branches } = useBranches();
   const { data: operators } = useOperators();
@@ -149,8 +163,11 @@ const StudentsPage = () => {
   });
 
   const toggleSort = (field: string) => {
-    if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortField(field); setSortDir("asc"); }
+    if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else {
+      setSortField(field);
+      setSortDir('asc');
+    }
   };
 
   const sorted = [...filtered].sort((a, b) => {
@@ -159,42 +176,55 @@ const StudentsPage = () => {
     if (va == null && vb == null) return 0;
     if (va == null) return 1;
     if (vb == null) return -1;
-    if (typeof va === "string" && typeof vb === "string") {
-      return sortDir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+    if (typeof va === 'string' && typeof vb === 'string') {
+      return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
     }
-    return sortDir === "asc" ? (va < vb ? -1 : va > vb ? 1 : 0) : (va > vb ? -1 : va < vb ? 1 : 0);
+    return sortDir === 'asc'
+      ? va < vb
+        ? -1
+        : va > vb
+          ? 1
+          : 0
+      : va > vb
+        ? -1
+        : va < vb
+          ? 1
+          : 0;
   });
 
   const { currentPage, totalPages, paginatedItems, setCurrentPage } =
     usePagination(sorted);
 
   const exportToExcel = async () => {
-    const XLSX = await import("xlsx");
+    const XLSX = await import('xlsx');
     const rows = sorted.map((s, idx) => ({
-      "#": idx + 1,
-      Ism: s.first_name,
-      Familiya: s.last_name,
-      Telefon: formatPhone(s.phone),
-      Kurs: s.course_type === "tezkor" ? "Tezkor" : "Avto maktab",
-      Filial: s.branch_name ?? "—",
-      Guruh: s.group_name ?? "—",
-      "Umumiy narx": s.total_price,
-      Qarz: s.debt,
+      '#': idx + 1,
+      [t('students.first_name')]: s.first_name,
+      [t('students.last_name')]: s.last_name,
+      [t('students.phone')]: formatPhone(s.phone),
+      [t('students.course_fast')]:
+        s.course_type === 'tezkor'
+          ? t('students.course_fast')
+          : t('students.course_school'),
+      [t('common.branch')]: s.branch_name ?? t('common.na'),
+      [t('students.group')]: s.group_name ?? t('common.na'),
+      [t('students.total_price')]: s.total_price,
+      [t('students.debt')]: s.debt,
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Talabalar");
-    XLSX.writeFile(wb, `talabalar_${format(new Date(), "dd-MM-yyyy")}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, t('students.title'));
+    XLSX.writeFile(wb, `talabalar_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
   };
 
   const handleDelete = () => {
     if (!deleteId) return;
     deleteMutation.mutate(deleteId, {
       onSuccess: () => {
-        toast.success("Talaba o'chirildi");
+        toast.success(t('students.deleted'));
         setDeleteId(null);
       },
-      onError: () => toast.error("Xatolik yuz berdi"),
+      onError: () => toast.error(t('common.error')),
     });
   };
 
@@ -202,18 +232,18 @@ const StudentsPage = () => {
     if (editStudent) {
       updateMutation.mutate({ ...data, id: editStudent.id } as Student, {
         onSuccess: () => {
-          toast.success("Talaba yangilandi");
+          toast.success(t('students.updated'));
           closeModal();
         },
-        onError: () => toast.error("Xatolik yuz berdi"),
+        onError: () => toast.error(t('common.error')),
       });
     } else {
       createMutation.mutate(data, {
         onSuccess: () => {
-          toast.success("Talaba qo'shildi");
+          toast.success(t('students.added'));
           closeModal();
         },
-        onError: () => toast.error("Xatolik yuz berdi"),
+        onError: () => toast.error(t('common.error')),
       });
     }
   };
@@ -239,9 +269,11 @@ const StudentsPage = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl font-bold text-balance">Talabalar</h1>
+          <h1 className="font-heading text-2xl font-bold text-balance">
+            {t('students.title')}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            {filtered?.length || 0} ta talaba topildi
+            {t('students.count', { count: filtered?.length || 0 })}
           </p>
         </div>
         <div className="flex gap-2">
@@ -251,10 +283,10 @@ const StudentsPage = () => {
             onClick={exportToExcel}
             disabled={sorted.length === 0}
           >
-            <Download className="h-4 w-4" /> Excel
+            <Download className="h-4 w-4" /> {t('students.export_excel')}
           </Button>
           <Button className="gap-2" onClick={openCreate}>
-            <Plus className="h-4 w-4" /> Talaba qo'shish
+            <Plus className="h-4 w-4" /> {t('students.add')}
           </Button>
         </div>
       </div>
@@ -266,20 +298,24 @@ const StudentsPage = () => {
           onValueChange={(v) => setCourseType(v as CourseType)}
         >
           <TabsList className="bg-secondary">
-            <TabsTrigger value="tezkor">Tezkor</TabsTrigger>
-            <TabsTrigger value="avto_maktab">Avto maktab</TabsTrigger>
+            <TabsTrigger value="tezkor">
+              {t('students.course_fast')}
+            </TabsTrigger>
+            <TabsTrigger value="avto_maktab">
+              {t('students.course_school')}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
         {isOwner() && (
           <Select
-            value={branchId || "all"}
-            onValueChange={(v) => setBranchId(v === "all" ? undefined : v)}
+            value={branchId || 'all'}
+            onValueChange={(v) => setBranchId(v === 'all' ? undefined : v)}
           >
             <SelectTrigger className="w-40 bg-secondary border-border">
-              <SelectValue placeholder="Filial" />
+              <SelectValue placeholder={t('common.branch')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Barchasi</SelectItem>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
               {(branches || []).map((b) => (
                 <SelectItem key={b.id} value={b.id}>
                   {b.name}
@@ -290,26 +326,27 @@ const StudentsPage = () => {
         )}
 
         {/* Operator filter — owner va manager uchun */}
-        {(isOwner() || user?.role === "manager") && (operators || []).length > 0 && (
-          <Select
-            value={operatorId || "all"}
-            onValueChange={(v) => setOperatorId(v === "all" ? undefined : v)}
-          >
-            <SelectTrigger className="w-44 bg-secondary border-border">
-              <SelectValue placeholder="Operator" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Barcha operatorlar</SelectItem>
-              {(operators || [])
-                .filter((op) => isOwner() || op.branch_id === user?.branch_id)
-                .map((op) => (
-                  <SelectItem key={op.id} value={op.id}>
-                    {op.name || op.email}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        )}
+        {(isOwner() || user?.role === 'manager') &&
+          (operators || []).length > 0 && (
+            <Select
+              value={operatorId || 'all'}
+              onValueChange={(v) => setOperatorId(v === 'all' ? undefined : v)}
+            >
+              <SelectTrigger className="w-44 bg-secondary border-border">
+                <SelectValue placeholder={t('students.operator')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('common.all_operators')}</SelectItem>
+                {(operators || [])
+                  .filter((op) => isOwner() || op.branch_id === user?.branch_id)
+                  .map((op) => (
+                    <SelectItem key={op.id} value={op.id}>
+                      {op.name || op.email}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          )}
 
         {/* Date filter — single or range */}
         <Popover>
@@ -317,16 +354,16 @@ const StudentsPage = () => {
             <Button
               variant="outline"
               className={cn(
-                "min-w-[220px] justify-start text-left font-normal bg-secondary border-border",
-                !dateFrom && "text-muted-foreground",
+                'min-w-[220px] justify-start text-left font-normal bg-secondary border-border',
+                !dateFrom && 'text-muted-foreground',
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {!dateFrom
-                ? "Sana tanlang"
+                ? t('students.date_range')
                 : dateTo && dateTo.getTime() !== dateFrom.getTime()
-                  ? `${format(dateFrom, "dd.MM.yyyy")} → ${format(dateTo, "dd.MM.yyyy")}`
-                  : format(dateFrom, "dd.MM.yyyy")}
+                  ? `${format(dateFrom, 'dd.MM.yyyy')} \u2192 ${format(dateTo, 'dd.MM.yyyy')}`
+                  : format(dateFrom, 'dd.MM.yyyy')}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
@@ -344,7 +381,7 @@ const StudentsPage = () => {
               }}
               numberOfMonths={2}
               initialFocus
-              className={cn("p-3 pointer-events-auto")}
+              className={cn('p-3 pointer-events-auto')}
             />
           </PopoverContent>
         </Popover>
@@ -357,14 +394,14 @@ const StudentsPage = () => {
               setDateTo(undefined);
             }}
           >
-            Tozalash
+            {t('students.clear_filters')}
           </Button>
         )}
 
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Ism, familya yoki telefon..."
+            placeholder={t('students.search_placeholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 bg-secondary border-border"
@@ -377,286 +414,366 @@ const StudentsPage = () => {
         <div className="hidden md:block">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  #
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  <button onClick={() => toggleSort("last_name")} className="flex items-center gap-1 hover:text-foreground transition-colors">
-                    Familya
-                    {sortField === "last_name" ? (sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />) : <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  <button onClick={() => toggleSort("first_name")} className="flex items-center gap-1 hover:text-foreground transition-colors">
-                    Ismi
-                    {sortField === "first_name" ? (sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />) : <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  Telefon
-                </th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                  <button onClick={() => toggleSort("total_price")} className="flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
-                    Kurs narxi
-                    {sortField === "total_price" ? (sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />) : <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />}
-                  </button>
-                </th>
-                {courseType === "tezkor" ? (
-                  <>
-                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                      To'lov
-                    </th>
-                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                      <button onClick={() => toggleSort("debt")} className="flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
-                        Qarzdorlik
-                        {sortField === "debt" ? (sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />) : <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />}
-                      </button>
-                    </th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                      Tulov turi
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      Guruh
-                    </th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                      Dakument
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      Operator
-                    </th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                      Natijasi
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      Izoh
-                    </th>
-                  </>
-                ) : (
-                  <>
-                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                      Bosh. tulov
-                    </th>
-                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                      2-tulov
-                    </th>
-                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                      3-tulov
-                    </th>
-                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                      <button onClick={() => toggleSort("debt")} className="flex items-center gap-1 hover:text-foreground transition-colors ml-auto">
-                        Qarzdorlik
-                        {sortField === "debt" ? (sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />) : <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />}
-                      </button>
-                    </th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                      Tulov turi
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      Guruh
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      Tugatish
-                    </th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                      O83
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      Shartnoma
-                    </th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                      Dakument
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      Operator
-                    </th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                      Natijasi
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      Izoh
-                    </th>
-                  </>
-                )}
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  <button onClick={() => toggleSort("created_at")} className="flex items-center gap-1 hover:text-foreground transition-colors">
-                    Sana
-                    {sortField === "created_at" ? (sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />) : <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  Amallar
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading
-                ? [...Array(5)].map((_, i) => (
-                    <tr key={i} className="border-b border-border/50">
-                      <td colSpan={16} className="p-4">
-                        <Skeleton className="h-5 w-full" />
-                      </td>
-                    </tr>
-                  ))
-                : paginatedItems?.map((s, idx) => (
-                    <tr
-                      key={s.id}
-                      className="table-row-striped border-b border-border/50"
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    #
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    <button
+                      onClick={() => toggleSort('last_name')}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
                     >
-                      <td className="px-4 py-3 text-center text-muted-foreground">
-                        {startIndex + idx + 1}
-                      </td>
-                      <td className="px-4 py-3 font-medium">
-                        {capitalize(s.last_name)}
-                      </td>
-                      <td className="px-4 py-3">{capitalize(s.first_name)}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {formatPhone(s.phone)}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums">
-                        {formatMoney(s.total_price)}
-                      </td>
-                      {courseType === "tezkor" ? (
-                        <>
-                          <td className="px-4 py-3 text-right tabular-nums">
-                            {formatMoney(s.amount_paid || 0)}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <span
-                              className={
-                                s.debt > 0 ? "text-destructive" : "text-success"
-                              }
-                            >
-                              {s.debt > 0 ? formatMoney(s.debt) : "—"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-center text-xs">
-                            {s.payment_method === "naqd"
-                              ? "Naqd"
-                              : s.payment_method === "karta"
-                                ? "Karta"
-                                : "Transfer"}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {s.group_name || "—"}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span
-                              className={
-                                s.has_document
-                                  ? "text-success"
-                                  : "text-destructive"
-                              }
-                            >
-                              {s.has_document ? "+" : "-"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {s.registered_by}
-                          </td>
-                          <td className="px-4 py-3 text-center">{s.result}</td>
-                          <td className="px-4 py-3 text-muted-foreground max-w-[120px] truncate">
-                            {s.notes}
-                          </td>
-                        </>
+                      {t('students.last_name')}
+                      {sortField === 'last_name' ? (
+                        sortDir === 'asc' ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )
                       ) : (
-                        <>
-                          <td className="px-4 py-3 text-right tabular-nums">
-                            {formatMoney(s.initial_payment || 0)}
-                          </td>
-                          <td className="px-4 py-3 text-right tabular-nums">
-                            {formatMoney(s.second_payment || 0)}
-                          </td>
-                          <td className="px-4 py-3 text-right tabular-nums">
-                            {formatMoney(s.third_payment || 0)}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <span
-                              className={
-                                s.debt > 0 ? "text-destructive" : "text-success"
-                              }
-                            >
-                              {s.debt > 0 ? formatMoney(s.debt) : "—"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-center text-xs">
-                            {s.payment_method === "naqd"
-                              ? "Naqd"
-                              : s.payment_method === "karta"
-                                ? "Karta"
-                                : "Transfer"}
-                          </td>
-                          <td className="px-4 py-3">{s.group_name}</td>
-                          <td className="px-4 py-3 text-muted-foreground tabular-nums">
-                            {formatDate(s.completion_date)}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span
-                              className={
-                                s.o83 ? "text-success" : "text-destructive"
-                              }
-                            >
-                              {s.o83 ? "+" : "-"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {s.contract_number}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span
-                              className={
-                                s.has_document
-                                  ? "text-success"
-                                  : "text-destructive"
-                              }
-                            >
-                              {s.has_document ? "+" : "-"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {s.registered_by}
-                          </td>
-                          <td className="px-4 py-3 text-center">{s.result}</td>
-                          <td className="px-4 py-3 text-muted-foreground max-w-[120px] truncate">
-                            {s.notes}
-                          </td>
-                        </>
+                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
                       )}
-                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap tabular-nums">
-                        {formatDateTime(s.created_at)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => openEdit(s)}
-                            className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          {isOwner() && (
-                            <button
-                              onClick={() => setDeleteId(s.id)}
-                              className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    <button
+                      onClick={() => toggleSort('first_name')}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      {t('students.first_name')}
+                      {sortField === 'first_name' ? (
+                        sortDir === 'asc' ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )
+                      ) : (
+                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    {t('students.phone')}
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                    <button
+                      onClick={() => toggleSort('total_price')}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors ml-auto"
+                    >
+                      {t('students.total_price')}
+                      {sortField === 'total_price' ? (
+                        sortDir === 'asc' ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )
+                      ) : (
+                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                      )}
+                    </button>
+                  </th>
+                  {courseType === 'tezkor' ? (
+                    <>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                        {t('students.payment')}
+                      </th>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                        <button
+                          onClick={() => toggleSort('debt')}
+                          className="flex items-center gap-1 hover:text-foreground transition-colors ml-auto"
+                        >
+                          {t('students.debt')}
+                          {sortField === 'debt' ? (
+                            sortDir === 'asc' ? (
+                              <ChevronUp className="h-3 w-3" />
+                            ) : (
+                              <ChevronDown className="h-3 w-3" />
+                            )
+                          ) : (
+                            <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-              {!isLoading && filtered?.length === 0 && (
-                <tr>
-                  <td colSpan={16} className="p-0">
-                    <EmptyState
-                      icon={GraduationCap}
-                      title="Talabalar topilmadi"
-                      description="Filtrlarni o'zgartiring yoki yangi talaba qo'shing."
-                    />
-                  </td>
+                        </button>
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                        {t('students.payment_method')}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        {t('students.group')}
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                        {t('students.document')}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        {t('students.operator')}
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                        {t('students.result')}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        {t('students.notes')}
+                      </th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                        {t('students.initial_payment')}
+                      </th>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                        2-{t('students.payment').toLowerCase()}
+                      </th>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                        3-{t('students.payment').toLowerCase()}
+                      </th>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                        <button
+                          onClick={() => toggleSort('debt')}
+                          className="flex items-center gap-1 hover:text-foreground transition-colors ml-auto"
+                        >
+                          {t('students.debt')}
+                          {sortField === 'debt' ? (
+                            sortDir === 'asc' ? (
+                              <ChevronUp className="h-3 w-3" />
+                            ) : (
+                              <ChevronDown className="h-3 w-3" />
+                            )
+                          ) : (
+                            <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                          )}
+                        </button>
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                        {t('students.payment_method')}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        {t('students.group')}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        {t('students.completion_date')}
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                        {t('students.o83')}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        {t('students.contract_number')}
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                        {t('students.document')}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        {t('students.operator')}
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                        {t('students.result')}
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        {t('students.notes')}
+                      </th>
+                    </>
+                  )}
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    <button
+                      onClick={() => toggleSort('created_at')}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      {t('common.date')}
+                      {sortField === 'created_at' ? (
+                        sortDir === 'asc' ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )
+                      ) : (
+                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('common.actions')}
+                  </th>
                 </tr>
-              )}
+              </thead>
+              <tbody>
+                {isLoading
+                  ? [...Array(5)].map((_, i) => (
+                      <tr key={i} className="border-b border-border/50">
+                        <td colSpan={16} className="p-4">
+                          <Skeleton className="h-5 w-full" />
+                        </td>
+                      </tr>
+                    ))
+                  : paginatedItems?.map((s, idx) => (
+                      <tr
+                        key={s.id}
+                        className="table-row-striped border-b border-border/50"
+                      >
+                        <td className="px-4 py-3 text-center text-muted-foreground">
+                          {startIndex + idx + 1}
+                        </td>
+                        <td className="px-4 py-3 font-medium">
+                          {capitalize(s.last_name)}
+                        </td>
+                        <td className="px-4 py-3">
+                          {capitalize(s.first_name)}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {formatPhone(s.phone)}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums">
+                          {formatMoney(s.total_price)}
+                        </td>
+                        {courseType === 'tezkor' ? (
+                          <>
+                            <td className="px-4 py-3 text-right tabular-nums">
+                              {formatMoney(s.amount_paid || 0)}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <span
+                                className={
+                                  s.debt > 0
+                                    ? 'text-destructive'
+                                    : 'text-success'
+                                }
+                              >
+                                {s.debt > 0
+                                  ? formatMoney(s.debt)
+                                  : t('common.na')}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center text-xs">
+                              {s.payment_method === 'naqd'
+                                ? t('students.payment_cash')
+                                : s.payment_method === 'karta'
+                                  ? t('students.payment_card')
+                                  : t('students.payment_transfer')}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              {s.group_name || t('common.na')}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span
+                                className={
+                                  s.has_document
+                                    ? 'text-success'
+                                    : 'text-destructive'
+                                }
+                              >
+                                {s.has_document ? '+' : '-'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              {s.registered_by}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {s.result}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground max-w-[120px] truncate">
+                              {s.notes}
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="px-4 py-3 text-right tabular-nums">
+                              {formatMoney(s.initial_payment || 0)}
+                            </td>
+                            <td className="px-4 py-3 text-right tabular-nums">
+                              {formatMoney(s.second_payment || 0)}
+                            </td>
+                            <td className="px-4 py-3 text-right tabular-nums">
+                              {formatMoney(s.third_payment || 0)}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <span
+                                className={
+                                  s.debt > 0
+                                    ? 'text-destructive'
+                                    : 'text-success'
+                                }
+                              >
+                                {s.debt > 0
+                                  ? formatMoney(s.debt)
+                                  : t('common.na')}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center text-xs">
+                              {s.payment_method === 'naqd'
+                                ? t('students.payment_cash')
+                                : s.payment_method === 'karta'
+                                  ? t('students.payment_card')
+                                  : t('students.payment_transfer')}
+                            </td>
+                            <td className="px-4 py-3">{s.group_name}</td>
+                            <td className="px-4 py-3 text-muted-foreground tabular-nums">
+                              {formatDate(s.completion_date)}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span
+                                className={
+                                  s.o83 ? 'text-success' : 'text-destructive'
+                                }
+                              >
+                                {s.o83 ? '+' : '-'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              {s.contract_number}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span
+                                className={
+                                  s.has_document
+                                    ? 'text-success'
+                                    : 'text-destructive'
+                                }
+                              >
+                                {s.has_document ? '+' : '-'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              {s.registered_by}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {s.result}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground max-w-[120px] truncate">
+                              {s.notes}
+                            </td>
+                          </>
+                        )}
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap tabular-nums">
+                          {formatDateTime(s.created_at)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => openEdit(s)}
+                              className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            {isOwner() && (
+                              <button
+                                onClick={() => setDeleteId(s.id)}
+                                className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                {!isLoading && filtered?.length === 0 && (
+                  <tr>
+                    <td colSpan={16} className="p-0">
+                      <EmptyState
+                        icon={GraduationCap}
+                        title={t('students.not_found')}
+                        description={t('students.not_found_desc')}
+                      />
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -670,19 +787,41 @@ const StudentsPage = () => {
           ) : paginatedItems && paginatedItems.length > 0 ? (
             paginatedItems.map((s) => {
               const fields = [
-                { label: "Filial", value: s.branch_name || "—" },
-                { label: "Guruh", value: s.group_name ?? "—" },
-                { label: "Kurs", value: s.course_type === "tezkor" ? "Tezkor" : "Avto maktab" },
                 {
-                  label: "Qarz",
+                  label: t('students.detail.branch'),
+                  value: s.branch_name || t('common.na'),
+                },
+                {
+                  label: t('students.detail.group'),
+                  value: s.group_name ?? t('common.na'),
+                },
+                {
+                  label: t('students.detail.course'),
+                  value:
+                    s.course_type === 'tezkor'
+                      ? t('students.course_fast')
+                      : t('students.course_school'),
+                },
+                {
+                  label: t('students.detail.debt'),
                   value: (
-                    <span className={s.debt > 0 ? "text-destructive" : "text-success"}>
-                      {s.debt > 0 ? formatMoney(s.debt) : "—"}
+                    <span
+                      className={
+                        s.debt > 0 ? 'text-destructive' : 'text-success'
+                      }
+                    >
+                      {s.debt > 0 ? formatMoney(s.debt) : t('common.na')}
                     </span>
                   ),
                 },
-                { label: "Holat", value: s.result || "—" },
-                { label: "Sana", value: formatDate(s.created_at) },
+                {
+                  label: t('students.detail.status'),
+                  value: s.result || t('common.na'),
+                },
+                {
+                  label: t('students.detail.date'),
+                  value: formatDate(s.created_at),
+                },
               ];
               return (
                 <DataCard
@@ -714,8 +853,8 @@ const StudentsPage = () => {
           ) : (
             <EmptyState
               icon={GraduationCap}
-              title="Talabalar topilmadi"
-              description="Filtrlarni o'zgartiring yoki yangi talaba qo'shing."
+              title={t('students.not_found')}
+              description={t('students.not_found_desc')}
             />
           )}
         </div>
