@@ -5,12 +5,12 @@ import { Label } from '@/components/ui/label';
 import { User, Shield, Building2, Mail, Phone } from 'lucide-react';
 
 const ProfilePage = () => {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
 
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="font-heading text-2xl font-bold">Profil</h1>
+        <h1 className="font-heading text-2xl font-bold text-balance">Profil</h1>
         <p className="text-sm text-muted-foreground">Shaxsiy ma'lumotlar</p>
       </div>
 
@@ -21,7 +21,7 @@ const ProfilePage = () => {
             <User className="h-8 w-8" />
           </div>
           <div>
-            <h2 className="font-heading text-lg font-semibold">{user?.name}</h2>
+            <h2 className="font-heading text-lg font-semibold text-balance">{user?.name}</h2>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                 <Shield className="h-3 w-3" />
@@ -58,7 +58,7 @@ const ProfilePage = () => {
 
       {/* Change password */}
       <div className="glass-card p-6 space-y-4">
-        <h3 className="font-heading font-semibold">Parolni o'zgartirish</h3>
+        <h3 className="font-heading font-semibold text-balance">Parolni o'zgartirish</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label>Joriy parol</Label>

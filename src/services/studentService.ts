@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
+import { useAuthStore } from '@/store/authStore';
 import { Student, CourseType } from '@/types/student';
 import type { CreateStudentPayload } from '@/components/ui/StudentModal';
 
@@ -10,8 +11,11 @@ export const useStudents = (
   limit?: number,
   operatorId?: string,
 ) => {
+  const role = useAuthStore((s) => s.user?.role);
+  const isOwnerOrDev = role === 'owner' || role === 'dev';
   return useQuery<Student[]>({
     queryKey: ['students', courseType, branchId, page, limit, operatorId],
+    enabled: !!branchId || isOwnerOrDev,
     queryFn: async () => {
       const { data: res } = await axiosInstance.get('/students', {
         params: {
@@ -32,13 +36,14 @@ export const useStudents = (
 
 export const useCreateStudent = () => {
   const qc = useQueryClient();
+  const branchId = useAuthStore((s) => s.user?.branch_id);
   return useMutation({
     mutationFn: async (student: CreateStudentPayload) => {
       const { data } = await axiosInstance.post('/students', student);
       return data?.data || data;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['students'] });
+      qc.invalidateQueries({ queryKey: ['students', branchId] });
       qc.invalidateQueries({ queryKey: ['payments'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
@@ -48,6 +53,7 @@ export const useCreateStudent = () => {
 
 export const useUpdateStudent = () => {
   const qc = useQueryClient();
+  const branchId = useAuthStore((s) => s.user?.branch_id);
   return useMutation({
     mutationFn: async ({
       id,
@@ -57,7 +63,7 @@ export const useUpdateStudent = () => {
       return data?.data || data;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['students'] });
+      qc.invalidateQueries({ queryKey: ['students', branchId] });
       qc.invalidateQueries({ queryKey: ['payments'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
@@ -67,12 +73,13 @@ export const useUpdateStudent = () => {
 
 export const useDeleteStudent = () => {
   const qc = useQueryClient();
+  const branchId = useAuthStore((s) => s.user?.branch_id);
   return useMutation({
     mutationFn: async (id: string) => {
       await axiosInstance.delete(`/students/${id}`);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['students'] });
+      qc.invalidateQueries({ queryKey: ['students', branchId] });
       qc.invalidateQueries({ queryKey: ['payments'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });

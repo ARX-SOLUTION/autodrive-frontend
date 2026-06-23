@@ -329,7 +329,7 @@ const AuditLogPage = () => {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="font-heading text-2xl font-bold flex items-center gap-2">
+        <h1 className="font-heading text-2xl font-bold flex items-center gap-2 text-balance">
           <ShieldCheck className="h-6 w-6" /> Audit log
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -340,7 +340,7 @@ const AuditLogPage = () => {
       {/* Filters */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Filterlash</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-balance">Filterlash</h2>
           {hasAnyFilter && (
             <Button variant="ghost" size="sm" onClick={clearAll} className="h-7 gap-1 text-xs">
               <X className="h-3 w-3" /> Hammasini tozalash
@@ -407,7 +407,7 @@ const AuditLogPage = () => {
       {/* Table */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">O'zgarishlar ro'yxati</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-balance">O'zgarishlar ro'yxati</h2>
           <span className="text-xs text-muted-foreground">{total} ta yozuv</span>
         </div>
         <div className="hidden md:block glass-card overflow-hidden">
@@ -454,7 +454,7 @@ const AuditLogPage = () => {
                       <td className="px-4 py-3 text-muted-foreground text-xs max-w-[240px] truncate">
                         {log.changes ? JSON.stringify(log.changes) : log.entityId}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(log.createdAt)}</td>
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap tabular-nums">{formatDate(log.createdAt)}</td>
                     </tr>
                   ))
                 )}
@@ -520,7 +520,7 @@ const AuditLogPage = () => {
                     <p>{ROLE_LABELS[selectedLog.user?.role || ""] || selectedLog.user?.role || "—"}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground text-xs">Vaqt</span>
+                    <span className="text-muted-foreground text-xs tabular-nums">Vaqt</span>
                     <p>{formatDate(selectedLog.createdAt)}</p>
                   </div>
                   <div>

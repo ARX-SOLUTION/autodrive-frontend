@@ -179,7 +179,7 @@ const PaymentModal = ({
                                 />
                                 {s.last_name} {s.first_name}
                                 {s.debt !== undefined && s.debt > 0 && (
-                                  <span className="ml-auto text-xs text-destructive">
+                                  <span className="ml-auto text-xs text-destructive tabular-nums">
                                     {formatMoney(s.debt)} so'm
                                   </span>
                                 )}
@@ -197,7 +197,7 @@ const PaymentModal = ({
 
             {/* Talaba qarzdorligi ko'rsatish */}
             {selectedStudent && selectedStudent.debt !== undefined && (
-              <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm">
+              <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm tabular-nums">
                 <span className="text-muted-foreground">Qarzdorlik: </span>
                 <span className="font-medium text-destructive">
                   {formatMoney(selectedStudent.debt)} so'm

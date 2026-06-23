@@ -15,6 +15,7 @@ const PaymentsPage = lazy(() => import('./pages/PaymentsPage'));
 const OperatorsPage = lazy(() => import('./pages/OperatorsPage'));
 const TeachersPage = lazy(() => import('./pages/TeachersPage'));
 const AttendancePage = lazy(() => import('./pages/AttendancePage'));
+const SchedulePage = lazy(() => import('./pages/SchedulePage'));
 const BranchesPage = lazy(() => import('./pages/BranchesPage'));
 const GroupsPage = lazy(() => import('./pages/GroupsPage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
@@ -85,6 +86,7 @@ const App = () => (
                   </OwnerRoute>
                 }
               />
+              <Route path="jadval" element={<SchedulePage />} />
               <Route path="davomat" element={<AttendancePage />} />
               <Route path="profile" element={<ProfilePage />} />
             </Route>

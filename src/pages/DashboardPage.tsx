@@ -86,7 +86,8 @@ const RESULT_COLORS = [
 ];
 
 const DashboardPage = () => {
-  const { isOwner, user } = useAuthStore();
+  const isOwner = useAuthStore((s) => s.isOwner);
+  const user = useAuthStore((s) => s.user);
   const [courseType, setCourseType] = useState<CourseType | undefined>();
   const [branchId, setBranchId] = useState<string | undefined>(
     isOwner() ? undefined : user?.branch_id || undefined,
@@ -166,7 +167,7 @@ const DashboardPage = () => {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl font-bold">Dashboard</h1>
+          <h1 className="font-heading text-2xl font-bold text-balance">Dashboard</h1>
           <p className="text-sm text-muted-foreground">Biznes ko'rsatkichlari</p>
         </div>
         <div className="flex items-center gap-3">
@@ -205,7 +206,7 @@ const DashboardPage = () => {
 
       {/* ── Row 1: Student KPIs ─────────────────────────────────────────────── */}
       <section>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 text-balance">
           Talabalar
         </h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
@@ -237,7 +238,7 @@ const DashboardPage = () => {
 
       {/* ── Row 2: Financial KPIs ───────────────────────────────────────────── */}
       <section>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 text-balance">
           Moliya
         </h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
@@ -288,7 +289,7 @@ const DashboardPage = () => {
         {/* Monthly revenue */}
         {owner && (
           <div className="glass-card p-5">
-            <h3 className="font-heading text-sm font-semibold mb-4">
+            <h3 className="font-heading text-sm font-semibold mb-4 text-balance">
               Oylik daromad (so'm)
             </h3>
             <ResponsiveContainer width="100%" height={240}>
@@ -317,7 +318,7 @@ const DashboardPage = () => {
 
         {/* Monthly enrollment */}
         <div className="glass-card p-5">
-          <h3 className="font-heading text-sm font-semibold mb-4">
+          <h3 className="font-heading text-sm font-semibold mb-4 text-balance">
             Oylik ro'yxatga olish
           </h3>
           <ResponsiveContainer width="100%" height={240}>
@@ -342,7 +343,7 @@ const DashboardPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Payment status pie */}
         <div className="glass-card p-5">
-          <h3 className="font-heading text-sm font-semibold mb-4">To'lov holati</h3>
+          <h3 className="font-heading text-sm font-semibold mb-4 text-balance">To'lov holati</h3>
           {totalPieStudents === 0 ? (
             <div className="flex h-[240px] items-center justify-center text-sm text-muted-foreground">
               Ma'lumot yo'q
@@ -389,7 +390,7 @@ const DashboardPage = () => {
 
         {/* Result stats */}
         <div className="glass-card p-5">
-          <h3 className="font-heading text-sm font-semibold mb-4">Talabalar natijalari</h3>
+          <h3 className="font-heading text-sm font-semibold mb-4 text-balance">Talabalar natijalari</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={resultData} layout="vertical" barSize={20}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(228, 12%, 18%)" horizontal={false} />
@@ -417,7 +418,7 @@ const DashboardPage = () => {
       {/* ── Branch comparison (owner only, full width) ──────────────────────── */}
       {owner && analytics.branch_stats.length > 1 && (
         <div className="glass-card p-5">
-          <h3 className="font-heading text-sm font-semibold mb-4">
+          <h3 className="font-heading text-sm font-semibold mb-4 text-balance">
             Filiallar taqqoslamasi
           </h3>
           <ResponsiveContainer width="100%" height={260}>

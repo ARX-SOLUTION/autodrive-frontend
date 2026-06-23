@@ -18,7 +18,7 @@ export const EmptyState = ({
     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
       <Icon className="h-6 w-6 text-muted-foreground" />
     </div>
-    <h3 className="font-heading text-sm font-semibold text-foreground">{title}</h3>
+    <h3 className="font-heading text-sm font-semibold text-foreground text-balance">{title}</h3>
     {description && (
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>
     )}

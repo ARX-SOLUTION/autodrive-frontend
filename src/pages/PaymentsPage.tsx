@@ -56,7 +56,6 @@ import
   } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
 
 const formatDate = (d: string) => {
   try {
@@ -98,7 +97,8 @@ const lastMonthEnd = () => {
 };
 
 const PaymentsPage = () => {
-  const { isOwner, user } = useAuthStore();
+  const isOwner = useAuthStore((s) => s.isOwner);
+  const user = useAuthStore((s) => s.user);
   const [branchId, setBranchId] = useState<string | undefined>(
     isOwner() ? undefined : user?.branch_id || undefined,
   );
@@ -197,7 +197,8 @@ const PaymentsPage = () => {
     });
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
+    const XLSX = await import("xlsx");
     const rows = sorted.map((p, idx) => ({
       "#": idx + 1,
       Talaba: p.student_name,
@@ -272,7 +273,7 @@ const PaymentsPage = () => {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl font-bold">To'lovlar</h1>
+          <h1 className="font-heading text-2xl font-bold text-balance">To'lovlar</h1>
           <p className="text-sm text-muted-foreground">
             Talabalar to'lovlarini boshqarish va hisob-kitob
           </p>
@@ -295,8 +296,8 @@ const PaymentsPage = () => {
 
       {/* SECTION 1: Joriy holat (Always visible snapshot) */}
       <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="flex items-center justify-between mb-3 tabular-nums">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-balance">
             Joriy holat
           </h2>
           <span className="text-xs text-muted-foreground">
@@ -330,7 +331,7 @@ const PaymentsPage = () => {
       {/* SECTION 2: Filterlar */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-balance">
             Filterlash
           </h2>
           {hasAnyFilter && (
@@ -478,14 +479,14 @@ const PaymentsPage = () => {
       {hasAnyFilter && (
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-primary">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-primary text-balance">
               Tanlangan natija
             </h2>
             <span className="text-xs text-muted-foreground">
               {filtered.length} ta to'lov bo'yicha
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 tabular-nums">
             <SummaryCard
               title="Yig'ilgan summa"
               value={formatMoney(displayedSummary.period_collected)}
@@ -508,7 +509,7 @@ const PaymentsPage = () => {
       {/* SECTION 4: Table */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-balance">
             To'lovlar ro'yxati
           </h2>
           <span className="text-xs text-muted-foreground">
@@ -637,7 +638,7 @@ const PaymentsPage = () => {
                       <td className="px-4 py-3 text-muted-foreground text-xs">
                         {p.recorded_by || "—"}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className="px-4 py-3 text-muted-foreground tabular-nums">
                         {formatDate(p.date)}
                       </td>
                     </tr>
