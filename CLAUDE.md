@@ -17,11 +17,13 @@ Operating rules for **Auto Drive CRM** (NestJS backend + React frontend). Optimi
 > When making independent changes across multiple files, launch multiple subagents in parallel by including ALL Task tool calls in a single message. Do not serialize independent edits — spawn one subagent per independent change and run them simultaneously.
 
 **Examples — fire in parallel:**
+
 - Add field to backend DTO **+** add column to frontend table → 2 subagents, 1 message.
 - Search 3 directories for usages → 3 Grep calls, 1 message.
 - Update `userService.ts`, `studentService.ts`, `paymentService.ts` for the same API change → 3 subagents, 1 message.
 
 **Serialize only when:**
+
 - Step B reads Step A's output.
 - Schema migration before code using it.
 - Type generation (`prisma generate`) before TS that imports it.
@@ -34,8 +36,8 @@ Operating rules for **Auto Drive CRM** (NestJS backend + React frontend). Optimi
 - [ ] Unclear? → Stop. Ask **one** specific question (with grep evidence).
 - [ ] Simpler way? → Push back before coding.
 
-**❌** *"Active students" → silently uses `isActive`.*
-**✅** *"`status='active'` or `deletedAt IS NULL`? Existing code uses status — confirm?"*
+**❌** _"Active students" → silently uses `isActive`._
+**✅** _"`status='active'` or `deletedAt IS NULL`? Existing code uses status — confirm?"_
 
 ---
 
@@ -49,17 +51,18 @@ Operating rules for **Auto Drive CRM** (NestJS backend + React frontend). Optimi
 - [ ] 200 lines feel like 50? → Rewrite.
 
 **Backend — don't:**
+
 - `try/catch` re-throw — `HttpExceptionFilter` handles it.
 - Custom partial DTOs — use `PartialType(CreateXDto)`.
 - `BaseService<T>` for 2 modules — repeat the code.
 - Pre-emptive cache/queue/retry.
 
 **Frontend — don't:**
+
 - Custom `useFetch` — TanStack Query is the standard.
 - New shadcn variant for one-off color — `className` override.
 - Zustand for local state — `useState`. Auth store is the **only** global.
 - "Reusable" form abstraction for one form.
-
 
 ```ts
 // ❌ overengineered
@@ -72,8 +75,6 @@ async findActive(user: CurrentUserPayload) {
   });
 }
 ```
-
-
 
 ---
 
@@ -90,13 +91,13 @@ async findActive(user: CurrentUserPayload) {
 
 **Style-match checklist (read file before editing):**
 
-| Backend | Frontend |
-|---|---|
-| `snake_case` API via `fromEntity()` | services in `src/services/<name>Service.ts` |
-| `camelCase` Prisma models | types in `src/types/<name>.ts` |
-| `Api*Exception` (never raw `Error`) | `cn()` from `@/lib/utils` |
-| Request DTOs in `dto/request/` | shadcn primitives in `components/ui/` |
-| `EmptyToUndefined` for optional strings | toasts via `sonner` |
+| Backend                                 | Frontend                                    |
+| --------------------------------------- | ------------------------------------------- |
+| `snake_case` API via `fromEntity()`     | services in `src/services/<name>Service.ts` |
+| `camelCase` Prisma models               | types in `src/types/<name>.ts`              |
+| `Api*Exception` (never raw `Error`)     | `cn()` from `@/lib/utils`                   |
+| Request DTOs in `dto/request/`          | shadcn primitives in `components/ui/`       |
+| `EmptyToUndefined` for optional strings | toasts via `sonner`                         |
 
 ---
 
@@ -104,23 +105,20 @@ async findActive(user: CurrentUserPayload) {
 
 **Every task = verifiable goal. Loop until each checkpoint passes.**
 
-| Vague | Verifiable |
-|---|---|
-| "Add validation" | "DTO rejects empty input with 400; valid input creates row" |
-| "Fix the bug" | "Failing test reproduces it; passes after fix" |
-| "Refactor X" | "Tests pass before AND after; no behavior change" |
-| "Make table nicer" | "Sortable name+date, paginated, mobile-responsive" |
+| Vague              | Verifiable                                                  |
+| ------------------ | ----------------------------------------------------------- |
+| "Add validation"   | "DTO rejects empty input with 400; valid input creates row" |
+| "Fix the bug"      | "Failing test reproduces it; passes after fix"              |
+| "Refactor X"       | "Tests pass before AND after; no behavior change"           |
+| "Make table nicer" | "Sortable name+date, paginated, mobile-responsive"          |
 
 **Multi-step format:**
-
 
 ```
 1. [Step] → verify: [check]   ← STOP if fails
 2. [Step] → verify: [check]   ← STOP if fails
 3. [Step] → verify: [check]
 ```
-
-
 
 **Backend example — "Operators see only own students":**
 
@@ -132,8 +130,6 @@ async findActive(user: CurrentUserPayload) {
 3. e2e covers new path
    → verify: pnpm test:e2e green
 ```
-
-
 
 **Frontend example — "Mark paid action":**
 
@@ -148,8 +144,6 @@ async findActive(user: CurrentUserPayload) {
    → verify: no double-click possible
 ```
 
-
-
 **Verification failed?** → Don't declare done. Don't change goal silently. Report what failed + minimal repro.
 
 ---
@@ -159,21 +153,25 @@ async findActive(user: CurrentUserPayload) {
 ### Backend (NestJS + Prisma)
 
 **Response shape — auto-wrapped, don't build manually:**
+
 - Success → `{ success: true, data }` via `ResponseWrapperInterceptor`
 - Error → `{ error: { code, message, ... } }` via `HttpExceptionFilter`
 
 **Auth & tenancy (always):**
+
 - `JwtAuthGuard` global. Opt out with `@Public()`.
 - `@Roles(Role.owner, ...)` for RBAC.
 - Branch-scope `manager`/`operator` queries by `CurrentUserPayload.branchId`. Owner/dev see all.
 - Filter `deletedAt: null` on `User`, `Student`, `Branch`.
 
 **Data integrity:**
+
 - Multi-table writes → `prisma.$transaction`. No exceptions.
 - Use `Decimal` arithmetic for money — never cast to `number` mid-calc.
 - DTO validation: `class-validator` + `EmptyToUndefined` for optional strings.
 
 **Performance at scale:**
+
 - Index hot filters (`@@index` already on `branchId+courseType+deletedAt`, `debt`, `groupId`). Add when adding new filters.
 - `findMany` with pagination — never unbounded.
 - `select` only what's needed for list endpoints (avoid loading relations you don't render).
@@ -182,22 +180,26 @@ async findActive(user: CurrentUserPayload) {
 ### Frontend (React + Vite)
 
 **State boundaries:**
+
 - Server state → **TanStack Query only**. Hooks live in `src/services/*Service.ts`.
 - Global client state → **Zustand only for auth** (`src/store/authStore.ts`).
 - Everything else → local `useState`.
 
 **Mutations checklist:**
+
 - [ ] `mutationFn` uses `axiosInstance` (handles JWT + 401).
 - [ ] `onSuccess`: `queryClient.invalidateQueries({ queryKey: [...] })`.
 - [ ] `onError`: `toast.error(msg)` via `sonner`.
 - [ ] Button `disabled={mutation.isPending}` — no double-clicks.
 
 **Forms:**
+
 - `react-hook-form` + `zod` resolver.
 - Errors via shadcn `<FormMessage />`.
 - Submit handler is `async`, awaits mutation.
 
 **Performance at scale:**
+
 - Long lists → paginate (use existing `usePagination` hook).
 - Expensive renders → `React.memo` + stable keys; never `index` as key for editable rows.
 - Query keys: tuple form `['students', { branchId, page }]` for granular invalidation.
@@ -205,6 +207,7 @@ async findActive(user: CurrentUserPayload) {
 - Code-split heavy pages (`React.lazy` for routes if bundle grows).
 
 **Accessibility & UX:**
+
 - All actionable elements keyboard-reachable (Radix primitives handle this — don't override).
 - Loading → shadcn `<Skeleton>`. Empty → explicit empty state, not blank table.
 - Destructive actions → `ConfirmDialog`. No silent deletes.
@@ -220,16 +223,17 @@ async findActive(user: CurrentUserPayload) {
 
 ## 🚀 6. Speed at Scale Playbook
 
-| Situation | Move |
-|---|---|
-| Adding same field to BE DTO + FE type + FE form | 3 subagents, 1 message |
-| Searching for usages across BE+FE | Parallel Grep, 1 message |
-| Reading 5 unrelated files to understand context | Parallel Read, 1 message |
-| Modifying 4 service files for same API contract change | 4 subagents, 1 message |
-| Schema change → migration → seed update → code | **Sequential** (each depends on prior) |
-| Type generation → code using types | **Sequential** |
+| Situation                                              | Move                                   |
+| ------------------------------------------------------ | -------------------------------------- |
+| Adding same field to BE DTO + FE type + FE form        | 3 subagents, 1 message                 |
+| Searching for usages across BE+FE                      | Parallel Grep, 1 message               |
+| Reading 5 unrelated files to understand context        | Parallel Read, 1 message               |
+| Modifying 4 service files for same API contract change | 4 subagents, 1 message                 |
+| Schema change → migration → seed update → code         | **Sequential** (each depends on prior) |
+| Type generation → code using types                     | **Sequential**                         |
 
 **Cost discipline:**
+
 - Use `Explore`/`Plan` subagents for read-heavy investigation — keeps main context small.
 - Don't re-read files just edited (harness tracks state).
 - Don't double-search: if a subagent is searching, **you** don't also search.
@@ -249,8 +253,6 @@ async findActive(user: CurrentUserPayload) {
 /plugin install ui-ux-pro-max@ui-ux-pro-max-skill
 ```
 
-
-
 **Or via CLI (per-project / global):**
 
 ```bash
@@ -259,13 +261,12 @@ uipro init --ai claude              # per project
 uipro init --ai claude --global     # all projects
 ```
 
-
-
 **Auto-triggers on:** "build a page", "design a dashboard", "create a component", "make a landing", "mobile UI", "dark mode", "color scheme", "redesign X".
 
 **Provides:** 67 UI styles · 161 color palettes · 57 font pairings · 161 product-type reasoning rules · 99 UX guidelines · 25 chart types · 10 stacks (incl. React, Tailwind, shadcn).
 
 **Workflow rule (this project = React + shadcn + Tailwind):**
+
 1. New page or significant UI change → **let the skill propose** style/palette/typography **first**.
 2. Map skill output onto existing shadcn primitives in `src/components/ui/`. Don't introduce a new component library.
 3. Use Tailwind tokens + `cn()` for overrides. Don't fork `tailwind.config.ts` unless skill explicitly recommends a token addition.
@@ -280,33 +281,32 @@ uipro init --ai claude --global     # all projects
 /plugin install fullstack-dev-skills@jeffallan
 ```
 
-
-
 **Repo:** https://github.com/Jeffallan/claude-skills — check repo for exact `/plugin install` slug if the above changes.
 
 **Relevant skills for this stack (NestJS 11 + Prisma 6 + PostgreSQL):**
 
-| Skill | Triggers on | Use for |
-|---|---|---|
-| **NestJS Expert** | "new module", "controller", "service", "guard", "interceptor", "DI" | Module scaffolds, decorators, DTO patterns, lifecycle hooks |
-| **API Architect** | "new endpoint", "REST", "OpenAPI", "versioning", "pagination", "error contract" | Endpoint shape, HTTP semantics, Swagger annotations |
-| **Database Designer** | "migration", "schema change", "index", "relation", "Prisma", "query plan" | Schema edits, index strategy, N+1 avoidance, transactions |
-| **Secure Code Guardian** | "auth", "JWT", "RBAC", "password", "input validation", "rate limit", "CORS" | Threat-model new flows, harden inputs, audit `@Public()` routes |
-| **Test Master** | "write test", "e2e", "Jest", "mock", "coverage" | Spec scaffolds, fixture builders, integration test setup |
-| **Debugging Wizard** | "bug", "500", "Prisma error", "race", "deadlock" | Root-cause analysis, minimal repros |
+| Skill                    | Triggers on                                                                     | Use for                                                         |
+| ------------------------ | ------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| **NestJS Expert**        | "new module", "controller", "service", "guard", "interceptor", "DI"             | Module scaffolds, decorators, DTO patterns, lifecycle hooks     |
+| **API Architect**        | "new endpoint", "REST", "OpenAPI", "versioning", "pagination", "error contract" | Endpoint shape, HTTP semantics, Swagger annotations             |
+| **Database Designer**    | "migration", "schema change", "index", "relation", "Prisma", "query plan"       | Schema edits, index strategy, N+1 avoidance, transactions       |
+| **Secure Code Guardian** | "auth", "JWT", "RBAC", "password", "input validation", "rate limit", "CORS"     | Threat-model new flows, harden inputs, audit `@Public()` routes |
+| **Test Master**          | "write test", "e2e", "Jest", "mock", "coverage"                                 | Spec scaffolds, fixture builders, integration test setup        |
+| **Debugging Wizard**     | "bug", "500", "Prisma error", "race", "deadlock"                                | Root-cause analysis, minimal repros                             |
 
 **Workflow rule:**
+
 1. New endpoint/migration/auth flow → **load relevant skill first** (often 2: e.g., `API Architect` + `Database Designer` for an endpoint that hits new tables).
 2. Run skills in parallel via subagents (§0) when investigating an unfamiliar area.
 3. Skill output is **input to your work** — apply project conventions (§5) on top. Don't paste skill scaffolds raw if they contradict our `Api*Exception`, `fromEntity()`, or branch-tenancy patterns.
 
 ### Built-in Claude Code skills (already available)
 
-| Skill | When to invoke |
-|---|---|
-| `/review` | Before opening a PR — internal code review pass |
+| Skill              | When to invoke                                             |
+| ------------------ | ---------------------------------------------------------- |
+| `/review`          | Before opening a PR — internal code review pass            |
 | `/security-review` | Any change touching auth, input handling, or data exposure |
-| `/init` | Bootstrapping a new repo's `CLAUDE.md` |
+| `/init`            | Bootstrapping a new repo's `CLAUDE.md`                     |
 
 ### Skill etiquette
 
@@ -330,16 +330,15 @@ uipro init --ai claude --global     # all projects
 
 ### 8.2 Cross-tenant roles — `owner` and `dev` only
 
-| Role | `branchId` in JWT | Scope | Use |
-|---|---|---|---|
-| `dev` | usually `null` | All branches | Internal/debug — flag in audit log |
-| `owner` | usually `null` | All branches | Company owner — global analytics, branch CRUD |
-| `manager` | **required** | Their branch only | Branch operations |
-| `operator` | **required** | Their branch only | Day-to-day registrar |
-| `teacher` | **required** | Their branch only | Read-only on assigned students |
+| Role       | `branchId` in JWT | Scope             | Use                                           |
+| ---------- | ----------------- | ----------------- | --------------------------------------------- |
+| `dev`      | usually `null`    | All branches      | Internal/debug — flag in audit log            |
+| `owner`    | usually `null`    | All branches      | Company owner — global analytics, branch CRUD |
+| `manager`  | **required**      | Their branch only | Branch operations                             |
+| `operator` | **required**      | Their branch only | Day-to-day registrar                          |
+| `teacher`  | **required**      | Their branch only | Read-only on assigned students                |
 
 **Rule:** Every service method must explicitly handle cross-tenant roles:
-
 
 ```ts
 // ✅ Correct — explicit cross-tenant branch
@@ -352,8 +351,6 @@ if (user.role !== 'owner' && user.role !== 'dev') {
 // ❌ Wrong — silent: if user.branchId is null, returns ALL tenants' data
 const where = { deletedAt: null, branchId: user.branchId ?? undefined };
 ```
-
-
 
 ### 8.3 Query layer — every read AND write must be tenant-scoped
 
@@ -377,8 +374,6 @@ const result = await prisma.student.updateMany({
 if (result.count === 0) throw new ApiNotFoundException();
 ```
 
-
-
 ### 8.4 Audit logging — tenant context required
 
 Every entry in `AuditLog` must capture the actor's tenant context for forensic analysis:
@@ -392,14 +387,17 @@ Every entry in `AuditLog` must capture the actor's tenant context for forensic a
 ### 8.5 Tenant isolation at the boundaries
 
 **Inbound (controllers):**
+
 - [ ] Reject requests where body/query `branch_id` differs from JWT `branchId` for non-cross-tenant roles. Don't silently ignore — return 403.
 - [ ] Swagger: don't document `branch_id` as a writable field for branch-scoped endpoints.
 
 **Outbound (responses):**
+
 - [ ] `fromEntity()` must not expose foreign-tenant data leaked via `include`. If you `include: { branch: true }`, ensure the join couldn't return another tenant's branch.
 - [ ] Error messages: don't leak existence of another tenant's records. `"Student not found"` for both "doesn't exist" and "exists in another tenant" — never `"Student belongs to branch X"`.
 
 **Telemetry / logs:**
+
 - [ ] Every `Logger.log()` for a request includes `branchId` and `userId`. Add to correlation context (see [correlation-id.middleware.ts](src/core/middleware/correlation-id.middleware.ts)).
 - [ ] Never log full PII (phone, full name) — log IDs + branch.
 
@@ -421,13 +419,13 @@ The shared-schema model means one tenant's heavy query can degrade all tenants:
 
 ### 8.8 Future hardening (not required, flag when relevant)
 
-| Pattern | When to consider |
-|---|---|
+| Pattern                                 | When to consider                                                                                                                   |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | PostgreSQL **Row-Level Security (RLS)** | When tenant count grows or audit requires DB-layer enforcement. Add `tenant_id = current_setting('app.branch_id')::uuid` policies. |
-| **Schema-per-tenant** migration | If a single tenant (e.g., large franchise) needs schema customization. |
-| **Database-per-tenant** | Enterprise/regulated customer demands full isolation. Not currently planned. |
-| **Logical replication per tenant** | Geo-distribution per branch (cross-region) — only at significant scale. |
-| **Connection pool per tenant** | If noisy neighbor becomes measurable in production. |
+| **Schema-per-tenant** migration         | If a single tenant (e.g., large franchise) needs schema customization.                                                             |
+| **Database-per-tenant**                 | Enterprise/regulated customer demands full isolation. Not currently planned.                                                       |
+| **Logical replication per tenant**      | Geo-distribution per branch (cross-region) — only at significant scale.                                                            |
+| **Connection pool per tenant**          | If noisy neighbor becomes measurable in production.                                                                                |
 
 **Today:** stick with shared-schema + strict app-layer enforcement. Don't introduce RLS or schema-per-tenant without explicit user approval — it's a major architectural change.
 
@@ -442,8 +440,6 @@ async findOne(@Param('id') id: string) {
 }
 ```
 
-
-
 **✅ Tenant-scoped fetch**
 
 ```ts
@@ -457,8 +453,6 @@ async findOne(@Param('id') id: string, @CurrentUser() user: CurrentUserPayload) 
 }
 ```
 
-
-
 **❌ Cross-tenant cache poisoning on FE**
 
 ```ts
@@ -466,19 +460,16 @@ useQuery({ queryKey: ['students'], queryFn: fetchStudents });
 // after branch switch → stale data from old tenant served from cache
 ```
 
-
-
 **✅ Tenant-keyed cache**
 
 ```ts
-const branchId = useAuthStore(s => s.user?.branchId);
+const branchId = useAuthStore((s) => s.user?.branchId);
 useQuery({
   queryKey: ['students', branchId],
   queryFn: () => fetchStudents(),
   enabled: !!branchId || isCrossTenantRole,
 });
 ```
-
 
 ---
 
@@ -507,6 +498,50 @@ useQuery({
 
 ---
 
+## 🔄 9. Cross-Repo Dependency & Multi-Language Rules
+
+**Rules that ensure BE+FE+Admin stay in sync, and every feature supports all 3 languages (uz/ru/en).**
+
+### 9.1 API contract changes → FE + Admin must update
+
+When any backend API response shape, request DTO, or query parameter changes:
+
+- [ ] Update `src/types/*.ts` in this repo to match BE response DTOs.
+- [ ] Update `src/services/*Service.ts` hooks (query keys, params, return types).
+- [ ] Verify: `tsc --noEmit` builds clean.
+
+### 9.2 Every feature must support uz/ru/en (MANDATORY)
+
+All user-facing text must use `useTranslation()` / `t()` from `react-i18next`. No hardcoded Uzbek, Russian, or English strings.
+
+- [ ] New page → add translation keys to `src/i18n/locales/{uz,ru,en}.json` **before** writing the component.
+- [ ] New component with user-facing text → add keys + use `t('key')`.
+- [ ] Toast messages, button labels, placeholders, empty states, errors — all must use `t()`.
+- [ ] Never commit a component without checking if it needs translations.
+- [ ] Pre-flight: `t()` calls exist for every visible string in the component.
+
+**Translation key naming convention:**
+
+```
+"pagename.element.action": "Uzbek text"
+"students.table.name": "Ism"
+"attendance.status.present": "Keldi"
+"schedule.legends.theory": "Teoriya"
+```
+
+### 9.3 Frontend ↔ Admin panel parity
+
+- A feature added to this frontend should have an equivalent in `autodrive-admin-panel` if the admin panel has the same page type.
+- Shared translation patterns between FE and Admin should be consistent (same key names where possible).
+
+### 9.4 After adding translations
+
+- [ ] Verify translation coverage: all keys in `uz.json` exist in `ru.json` and `en.json`.
+- [ ] Build check: `tsc --noEmit` passes.
+- [ ] PR must include all 3 locale files.
+
+---
+
 ## Agent skills
 
 ### Issue tracker
@@ -520,3 +555,26 @@ Issues tracked on GitHub. See `docs/agents/issue-tracker.md`.
 ### Domain docs
 
 Single-context — one `CONTEXT.md` at repo root. See `docs/agents/domain.md`.
+
+---
+
+## Matt Pocock Engineering Skills
+
+Globally installed at `~/.agents/skills/`. Vanilla (original).
+
+### Workflow (sinab koʻrilgan)
+
+1. `/grill-with-docs` → design decisions
+2. `/to-prd` → PRD
+3. `/to-issues` → GitHub Issues (BEADS tracker)
+4. `/tdd` → implement
+
+### Key skills
+
+- `/triage` — backlog management
+- `/implement` — plan execution
+- `/prototype` — throwaway prototypes
+- `/review` — parallel code review
+- `/handoff` — cross-session context
+- `/diagnosing-bugs` — bug investigation
+- `/ask-matt` — router (lists all skills)
