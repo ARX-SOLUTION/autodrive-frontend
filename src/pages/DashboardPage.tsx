@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
-import { useDashboardAnalytics } from '@/services/dashboardService';
+import {
+  useDashboardAnalytics,
+  useTeacherAnalytics,
+} from '@/services/dashboardService';
 import { useBranches } from '@/services/branchService';
 import { SummaryCard } from '@/components/ui/SummaryCard';
 import {
@@ -86,7 +89,7 @@ const RESULT_COLORS = [
   'hsl(0, 72%, 51%)',
 ];
 
-const DashboardPage = () => {
+const MainDashboard = () => {
   const { t } = useTranslation();
   const isOwner = useAuthStore((s) => s.isOwner);
   const user = useAuthStore((s) => s.user);
@@ -588,6 +591,134 @@ const DashboardPage = () => {
       )}
     </div>
   );
+};
+
+const TeacherDashboard = () => {
+  const { t } = useTranslation();
+  const { data: analytics, isLoading } = useTeacherAnalytics();
+
+  if (isLoading || !analytics) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-9 w-64" />
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-72 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  const resultData = [
+    {
+      name: t('dashboard.result_studying'),
+      value: analytics.result_stats.oqimoqda,
+    },
+    {
+      name: t('dashboard.result_passed'),
+      value: analytics.result_stats.topshirdi,
+    },
+    {
+      name: t('dashboard.result_failed'),
+      value: analytics.result_stats.yiqildi,
+    },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl font-bold text-balance">
+            {t('dashboard.title')}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t('dashboard.subtitle')}
+          </p>
+        </div>
+      </div>
+
+      <section>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 text-balance">
+          {t('dashboard.students_section', 'Students')}
+        </h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+          <SummaryCard
+            title={t('dashboard.cards.active_groups', 'Active Groups')}
+            value={analytics.active_groups}
+            icon={<Users className="h-5 w-5" />}
+          />
+          <SummaryCard
+            title={t('dashboard.cards.total_students', 'Total Students')}
+            value={analytics.total_students}
+            icon={<GraduationCap className="h-5 w-5" />}
+          />
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="glass-card p-5">
+          <h3 className="font-heading text-sm font-semibold mb-4 text-balance">
+            {t('dashboard.result_title')}
+          </h3>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={resultData} layout="vertical" barSize={24}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="hsl(228, 12%, 18%)"
+                horizontal={false}
+              />
+              <XAxis type="number" {...AXIS_PROPS} allowDecimals={false} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                {...AXIS_PROPS}
+                width={80}
+              />
+              <Tooltip
+                {...CHART_STYLE}
+                formatter={(v: number) => [`${v} ta`, '']}
+              />
+              <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                {resultData.map((_, i) => (
+                  <Cell key={i} fill={RESULT_COLORS[i]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="flex justify-center gap-5 mt-4">
+            {resultData.map((d, i) => (
+              <div
+                key={d.name}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground"
+              >
+                <span
+                  className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: RESULT_COLORS[i] }}
+                />
+                {d.name}: {d.value}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DashboardPage = () => {
+  const user = useAuthStore((s) => s.user);
+
+  if (user?.role === 'teacher') {
+    return <TeacherDashboard />;
+  }
+
+  return <MainDashboard />;
 };
 
 export default DashboardPage;

@@ -1,4 +1,6 @@
-import * as CollapsiblePrimitive from "@radix-ui/react-collapsible";
+/* eslint-disable react-refresh/only-export-components */
+
+import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
 
 const Collapsible = CollapsiblePrimitive.Root;
 

@@ -10,12 +10,14 @@ export const useStudents = (
   page?: number,
   limit?: number,
   operatorId?: string,
+  options?: { enabled?: boolean },
 ) => {
   const role = useAuthStore((s) => s.user?.role);
   const isOwnerOrDev = role === 'owner' || role === 'dev';
+  const baseEnabled = !!branchId || isOwnerOrDev;
   return useQuery<Student[]>({
     queryKey: ['students', courseType, branchId, page, limit, operatorId],
-    enabled: !!branchId || isOwnerOrDev,
+    enabled: (options?.enabled ?? true) && baseEnabled,
     queryFn: async () => {
       const { data: res } = await axiosInstance.get('/students', {
         params: {
@@ -85,4 +87,23 @@ export const useDeleteStudent = () => {
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
     },
   });
+};
+
+export const searchStudents = async (q: string): Promise<Student[]> => {
+  const { data } = await axiosInstance.get('/students', {
+    params: { search: q },
+  });
+  const arr = data?.data;
+  if (Array.isArray(arr)) return arr;
+  if (Array.isArray(data)) return data;
+  return [];
+};
+
+export const bulkCreateStudents = async (file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const { data } = await axiosInstance.post('/students/bulk', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
 };

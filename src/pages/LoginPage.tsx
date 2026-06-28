@@ -1,15 +1,15 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useLogin } from "@/services/authService";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Car } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useLogin } from '@/services/authService';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Car } from 'lucide-react';
+import { toast } from 'sonner';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const login = useLogin();
 
@@ -19,11 +19,20 @@ const LoginPage = () => {
       { email, password },
       {
         onSuccess: () => {
-          toast.success("Tizimga muvaffaqiyatli kirdingiz!");
+          toast.success('Tizimga muvaffaqiyatli kirdingiz!');
 
-          navigate("/dashboard");
+          navigate('/dashboard');
         },
-        onError: () => toast.error("Email yoki parol noto'g'ri"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onError: (error: any) => {
+          if (error.response?.status === 429) {
+            toast.error("Ko'p urinishlar. Iltimos 1 daqiqa kuting.");
+          } else if (!error.response) {
+            toast.error("Server bilan ulanish yo'q.");
+          } else {
+            toast.error("Email yoki parol noto'g'ri");
+          }
+        },
       },
     );
   };
@@ -67,7 +76,7 @@ const LoginPage = () => {
             />
           </div>
           <Button type="submit" className="w-full" disabled={login.isPending}>
-            {login.isPending ? "Kirilmoqda..." : "Kirish"}
+            {login.isPending ? 'Kirilmoqda...' : 'Kirish'}
           </Button>
         </form>
       </div>

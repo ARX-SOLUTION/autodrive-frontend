@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
 export interface DataCardField {
   label: string;
@@ -35,19 +35,30 @@ export const DataCard = ({
     <div
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm transition-colors",
-        accent && "pl-5",
-        interactive && "cursor-pointer hover:border-primary/40 hover:bg-accent/30",
+        'relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm transition-colors',
+        accent && 'pl-5',
+        interactive &&
+          'cursor-pointer hover:border-primary/40 hover:bg-accent/30',
         className,
       )}
     >
       {accent && (
-        <span aria-hidden className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: accent }} />
+        <span
+          aria-hidden
+          className="absolute inset-y-0 left-0 w-1"
+          style={{ backgroundColor: accent }}
+        />
       )}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="truncate font-heading text-sm font-semibold text-foreground text-balance">{title}</div>
-          {subtitle && <div className="mt-0.5 truncate text-xs text-muted-foreground">{subtitle}</div>}
+          <div className="truncate font-heading text-sm font-semibold text-foreground text-balance">
+            {title}
+          </div>
+          {subtitle && (
+            <div className="mt-0.5 truncate text-xs text-muted-foreground">
+              {subtitle}
+            </div>
+          )}
         </div>
         {actions && <div className="flex items-center gap-1">{actions}</div>}
       </div>
@@ -55,8 +66,12 @@ export const DataCard = ({
         <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
           {fields.map((f, i) => (
             <div key={i} className="min-w-0">
-              <dt className="truncate text-[10px] uppercase tracking-wider text-muted-foreground/70">{f.label}</dt>
-              <dd className="mt-0.5 truncate text-foreground tabular-nums">{f.value}</dd>
+              <dt className="truncate text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                {f.label}
+              </dt>
+              <dd className="mt-0.5 truncate text-foreground tabular-nums">
+                {f.value}
+              </dd>
             </div>
           ))}
         </dl>

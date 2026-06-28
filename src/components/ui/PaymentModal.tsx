@@ -1,20 +1,20 @@
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from '@/components/ui/popover';
 import {
   Command,
   CommandEmpty,
@@ -22,16 +22,16 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import { ChevronsUpDown, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/command';
+import { ChevronsUpDown, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Form,
   FormControl,
@@ -39,8 +39,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { PaymentMethod } from "@/types/student";
+} from '@/components/ui/form';
+import { PaymentMethod } from '@/types/student';
 
 export interface CreatePaymentPayload {
   student_id: string;
@@ -64,17 +64,17 @@ interface PaymentModalProps {
 }
 
 const paymentMethodLabels: Record<PaymentMethod, string> = {
-  naqd: "Naqd",
-  karta: "Karta",
-  perechisleniya: "Perechisleniya",
+  naqd: 'Naqd',
+  karta: 'Karta',
+  perechisleniya: 'Perechisleniya',
 };
 
 const paymentSchema = z.object({
-  student_id: z.string().min(1, "Talabani tanlang"),
+  student_id: z.string().min(1, 'Talabani tanlang'),
   amount: z.coerce
     .number({ invalid_type_error: "To'lov miqdorini kiriting" })
     .positive("To'lov miqdori 0 dan katta bo'lishi kerak"),
-  payment_method: z.enum(["naqd", "karta", "perechisleniya"], {
+  payment_method: z.enum(['naqd', 'karta', 'perechisleniya'], {
     required_error: "To'lov turini tanlang",
   }),
 });
@@ -91,9 +91,9 @@ const PaymentModal = ({
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      student_id: "",
+      student_id: '',
       amount: 0,
-      payment_method: "naqd",
+      payment_method: 'naqd',
     },
   });
 
@@ -101,18 +101,18 @@ const PaymentModal = ({
 
   useEffect(() => {
     if (open) {
-      form.reset({ student_id: "", amount: 0, payment_method: "naqd" });
+      form.reset({ student_id: '', amount: 0, payment_method: 'naqd' });
     }
   }, [open, form]);
 
-  const studentId = form.watch("student_id");
+  const studentId = form.watch('student_id');
   const selectedStudent = students.find((s) => s.id === studentId);
 
   const handleSubmit = form.handleSubmit((values) => {
     onSubmit(values);
   });
 
-  const formatMoney = (n: number) => new Intl.NumberFormat("uz-UZ").format(n);
+  const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -144,14 +144,14 @@ const PaymentModal = ({
                         >
                           {selectedStudent
                             ? `${selectedStudent.last_name} ${selectedStudent.first_name}`
-                            : "Talabani tanlang"}
+                            : 'Talabani tanlang'}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
                     <PopoverContent
                       onWheel={(e) => e.stopPropagation()}
-                      style={{ width: "var(--radix-popover-trigger-width)" }}
+                      style={{ width: 'var(--radix-popover-trigger-width)' }}
                       className="w-full p-0"
                       align="start"
                     >
@@ -171,10 +171,10 @@ const PaymentModal = ({
                               >
                                 <Check
                                   className={cn(
-                                    "mr-2 h-4 w-4",
+                                    'mr-2 h-4 w-4',
                                     field.value === s.id
-                                      ? "opacity-100"
-                                      : "opacity-0",
+                                      ? 'opacity-100'
+                                      : 'opacity-0',
                                   )}
                                 />
                                 {s.last_name} {s.first_name}
@@ -219,10 +219,10 @@ const PaymentModal = ({
                       placeholder="0"
                       className="bg-secondary border-border"
                       {...field}
-                      value={field.value || ""}
+                      value={field.value || ''}
                       onChange={(e) =>
                         field.onChange(
-                          e.target.value === "" ? 0 : Number(e.target.value),
+                          e.target.value === '' ? 0 : Number(e.target.value),
                         )
                       }
                     />
@@ -265,8 +265,11 @@ const PaymentModal = ({
               <Button type="button" variant="outline" onClick={onClose}>
                 Bekor qilish
               </Button>
-              <Button type="submit" disabled={loading || form.formState.isSubmitting}>
-                {loading ? "Saqlanmoqda..." : "Qo'shish"}
+              <Button
+                type="submit"
+                disabled={loading || form.formState.isSubmitting}
+              >
+                {loading ? 'Saqlanmoqda...' : "Qo'shish"}
               </Button>
             </div>
           </form>

@@ -1,13 +1,18 @@
-import { useState } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
+import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from '@/hooks/useDebounce';
 import {
   useStudents,
   useCreateStudent,
   useUpdateStudent,
   useDeleteStudent,
+  searchStudents,
 } from '@/services/studentService';
 import { useBranches } from '@/services/branchService';
 import { useOperators } from '@/services/operatorService';
@@ -31,6 +36,7 @@ import {
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import StudentModal from '@/components/ui/StudentModal';
+import ImportStudentsModal from '@/components/ui/ImportStudentsModal';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import {
@@ -110,12 +116,18 @@ const StudentsPage = () => {
   const setSearch = (v: string) => setParam('q', v || undefined);
 
   const rawDateFrom = searchParams.get('date_from');
-  const dateFrom = rawDateFrom ? new Date(rawDateFrom) : undefined;
+  const dateFrom = React.useMemo(
+    () => (rawDateFrom ? new Date(rawDateFrom) : undefined),
+    [rawDateFrom],
+  );
   const setDateFrom = (v: Date | undefined) =>
     setParam('date_from', v ? v.toISOString().slice(0, 10) : undefined);
 
   const rawDateTo = searchParams.get('date_to');
-  const dateTo = rawDateTo ? new Date(rawDateTo) : undefined;
+  const dateTo = React.useMemo(
+    () => (rawDateTo ? new Date(rawDateTo) : undefined),
+    [rawDateTo],
+  );
   const setDateTo = (v: Date | undefined) =>
     setParam('date_to', v ? v.toISOString().slice(0, 10) : undefined);
 
@@ -128,39 +140,104 @@ const StudentsPage = () => {
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [sortField, setSortField] = useState('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [importModalOpen, setImportModalOpen] = useState(false);
+
+  const debouncedSearch = useDebounce(search, 300);
 
   const { data: branches } = useBranches();
   const { data: operators } = useOperators();
 
-  const { data: students, isLoading } = useStudents(
+  const SERVER_PAGE_SIZE = 50;
+  const { currentPage, setCurrentPage } = usePagination([], SERVER_PAGE_SIZE);
+
+  const { data: students, isLoading: isStudentsLoading } = useStudents(
     courseType,
     branchId,
-    1,
-    500,
+    currentPage,
+    SERVER_PAGE_SIZE,
     operatorId,
   );
+
+  const { data: searchResults, isLoading: isSearchLoading } = useQuery({
+    queryKey: ['searchStudents', debouncedSearch],
+    queryFn: () => searchStudents(debouncedSearch),
+    enabled: debouncedSearch.trim().length > 0,
+  });
+
+  const isLoading = debouncedSearch ? isSearchLoading : isStudentsLoading;
+  const currentData = debouncedSearch ? searchResults : students;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    courseType,
+    branchId,
+    operatorId,
+    debouncedSearch,
+    dateFrom,
+    dateTo,
+    setCurrentPage,
+  ]);
+
+  const filtered = useMemo(() => {
+    return (currentData || []).filter((s) => {
+      const matchSearch = debouncedSearch
+        ? true
+        : s?.last_name
+            ?.toLowerCase()
+            .includes(debouncedSearch?.toLowerCase()) ||
+          s?.first_name
+            ?.toLowerCase()
+            .includes(debouncedSearch?.toLowerCase()) ||
+          s?.phone?.includes(debouncedSearch);
+
+      let matchDate = true;
+      if (dateFrom || dateTo) {
+        const created = new Date(s.created_at);
+        if (dateFrom && created < dateFrom) matchDate = false;
+        if (dateTo) {
+          const toEnd = new Date(dateTo);
+          toEnd.setHours(23, 59, 59, 999);
+          if (created > toEnd) matchDate = false;
+        }
+      }
+      return matchSearch && matchDate;
+    });
+  }, [currentData, debouncedSearch, dateFrom, dateTo]);
+
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      const va = a[sortField as keyof typeof a];
+      const vb = b[sortField as keyof typeof b];
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (typeof va === 'string' && typeof vb === 'string') {
+        return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+      }
+      return sortDir === 'asc'
+        ? va < vb
+          ? -1
+          : va > vb
+            ? 1
+            : 0
+        : va > vb
+          ? -1
+          : va < vb
+            ? 1
+            : 0;
+    });
+  }, [filtered, sortField, sortDir]);
+
+  const hasMorePages = sorted.length === SERVER_PAGE_SIZE;
+  const serverTotalPages = Math.max(
+    1,
+    hasMorePages ? currentPage + 1 : currentPage,
+  );
+
   const createMutation = useCreateStudent();
   const updateMutation = useUpdateStudent();
   const deleteMutation = useDeleteStudent();
-
-  const filtered = (students || []).filter((s) => {
-    const matchSearch =
-      s?.last_name?.toLowerCase().includes(search?.toLowerCase()) ||
-      s?.first_name?.toLowerCase().includes(search?.toLowerCase()) ||
-      s?.phone?.includes(search);
-
-    let matchDate = true;
-    if (dateFrom || dateTo) {
-      const created = new Date(s.created_at);
-      if (dateFrom && created < dateFrom) matchDate = false;
-      if (dateTo) {
-        const toEnd = new Date(dateTo);
-        toEnd.setHours(23, 59, 59, 999);
-        if (created > toEnd) matchDate = false;
-      }
-    }
-    return matchSearch && matchDate;
-  });
 
   const toggleSort = (field: string) => {
     if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -169,31 +246,6 @@ const StudentsPage = () => {
       setSortDir('asc');
     }
   };
-
-  const sorted = [...filtered].sort((a, b) => {
-    const va = a[sortField as keyof typeof a];
-    const vb = b[sortField as keyof typeof b];
-    if (va == null && vb == null) return 0;
-    if (va == null) return 1;
-    if (vb == null) return -1;
-    if (typeof va === 'string' && typeof vb === 'string') {
-      return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-    }
-    return sortDir === 'asc'
-      ? va < vb
-        ? -1
-        : va > vb
-          ? 1
-          : 0
-      : va > vb
-        ? -1
-        : va < vb
-          ? 1
-          : 0;
-  });
-
-  const { currentPage, totalPages, paginatedItems, setCurrentPage } =
-    usePagination(sorted);
 
   const exportToExcel = async () => {
     const XLSX = await import('xlsx');
@@ -262,8 +314,7 @@ const StudentsPage = () => {
     setModalOpen(true);
   };
 
-  // Calculate the starting index for current page
-  const startIndex = (currentPage - 1) * 10;
+  const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
 
   return (
     <div className="space-y-6">
@@ -284,6 +335,13 @@ const StudentsPage = () => {
             disabled={sorted.length === 0}
           >
             <Download className="h-4 w-4" /> {t('students.export_excel')}
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => setImportModalOpen(true)}
+          >
+            <UploadCloud className="h-4 w-4" /> [CSV Orqali Yuklash]
           </Button>
           <Button className="gap-2" onClick={openCreate}>
             <Plus className="h-4 w-4" /> {t('students.add')}
@@ -602,7 +660,7 @@ const StudentsPage = () => {
                         </td>
                       </tr>
                     ))
-                  : paginatedItems?.map((s, idx) => (
+                  : sorted?.map((s, idx) => (
                       <tr
                         key={s.id}
                         className="table-row-striped border-b border-border/50"
@@ -784,8 +842,8 @@ const StudentsPage = () => {
             [...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-28 w-full rounded-lg" />
             ))
-          ) : paginatedItems && paginatedItems.length > 0 ? (
-            paginatedItems.map((s) => {
+          ) : sorted && sorted.length > 0 ? (
+            sorted.map((s) => {
               const fields = [
                 {
                   label: t('students.detail.branch'),
@@ -862,7 +920,7 @@ const StudentsPage = () => {
 
       <PaginationControls
         currentPage={currentPage}
-        totalPages={totalPages}
+        totalPages={serverTotalPages}
         onPageChange={setCurrentPage}
       />
 
@@ -875,6 +933,11 @@ const StudentsPage = () => {
         courseType={courseType}
         operators={operators || []}
         defaultBranchId={branchId}
+      />
+
+      <ImportStudentsModal
+        open={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
       />
 
       <ConfirmDialog

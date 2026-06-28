@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUsers } from '@/services/userService';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -47,27 +47,29 @@ const UsersPage = () => {
     }
   };
 
-  const sorted = [...(users || [])].sort((a, b) => {
-    const va = a[sortField as keyof typeof a];
-    const vb = b[sortField as keyof typeof b];
-    if (va == null && vb == null) return 0;
-    if (va == null) return 1;
-    if (vb == null) return -1;
-    if (typeof va === 'string' && typeof vb === 'string') {
-      return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-    }
-    return sortDir === 'asc'
-      ? va < vb
-        ? -1
+  const sorted = useMemo(() => {
+    return [...(users || [])].sort((a, b) => {
+      const va = a[sortField as keyof typeof a];
+      const vb = b[sortField as keyof typeof b];
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (typeof va === 'string' && typeof vb === 'string') {
+        return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+      }
+      return sortDir === 'asc'
+        ? va < vb
+          ? -1
+          : va > vb
+            ? 1
+            : 0
         : va > vb
-          ? 1
-          : 0
-      : va > vb
-        ? -1
-        : va < vb
-          ? 1
-          : 0;
-  });
+          ? -1
+          : va < vb
+            ? 1
+            : 0;
+    });
+  }, [users, sortField, sortDir]);
 
   const { currentPage, totalPages, paginatedItems, setCurrentPage } =
     usePagination(sorted);

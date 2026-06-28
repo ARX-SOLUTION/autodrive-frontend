@@ -1,15 +1,102 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useBranches } from '@/services/branchService';
+import {
+  useBranches,
+  useCreateBranch,
+  useUpdateBranch,
+  useDeleteBranch,
+} from '@/services/branchService';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Plus, Pencil, Trash2, MapPin, Building2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import { Plus, Pencil, Trash2, MapPin, Building2, Phone } from 'lucide-react';
 import { formatDate } from '@/pages/StudentsPage';
+import { extractErrorMessage } from '@/lib/errors';
+import { Branch } from '@/types/branch';
+
+interface FormState {
+  name: string;
+  location: string;
+  phone: string;
+}
+
+const EMPTY_FORM: FormState = { name: '', location: '', phone: '' };
 
 const BranchesPage = () => {
   const { t } = useTranslation();
   const { data: branches, isLoading } = useBranches();
+  const createMut = useCreateBranch();
+  const updateMut = useUpdateBranch();
+  const deleteMut = useDeleteBranch();
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editItem, setEditItem] = useState<Branch | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+
+  const openCreate = () => {
+    setEditItem(null);
+    setForm(EMPTY_FORM);
+    setModalOpen(true);
+  };
+
+  const openEdit = (b: Branch) => {
+    setEditItem(b);
+    setForm({ name: b.name, location: b.location, phone: b.phone || '' });
+    setModalOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.location.trim()) return;
+    const payload = {
+      name: form.name.trim(),
+      location: form.location.trim(),
+      phone: form.phone.trim() || undefined,
+    };
+    if (editItem) {
+      updateMut.mutate(
+        { id: editItem.id, ...payload },
+        {
+          onSuccess: () => {
+            toast.success(t('branches.updated'));
+            setModalOpen(false);
+          },
+          onError: (err) => toast.error(extractErrorMessage(err)),
+        },
+      );
+    } else {
+      createMut.mutate(payload, {
+        onSuccess: () => {
+          toast.success(t('branches.added'));
+          setModalOpen(false);
+        },
+        onError: (err) => toast.error(extractErrorMessage(err)),
+      });
+    }
+  };
+
+  const handleDelete = () => {
+    if (!deleteId) return;
+    deleteMut.mutate(deleteId, {
+      onSuccess: () => {
+        toast.success(t('branches.deleted'));
+        setDeleteId(null);
+      },
+      onError: (err) => toast.error(extractErrorMessage(err)),
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -22,7 +109,7 @@ const BranchesPage = () => {
             {t('branches.subtitle')}
           </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={openCreate}>
           <Plus className="h-4 w-4" /> {t('branches.add')}
         </Button>
       </div>
@@ -40,6 +127,7 @@ const BranchesPage = () => {
                   icon={Building2}
                   title={t('branches.not_found')}
                   description={t('branches.not_found_desc')}
+                  action={{ label: t('branches.add'), onClick: openCreate }}
                 />
               </div>
             ) : (
@@ -54,15 +142,23 @@ const BranchesPage = () => {
                         <MapPin className="h-3.5 w-3.5" />
                         {b.location}
                       </div>
+                      {b.phone && (
+                        <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <Phone className="h-3.5 w-3.5" />
+                          {b.phone}
+                        </div>
+                      )}
                     </div>
                     <div className="flex gap-1">
                       <button
+                        onClick={() => openEdit(b)}
                         aria-label={t('common.edit')}
                         className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
+                        onClick={() => setDeleteId(b.id)}
                         aria-label={t('common.delete')}
                         className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                       >
@@ -109,6 +205,10 @@ const BranchesPage = () => {
               fields={[
                 { label: t('branches.students'), value: b.active_students },
                 {
+                  label: t('common.phone'),
+                  value: b.phone || t('common.na'),
+                },
+                {
                   label: t('branches.created'),
                   value: formatDate(b.created_at),
                 },
@@ -120,12 +220,14 @@ const BranchesPage = () => {
               actions={
                 <>
                   <button
+                    onClick={() => openEdit(b)}
                     aria-label={t('common.edit')}
                     className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button
+                    onClick={() => setDeleteId(b.id)}
                     aria-label={t('common.delete')}
                     className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                   >
@@ -140,9 +242,80 @@ const BranchesPage = () => {
             icon={Building2}
             title={t('branches.not_found')}
             description={t('branches.not_found_desc')}
+            action={{ label: t('branches.add'), onClick: openCreate }}
           />
         )}
       </div>
+
+      <Dialog open={modalOpen} onOpenChange={(o) => !o && setModalOpen(false)}>
+        <DialogContent className="max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-heading">
+              {editItem ? t('branches.edit') : t('branches.add')}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t('branches.name')} *</Label>
+              <Input
+                value={form.name}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
+                required
+                className="bg-secondary border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('branches.address')} *</Label>
+              <Input
+                value={form.location}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, location: e.target.value }))
+                }
+                required
+                placeholder={t('branches.address')}
+                className="bg-secondary border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('common.phone')}</Label>
+              <Input
+                value={form.phone}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, phone: e.target.value }))
+                }
+                placeholder="+998..."
+                className="bg-secondary border-border"
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setModalOpen(false)}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="submit"
+                disabled={createMut.isPending || updateMut.isPending}
+              >
+                {createMut.isPending || updateMut.isPending
+                  ? t('common.saving')
+                  : t('common.save')}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        loading={deleteMut.isPending}
+      />
     </div>
   );
 };

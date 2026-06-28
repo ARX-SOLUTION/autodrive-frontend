@@ -1,4 +1,11 @@
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
 interface ConfirmDialogProps {
@@ -25,7 +32,9 @@ export const ConfirmDialog = ({
         <DialogDescription>{description}</DialogDescription>
       </DialogHeader>
       <DialogFooter className="gap-2">
-        <Button variant="outline" onClick={onClose}>Bekor qilish</Button>
+        <Button variant="outline" onClick={onClose}>
+          Bekor qilish
+        </Button>
         <Button variant="destructive" onClick={onConfirm} disabled={loading}>
           {loading ? "O'chirilmoqda..." : "O'chirish"}
         </Button>
