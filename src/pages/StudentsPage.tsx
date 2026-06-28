@@ -116,7 +116,7 @@ const StudentsPage = () => {
   const setSearch = (v: string) => setParam('q', v || undefined);
 
   const rawDateFrom = searchParams.get('date_from');
-  const dateFrom = React.useMemo(
+  const dateFrom = useMemo(
     () => (rawDateFrom ? new Date(rawDateFrom) : undefined),
     [rawDateFrom],
   );
@@ -124,7 +124,7 @@ const StudentsPage = () => {
     setParam('date_from', v ? v.toISOString().slice(0, 10) : undefined);
 
   const rawDateTo = searchParams.get('date_to');
-  const dateTo = React.useMemo(
+  const dateTo = useMemo(
     () => (rawDateTo ? new Date(rawDateTo) : undefined),
     [rawDateTo],
   );
