@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Props {
   currentPage: number;
@@ -7,20 +7,28 @@ interface Props {
   onPageChange: (page: number) => void;
 }
 
-const PaginationControls = ({ currentPage, totalPages, onPageChange }: Props) => {
+const PaginationControls = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: Props) => {
   if (totalPages <= 1) return null;
 
   const getPageNumbers = () => {
-    const pages: (number | "...")[] = [];
+    const pages: (number | '...')[] = [];
     if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
       pages.push(1);
-      if (currentPage > 3) pages.push("...");
-      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+      if (currentPage > 3) pages.push('...');
+      for (
+        let i = Math.max(2, currentPage - 1);
+        i <= Math.min(totalPages - 1, currentPage + 1);
+        i++
+      ) {
         pages.push(i);
       }
-      if (currentPage < totalPages - 2) pages.push("...");
+      if (currentPage < totalPages - 2) pages.push('...');
       pages.push(totalPages);
     }
     return pages;
@@ -39,19 +47,21 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange }: Props) =>
         Oldingi
       </Button>
       {getPageNumbers().map((page, i) =>
-        page === "..." ? (
-          <span key={`e${i}`} className="px-2 text-muted-foreground">...</span>
+        page === '...' ? (
+          <span key={`e${i}`} className="px-2 text-muted-foreground">
+            ...
+          </span>
         ) : (
           <Button
             key={page}
-            variant={page === currentPage ? "default" : "outline"}
+            variant={page === currentPage ? 'default' : 'outline'}
             size="sm"
             onClick={() => onPageChange(page)}
-            className={page === currentPage ? "" : "bg-secondary border-border"}
+            className={page === currentPage ? '' : 'bg-secondary border-border'}
           >
             {page}
           </Button>
-        )
+        ),
       )}
       <Button
         variant="outline"

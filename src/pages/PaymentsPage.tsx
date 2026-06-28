@@ -130,8 +130,26 @@ const PaymentsPage = () => {
   const hasDateFilter = !!dateFrom || !!dateTo;
   const { data: snapshot } = usePaymentSnapshot(branchId);
   const { data: branches } = useBranches();
-  const { data: tezkorStudents } = useStudents('tezkor', branchId, 1, 500);
-  const { data: avtoStudents } = useStudents('avto_maktab', branchId, 1, 500);
+  const { data: tezkorStudents } = useStudents(
+    'tezkor',
+    branchId,
+    1,
+    500,
+    undefined,
+    {
+      enabled: modalOpen,
+    },
+  );
+  const { data: avtoStudents } = useStudents(
+    'avto_maktab',
+    branchId,
+    1,
+    500,
+    undefined,
+    {
+      enabled: modalOpen,
+    },
+  );
   const allStudents = [...(tezkorStudents ?? []), ...(avtoStudents ?? [])];
   const createPayment = useCreatePayment();
 
@@ -143,7 +161,7 @@ const PaymentsPage = () => {
         icon: <Download className="h-4 w-4" />,
       });
     }
-  }, []);
+  }, [isOwner, t]);
 
   // Client-side filter for search/status/method (date is server-side)
   const filtered = useMemo(
@@ -186,27 +204,29 @@ const PaymentsPage = () => {
     }
   };
 
-  const sorted = [...filtered].sort((a, b) => {
-    const va = a[sortField as keyof typeof a];
-    const vb = b[sortField as keyof typeof b];
-    if (va == null && vb == null) return 0;
-    if (va == null) return 1;
-    if (vb == null) return -1;
-    if (typeof va === 'string' && typeof vb === 'string') {
-      return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-    }
-    return sortDir === 'asc'
-      ? va < vb
-        ? -1
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      const va = a[sortField as keyof typeof a];
+      const vb = b[sortField as keyof typeof b];
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (typeof va === 'string' && typeof vb === 'string') {
+        return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+      }
+      return sortDir === 'asc'
+        ? va < vb
+          ? -1
+          : va > vb
+            ? 1
+            : 0
         : va > vb
-          ? 1
-          : 0
-      : va > vb
-        ? -1
-        : va < vb
-          ? 1
-          : 0;
-  });
+          ? -1
+          : va < vb
+            ? 1
+            : 0;
+    });
+  }, [filtered, sortField, sortDir]);
 
   const { currentPage, totalPages, paginatedItems, setCurrentPage } =
     usePagination(sorted);

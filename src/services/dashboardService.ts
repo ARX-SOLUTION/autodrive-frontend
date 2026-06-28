@@ -18,10 +18,18 @@ export interface DashboardAnalytics {
   result_stats: { oqimoqda: number; topshirdi: number; yiqildi: number };
   monthly_enrollment: { month: string; tezkor: number; avto_maktab: number }[];
   monthly_revenue: { month: string; amount: number }[];
-  branch_stats: { branch: string; students: number; revenue: number; debt: number }[];
+  branch_stats: {
+    branch: string;
+    students: number;
+    revenue: number;
+    debt: number;
+  }[];
 }
 
-export const useDashboardAnalytics = (branchId?: string, courseType?: CourseType) => {
+export const useDashboardAnalytics = (
+  branchId?: string,
+  courseType?: CourseType,
+) => {
   const role = useAuthStore((s) => s.user?.role);
   const isOwnerOrDev = role === 'owner' || role === 'dev';
   return useQuery<DashboardAnalytics>({
@@ -31,6 +39,24 @@ export const useDashboardAnalytics = (branchId?: string, courseType?: CourseType
       const { data: res } = await axiosInstance.get('/dashboard/analytics', {
         params: { branch_id: branchId, course_type: courseType },
       });
+      return res?.data || res;
+    },
+  });
+};
+
+export interface TeacherAnalytics {
+  active_groups: number;
+  total_students: number;
+  result_stats: { oqimoqda: number; topshirdi: number; yiqildi: number };
+}
+
+export const useTeacherAnalytics = () => {
+  return useQuery<TeacherAnalytics>({
+    queryKey: ['dashboard', 'teacher-analytics'],
+    queryFn: async () => {
+      const { data: res } = await axiosInstance.get(
+        '/dashboard/teacher-analytics',
+      );
       return res?.data || res;
     },
   });

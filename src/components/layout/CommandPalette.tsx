@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+/* eslint-disable react-refresh/only-export-components */
+
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
   Building2,
@@ -12,7 +14,7 @@ import {
   Layers,
   UserCog,
   ShieldCheck,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   CommandDialog,
   CommandEmpty,
@@ -20,8 +22,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import { useAuthStore } from "@/store/authStore";
+} from '@/components/ui/command';
+import { useAuthStore } from '@/store/authStore';
 
 type NavEntry = {
   labelKey: string;
@@ -31,16 +33,26 @@ type NavEntry = {
 };
 
 const NAV_ENTRIES: NavEntry[] = [
-  { labelKey: "nav.dashboard", path: "/dashboard", icon: LayoutDashboard },
-  { labelKey: "nav.branches", path: "/filiallar", icon: Building2, ownerOnly: true },
-  { labelKey: "nav.groups", path: "/guruhlar", icon: Layers },
-  { labelKey: "nav.students", path: "/talabalar", icon: GraduationCap },
-  { labelKey: "nav.payments", path: "/tolovlar", icon: CreditCard },
-  { labelKey: "nav.operators", path: "/operatorlar", icon: Headphones },
-  { labelKey: "nav.teachers", path: "/oqituvchilar", icon: Users },
-  { labelKey: "nav.users", path: "/foydalanuvchilar", icon: UserCog, ownerOnly: true },
-  { labelKey: "nav.audit", path: "/audit", icon: ShieldCheck, ownerOnly: true },
-  { labelKey: "nav.profile", path: "/profile", icon: User },
+  { labelKey: 'nav.dashboard', path: '/dashboard', icon: LayoutDashboard },
+  {
+    labelKey: 'nav.branches',
+    path: '/filiallar',
+    icon: Building2,
+    ownerOnly: true,
+  },
+  { labelKey: 'nav.groups', path: '/guruhlar', icon: Layers },
+  { labelKey: 'nav.students', path: '/talabalar', icon: GraduationCap },
+  { labelKey: 'nav.payments', path: '/tolovlar', icon: CreditCard },
+  { labelKey: 'nav.operators', path: '/operatorlar', icon: Headphones },
+  { labelKey: 'nav.teachers', path: '/oqituvchilar', icon: Users },
+  {
+    labelKey: 'nav.users',
+    path: '/foydalanuvchilar',
+    icon: UserCog,
+    ownerOnly: true,
+  },
+  { labelKey: 'nav.audit', path: '/audit', icon: ShieldCheck, ownerOnly: true },
+  { labelKey: 'nav.profile', path: '/profile', icon: User },
 ];
 
 interface CommandPaletteProps {
@@ -62,10 +74,18 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder={t("actions.search_placeholder", "Sahifa qidirish...") as string} />
+      <CommandInput
+        placeholder={
+          t('actions.search_placeholder', 'Sahifa qidirish...') as string
+        }
+      />
       <CommandList>
-        <CommandEmpty>{t("actions.search_empty", "Hech narsa topilmadi") as string}</CommandEmpty>
-        <CommandGroup heading={t("actions.search_pages", "Sahifalar") as string}>
+        <CommandEmpty>
+          {t('actions.search_empty', 'Hech narsa topilmadi') as string}
+        </CommandEmpty>
+        <CommandGroup
+          heading={t('actions.search_pages', 'Sahifalar') as string}
+        >
           {visibleNav.map((n) => {
             const label = t(n.labelKey);
             return (
@@ -90,13 +110,13 @@ export const useCommandPalette = () => {
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setOpen((o) => !o);
       }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, []);
   return { open, setOpen };
 };

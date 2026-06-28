@@ -642,7 +642,7 @@ const GroupsPage = () => {
                       </td>
                     </tr>
                   ))
-                ) : groupData?.active_students === 0 ? (
+                ) : !groupData?.students?.length ? (
                   <tr>
                     <td
                       colSpan={15}

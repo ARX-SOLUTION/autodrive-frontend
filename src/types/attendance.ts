@@ -42,3 +42,10 @@ export interface BatchAttendancePayload {
     notes?: string;
   }[];
 }
+
+export interface PaginatedLessons {
+  data: Lesson[];
+  total: number;
+  page: number;
+  limit: number;
+}

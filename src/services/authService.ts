@@ -1,11 +1,12 @@
-import { useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axiosInstance from "@/api/axiosInstance";
-import { useAuthStore } from "@/store/authStore";
-import { AuthResponse, LoginCredentials, User } from "@/types/user";
+import { useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { AxiosError } from 'axios';
+import axiosInstance from '@/api/axiosInstance';
+import { useAuthStore } from '@/store/authStore';
+import { AuthResponse, LoginCredentials, User } from '@/types/user';
 
 const loginApi = async (creds: LoginCredentials): Promise<AuthResponse> => {
-  const { data } = await axiosInstance.post("/auth/login", creds);
+  const { data } = await axiosInstance.post('/auth/login', creds);
   return data.data;
 };
 
@@ -31,9 +32,9 @@ export const useRestoreSession = () => {
   const logout = useAuthStore((s) => s.logout);
 
   const query = useQuery<User>({
-    queryKey: ["me"],
+    queryKey: ['me'],
     queryFn: async () => {
-      const { data } = await axiosInstance.get("/auth/me");
+      const { data } = await axiosInstance.get('/auth/me');
       return data.data;
     },
     enabled: isAuthenticated && !token,
@@ -41,11 +42,11 @@ export const useRestoreSession = () => {
   });
 
   useEffect(() => {
-    if (query.data) setAuth("cookie", query.data);
+    if (query.data) setAuth('cookie', query.data);
   }, [query.data, setAuth]);
 
   useEffect(() => {
-    if (query.error) logout();
+    if ((query.error as AxiosError)?.response?.status === 401) logout();
   }, [query.error, logout]);
 
   return query;
@@ -55,11 +56,11 @@ export const useLogout = () => {
   const logout = useAuthStore((s) => s.logout);
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => axiosInstance.post("/auth/logout"),
+    mutationFn: () => axiosInstance.post('/auth/logout'),
     onSettled: () => {
       logout();
       queryClient.clear();
-      window.location.href = "/login";
+      window.location.href = '/login';
     },
   });
 };

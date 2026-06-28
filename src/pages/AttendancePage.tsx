@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
+import PaginationControls from '@/components/ui/PaginationControls';
 import {
   useLessons,
   useLessonById,
@@ -57,7 +58,13 @@ const statusColors: Record<AttendanceStatus, string> = {
 
 const AttendancePage = () => {
   const { t } = useTranslation();
-  const { data: lessons, isLoading } = useLessons();
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 50;
+  const { data: lessonsData, isLoading } = useLessons(currentPage, pageSize);
+  const lessons = lessonsData?.data || [];
+  const totalPages = lessonsData?.total
+    ? Math.ceil(lessonsData.total / pageSize)
+    : Math.max(1, lessons.length < pageSize ? currentPage : currentPage + 1);
   const { data: groups } = useGroups();
   const createLesson = useCreateLesson();
   const batchAttendance = useBatchAttendance();
@@ -310,6 +317,11 @@ const AttendancePage = () => {
               )}
             </div>
           ))}
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       )}
 
