@@ -149,6 +149,7 @@
     "updated": "Filial yangilandi",
     "deleted": "Filial o'chirildi",
     "subtitle": "Barcha filiallarni boshqarish",
+    "subtitle_readonly": "Filial ma'lumotlari (faqat ko'rish)",
     "manager": "Menejer",
     "students": "Talabalar",
     "created": "Yaratilgan",
