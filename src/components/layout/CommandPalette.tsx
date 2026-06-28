@@ -30,6 +30,7 @@ type NavEntry = {
   path: string;
   icon: typeof LayoutDashboard;
   ownerOnly?: boolean;
+  branchAccess?: boolean;
 };
 
 const NAV_ENTRIES: NavEntry[] = [
@@ -38,7 +39,7 @@ const NAV_ENTRIES: NavEntry[] = [
     labelKey: 'nav.branches',
     path: '/filiallar',
     icon: Building2,
-    ownerOnly: true,
+    branchAccess: true,
   },
   { labelKey: 'nav.groups', path: '/guruhlar', icon: Layers },
   { labelKey: 'nav.students', path: '/talabalar', icon: GraduationCap },
@@ -64,8 +65,13 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const isOwner = useAuthStore((s) => s.isOwner());
+  const canViewBranches = useAuthStore((s) => s.canViewBranches());
 
-  const visibleNav = NAV_ENTRIES.filter((n) => !n.ownerOnly || isOwner);
+  const visibleNav = NAV_ENTRIES.filter((n) => {
+    if (n.branchAccess) return canViewBranches;
+    if (n.ownerOnly) return isOwner;
+    return true;
+  });
 
   const go = (path: string) => {
     onOpenChange(false);

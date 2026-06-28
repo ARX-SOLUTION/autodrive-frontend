@@ -149,6 +149,7 @@
     "updated": "Branch updated",
     "deleted": "Branch deleted",
     "subtitle": "Manage all branches",
+    "subtitle_readonly": "Branch information (read-only)",
     "manager": "Manager",
     "students": "Students",
     "created": "Created",

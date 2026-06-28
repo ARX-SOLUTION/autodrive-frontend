@@ -24,6 +24,7 @@ import { Plus, Pencil, Trash2, MapPin, Building2, Phone } from 'lucide-react';
 import { formatDate } from '@/pages/StudentsPage';
 import { extractErrorMessage } from '@/lib/errors';
 import { Branch } from '@/types/branch';
+import { useAuthStore } from '@/store/authStore';
 
 interface FormState {
   name: string;
@@ -35,6 +36,7 @@ const EMPTY_FORM: FormState = { name: '', location: '', phone: '' };
 
 const BranchesPage = () => {
   const { t } = useTranslation();
+  const canManageBranches = useAuthStore((s) => s.canManageBranches);
   const { data: branches, isLoading } = useBranches();
   const createMut = useCreateBranch();
   const updateMut = useUpdateBranch();
@@ -106,12 +108,16 @@ const BranchesPage = () => {
             {t('branches.title')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {t('branches.subtitle')}
+            {canManageBranches()
+              ? t('branches.subtitle')
+              : t('branches.subtitle_readonly')}
           </p>
         </div>
-        <Button className="gap-2" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> {t('branches.add')}
-        </Button>
+        {canManageBranches() && (
+          <Button className="gap-2" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> {t('branches.add')}
+          </Button>
+        )}
       </div>
 
       <div className="hidden md:block">
@@ -127,7 +133,11 @@ const BranchesPage = () => {
                   icon={Building2}
                   title={t('branches.not_found')}
                   description={t('branches.not_found_desc')}
-                  action={{ label: t('branches.add'), onClick: openCreate }}
+                  action={
+                    canManageBranches()
+                      ? { label: t('branches.add'), onClick: openCreate }
+                      : undefined
+                  }
                 />
               </div>
             ) : (
@@ -150,20 +160,24 @@ const BranchesPage = () => {
                       )}
                     </div>
                     <div className="flex gap-1">
-                      <button
-                        onClick={() => openEdit(b)}
-                        aria-label={t('common.edit')}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteId(b.id)}
-                        aria-label={t('common.delete')}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      {canManageBranches() && (
+                        <>
+                          <button
+                            onClick={() => openEdit(b)}
+                            aria-label={t('common.edit')}
+                            className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteId(b.id)}
+                            aria-label={t('common.delete')}
+                            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="mt-4 flex items-center gap-6 text-sm">
@@ -218,22 +232,24 @@ const BranchesPage = () => {
                 },
               ]}
               actions={
-                <>
-                  <button
-                    onClick={() => openEdit(b)}
-                    aria-label={t('common.edit')}
-                    className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setDeleteId(b.id)}
-                    aria-label={t('common.delete')}
-                    className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </>
+                canManageBranches() ? (
+                  <>
+                    <button
+                      onClick={() => openEdit(b)}
+                      aria-label={t('common.edit')}
+                      className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setDeleteId(b.id)}
+                      aria-label={t('common.delete')}
+                      className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                ) : undefined
               }
             />
           ))
@@ -242,7 +258,11 @@ const BranchesPage = () => {
             icon={Building2}
             title={t('branches.not_found')}
             description={t('branches.not_found_desc')}
-            action={{ label: t('branches.add'), onClick: openCreate }}
+            action={
+              canManageBranches()
+                ? { label: t('branches.add'), onClick: openCreate }
+                : undefined
+            }
           />
         )}
       </div>

@@ -9,6 +9,13 @@ import { Branch } from '@/types/branch';
 const mockMutate = vi.fn();
 let mockBranchesData: Branch[] = [];
 
+vi.mock('@/store/authStore', () => ({
+  useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
+    selector({
+      canManageBranches: () => true,
+    }),
+}));
+
 vi.mock('@/services/branchService', () => {
   return {
     useBranches: () => ({

@@ -1,7 +1,7 @@
-import { Link, useLocation } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { useAuthStore } from "@/store/authStore";
-import { useLogout } from "@/services/authService";
+import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '@/store/authStore';
+import { useLogout } from '@/services/authService';
 import {
   LayoutDashboard,
   Building2,
@@ -17,33 +17,44 @@ import {
   ShieldCheck,
   Calendar,
   ClipboardCheck,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useState } from "react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { ThemeToggle } from "./ThemeToggle";
-import { LanguageSwitcher } from "./LanguageSwitcher";
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useState } from 'react';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { ThemeToggle } from './ThemeToggle';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 type NavItem = {
   path: string;
   labelKey: string;
   icon: typeof LayoutDashboard;
-  ownerOnly: boolean;
+  ownerOnly?: boolean;
+  branchAccess?: boolean;
 };
 
 const navItems: NavItem[] = [
-  { path: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, ownerOnly: false },
-  { path: "/filiallar", labelKey: "nav.branches", icon: Building2, ownerOnly: true },
-  { path: "/jadval", labelKey: "nav.schedule", icon: Calendar, ownerOnly: false },
-  { path: "/davomat", labelKey: "nav.attendance", icon: ClipboardCheck, ownerOnly: false },
-  { path: "/guruhlar", labelKey: "nav.groups", icon: Layers, ownerOnly: false },
-  { path: "/talabalar", labelKey: "nav.students", icon: GraduationCap, ownerOnly: false },
-  { path: "/tolovlar", labelKey: "nav.payments", icon: CreditCard, ownerOnly: false },
-  { path: "/operatorlar", labelKey: "nav.operators", icon: Headphones, ownerOnly: false },
-  { path: "/oqituvchilar", labelKey: "nav.teachers", icon: Users, ownerOnly: false },
-  { path: "/foydalanuvchilar", labelKey: "nav.users", icon: UserCog, ownerOnly: true },
-  { path: "/audit", labelKey: "nav.audit", icon: ShieldCheck, ownerOnly: true },
-  { path: "/profile", labelKey: "nav.profile", icon: User, ownerOnly: false },
+  { path: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+  {
+    path: '/filiallar',
+    labelKey: 'nav.branches',
+    icon: Building2,
+    branchAccess: true,
+  },
+  { path: '/jadval', labelKey: 'nav.schedule', icon: Calendar },
+  { path: '/davomat', labelKey: 'nav.attendance', icon: ClipboardCheck },
+  { path: '/guruhlar', labelKey: 'nav.groups', icon: Layers },
+  { path: '/talabalar', labelKey: 'nav.students', icon: GraduationCap },
+  { path: '/tolovlar', labelKey: 'nav.payments', icon: CreditCard },
+  { path: '/operatorlar', labelKey: 'nav.operators', icon: Headphones },
+  { path: '/oqituvchilar', labelKey: 'nav.teachers', icon: Users },
+  {
+    path: '/foydalanuvchilar',
+    labelKey: 'nav.users',
+    icon: UserCog,
+    ownerOnly: true,
+  },
+  { path: '/audit', labelKey: 'nav.audit', icon: ShieldCheck, ownerOnly: true },
+  { path: '/profile', labelKey: 'nav.profile', icon: User },
 ];
 
 interface SidebarContentProps {
@@ -57,10 +68,17 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
   const user = useAuthStore((s) => s.user);
 
   const isOwner = useAuthStore((s) => s.isOwner);
+  const canViewBranches = useAuthStore((s) => s.canViewBranches);
   const logoutMutation = useLogout();
-  const filteredItems = navItems.filter((item) => !item.ownerOnly || isOwner());
+  const canSee = (item: NavItem) => {
+    if (item.branchAccess) return canViewBranches();
+    if (item.ownerOnly) return isOwner();
+    return true;
+  };
+  const filteredItems = navItems.filter(canSee);
 
-  const roleLabel = user?.role === "owner" ? t("roles.owner") : user?.branch_name;
+  const roleLabel =
+    user?.role === 'owner' ? t('roles.owner') : user?.branch_name;
 
   return (
     <>
@@ -70,7 +88,7 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
         </div>
         {!collapsed && (
           <span className="font-heading text-lg font-bold text-foreground">
-            {t("app.title")}
+            {t('app.title')}
           </span>
         )}
       </div>
@@ -84,13 +102,13 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
               to={item.path}
               onClick={onNavigate}
               className={cn(
-                "flex items-center text-sm font-medium transition-colors rounded-lg",
+                'flex items-center text-sm font-medium transition-colors rounded-lg',
                 collapsed
-                  ? "justify-center mx-auto w-10 h-10"
-                  : "gap-3 px-3 py-2.5",
+                  ? 'justify-center mx-auto w-10 h-10'
+                  : 'gap-3 px-3 py-2.5',
                 active
-                  ? "bg-primary/10 text-primary neon-glow-sm"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  ? 'bg-primary/10 text-primary neon-glow-sm'
+                  : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
               )}
             >
               <item.icon className="h-[18px] w-[18px] shrink-0" />
@@ -109,21 +127,33 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
             <p className="text-xs text-muted-foreground">{roleLabel}</p>
           </div>
         )}
-        <div className={cn("flex items-center", collapsed ? "flex-col gap-2 justify-center" : "flex-wrap justify-between gap-1 px-1")}>
+        <div
+          className={cn(
+            'flex items-center',
+            collapsed
+              ? 'flex-col gap-2 justify-center'
+              : 'flex-wrap justify-between gap-1 px-1',
+          )}
+        >
           <button
             onClick={() => {
               onNavigate?.();
               logoutMutation.mutate();
             }}
             className={cn(
-              "flex items-center rounded-lg text-sm text-muted-foreground hover:text-destructive transition-colors",
-              collapsed ? "justify-center w-10 h-10" : "gap-2 px-2 py-2",
+              'flex items-center rounded-lg text-sm text-muted-foreground hover:text-destructive transition-colors',
+              collapsed ? 'justify-center w-10 h-10' : 'gap-2 px-2 py-2',
             )}
           >
             <LogOut className="h-4 w-4" />
-            {!collapsed && <span>{t("actions.logout")}</span>}
+            {!collapsed && <span>{t('actions.logout')}</span>}
           </button>
-          <div className={cn("flex items-center", collapsed ? "flex-col gap-1" : "gap-1")}>
+          <div
+            className={cn(
+              'flex items-center',
+              collapsed ? 'flex-col gap-1' : 'gap-1',
+            )}
+          >
             <ThemeToggle collapsed={collapsed} />
             <LanguageSwitcher collapsed={collapsed} />
           </div>
@@ -140,26 +170,34 @@ interface SidebarProps {
   onMobileOpenChange: (open: boolean) => void;
 }
 
-export const Sidebar = ({ collapsed, onCollapsedChange, mobileOpen, onMobileOpenChange }: SidebarProps) => {
+export const Sidebar = ({
+  collapsed,
+  onCollapsedChange,
+  mobileOpen,
+  onMobileOpenChange,
+}: SidebarProps) => {
   const { t } = useTranslation();
 
   return (
     <>
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-glass-border-light backdrop-blur-2xl transition-all duration-300 md:flex",
-          collapsed ? "w-[68px]" : "w-60",
+          'fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-glass-border-light backdrop-blur-2xl transition-all duration-300 md:flex',
+          collapsed ? 'w-[68px]' : 'w-60',
         )}
         style={{ background: 'hsl(var(--sidebar-background))' }}
       >
         <SidebarContent collapsed={collapsed} />
         <button
           onClick={() => onCollapsedChange(!collapsed)}
-          aria-label={t("actions.sidebar")}
+          aria-label={t('actions.sidebar')}
           className="absolute -right-3 top-20 z-10 rounded-full border border-border bg-background p-1 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
         >
           <ChevronLeft
-            className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")}
+            className={cn(
+              'h-4 w-4 transition-transform',
+              collapsed && 'rotate-180',
+            )}
           />
         </button>
       </aside>
@@ -170,7 +208,10 @@ export const Sidebar = ({ collapsed, onCollapsedChange, mobileOpen, onMobileOpen
           className="w-72 bg-sidebar p-0 [&>button]:text-sidebar-foreground"
         >
           <div className="flex h-full flex-col">
-            <SidebarContent collapsed={false} onNavigate={() => onMobileOpenChange(false)} />
+            <SidebarContent
+              collapsed={false}
+              onNavigate={() => onMobileOpenChange(false)}
+            />
           </div>
         </SheetContent>
       </Sheet>

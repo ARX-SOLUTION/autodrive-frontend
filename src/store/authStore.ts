@@ -10,6 +10,8 @@ interface AuthState {
   setAuth: (token: string, user: User) => void;
   logout: () => void;
   isOwner: () => boolean;
+  canViewBranches: () => boolean;
+  canManageBranches: () => boolean;
   setHasHydrated: (state: boolean) => void;
 }
 
@@ -20,9 +22,21 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       hasHydrated: false,
-      setAuth: (token, user) => set({ token, user, isAuthenticated: true, hasHydrated: true }),
-      logout: () => set({ token: null, user: null, isAuthenticated: false, hasHydrated: true }),
+      setAuth: (token, user) =>
+        set({ token, user, isAuthenticated: true, hasHydrated: true }),
+      logout: () =>
+        set({
+          token: null,
+          user: null,
+          isAuthenticated: false,
+          hasHydrated: true,
+        }),
       isOwner: () => get().user?.role === 'owner',
+      canViewBranches: () => {
+        const role = get().user?.role;
+        return role === 'owner' || role === 'manager';
+      },
+      canManageBranches: () => get().user?.role === 'owner',
       setHasHydrated: (state) => set({ hasHydrated: state }),
     }),
     {
@@ -40,6 +54,6 @@ export const useAuthStore = create<AuthState>()(
           state.setHasHydrated(true);
         }
       },
-    }
-  )
+    },
+  ),
 );
