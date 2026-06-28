@@ -25,3 +25,6 @@ dist-ssr
 
 # Project-local Codex skills
 .codex/
+
+*storybook.log
+storybook-static/
