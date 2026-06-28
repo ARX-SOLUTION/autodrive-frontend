@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -21,24 +22,32 @@ export const ConfirmDialog = ({
   open,
   onClose,
   onConfirm,
-  title = "O'chirishni tasdiqlang",
-  description = "Bu amalni ortga qaytarib bo'lmaydi. Davom etishni xohlaysizmi?",
+  title,
+  description,
   loading,
-}: ConfirmDialogProps) => (
-  <Dialog open={open} onOpenChange={onClose}>
-    <DialogContent className="glass-card border-border sm:max-w-md">
-      <DialogHeader>
-        <DialogTitle className="font-heading">{title}</DialogTitle>
-        <DialogDescription>{description}</DialogDescription>
-      </DialogHeader>
-      <DialogFooter className="gap-2">
-        <Button variant="outline" onClick={onClose}>
-          Bekor qilish
-        </Button>
-        <Button variant="destructive" onClick={onConfirm} disabled={loading}>
-          {loading ? "O'chirilmoqda..." : "O'chirish"}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-);
+}: ConfirmDialogProps) => {
+  const { t } = useTranslation();
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="glass-card border-border sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-heading">
+            {title ?? t('common.confirm_delete_title')}
+          </DialogTitle>
+          <DialogDescription>
+            {description ?? t('common.confirm_delete_desc')}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button variant="destructive" onClick={onConfirm} disabled={loading}>
+            {loading ? t('common.deleting') : t('common.delete')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};

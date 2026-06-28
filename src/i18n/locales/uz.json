@@ -57,7 +57,9 @@
     "success": "Muvaffaqiyatli",
     "not_found": "Topilmadi",
     "no_data": "Ma'lumot topilmadi",
-    "confirm_delete": "O'chirishni tasdiqlaysizmi?",
+    "confirm_delete": "Confirm deletion?",
+    "confirm_delete_title": "Confirm deletion",
+    "confirm_delete_desc": "This action cannot be undone. Do you want to continue?",
     "select_placeholder": "Tanlang",
     "all_branches": "Barcha filiallar",
     "all_groups": "Barcha guruhlar",
@@ -95,7 +97,9 @@
     "submit": "Kirish",
     "submitting": "Kirilmoqda...",
     "success": "Tizimga muvaffaqiyatli kirdingiz!",
-    "error": "Email yoki parol noto'g'ri"
+    "error": "Email yoki parol noto'g'ri",
+    "rate_limit": "Ko'p urinishlar. Iltimos 1 daqiqa kuting.",
+    "network_error": "Server bilan ulanish yo'q."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -238,7 +242,31 @@
       "debt": "Qarz",
       "status": "Holat",
       "date": "Sana"
-    }
+    },
+    "tab_info": "Ma'lumotlar",
+    "tab_exams": "Imtihonlar",
+    "extra_payment": "Qo'shimcha to'lov",
+    "payment_amount": "To'lov miqdori",
+    "extra_payment_placeholder": "0 (yangi to'lov qo'shish uchun)",
+    "current_debt": "Joriy qarzdorlik",
+    "operator_optional": "Operatorni tanlang (ixtiyoriy)",
+    "notes_placeholder": "Izoh yozing...",
+    "has_document": "Hujjat mavjud",
+    "group_required": "Guruh",
+    "validation_required": "Talab qilinadi",
+    "validation_phone": "Telefon raqami noto'g'ri",
+    "validation_branch": "Filial tanlanmagan! Iltimos filial tanlang.",
+    "validation_group_required": "Avto maktab kursi uchun Guruh tanlash shart!"
+  },
+  "exams": {
+    "add_title": "Yangi natija qo'shish",
+    "exam_type": "Imtihon turi",
+    "theory": "Nazariy (THEORY)",
+    "practice": "Amaliy (PRACTICE)",
+    "score_optional": "Ball (ixtiyoriy)",
+    "passed": "O'tdi (Passed)",
+    "added": "Natija qo'shildi",
+    "date_required": "Sana talab qilinadi"
   },
   "payments": {
     "title": "To'lovlar",

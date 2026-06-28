@@ -58,6 +58,8 @@
     "not_found": "Not found",
     "no_data": "No data found",
     "confirm_delete": "Confirm deletion?",
+    "confirm_delete_title": "Confirm deletion",
+    "confirm_delete_desc": "This action cannot be undone. Do you want to continue?",
     "select_placeholder": "Select",
     "all_branches": "All branches",
     "all_groups": "All groups",
@@ -95,7 +97,9 @@
     "submit": "Sign in",
     "submitting": "Signing in...",
     "success": "Successfully signed in!",
-    "error": "Invalid email or password"
+    "error": "Invalid email or password",
+    "rate_limit": "Too many attempts. Please wait 1 minute.",
+    "network_error": "Unable to connect to the server."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -238,7 +242,31 @@
       "debt": "Debt",
       "status": "Status",
       "date": "Date"
-    }
+    },
+    "tab_info": "Details",
+    "tab_exams": "Exams",
+    "extra_payment": "Additional payment",
+    "payment_amount": "Payment amount",
+    "extra_payment_placeholder": "0 (to add a new payment)",
+    "current_debt": "Current debt",
+    "operator_optional": "Select operator (optional)",
+    "notes_placeholder": "Write a note...",
+    "has_document": "Document available",
+    "group_required": "Group",
+    "validation_required": "Required",
+    "validation_phone": "Invalid phone number",
+    "validation_branch": "Branch not selected. Please select a branch.",
+    "validation_group_required": "Group is required for driving school course"
+  },
+  "exams": {
+    "add_title": "Add new result",
+    "exam_type": "Exam type",
+    "theory": "Theory (THEORY)",
+    "practice": "Practice (PRACTICE)",
+    "score_optional": "Score (optional)",
+    "passed": "Passed",
+    "added": "Result added",
+    "date_required": "Date is required"
   },
   "payments": {
     "title": "Payments",

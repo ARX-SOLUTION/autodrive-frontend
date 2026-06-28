@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -60,22 +61,22 @@ interface PaymentModalProps {
   onClose: () => void;
   onSubmit: (data: CreatePaymentPayload) => void;
   loading?: boolean;
-  students: Student[]; // talabalar ro'yxati
+  students: Student[]; // student list for the combobox
 }
 
 const paymentMethodLabels: Record<PaymentMethod, string> = {
-  naqd: 'Naqd',
-  karta: 'Karta',
-  perechisleniya: 'Perechisleniya',
+  naqd: 'Cash',
+  karta: 'Card',
+  perechisleniya: 'Transfer',
 };
 
 const paymentSchema = z.object({
-  student_id: z.string().min(1, 'Talabani tanlang'),
+  student_id: z.string().min(1, 'Select a student'),
   amount: z.coerce
-    .number({ invalid_type_error: "To'lov miqdorini kiriting" })
-    .positive("To'lov miqdori 0 dan katta bo'lishi kerak"),
+    .number({ invalid_type_error: 'Enter payment amount' })
+    .positive('Payment amount must be greater than 0'),
   payment_method: z.enum(['naqd', 'karta', 'perechisleniya'], {
-    required_error: "To'lov turini tanlang",
+    required_error: 'Select payment method',
   }),
 });
 
@@ -88,6 +89,7 @@ const PaymentModal = ({
   loading,
   students,
 }: PaymentModalProps) => {
+  const { t } = useTranslation();
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
@@ -118,18 +120,19 @@ const PaymentModal = ({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="font-heading">To'lov qo'shish</DialogTitle>
+          <DialogTitle className="font-heading">
+            {t('payments.add_payment')}
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Talaba tanlash */}
             <FormField
               control={form.control}
               name="student_id"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <FormLabel>Talaba *</FormLabel>
+                  <FormLabel>{t('payments.student_name')} *</FormLabel>
                   <Popover
                     open={studentPopoverOpen}
                     onOpenChange={setStudentPopoverOpen}
@@ -144,7 +147,9 @@ const PaymentModal = ({
                         >
                           {selectedStudent
                             ? `${selectedStudent.last_name} ${selectedStudent.first_name}`
-                            : 'Talabani tanlang'}
+                            : t('students.select_student', {
+                                defaultValue: 'Select a student',
+                              })}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -156,9 +161,11 @@ const PaymentModal = ({
                       align="start"
                     >
                       <Command>
-                        <CommandInput placeholder="Talabani qidiring..." />
+                        <CommandInput
+                          placeholder={t('payments.search_placeholder')}
+                        />
                         <CommandList>
-                          <CommandEmpty>Talaba topilmadi.</CommandEmpty>
+                          <CommandEmpty>{t('payments.not_found')}</CommandEmpty>
                           <CommandGroup>
                             {students.map((s) => (
                               <CommandItem
@@ -195,23 +202,23 @@ const PaymentModal = ({
               )}
             />
 
-            {/* Talaba qarzdorligi ko'rsatish */}
             {selectedStudent && selectedStudent.debt !== undefined && (
               <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm tabular-nums">
-                <span className="text-muted-foreground">Qarzdorlik: </span>
+                <span className="text-muted-foreground">
+                  {t('payments.remaining_debt')}:{' '}
+                </span>
                 <span className="font-medium text-destructive">
                   {formatMoney(selectedStudent.debt)} so'm
                 </span>
               </div>
             )}
 
-            {/* Miqdor */}
             <FormField
               control={form.control}
               name="amount"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <FormLabel>To'lov miqdori (so'm) *</FormLabel>
+                  <FormLabel>{t('payments.amount')} *</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -232,13 +239,12 @@ const PaymentModal = ({
               )}
             />
 
-            {/* To'lov turi */}
             <FormField
               control={form.control}
               name="payment_method"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <FormLabel>To'lov turi *</FormLabel>
+                  <FormLabel>{t('payments.payment_method')} *</FormLabel>
                   <Select
                     value={field.value}
                     onValueChange={(v) => field.onChange(v as PaymentMethod)}
@@ -263,13 +269,13 @@ const PaymentModal = ({
 
             <div className="flex justify-end gap-3 pt-2">
               <Button type="button" variant="outline" onClick={onClose}>
-                Bekor qilish
+                {t('common.cancel')}
               </Button>
               <Button
                 type="submit"
                 disabled={loading || form.formState.isSubmitting}
               >
-                {loading ? 'Saqlanmoqda...' : "Qo'shish"}
+                {loading ? t('common.saving') : t('common.add')}
               </Button>
             </div>
           </form>
