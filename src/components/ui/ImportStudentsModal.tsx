@@ -80,9 +80,9 @@ export default function ImportStudentsModal({
     <Dialog open={open} onOpenChange={(val) => !val && handleClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>[CSV Orqali Yuklash]</DialogTitle>
+          <DialogTitle>{t('students.import.modal_title')}</DialogTitle>
           <DialogDescription>
-            Yuklash uchun .csv faylni tanlang.
+            {t('students.import.description')}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4">
@@ -95,13 +95,13 @@ export default function ImportStudentsModal({
             />
           </div>
           <div className="text-sm text-muted-foreground flex justify-between items-center">
-            <span>Fayl formati qanday bo'lishini bilmaysizmi?</span>
+            <span>{t('students.import.format_help')}</span>
             <Button
               variant="link"
               className="p-0 h-auto"
               onClick={downloadSample}
             >
-              Namuna yuklab olish
+              {t('students.import.download_sample')}
             </Button>
           </div>
           <Button
@@ -110,7 +110,9 @@ export default function ImportStudentsModal({
             onClick={handleUpload}
           >
             <UploadCloud className="h-4 w-4" />
-            {mutation.isPending ? 'Yuklanmoqda...' : 'Yuklash'}
+            {mutation.isPending
+              ? t('students.import.uploading')
+              : t('students.import.upload_button')}
           </Button>
         </div>
       </DialogContent>

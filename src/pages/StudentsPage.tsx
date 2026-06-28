@@ -341,7 +341,8 @@ const StudentsPage = () => {
             className="gap-2"
             onClick={() => setImportModalOpen(true)}
           >
-            <UploadCloud className="h-4 w-4" /> [CSV Orqali Yuklash]
+            <UploadCloud className="h-4 w-4" />{' '}
+            {t('students.import.button_label')}
           </Button>
           <Button className="gap-2" onClick={openCreate}>
             <Plus className="h-4 w-4" /> {t('students.add')}
