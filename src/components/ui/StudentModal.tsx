@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -63,33 +64,23 @@ export interface CreateStudentPayload {
   registered_by?: string;
 }
 
-const paymentMethodLabels: Record<PaymentMethod, string> = {
-  naqd: 'Naqd',
-  karta: 'Karta',
-  perechisleniya: 'Perechisleniya',
-};
-
-const resultLabels: Record<ResultStatus, string> = {
-  oqimoqda: 'Oqimoqda',
-  topshirdi: 'Topshirdi',
-  yiqildi: 'Yiqildi',
-};
-
 const studentFormSchema = z
   .object({
-    first_name: z.string().min(1, 'Talab qilinadi'),
-    last_name: z.string().min(1, 'Talab qilinadi'),
+    first_name: z.string().min(1, 'Required'),
+    last_name: z.string().min(1, 'Required'),
     phone: z
       .string()
-      .min(1, 'Talab qilinadi')
-      .regex(/^\+?\d{9,15}$/, "Telefon raqami noto'g'ri"),
+      .min(1, 'Required')
+      .regex(/^\+?\d{9,15}$/, 'Invalid phone number'),
     course_type: z.enum(['tezkor', 'avto_maktab']),
-    branch_id: z.string().min(1, 'Filial tanlanmagan! Iltimos filial tanlang.'),
+    branch_id: z
+      .string()
+      .min(1, 'Branch not selected. Please select a branch.'),
     payment_method: z.enum(['naqd', 'karta', 'perechisleniya']).optional(),
     result: z.enum(['oqimoqda', 'topshirdi', 'yiqildi']).optional(),
     has_document: z.boolean().optional(),
     o83: z.boolean().optional(),
-    total_price: z.coerce.number().nonnegative('Talab qilinadi'),
+    total_price: z.coerce.number().nonnegative('Required'),
     amount_paid: z.coerce.number().nonnegative().optional(),
     initial_payment: z.coerce.number().nonnegative().optional(),
     group_id: z.string().optional(),
@@ -104,7 +95,7 @@ const studentFormSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['group_id'],
-        message: 'Avto maktab kursi uchun Guruh tanlash shart!',
+        message: 'Group is required for driving school course',
       });
     }
   });
@@ -134,6 +125,7 @@ const StudentModal = ({
   disabledFields = [],
   defaultBranchId,
 }: StudentModalProps) => {
+  const { t } = useTranslation();
   const isOwner = useAuthStore((s) => s.isOwner);
   const user = useAuthStore((s) => s.user);
   const { data: branches } = useBranches();
@@ -184,6 +176,18 @@ const StudentModal = ({
   const operatorList = operators.filter(
     (op) => !watchedBranchId || op.branch_id === watchedBranchId,
   );
+
+  const localizedPaymentMethods: Record<PaymentMethod, string> = {
+    naqd: t('students.payment_cash'),
+    karta: t('students.payment_card'),
+    perechisleniya: t('students.payment_transfer'),
+  };
+
+  const localizedResultLabels: Record<ResultStatus, string> = {
+    oqimoqda: t('students.status_studying'),
+    topshirdi: t('students.status_passed'),
+    yiqildi: t('students.status_failed'),
+  };
 
   useEffect(() => {
     if (open) {
@@ -298,9 +302,13 @@ const StudentModal = ({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
         <DialogHeader>
           <DialogTitle className="font-heading">
-            {student ? 'Talabani tahrirlash' : "Yangi talaba qo'shish"}
+            {student ? t('students.edit') : t('students.add')}
             <span className="ml-2 text-sm font-normal text-muted-foreground">
-              ({courseType === 'tezkor' ? 'Tezkor' : 'Avto maktab'})
+              (
+              {courseType === 'tezkor'
+                ? t('students.course_fast')
+                : t('students.course_school')}
+              )
             </span>
           </DialogTitle>
         </DialogHeader>
@@ -308,8 +316,8 @@ const StudentModal = ({
         <Tabs defaultValue="info" className="w-full mt-2">
           {student && (
             <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="info">Ma'lumotlar</TabsTrigger>
-              <TabsTrigger value="exams">Imtihonlar</TabsTrigger>
+              <TabsTrigger value="info">{t('students.tab_info')}</TabsTrigger>
+              <TabsTrigger value="exams">{t('students.tab_exams')}</TabsTrigger>
             </TabsList>
           )}
           <TabsContent value="info" className="m-0">
@@ -321,7 +329,7 @@ const StudentModal = ({
                     name="last_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Familya *</FormLabel>
+                        <FormLabel>{t('students.last_name')} *</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -337,7 +345,7 @@ const StudentModal = ({
                     name="first_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Ismi *</FormLabel>
+                        <FormLabel>{t('students.first_name')} *</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -353,7 +361,7 @@ const StudentModal = ({
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Telefon *</FormLabel>
+                        <FormLabel>{t('students.phone')} *</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -370,7 +378,7 @@ const StudentModal = ({
                     name="branch_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Filial</FormLabel>
+                        <FormLabel>{t('students.detail.branch')}</FormLabel>
                         {isOwner() ? (
                           <Select
                             value={field.value || ''}
@@ -378,7 +386,9 @@ const StudentModal = ({
                           >
                             <FormControl>
                               <SelectTrigger className="bg-secondary border-border">
-                                <SelectValue placeholder="Tanlang" />
+                                <SelectValue
+                                  placeholder={t('common.select_placeholder')}
+                                />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -410,7 +420,7 @@ const StudentModal = ({
                     name="total_price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Kurs narxi *</FormLabel>
+                        <FormLabel>{t('students.total_price')} *</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -429,7 +439,7 @@ const StudentModal = ({
                     name="payment_method"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>To'lov turi</FormLabel>
+                        <FormLabel>{t('students.payment_method')}</FormLabel>
                         <Select
                           value={field.value || 'naqd'}
                           onValueChange={(v) =>
@@ -445,7 +455,7 @@ const StudentModal = ({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {Object.entries(paymentMethodLabels).map(
+                            {Object.entries(localizedPaymentMethods).map(
                               ([k, v]) => (
                                 <SelectItem key={k} value={k}>
                                   {v}
@@ -469,7 +479,9 @@ const StudentModal = ({
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
-                              {student ? "Qo'shimcha to'lov" : "To'lov miqdori"}
+                              {student
+                                ? t('students.extra_payment')
+                                : t('students.payment_amount')}
                             </FormLabel>
                             <FormControl>
                               <Input
@@ -479,7 +491,7 @@ const StudentModal = ({
                                 min={0}
                                 placeholder={
                                   student
-                                    ? "0 (yangi to'lov qo'shish uchun)"
+                                    ? t('students.extra_payment_placeholder')
                                     : '0'
                                 }
                                 className="bg-secondary border-border"
@@ -491,7 +503,9 @@ const StudentModal = ({
                       />
                       <div className="space-y-2">
                         <Label>
-                          {student ? 'Joriy qarzdorlik' : 'Qarzdorlik'}
+                          {student
+                            ? t('students.current_debt')
+                            : t('students.debt')}
                         </Label>
                         <Input
                           value={formatMoney(debt)}
@@ -506,14 +520,16 @@ const StudentModal = ({
                         name="group_id"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Guruh</FormLabel>
+                            <FormLabel>{t('students.group')}</FormLabel>
                             <Select
                               value={field.value || ''}
                               onValueChange={field.onChange}
                             >
                               <FormControl>
                                 <SelectTrigger className="bg-secondary border-border">
-                                  <SelectValue placeholder="Tanlang" />
+                                  <SelectValue
+                                    placeholder={t('common.select_placeholder')}
+                                  />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -538,7 +554,9 @@ const StudentModal = ({
                         name="initial_payment"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Boshlang'ich to'lov</FormLabel>
+                            <FormLabel>
+                              {t('students.initial_payment')}
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
@@ -558,7 +576,9 @@ const StudentModal = ({
                       />
                       <div className="space-y-2">
                         <Label>
-                          {student ? 'Joriy qarzdorlik' : 'Qarzdorlik'}
+                          {student
+                            ? t('students.current_debt')
+                            : t('students.debt')}
                         </Label>
                         <Input
                           value={formatMoney(debt)}
@@ -573,14 +593,16 @@ const StudentModal = ({
                         name="amount_paid"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Qo'shimcha to'lov</FormLabel>
+                            <FormLabel>{t('students.extra_payment')}</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
                                 {...field}
                                 value={field.value || ''}
                                 min={0}
-                                placeholder="0 (yangi to'lov qo'shish uchun)"
+                                placeholder={t(
+                                  'students.extra_payment_placeholder',
+                                )}
                                 className="bg-secondary border-border"
                               />
                             </FormControl>
@@ -596,7 +618,8 @@ const StudentModal = ({
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
-                              Guruh <span className="text-destructive">*</span>
+                              {t('students.group_required')}{' '}
+                              <span className="text-destructive">*</span>
                             </FormLabel>
                             <Select
                               value={field.value || ''}
@@ -604,7 +627,9 @@ const StudentModal = ({
                             >
                               <FormControl>
                                 <SelectTrigger className="bg-secondary border-border">
-                                  <SelectValue placeholder="Tanlang" />
+                                  <SelectValue
+                                    placeholder={t('common.select_placeholder')}
+                                  />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -624,7 +649,9 @@ const StudentModal = ({
                         name="completion_date"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Tugatish sanasi</FormLabel>
+                            <FormLabel>
+                              {t('students.completion_date')}
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 type="date"
@@ -642,7 +669,9 @@ const StudentModal = ({
                         name="contract_number"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Shartnoma raqami</FormLabel>
+                            <FormLabel>
+                              {t('students.contract_number')}
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
@@ -683,14 +712,16 @@ const StudentModal = ({
                     name="registered_by"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Operator</FormLabel>
+                        <FormLabel>{t('students.operator')}</FormLabel>
                         <Select
                           value={field.value || ''}
                           onValueChange={field.onChange}
                         >
                           <FormControl>
                             <SelectTrigger className="bg-secondary border-border">
-                              <SelectValue placeholder="Operatorni tanlang (ixtiyoriy)" />
+                              <SelectValue
+                                placeholder={t('students.operator_optional')}
+                              />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -713,7 +744,7 @@ const StudentModal = ({
                     name="result"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Natijasi</FormLabel>
+                        <FormLabel>{t('students.result')}</FormLabel>
                         <Select
                           value={field.value || 'oqimoqda'}
                           onValueChange={(v) =>
@@ -726,11 +757,13 @@ const StudentModal = ({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {Object.entries(resultLabels).map(([k, v]) => (
-                              <SelectItem key={k} value={k}>
-                                {v}
-                              </SelectItem>
-                            ))}
+                            {Object.entries(localizedResultLabels).map(
+                              ([k, v]) => (
+                                <SelectItem key={k} value={k}>
+                                  {v}
+                                </SelectItem>
+                              ),
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -752,7 +785,7 @@ const StudentModal = ({
                         />
                       </FormControl>
                       <FormLabel htmlFor="doc" className="!mt-0">
-                        Hujjat mavjud
+                        {t('students.has_document')}
                       </FormLabel>
                     </FormItem>
                   )}
@@ -763,12 +796,12 @@ const StudentModal = ({
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Izoh</FormLabel>
+                      <FormLabel>{t('students.notes')}</FormLabel>
                       <FormControl>
                         <Textarea
                           {...field}
                           value={field.value || ''}
-                          placeholder="Izoh yozing..."
+                          placeholder={t('students.notes_placeholder')}
                           rows={3}
                           className="bg-secondary border-border"
                         />
@@ -780,17 +813,17 @@ const StudentModal = ({
 
                 <div className="flex justify-end gap-3 pt-2">
                   <Button type="button" variant="outline" onClick={onClose}>
-                    Bekor qilish
+                    {t('common.cancel')}
                   </Button>
                   <Button
                     type="submit"
                     disabled={loading || form.formState.isSubmitting}
                   >
                     {loading || form.formState.isSubmitting
-                      ? 'Saqlanmoqda...'
+                      ? t('common.saving')
                       : student
-                        ? 'Saqlash'
-                        : "Qo'shish"}
+                        ? t('common.save')
+                        : t('common.add')}
                   </Button>
                 </div>
               </form>

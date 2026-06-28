@@ -368,7 +368,7 @@ const SchedulePage = () => {
               <Label>Guruh</Label>
               <Select value={formGroupId} onValueChange={setFormGroupId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Guruhni tanlang" />
+                  <SelectValue placeholder={t('schedule.group_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {(groups || []).map((g) => (

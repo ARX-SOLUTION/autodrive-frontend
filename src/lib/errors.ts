@@ -1,4 +1,4 @@
-import type { AxiosError } from "axios";
+import type { AxiosError } from 'axios';
 
 /**
  * Backend error envelope produced by NestJS `HttpExceptionFilter`.
@@ -17,11 +17,11 @@ type ApiErrorEnvelope = {
  * surface a message (network failure, non-Axios error, malformed payload).
  *
  * Usage in a mutation `onError`:
- *   onError: (err) => toast.error(extractErrorMessage(err, "Xatolik yuz berdi"))
+ *   onError: (err) => toast.error(extractErrorMessage(err, t('common.error')))
  */
 export function extractErrorMessage(
   err: unknown,
-  fallback = "Xatolik yuz berdi",
+  fallback = 'An error occurred',
 ): string {
   const e = err as AxiosError<ApiErrorEnvelope>;
   return e?.response?.data?.error?.message ?? fallback;

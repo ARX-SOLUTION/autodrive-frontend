@@ -58,6 +58,8 @@
     "not_found": "Не найдено",
     "no_data": "Данные не найдены",
     "confirm_delete": "Подтвердите удаление?",
+    "confirm_delete_title": "Подтвердите удаление",
+    "confirm_delete_desc": "Это действие нельзя отменить. Продолжить?",
     "select_placeholder": "Выберите",
     "all_branches": "Все филиалы",
     "all_groups": "Все группы",
@@ -95,7 +97,9 @@
     "submit": "Войти",
     "submitting": "Вход...",
     "success": "Вы успешно вошли!",
-    "error": "Неверный email или пароль"
+    "error": "Неверный email или пароль",
+    "rate_limit": "Слишком много попыток. Подождите 1 минуту.",
+    "network_error": "Не удалось подключиться к серверу."
   },
   "dashboard": {
     "title": "Панель",
@@ -238,7 +242,31 @@
       "debt": "Долг",
       "status": "Статус",
       "date": "Дата"
-    }
+    },
+    "tab_info": "Данные",
+    "tab_exams": "Экзамены",
+    "extra_payment": "Дополнительный платёж",
+    "payment_amount": "Сумма платежа",
+    "extra_payment_placeholder": "0 (для нового платежа)",
+    "current_debt": "Текущий долг",
+    "operator_optional": "Выберите оператора (необязательно)",
+    "notes_placeholder": "Напишите заметку...",
+    "has_document": "Документ имеется",
+    "group_required": "Группа",
+    "validation_required": "Обязательное поле",
+    "validation_phone": "Неверный номер телефона",
+    "validation_branch": "Филиал не выбран. Выберите филиал.",
+    "validation_group_required": "Для курса автошколы необходимо выбрать группу"
+  },
+  "exams": {
+    "add_title": "Добавить результат",
+    "exam_type": "Тип экзамена",
+    "theory": "Теория (THEORY)",
+    "practice": "Практика (PRACTICE)",
+    "score_optional": "Балл (необязательно)",
+    "passed": "Сдал (Passed)",
+    "added": "Результат добавлен",
+    "date_required": "Дата обязательна"
   },
   "payments": {
     "title": "Платежи",
