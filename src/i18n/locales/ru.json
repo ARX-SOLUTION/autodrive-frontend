@@ -256,7 +256,16 @@
     "validation_required": "Обязательное поле",
     "validation_phone": "Неверный номер телефона",
     "validation_branch": "Филиал не выбран. Выберите филиал.",
-    "validation_group_required": "Для курса автошколы необходимо выбрать группу"
+    "validation_group_required": "Для курса автошколы необходимо выбрать группу",
+    "import": {
+      "button_label": "Импорт через CSV",
+      "modal_title": "Импорт через CSV",
+      "description": "Выберите .csv файл для загрузки.",
+      "format_help": "Не знаете формат файла?",
+      "download_sample": "Скачать образец",
+      "uploading": "Загрузка...",
+      "upload_button": "Загрузить"
+    }
   },
   "exams": {
     "add_title": "Добавить результат",

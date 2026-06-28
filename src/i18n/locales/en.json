@@ -256,7 +256,16 @@
     "validation_required": "Required",
     "validation_phone": "Invalid phone number",
     "validation_branch": "Branch not selected. Please select a branch.",
-    "validation_group_required": "Group is required for driving school course"
+    "validation_group_required": "Group is required for driving school course",
+    "import": {
+      "button_label": "Import via CSV",
+      "modal_title": "Import via CSV",
+      "description": "Select a .csv file to upload.",
+      "format_help": "Not sure about the file format?",
+      "download_sample": "Download sample",
+      "uploading": "Uploading...",
+      "upload_button": "Upload"
+    }
   },
   "exams": {
     "add_title": "Add new result",

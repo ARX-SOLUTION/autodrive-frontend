@@ -256,7 +256,16 @@
     "validation_required": "Talab qilinadi",
     "validation_phone": "Telefon raqami noto'g'ri",
     "validation_branch": "Filial tanlanmagan! Iltimos filial tanlang.",
-    "validation_group_required": "Avto maktab kursi uchun Guruh tanlash shart!"
+    "validation_group_required": "Avto maktab kursi uchun Guruh tanlash shart!",
+    "import": {
+      "button_label": "CSV Orqali Yuklash",
+      "modal_title": "CSV Orqali Yuklash",
+      "description": "Yuklash uchun .csv faylni tanlang.",
+      "format_help": "Fayl formati qanday bo'lishini bilmaysizmi?",
+      "download_sample": "Namuna yuklab olish",
+      "uploading": "Yuklanmoqda...",
+      "upload_button": "Yuklash"
+    }
   },
   "exams": {
     "add_title": "Yangi natija qo'shish",
