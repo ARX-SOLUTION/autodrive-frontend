@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepare": "node node_modules/husky/bin.js || true",
+    "prepare": "husky || true",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
