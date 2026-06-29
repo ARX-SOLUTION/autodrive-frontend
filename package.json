@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepare": "husky || true",
+    "prepare": "test -z \"$VERCEL\" && husky || true",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
