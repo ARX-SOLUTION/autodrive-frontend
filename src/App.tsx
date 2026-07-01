@@ -64,20 +64,20 @@ const App = () => (
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route
-                path="filiallar"
+                path="branches"
                 element={
                   <BranchAccessRoute>
                     <BranchesPage />
                   </BranchAccessRoute>
                 }
               />
-              <Route path="guruhlar" element={<GroupsPage />} />
-              <Route path="talabalar" element={<StudentsPage />} />
-              <Route path="tolovlar" element={<PaymentsPage />} />
-              <Route path="operatorlar" element={<OperatorsPage />} />
-              <Route path="oqituvchilar" element={<TeachersPage />} />
+              <Route path="groups" element={<GroupsPage />} />
+              <Route path="students" element={<StudentsPage />} />
+              <Route path="payments" element={<PaymentsPage />} />
+              <Route path="operators" element={<OperatorsPage />} />
+              <Route path="teachers" element={<TeachersPage />} />
               <Route
-                path="foydalanuvchilar"
+                path="users"
                 element={
                   <OwnerRoute>
                     <UsersPage />
@@ -92,8 +92,8 @@ const App = () => (
                   </OwnerRoute>
                 }
               />
-              <Route path="jadval" element={<SchedulePage />} />
-              <Route path="davomat" element={<AttendancePage />} />
+              <Route path="schedule" element={<SchedulePage />} />
+              <Route path="attendance" element={<AttendancePage />} />
               <Route path="profile" element={<ProfilePage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
