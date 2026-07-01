@@ -5,14 +5,14 @@ import { useTranslation } from "react-i18next";
 /** Slug → translation key. Unknown slugs fall back to title-cased slug. */
 const SEGMENT_KEYS: Record<string, string> = {
   dashboard: "nav.dashboard",
-  filiallar: "nav.branches",
-  guruhlar: "nav.groups",
-  talabalar: "nav.students",
-  tolovlar: "nav.payments",
+  branches: "nav.branches",
+  groups: "nav.groups",
+  students: "nav.students",
+  payments: "nav.payments",
   hujjatlar: "nav.documents",
-  operatorlar: "nav.operators",
-  oqituvchilar: "nav.teachers",
-  foydalanuvchilar: "nav.users",
+  operators: "nav.operators",
+  teachers: "nav.teachers",
+  users: "nav.users",
   audit: "nav.audit",
   profile: "nav.profile",
 };
