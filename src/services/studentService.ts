@@ -38,14 +38,13 @@ export const useStudents = (
 
 export const useCreateStudent = () => {
   const qc = useQueryClient();
-  const branchId = useAuthStore((s) => s.user?.branch_id);
   return useMutation({
     mutationFn: async (student: CreateStudentPayload) => {
       const { data } = await axiosInstance.post('/students', student);
       return data?.data || data;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['students', branchId] });
+      qc.invalidateQueries({ queryKey: ['students'] });
       qc.invalidateQueries({ queryKey: ['payments'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
@@ -55,7 +54,6 @@ export const useCreateStudent = () => {
 
 export const useUpdateStudent = () => {
   const qc = useQueryClient();
-  const branchId = useAuthStore((s) => s.user?.branch_id);
   return useMutation({
     mutationFn: async ({
       id,
@@ -65,7 +63,7 @@ export const useUpdateStudent = () => {
       return data?.data || data;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['students', branchId] });
+      qc.invalidateQueries({ queryKey: ['students'] });
       qc.invalidateQueries({ queryKey: ['payments'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
@@ -75,13 +73,12 @@ export const useUpdateStudent = () => {
 
 export const useDeleteStudent = () => {
   const qc = useQueryClient();
-  const branchId = useAuthStore((s) => s.user?.branch_id);
   return useMutation({
     mutationFn: async (id: string) => {
       await axiosInstance.delete(`/students/${id}`);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['students', branchId] });
+      qc.invalidateQueries({ queryKey: ['students'] });
       qc.invalidateQueries({ queryKey: ['payments'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });

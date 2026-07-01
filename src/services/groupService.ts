@@ -76,7 +76,6 @@ export const useCreateGroup = () => {
 
 export const useUpdateGroup = () => {
   const qc = useQueryClient();
-  const branchId = useAuthStore((s) => s.user?.branch_id);
   return useMutation({
     mutationFn: async ({
       id,
@@ -93,7 +92,7 @@ export const useUpdateGroup = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['groups'] });
       qc.invalidateQueries({ queryKey: ['groups-overview'] });
-      qc.invalidateQueries({ queryKey: ['students', branchId] });
+      qc.invalidateQueries({ queryKey: ['students'] });
     },
   });
 };
