@@ -465,6 +465,13 @@
     "title": "Foydalanuvchilar",
     "not_found": "Foydalanuvchilar topilmadi",
     "count": "{{count}} ta foydalanuvchi",
+    "add": "Menejer qo'shish",
+    "add_title": "Yangi menejer",
+    "name_label": "F.I.Sh.",
+    "email_label": "Email",
+    "password_label": "Parol",
+    "added": "Menejer qo'shildi",
+    "no_branches": "Filial yo'q — avval filial yarating",
     "detail": {
       "role": "Rol",
       "branch": "Filial",
