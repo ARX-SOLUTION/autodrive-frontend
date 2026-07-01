@@ -1,11 +1,37 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useUsers } from '@/services/userService';
+import { toast } from 'sonner';
+import { useUsers, useCreateManager } from '@/services/userService';
+import { useBranches } from '@/services/branchService';
+import { useAuthStore } from '@/store/authStore';
+import { extractErrorMessage } from '@/lib/errors';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { format } from 'date-fns';
 import { usePagination } from '@/hooks/usePagination';
 import PaginationControls from '@/components/ui/PaginationControls';
-import { ChevronUp, ChevronDown, ChevronsUpDown, UserCog } from 'lucide-react';
+import {
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  UserCog,
+  Plus,
+} from 'lucide-react';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -36,8 +62,52 @@ const roleLabel = (role?: string) => {
 const UsersPage = () => {
   const { t } = useTranslation();
   const { data: users, isLoading } = useUsers('manager');
+  const isOwner = useAuthStore((s) => s.user?.role === 'owner');
+  const { data: branches } = useBranches();
+  const createMut = useCreateManager();
   const [sortField, setSortField] = useState('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [modalOpen, setModalOpen] = useState(false);
+  const EMPTY_FORM = {
+    fullName: '',
+    email: '',
+    password: '',
+    phone: '',
+    branchId: '',
+  };
+  const [form, setForm] = useState(EMPTY_FORM);
+
+  const openCreate = () => {
+    setForm(EMPTY_FORM);
+    setModalOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      !form.fullName.trim() ||
+      !form.email.trim() ||
+      !form.password.trim() ||
+      !form.branchId
+    )
+      return;
+    createMut.mutate(
+      {
+        fullName: form.fullName.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        phone: form.phone.trim() || undefined,
+        branchId: form.branchId,
+      },
+      {
+        onSuccess: () => {
+          toast.success(t('users.added'));
+          setModalOpen(false);
+        },
+        onError: (err) => toast.error(extractErrorMessage(err)),
+      },
+    );
+  };
 
   const toggleSort = (field: string) => {
     if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -78,13 +148,20 @@ const UsersPage = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-2xl font-bold text-balance">
-          {t('users.title')}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t('users.count', { count: (users || []).length })}
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl font-bold text-balance">
+            {t('users.title')}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t('users.count', { count: (users || []).length })}
+          </p>
+        </div>
+        {isOwner && (
+          <Button className="gap-2" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> {t('users.add')}
+          </Button>
+        )}
       </div>
 
       <div className="hidden md:block glass-card overflow-hidden">
@@ -276,6 +353,101 @@ const UsersPage = () => {
         totalPages={totalPages}
         onPageChange={setCurrentPage}
       />
+
+      <Dialog open={modalOpen} onOpenChange={(o) => !o && setModalOpen(false)}>
+        <DialogContent className="max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-heading">
+              {t('users.add_title')}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t('users.name_label')} *</Label>
+              <Input
+                value={form.fullName}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, fullName: e.target.value }))
+                }
+                required
+                className="bg-secondary border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('users.email_label')} *</Label>
+              <Input
+                type="email"
+                value={form.email}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, email: e.target.value }))
+                }
+                required
+                className="bg-secondary border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('users.password_label')} *</Label>
+              <Input
+                type="password"
+                value={form.password}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, password: e.target.value }))
+                }
+                required
+                className="bg-secondary border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('common.phone')}</Label>
+              <Input
+                value={form.phone}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, phone: e.target.value }))
+                }
+                placeholder="+998..."
+                className="bg-secondary border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('common.branch')} *</Label>
+              <Select
+                value={form.branchId}
+                onValueChange={(v) => setForm((f) => ({ ...f, branchId: v }))}
+                disabled={(branches || []).length === 0}
+              >
+                <SelectTrigger className="bg-secondary border-border">
+                  <SelectValue
+                    placeholder={
+                      (branches || []).length === 0
+                        ? t('users.no_branches')
+                        : t('common.select_placeholder')
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {(branches || []).map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setModalOpen(false)}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit" disabled={createMut.isPending}>
+                {createMut.isPending ? t('common.saving') : t('common.add')}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

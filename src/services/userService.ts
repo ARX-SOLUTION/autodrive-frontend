@@ -22,6 +22,28 @@ export const useUsers = (role?: string) => {
   });
 };
 
+export const useCreateManager = () => {
+  const qc = useQueryClient();
+  const activeCompanyId = useAuthStore((s) => s.activeCompanyId);
+  return useMutation({
+    mutationFn: async (m: {
+      fullName: string;
+      email: string;
+      password: string;
+      phone?: string;
+      branchId: string;
+    }) => {
+      const { data } = await axiosInstance.post("/users", {
+        ...m,
+        role: "manager",
+      });
+      return data?.data || data;
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["users", activeCompanyId] }),
+  });
+};
+
 export const useUpdateUser = () => {
   const qc = useQueryClient();
   return useMutation({

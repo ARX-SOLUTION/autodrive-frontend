@@ -465,6 +465,13 @@
     "title": "Users",
     "not_found": "Users not found",
     "count": "{{count}} users",
+    "add": "Add manager",
+    "add_title": "New manager",
+    "name_label": "Full name",
+    "email_label": "Email",
+    "password_label": "Password",
+    "added": "Manager added",
+    "no_branches": "No branches — create one first",
     "detail": {
       "role": "Role",
       "branch": "Branch",
