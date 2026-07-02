@@ -69,10 +69,12 @@ const TeachersPage = () => {
     PRACTICE: t('teachers.spec_practice'),
   };
 
+  // NOTE: never name a callback param `t` here — it shadows the i18n `t`
+  // and crashes the row render (the original TeachersPage production bug).
   const filtered = (teachers || []).filter(
-    (t) =>
-      t.name?.toLowerCase().includes(search.toLowerCase()) ||
-      t.phone?.includes(search),
+    (teacher) =>
+      teacher.name?.toLowerCase().includes(search.toLowerCase()) ||
+      teacher.phone?.includes(search),
   );
 
   const toggleSort = (field: string) => {
@@ -121,13 +123,13 @@ const TeachersPage = () => {
     setModalOpen(true);
   };
 
-  const openEdit = (t: User) => {
-    setEditItem(t);
+  const openEdit = (teacher: User) => {
+    setEditItem(teacher);
     setForm({
-      fullName: t.name || '',
-      phone: t.phone || '',
-      branchId: t.branch_id || '',
-      specialization: t.specialization || 'THEORY',
+      fullName: teacher.name || '',
+      phone: teacher.phone || '',
+      branchId: teacher.branch_id || '',
+      specialization: teacher.specialization || 'THEORY',
     });
     setModalOpen(true);
   };
@@ -270,29 +272,31 @@ const TeachersPage = () => {
                       </td>
                     </tr>
                   ))
-                : paginatedItems.map((t, idx) => (
+                : paginatedItems.map((teacher, idx) => (
                     <tr
-                      key={t.id}
+                      key={teacher.id}
                       className="table-row-striped border-b border-border/50"
                     >
                       <td className="px-4 py-3 text-center text-muted-foreground">
                         {startIndex + idx + 1}
                       </td>
-                      <td className="px-4 py-3 font-medium">{t.name}</td>
+                      <td className="px-4 py-3 font-medium">{teacher.name}</td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {t.phone}
+                        {teacher.phone}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {specLabels[t.specialization] || t.specialization}
+                        {specLabels[teacher.specialization] ||
+                          teacher.specialization}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {t.branch_name || getBranchName(t.branch_id)}
+                        {teacher.branch_name ||
+                          getBranchName(teacher.branch_id)}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${t.is_active !== false ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${teacher.is_active !== false ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}
                         >
-                          {t.is_active !== false
+                          {teacher.is_active !== false
                             ? t('common.active')
                             : t('common.inactive')}
                         </span>
@@ -300,13 +304,13 @@ const TeachersPage = () => {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
                           <button
-                            onClick={() => openEdit(t)}
+                            onClick={() => openEdit(teacher)}
                             className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
                           <button
-                            onClick={() => setDeleteId(t.id)}
+                            onClick={() => setDeleteId(teacher.id)}
                             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -323,43 +327,48 @@ const TeachersPage = () => {
             ? [...Array(3)].map((_, i) => (
                 <Skeleton key={i} className="h-28 w-full" />
               ))
-            : paginatedItems.map((t) => (
+            : paginatedItems.map((teacher) => (
                 <DataCard
-                  key={t.id}
-                  title={t.name || t('common.na')}
-                  subtitle={t.phone}
+                  key={teacher.id}
+                  title={teacher.name || t('common.na')}
+                  subtitle={teacher.phone}
                   fields={[
                     {
                       label: t('teachers.specialization'),
-                      value: t.specialization
-                        ? specLabels[t.specialization] || t.specialization
+                      value: teacher.specialization
+                        ? specLabels[teacher.specialization] ||
+                          teacher.specialization
                         : t('common.na'),
                     },
                     {
                       label: t('teachers.email'),
-                      value: t.email || t('common.na'),
+                      value: teacher.email || t('common.na'),
                     },
                     {
                       label: t('teachers.branch'),
-                      value: t.branch_name || getBranchName(t.branch_id || ''),
+                      value:
+                        teacher.branch_name ||
+                        getBranchName(teacher.branch_id || ''),
                     },
                     {
                       label: t('operators.detail.created'),
-                      value: t.created_at
-                        ? new Date(t.created_at).toLocaleDateString('uz-UZ')
+                      value: teacher.created_at
+                        ? new Date(teacher.created_at).toLocaleDateString(
+                            'uz-UZ',
+                          )
                         : t('common.na'),
                     },
                   ]}
                   actions={
                     <>
                       <button
-                        onClick={() => openEdit(t)}
+                        onClick={() => openEdit(teacher)}
                         className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        onClick={() => setDeleteId(t.id)}
+                        onClick={() => setDeleteId(teacher.id)}
                         className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                       >
                         <Trash2 className="h-3.5 w-3.5" />

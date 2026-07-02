@@ -22,7 +22,7 @@ export const usePayments = (courseType?: string, startDate?: Date, endDate?: Dat
             endDate: endDate ? toLocalDateStr(endDate) : undefined,
           },
         });
-        const arr = res?.data;
+        const arr = res?.data?.data || res?.data;
         if (Array.isArray(arr)) return arr;
         if (Array.isArray(res)) return res;
         return [];
