@@ -493,7 +493,9 @@
     "new_password": "Новый пароль",
     "update_password": "Обновить пароль",
     "name": "Имя",
-    "phone": "Телефон"
+    "phone": "Телефон",
+    "must_change_password_notice": "Необходимо сменить пароль перед продолжением.",
+    "update_password_success": "Пароль успешно обновлён."
   },
   "attendance": {
     "title": "Посещаемость",

@@ -1,13 +1,15 @@
 import { useRestoreSession } from '@/services/authService';
 import { useAuthStore } from '@/store/authStore';
 import { Loader2 } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const token = useAuthStore((s) => s.token);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
+  const user = useAuthStore((s) => s.user);
   const { isLoading } = useRestoreSession();
+  const { pathname } = useLocation();
 
   if (!hasHydrated) {
     return (
@@ -33,5 +35,10 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  if (user?.must_change_password && pathname !== '/profile') {
+    return <Navigate to="/profile" replace />;
+  }
+
   return <>{children}</>;
 };
