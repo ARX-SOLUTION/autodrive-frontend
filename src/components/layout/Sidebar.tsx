@@ -45,8 +45,13 @@ const navItems: NavItem[] = [
   { path: '/groups', labelKey: 'nav.groups', icon: Layers },
   { path: '/students', labelKey: 'nav.students', icon: GraduationCap },
   { path: '/payments', labelKey: 'nav.payments', icon: CreditCard },
-  { path: '/operators', labelKey: 'nav.operators', icon: Headphones },
-  { path: '/teachers', labelKey: 'nav.teachers', icon: Users },
+  {
+    path: '/operators',
+    labelKey: 'nav.operators',
+    icon: Headphones,
+    branchAccess: true,
+  },
+  { path: '/teachers', labelKey: 'nav.teachers', icon: Users, branchAccess: true },
   {
     path: '/users',
     labelKey: 'nav.users',
