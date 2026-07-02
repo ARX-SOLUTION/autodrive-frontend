@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -106,6 +106,7 @@ interface StudentModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: CreateStudentPayload) => void;
+  onSaveAndAdd?: (data: CreateStudentPayload) => void;
   loading?: boolean;
   student?: Student | null;
   courseType: CourseType;
@@ -118,6 +119,7 @@ const StudentModal = ({
   open,
   onClose,
   onSubmit,
+  onSaveAndAdd,
   loading,
   student,
   courseType,
@@ -158,6 +160,26 @@ const StudentModal = ({
     resolver: zodResolver(studentFormSchema),
     defaultValues: defaultFormValues(),
   });
+
+  // ponytail: ref tracks which submit button was clicked; defaults to 'close' so Enter → Save
+  const submitModeRef = useRef<'close' | 'add'>('close');
+
+  const resetForNext = () => {
+    const current = form.getValues();
+    form.reset({
+      ...current,
+      first_name: '',
+      last_name: '',
+      phone: '',
+      amount_paid: 0,
+      initial_payment: 0,
+      notes: '',
+      completion_date: '',
+      contract_number: '',
+      registered_by: '',
+    });
+    form.setFocus('last_name');
+  };
 
   const [debt, setDebt] = useState(0);
 
@@ -219,6 +241,8 @@ const StudentModal = ({
         });
       } else {
         form.reset(defaultFormValues());
+        // Focus first field after dialog animation settles
+        setTimeout(() => form.setFocus('last_name'), 50);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -258,7 +282,7 @@ const StudentModal = ({
     }
   }, [form, groupList, operatorList, watchedGroupId, watchedRegisteredBy]);
 
-  const handleSubmit = form.handleSubmit(async (values) => {
+  const onFormValid = async (values: StudentFormValues) => {
     const payload: CreateStudentPayload = {
       first_name: values.first_name,
       last_name: values.last_name,
@@ -288,8 +312,19 @@ const StudentModal = ({
         payload.amount_paid = Number(values.amount_paid);
       }
     }
-    await onSubmit(payload);
-  });
+
+    const mode = submitModeRef.current;
+    submitModeRef.current = 'close'; // reset for next submission
+
+    if (mode === 'add' && onSaveAndAdd) {
+      onSaveAndAdd(payload);
+      resetForNext();
+    } else {
+      await onSubmit(payload);
+    }
+  };
+
+  const handleSubmit = form.handleSubmit(onFormValid);
 
   const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
   const currentBranchName =
@@ -367,6 +402,9 @@ const StudentModal = ({
                             {...field}
                             placeholder="+998901234567"
                             className="bg-secondary border-border"
+                            onFocus={() => {
+                              if (!field.value) field.onChange('+998');
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -815,9 +853,25 @@ const StudentModal = ({
                   <Button type="button" variant="outline" onClick={onClose}>
                     {t('common.cancel')}
                   </Button>
+                  {!student && onSaveAndAdd && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={loading || form.formState.isSubmitting}
+                      onClick={() => {
+                        submitModeRef.current = 'add';
+                        form.handleSubmit(onFormValid)();
+                      }}
+                    >
+                      {t('students.save_and_add')}
+                    </Button>
+                  )}
                   <Button
                     type="submit"
                     disabled={loading || form.formState.isSubmitting}
+                    onClick={() => {
+                      submitModeRef.current = 'close';
+                    }}
                   >
                     {loading || form.formState.isSubmitting
                       ? t('common.saving')

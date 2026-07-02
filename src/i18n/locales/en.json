@@ -297,6 +297,7 @@
     "validation_required": "Required",
     "validation_phone": "Invalid phone number",
     "validation_branch": "Branch not selected. Please select a branch.",
+    "save_and_add": "Save and add another",
     "validation_group_required": "Group is required for driving school course",
     "import": {
       "button_label": "Import via CSV",

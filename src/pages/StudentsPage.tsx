@@ -301,6 +301,14 @@ const StudentsPage = () => {
     }
   };
 
+  // ponytail: separate handler — no closeModal, so the modal stays open for next entry
+  const handleSaveAndAdd = (data: Partial<Student>) => {
+    createMutation.mutate(data, {
+      onSuccess: () => toast.success(t('students.added')),
+      onError: () => toast.error(t('common.error')),
+    });
+  };
+
   const closeModal = () => {
     setModalOpen(false);
     setEditStudent(null);
@@ -930,6 +938,7 @@ const StudentsPage = () => {
         open={modalOpen}
         onClose={closeModal}
         onSubmit={handleModalSubmit}
+        onSaveAndAdd={!editStudent ? handleSaveAndAdd : undefined}
         loading={createMutation.isPending || updateMutation.isPending}
         student={editStudent}
         courseType={courseType}
