@@ -297,6 +297,7 @@
     "validation_required": "Обязательное поле",
     "validation_phone": "Неверный номер телефона",
     "validation_branch": "Филиал не выбран. Выберите филиал.",
+    "save_and_add": "Сохранить и добавить ещё",
     "validation_group_required": "Для курса автошколы необходимо выбрать группу",
     "import": {
       "button_label": "Импорт через CSV",

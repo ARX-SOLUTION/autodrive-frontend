@@ -297,6 +297,7 @@
     "validation_required": "Talab qilinadi",
     "validation_phone": "Telefon raqami noto'g'ri",
     "validation_branch": "Filial tanlanmagan! Iltimos filial tanlang.",
+    "save_and_add": "Saqlash va yana qo'shish",
     "validation_group_required": "Avto maktab kursi uchun Guruh tanlash shart!",
     "import": {
       "button_label": "CSV Orqali Yuklash",
