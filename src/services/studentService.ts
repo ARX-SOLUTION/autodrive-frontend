@@ -99,7 +99,7 @@ export const searchStudents = async (q: string): Promise<Student[]> => {
 export const bulkCreateStudents = async (file: File) => {
   const formData = new FormData();
   formData.append('file', file);
-  const { data } = await axiosInstance.post('/students/bulk', formData, {
+  const { data } = await axiosInstance.post('/students/bulk-create', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data;

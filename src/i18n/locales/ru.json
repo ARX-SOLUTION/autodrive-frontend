@@ -305,7 +305,9 @@
       "format_help": "Не знаете формат файла?",
       "download_sample": "Скачать образец",
       "uploading": "Загрузка...",
-      "upload_button": "Загрузить"
+      "upload_button": "Загрузить",
+      "success": "{{count}} студентов загружено",
+      "partial": "{{success}} загружено, {{errors}} ошибок"
     }
   },
   "exams": {

@@ -305,7 +305,9 @@
       "format_help": "Fayl formati qanday bo'lishini bilmaysizmi?",
       "download_sample": "Namuna yuklab olish",
       "uploading": "Yuklanmoqda...",
-      "upload_button": "Yuklash"
+      "upload_button": "Yuklash",
+      "success": "{{count}} ta talaba yuklandi",
+      "partial": "{{success}} yuklandi, {{errors}} ta xato"
     }
   },
   "exams": {

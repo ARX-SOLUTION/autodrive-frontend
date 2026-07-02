@@ -305,7 +305,9 @@
       "format_help": "Not sure about the file format?",
       "download_sample": "Download sample",
       "uploading": "Uploading...",
-      "upload_button": "Upload"
+      "upload_button": "Upload",
+      "success": "{{count}} students imported",
+      "partial": "{{success}} imported, {{errors}} row errors"
     }
   },
   "exams": {
