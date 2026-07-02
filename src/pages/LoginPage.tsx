@@ -14,26 +14,31 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const login = useLogin();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleError = (error: any) => {
+    if (error.response?.status === 429) {
+      toast.error(t('login.rate_limit'));
+    } else if (!error.response) {
+      toast.error(t('login.network_error'));
+    } else {
+      toast.error(t('login.error'));
+    }
+  };
+
+  const onSuccess = () => {
+    toast.success(t('login.success'));
+    navigate('/dashboard');
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    login.mutate({ email, password }, { onSuccess, onError: handleError });
+  };
+
+  const handleDemoLogin = () => {
     login.mutate(
-      { email, password },
-      {
-        onSuccess: () => {
-          toast.success(t('login.success'));
-          navigate('/dashboard');
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onError: (error: any) => {
-          if (error.response?.status === 429) {
-            toast.error(t('login.rate_limit'));
-          } else if (!error.response) {
-            toast.error(t('login.network_error'));
-          } else {
-            toast.error(t('login.error'));
-          }
-        },
-      },
+      { email: 'demo@automaktab.uz', password: 'demo1234' },
+      { onSuccess, onError: handleError },
     );
   };
 
@@ -80,6 +85,20 @@ const LoginPage = () => {
           <Button type="submit" className="w-full" disabled={login.isPending}>
             {login.isPending ? t('login.submitting') : t('login.submit')}
           </Button>
+          <div className="pt-1">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={handleDemoLogin}
+              disabled={login.isPending}
+            >
+              {t('login.demo')}
+            </Button>
+            <p className="mt-1.5 text-center text-xs text-muted-foreground">
+              {t('login.demo_hint')}
+            </p>
+          </div>
         </form>
       </div>
     </div>

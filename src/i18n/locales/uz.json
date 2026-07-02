@@ -99,7 +99,9 @@
     "success": "Tizimga muvaffaqiyatli kirdingiz!",
     "error": "Email yoki parol noto'g'ri",
     "rate_limit": "Ko'p urinishlar. Iltimos 1 daqiqa kuting.",
-    "network_error": "Server bilan ulanish yo'q."
+    "network_error": "Server bilan ulanish yo'q.",
+    "demo": "Demo sifatida kirish",
+    "demo_hint": "Namuna ma'lumotlar bilan tanishing"
   },
   "dashboard": {
     "title": "Dashboard",
