@@ -8,6 +8,7 @@ interface AuthState {
   isAuthenticated: boolean;
   hasHydrated: boolean;
   setAuth: (token: string, user: User) => void;
+  setUser: (user: User) => void;
   logout: () => void;
   isOwner: () => boolean;
   canViewBranches: () => boolean;
@@ -24,6 +25,10 @@ export const useAuthStore = create<AuthState>()(
       hasHydrated: false,
       setAuth: (token, user) =>
         set({ token, user, isAuthenticated: true, hasHydrated: true }),
+      // Revalidate the session (fresh user/role) without touching the
+      // persisted token — used by useRestoreSession on every mount.
+      setUser: (user) =>
+        set({ user, isAuthenticated: true, hasHydrated: true }),
       logout: () =>
         set({
           token: null,

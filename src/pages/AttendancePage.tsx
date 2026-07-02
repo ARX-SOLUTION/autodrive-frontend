@@ -78,7 +78,6 @@ const AttendancePage = () => {
   };
 
   const role = useAuthStore((s) => s.user?.role);
-  const userId = useAuthStore((s) => s.user?.id);
   const canEdit =
     role === 'owner' ||
     role === 'manager' ||
@@ -86,11 +85,7 @@ const AttendancePage = () => {
     role === 'teacher';
   // teacher can mark attendance but cannot create lessons (backend @Roles)
   const canCreate = canEdit && role !== 'teacher';
-  // teacher only picks from own groups (teacher_id). other roles: all groups.
-  const groupOptions =
-    role === 'teacher'
-      ? (groups || []).filter((g) => g.teacher_id === userId)
-      : groups || [];
+  const groupOptions = groups || [];
 
   const [createOpen, setCreateOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);

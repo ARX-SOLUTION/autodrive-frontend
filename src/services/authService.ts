@@ -18,17 +18,18 @@ export const useLogin = () => {
   });
 };
 
-// On page refresh: in-memory token is gone but the httpOnly cookie is
-// still valid. Call /auth/me to pull fresh user data and re-hydrate the
-// token sentinel so axios adds a Bearer header alongside the cookie.
+// On every mount of an authenticated app: revalidate the session by
+// calling /auth/me. The persisted Bearer token already keeps the user
+// signed in across refreshes; this just refreshes user data so role
+// changes / revocations take effect (401 → logout below). The token is
+// never touched here — we call setUser, not setAuth.
 //
 // `useQuery` v5 removed the `onSuccess` / `onError` options, so we wire
 // the side effects through `useEffect` watching `data` / `error` — the
 // old cast-and-pray pattern silently dropped both branches.
 export const useRestoreSession = () => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const token = useAuthStore((s) => s.token);
-  const setAuth = useAuthStore((s) => s.setAuth);
+  const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
 
   const query = useQuery<User>({
@@ -37,13 +38,13 @@ export const useRestoreSession = () => {
       const { data } = await axiosInstance.get('/auth/me');
       return data.data;
     },
-    enabled: isAuthenticated && !token,
+    enabled: isAuthenticated,
     retry: false,
   });
 
   useEffect(() => {
-    if (query.data) setAuth('cookie', query.data);
-  }, [query.data, setAuth]);
+    if (query.data) setUser(query.data);
+  }, [query.data, setUser]);
 
   useEffect(() => {
     if ((query.error as AxiosError)?.response?.status === 401) logout();

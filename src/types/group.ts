@@ -8,7 +8,6 @@ export interface Group {
   course_type: CourseType;
   active_students: number;
   is_active: boolean;
-  teacher_id?: string;
   created_at: string;
 }
 
