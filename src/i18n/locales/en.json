@@ -99,7 +99,9 @@
     "success": "Successfully signed in!",
     "error": "Invalid email or password",
     "rate_limit": "Too many attempts. Please wait 1 minute.",
-    "network_error": "Unable to connect to the server."
+    "network_error": "Unable to connect to the server.",
+    "demo": "Sign in as demo",
+    "demo_hint": "Explore with sample data"
   },
   "dashboard": {
     "title": "Dashboard",
