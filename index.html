@@ -35,9 +35,43 @@
     <meta property="og:url" content="https://automaktab.uz/" />
     <meta property="og:site_name" content="Auto Maktab CRM" />
     <meta property="og:locale" content="uz_UZ" />
+    <meta property="og:locale:alternate" content="ru_RU" />
     <meta property="og:image" content="https://automaktab.uz/favicon.png" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:image" content="https://automaktab.uz/favicon.png" />
+    <link rel="preconnect" href="https://api.automaktab.uz" crossorigin />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://automaktab.uz/#org",
+            "name": "Auto Maktab CRM",
+            "url": "https://automaktab.uz/",
+            "logo": "https://automaktab.uz/favicon.png",
+            "email": "demo@automaktab.uz",
+            "areaServed": "UZ"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Auto Maktab CRM",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "url": "https://automaktab.uz/",
+            "inLanguage": ["uz", "ru", "en"],
+            "description": "O'zbekistondagi avtomaktablar uchun boshqaruv tizimi: talabalar, guruhlar, to'lovlar, davomat va jadval — bitta CRM'da. CRM для автошкол Узбекистана.",
+            "publisher": { "@id": "https://automaktab.uz/#org" },
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "UZS",
+              "description": "Demo hisob bilan bepul sinab ko'ring"
+            }
+          }
+        ]
+      }
+    </script>
     <script>
       // Apply theme before React mounts to avoid FOUC
       (function () {
