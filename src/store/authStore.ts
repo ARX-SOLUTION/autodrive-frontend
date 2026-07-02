@@ -46,13 +46,12 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'autodrive-auth',
-      // Persist the token so the session survives a hard refresh. Deployed
-      // cross-site (Vercel FE + Railway BE), the httpOnly cookie is a
-      // third-party cookie the browser drops on reload — the Bearer token
-      // in localStorage is what keeps the user signed in. Expired tokens are
-      // caught by the axios 401 interceptor (logout + redirect to /login).
+      // token is NOT persisted — memory only (XSS can't read httpOnly cookies,
+      // but it can read localStorage). The app and API now share the
+      // automaktab.uz parent domain (COOKIE_DOMAIN=.automaktab.uz), so the
+      // httpOnly cookie is first-party and survives hard refresh;
+      // useRestoreSession re-hydrates the user from /auth/me via the cookie.
       partialize: (state) => ({
-        token: state.token,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         hasHydrated: state.hasHydrated,
