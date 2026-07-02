@@ -1,0 +1,13 @@
+# Auto Maktab CRM
+
+> Boshqaruv tizimi (CRM) O'zbekistondagi avtomaktablar uchun: talabalar ro'yxati,
+> guruhlar, to'lovlar va qarzdorlik, davomat, dars jadvali va imtihon natijalari —
+> filiallar bo'yicha, uz/ru/en tillarida. CRM для автошкол Узбекистана.
+
+Roles: owner (kompaniya egasi), manager (filial), operator (registrator), teacher (o'qituvchi).
+
+## Links
+
+- App: https://automaktab.uz/
+- Demo: login "Demo sifatida kirish" (demo@automaktab.uz) — namuna ma'lumotlar bilan
+- API: https://api.automaktab.uz/
