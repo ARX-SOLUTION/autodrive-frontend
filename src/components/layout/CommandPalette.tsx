@@ -14,6 +14,8 @@ import {
   Layers,
   UserCog,
   ShieldCheck,
+  Calendar,
+  ClipboardCheck,
 } from 'lucide-react';
 import {
   CommandDialog,
@@ -41,6 +43,8 @@ const NAV_ENTRIES: NavEntry[] = [
     icon: Building2,
     branchAccess: true,
   },
+  { labelKey: 'nav.schedule', path: '/schedule', icon: Calendar },
+  { labelKey: 'nav.attendance', path: '/attendance', icon: ClipboardCheck },
   { labelKey: 'nav.groups', path: '/groups', icon: Layers },
   { labelKey: 'nav.students', path: '/students', icon: GraduationCap },
   { labelKey: 'nav.payments', path: '/payments', icon: CreditCard },
