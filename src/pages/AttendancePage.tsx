@@ -78,11 +78,19 @@ const AttendancePage = () => {
   };
 
   const role = useAuthStore((s) => s.user?.role);
+  const userId = useAuthStore((s) => s.user?.id);
   const canEdit =
     role === 'owner' ||
     role === 'manager' ||
     role === 'operator' ||
     role === 'teacher';
+  // teacher can mark attendance but cannot create lessons (backend @Roles)
+  const canCreate = canEdit && role !== 'teacher';
+  // teacher only picks from own groups (teacher_id). other roles: all groups.
+  const groupOptions =
+    role === 'teacher'
+      ? (groups || []).filter((g) => g.teacher_id === userId)
+      : groups || [];
 
   const [createOpen, setCreateOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -163,7 +171,7 @@ const AttendancePage = () => {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t('attendance.title')}</h1>
-        {canEdit && (
+        {canCreate && (
           <Button onClick={openCreate}>
             <Plus className="mr-2 h-4 w-4" /> {t('attendance.add_lesson')}
           </Button>
@@ -357,7 +365,7 @@ const AttendancePage = () => {
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {(groups || []).map((g) => (
+                  {groupOptions.map((g) => (
                     <SelectItem key={g.id} value={g.id}>
                       {g.name} {g.branch_name ? `(${g.branch_name})` : ''}
                     </SelectItem>
