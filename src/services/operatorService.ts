@@ -14,7 +14,7 @@ export const useOperators = () => {
     queryFn: async () => {
       try {
         const { data: res } = await axiosInstance.get('/users', { params: { role: 'operator' } });
-        const arr = res?.data;
+        const arr = res?.data?.data || res?.data;
         if (Array.isArray(arr)) return arr;
         if (Array.isArray(res)) return res;
         return [];

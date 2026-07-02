@@ -12,7 +12,7 @@ export const useGroups = () => {
     queryFn: async () => {
       try {
         const { data: res } = await axiosInstance.get('/groups');
-        const arr = res?.data;
+        const arr = res?.data?.data || res?.data;
         if (Array.isArray(arr)) return arr;
         if (Array.isArray(res)) return res;
         return [];
@@ -33,7 +33,7 @@ export const useGroupsOverview = () => {
     queryFn: async () => {
       try {
         const { data: res } = await axiosInstance.get('/groups/overview');
-        const arr = res?.data;
+        const arr = res?.data?.data || res?.data;
         if (Array.isArray(arr)) return arr;
         if (Array.isArray(res)) return res;
         return [];

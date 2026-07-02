@@ -13,7 +13,7 @@ export const useUsers = (role?: string) => {
       const { data: res } = await axiosInstance.get('/users', {
         params: role ? { role } : {},
       });
-      const arr = res?.data;
+      const arr = res?.data?.data || res?.data;
       if (Array.isArray(arr)) return arr;
       if (Array.isArray(res)) return res;
       return [];

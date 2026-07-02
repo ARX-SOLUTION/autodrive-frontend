@@ -28,7 +28,7 @@ export const useStudents = (
           operator_id: operatorId,
         },
       });
-      const arr = res?.data;
+      const arr = res?.data?.data || res?.data;
       if (Array.isArray(arr)) return arr;
       if (Array.isArray(res)) return res;
       return [];
