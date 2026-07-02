@@ -53,6 +53,15 @@ export const useRestoreSession = () => {
   return query;
 };
 
+export const useChangePassword = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (dto: { currentPassword: string; newPassword: string }) =>
+      axiosInstance.post('/auth/change-password', dto),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['me'] }),
+  });
+};
+
 export const useLogout = () => {
   const logout = useAuthStore((s) => s.logout);
   const queryClient = useQueryClient();

@@ -493,7 +493,9 @@
     "new_password": "New password",
     "update_password": "Update password",
     "name": "Name",
-    "phone": "Phone"
+    "phone": "Phone",
+    "must_change_password_notice": "You must change your password before continuing.",
+    "update_password_success": "Password updated successfully."
   },
   "attendance": {
     "title": "Attendance",

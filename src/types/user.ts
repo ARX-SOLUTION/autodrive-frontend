@@ -15,6 +15,7 @@ export interface User {
   specialization?: Specialization;
   is_active?: boolean;
   created_at?: string;
+  must_change_password?: boolean;
 }
 
 export interface LoginCredentials {

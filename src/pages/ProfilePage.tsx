@@ -1,16 +1,37 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
+import { useChangePassword } from '@/services/authService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { User, Shield, Building2, Mail, Phone } from 'lucide-react';
+import { toast } from 'sonner';
 
 const ProfilePage = () => {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const changePasswordMut = useChangePassword();
+  const [pwForm, setPwForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+  });
+
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    changePasswordMut.mutate(pwForm, {
+      onSuccess: () => toast.success(t('profile.update_password_success')),
+      onError: () => toast.error(t('common.error')),
+    });
+  };
 
   return (
     <div className="space-y-6 max-w-2xl">
+      {user?.must_change_password && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-600">
+          {t('profile.must_change_password_notice')}
+        </div>
+      )}
       <div>
         <h1 className="font-heading text-2xl font-bold text-balance">
           {t('profile.title')}
@@ -72,28 +93,44 @@ const ProfilePage = () => {
       </div>
 
       {/* Change password */}
-      <div className="glass-card p-6 space-y-4">
-        <h3 className="font-heading font-semibold text-balance">
-          {t('profile.change_password')}
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label>{t('profile.current_password')}</Label>
-            <Input
-              type="password"
-              className="mt-1.5 bg-secondary border-border"
-            />
+      <form onSubmit={handleChangePassword}>
+        <div className="glass-card p-6 space-y-4">
+          <h3 className="font-heading font-semibold text-balance">
+            {t('profile.change_password')}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label>{t('profile.current_password')}</Label>
+              <Input
+                type="password"
+                className="mt-1.5 bg-secondary border-border"
+                value={pwForm.currentPassword}
+                onChange={(e) =>
+                  setPwForm((p) => ({ ...p, currentPassword: e.target.value }))
+                }
+              />
+            </div>
+            <div>
+              <Label>{t('profile.new_password')}</Label>
+              <Input
+                type="password"
+                className="mt-1.5 bg-secondary border-border"
+                value={pwForm.newPassword}
+                onChange={(e) =>
+                  setPwForm((p) => ({ ...p, newPassword: e.target.value }))
+                }
+              />
+            </div>
           </div>
-          <div>
-            <Label>{t('profile.new_password')}</Label>
-            <Input
-              type="password"
-              className="mt-1.5 bg-secondary border-border"
-            />
-          </div>
+          <Button
+            type="submit"
+            variant="outline"
+            disabled={changePasswordMut.isPending}
+          >
+            {t('profile.update_password')}
+          </Button>
         </div>
-        <Button variant="outline">{t('profile.update_password')}</Button>
-      </div>
+      </form>
     </div>
   );
 };

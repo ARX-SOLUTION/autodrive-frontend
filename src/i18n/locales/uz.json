@@ -493,7 +493,9 @@
     "new_password": "Yangi parol",
     "update_password": "Parolni yangilash",
     "name": "Ism",
-    "phone": "Telefon"
+    "phone": "Telefon",
+    "must_change_password_notice": "Davom etishdan oldin parolingizni o'zgartiring.",
+    "update_password_success": "Parol muvaffaqiyatli yangilandi."
   },
   "attendance": {
     "title": "Davomat",
