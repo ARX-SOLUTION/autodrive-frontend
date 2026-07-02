@@ -41,10 +41,13 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'autodrive-auth',
-      // token is NOT persisted — it lives in memory only.
-      // Session is maintained via httpOnly cookie; Bearer is kept for
-      // in-session requests where the in-memory token is still available.
+      // Persist the token so the session survives a hard refresh. Deployed
+      // cross-site (Vercel FE + Railway BE), the httpOnly cookie is a
+      // third-party cookie the browser drops on reload — the Bearer token
+      // in localStorage is what keeps the user signed in. Expired tokens are
+      // caught by the axios 401 interceptor (logout + redirect to /login).
       partialize: (state) => ({
+        token: state.token,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         hasHydrated: state.hasHydrated,
