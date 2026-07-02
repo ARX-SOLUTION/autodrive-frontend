@@ -338,6 +338,7 @@ const MainDashboard = () => {
   const { data: branches } = useBranches();
 
   const owner = isOwner();
+  const canViewAudit = owner || user?.role === 'manager';
 
   // ---- Derived values ----
   const revenueSeries = useMemo(
@@ -930,7 +931,8 @@ const MainDashboard = () => {
           )}
         </SectionCard>
 
-        {/* Activity log */}
+        {/* Activity log — owner/manager only (backend gates /audit-logs) */}
+        {canViewAudit && (
         <SectionCard
           staggerDelayMs={360}
           title={t('dashboard.activity_title')}
@@ -1004,6 +1006,7 @@ const MainDashboard = () => {
             </ul>
           )}
         </SectionCard>
+        )}
       </section>
 
       {/* ===== Owner-only: branch comparison ===== */}

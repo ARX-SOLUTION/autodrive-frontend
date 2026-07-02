@@ -17,10 +17,11 @@ export const useAuditLogs = (params: {
 }) => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const role = useAuthStore((s) => s.user?.role);
-  const isOwnerOrDev = role === 'owner' || role === 'dev';
+  // Backend gates /audit-logs to owner/manager/dev — don't fire for others (operator/teacher → 403).
+  const canViewAudit = role === 'owner' || role === 'manager' || role === 'dev';
   return useQuery<AuditLogsResponse>({
     queryKey: ["audit-logs", { ...params, branchId }],
-    enabled: !!branchId || isOwnerOrDev,
+    enabled: canViewAudit,
     queryFn: async () => {
       try {
         const { data: res } = await axiosInstance.get("/audit-logs", {

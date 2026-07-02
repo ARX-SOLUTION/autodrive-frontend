@@ -44,8 +44,13 @@ const NAV_ENTRIES: NavEntry[] = [
   { labelKey: 'nav.groups', path: '/groups', icon: Layers },
   { labelKey: 'nav.students', path: '/students', icon: GraduationCap },
   { labelKey: 'nav.payments', path: '/payments', icon: CreditCard },
-  { labelKey: 'nav.operators', path: '/operators', icon: Headphones },
-  { labelKey: 'nav.teachers', path: '/teachers', icon: Users },
+  {
+    labelKey: 'nav.operators',
+    path: '/operators',
+    icon: Headphones,
+    branchAccess: true,
+  },
+  { labelKey: 'nav.teachers', path: '/teachers', icon: Users, branchAccess: true },
   {
     labelKey: 'nav.users',
     path: '/users',
