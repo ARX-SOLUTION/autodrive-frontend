@@ -19,9 +19,9 @@ interface ImportStudentsModalProps {
   onClose: () => void;
 }
 
-const SAMPLE_CSV = `first_name,last_name,phone,course_type,payment_method,amount_paid,group_name,notes
-John,Doe,+998901234567,tezkor,naqd,1000000,Group A,Sample note
-Jane,Smith,+998909876543,avto_maktab,karta,500000,Group B,
+const SAMPLE_CSV = `firstName,lastName,phone,courseType
+John,Doe,+998901234567,tezkor
+Jane,Smith,+998909876543,avto_maktab
 `;
 
 export default function ImportStudentsModal({
@@ -35,15 +35,24 @@ export default function ImportStudentsModal({
 
   const mutation = useMutation({
     mutationFn: bulkCreateStudents,
-    onSuccess: () => {
-      toast.success(t('common.success') || 'Imported successfully');
+    onSuccess: (res) => {
+      const { successCount = 0, errorCount = 0 } = res?.data ?? res ?? {};
+      if (errorCount > 0 && successCount === 0) {
+        toast.error(t('common.error'));
+      } else if (errorCount > 0) {
+        toast.warning(
+          t('students.import.partial', { success: successCount, errors: errorCount }),
+        );
+      } else {
+        toast.success(t('students.import.success', { count: successCount }));
+      }
       qc.invalidateQueries({ queryKey: ['students'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
       handleClose();
     },
     onError: () => {
-      toast.error(t('common.error') || 'Error importing file');
+      toast.error(t('common.error'));
     },
   });
 
