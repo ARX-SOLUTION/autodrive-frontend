@@ -26,4 +26,14 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': 'off',
     },
   },
+  // ponytail: shadcn generated files legitimately co-export variants; disable rule + unused-directive reporting
+  {
+    files: ['src/components/ui/**'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
+  },
 );
