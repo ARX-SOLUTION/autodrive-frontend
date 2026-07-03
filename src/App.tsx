@@ -7,6 +7,10 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageLoader } from '@/components/layout/PageLoader';
 import { useAuthStore } from '@/store/authStore';
+import { initMetrica } from '@/lib/metrica';
+import { RouteTracker } from '@/components/RouteTracker';
+
+initMetrica();
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -52,6 +56,7 @@ const App = () => (
     <TooltipProvider>
       <Sonner />
       <BrowserRouter>
+        <RouteTracker />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<LandingPage />} />

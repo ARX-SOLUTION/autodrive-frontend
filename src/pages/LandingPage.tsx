@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
+import { ymGoal } from '@/lib/metrica';
 import {
   AlertTriangle,
   ArrowRight,
@@ -429,6 +430,7 @@ const LandingPage = () => {
           </div>
           <Button
             className="active:scale-[0.96] h-9 gap-1.5 bg-cyan-400 px-5 text-sm text-slate-950 transition-all hover:bg-cyan-300"
+            onClick={() => ymGoal('login_click')}
             asChild
           >
             <Link to="/login">
@@ -469,6 +471,7 @@ const LandingPage = () => {
             <Button
               size="lg"
               className="active:scale-[0.96] h-12 gap-2 bg-cyan-400 px-8 text-slate-950 transition-all hover:bg-cyan-300 hover:shadow-[0_0_32px_rgba(34,211,238,0.30)]"
+              onClick={() => ymGoal('demo_click')}
               asChild
             >
               <Link to="/login">
@@ -480,6 +483,7 @@ const LandingPage = () => {
               size="lg"
               variant="outline"
               className="active:scale-[0.96] h-12 gap-2 border-white/12 bg-white/5 px-8 text-white transition-all hover:bg-white/10 hover:text-white"
+              onClick={() => ymGoal('telegram_click')}
               asChild
             >
               <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer">
@@ -918,6 +922,7 @@ const LandingPage = () => {
             <Button
               size="lg"
               className="active:scale-[0.96] h-12 gap-2 bg-cyan-400 px-8 text-slate-950 transition-all hover:bg-cyan-300 hover:shadow-[0_0_32px_rgba(34,211,238,0.30)]"
+              onClick={() => ymGoal('demo_click')}
               asChild
             >
               <Link to="/login">
@@ -929,6 +934,7 @@ const LandingPage = () => {
               size="lg"
               variant="outline"
               className="active:scale-[0.96] h-12 gap-2 border-white/12 bg-white/5 px-8 text-white transition-all hover:bg-white/10 hover:text-white"
+              onClick={() => ymGoal('telegram_click')}
               asChild
             >
               <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer">
