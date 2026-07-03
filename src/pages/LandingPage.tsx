@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
+import { useTheme } from '@/hooks/useTheme';
 import {
   AlertTriangle,
   ArrowRight,
@@ -20,9 +21,11 @@ import {
   CalendarCheck2,
   CircleDollarSign,
   Clock,
+  Moon,
   Phone,
   Send,
   ShieldCheck,
+  Sun,
   TrendingUp,
   Users,
   Wallet,
@@ -99,7 +102,8 @@ const SCHEDULE_COLS = [
 ] as const;
 
 const LandingPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { theme, toggle: toggleTheme } = useTheme();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
@@ -516,7 +520,7 @@ const LandingPage = () => {
   return (
     <div
       ref={containerRef}
-      className="relative min-h-screen overflow-x-hidden bg-slate-950 text-white"
+      className="relative min-h-screen overflow-x-hidden bg-white text-slate-900 dark:bg-slate-950 dark:text-white"
       style={{ WebkitFontSmoothing: 'antialiased' } as React.CSSProperties}
     >
       {/* ── Background glows ─────────────────────────────────────────── */}
@@ -524,7 +528,7 @@ const LandingPage = () => {
         <div className="hero-glow-orb will-change-transform absolute -top-40 left-1/2 h-[900px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(34,211,238,0.12)_0%,transparent_70%)]" />
         <div className="absolute right-[-5%] top-1/3 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.07)_0%,transparent_70%)]" />
         <div className="absolute bottom-1/4 left-[-5%] h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,rgba(52,211,153,0.05)_0%,transparent_70%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)] dark:bg-[linear-gradient(rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.012)_1px,transparent_1px)]" />
       </div>
 
       {/* ── Sticky nav ───────────────────────────────────────────────── */}
@@ -537,20 +541,45 @@ const LandingPage = () => {
             <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-cyan-300/25 bg-cyan-300/10 shadow-[0_0_28px_rgba(34,211,238,0.16)]">
               <ShieldCheck className="size-4 text-cyan-200" />
             </div>
-            <span className="text-sm font-semibold tracking-tight text-white/85">
+            <span className="text-sm font-semibold tracking-tight text-slate-800 dark:text-white/85">
               Auto Maktab{' '}
-              <span className="font-normal text-white/35">CRM</span>
+              <span className="font-normal text-slate-400 dark:text-white/35">CRM</span>
             </span>
           </div>
           <div className="flex items-center gap-3">
             <a
               href={PHONE_LINK}
-              className="hidden items-center gap-1.5 text-sm text-white/40 transition-colors hover:text-white/70 lg:flex"
+              className="hidden items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-slate-700 dark:text-white/40 dark:hover:text-white/70 lg:flex"
               onClick={() => track('phone_click')}
             >
               <Phone className="size-3.5" />
               {PHONE_DISPLAY}
             </a>
+            {/* Language pill */}
+            <div className="flex items-center gap-1 rounded-full border border-slate-200 px-1 py-0.5 backdrop-blur-sm dark:border-white/10">
+              {(['uz', 'ru', 'en'] as const).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => i18n.changeLanguage(lang)}
+                  className={`rounded-full px-2 py-1 text-xs uppercase transition-colors ${
+                    i18n.language === lang
+                      ? 'bg-cyan-400/20 text-cyan-600 dark:text-cyan-400'
+                      : 'text-slate-500 hover:text-slate-800 dark:text-foreground/60 dark:hover:text-foreground'
+                  }`}
+                  aria-label={t('nav.switchLang', { lang })}
+                >
+                  {lang.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:text-slate-800 dark:border-white/10 dark:text-white/50 dark:hover:text-white"
+            >
+              {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            </button>
             <Button
               className="active:scale-[0.96] h-9 gap-1.5 bg-cyan-400 px-5 text-sm text-slate-950 transition-all hover:bg-cyan-300"
               asChild
@@ -586,7 +615,7 @@ const LandingPage = () => {
             {titleAfter}
           </h1>
 
-          <p className="hero-sub mx-auto mb-8 max-w-lg text-base leading-relaxed text-white/50 sm:text-lg">
+          <p className="hero-sub mx-auto mb-8 max-w-lg text-base leading-relaxed text-slate-500 dark:text-white/50 sm:text-lg">
             {t('landing.hero_sub')}
           </p>
 
@@ -604,7 +633,7 @@ const LandingPage = () => {
             <Button
               size="lg"
               variant="outline"
-              className="active:scale-[0.96] h-12 gap-2 border-white/12 bg-white/5 px-8 text-white transition-all hover:bg-white/10 hover:text-white"
+              className="active:scale-[0.96] h-12 gap-2 border-slate-300 bg-slate-100 px-8 text-slate-700 transition-all hover:bg-slate-200 hover:text-slate-900 dark:border-white/12 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:hover:text-white"
               asChild
             >
               <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" onClick={() => track('telegram_click')}>
@@ -618,13 +647,13 @@ const LandingPage = () => {
 
       {/* ── Dashboard Mock ───────────────────────────────────────────── */}
       <section className="hero-mock-section relative z-10 mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="hero-mock-wrapper will-change-transform overflow-hidden rounded-[24px] border border-white/10 bg-slate-900/70 shadow-[0_40px_100px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+        <div className="hero-mock-wrapper will-change-transform overflow-hidden rounded-[24px] border border-slate-200 bg-white/90 shadow-[0_40px_100px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-[0_40px_100px_rgba(0,0,0,0.55)]">
           {/* Browser chrome */}
-          <div className="flex items-center gap-2 border-b border-white/8 bg-white/[0.015] px-5 py-3">
+          <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-5 py-3 dark:border-white/8 dark:bg-white/[0.015]">
             <span className="h-2.5 w-2.5 rounded-full bg-rose-400/40" />
             <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/40" />
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/40" />
-            <div className="mx-auto flex h-5 w-52 items-center justify-center rounded-full bg-white/[0.06] text-[10px] tracking-wide text-white/25">
+            <div className="mx-auto flex h-5 w-52 items-center justify-center rounded-full bg-slate-200 text-[10px] tracking-wide text-slate-400 dark:bg-white/[0.06] dark:text-white/25">
               app.automaktab.uz
             </div>
           </div>
@@ -633,10 +662,10 @@ const LandingPage = () => {
             {/* Dashboard header */}
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="font-heading text-sm font-bold text-white/90">
+                <p className="font-heading text-sm font-bold text-slate-800 dark:text-white/90">
                   Xayrli kun, Mansur
                 </p>
-                <p className="mt-0.5 text-[11px] text-white/35">
+                <p className="mt-0.5 text-[11px] text-slate-400 dark:text-white/35">
                   {t('dashboard.hero_subtitle')}
                 </p>
               </div>
@@ -651,10 +680,10 @@ const LandingPage = () => {
               {kpiCards.map((card) => (
                 <div
                   key={card.label}
-                  className="relative overflow-hidden rounded-xl border border-white/8 bg-white/[0.035] p-3"
+                  className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/8 dark:bg-white/[0.035]"
                 >
                   <div className="mb-2 flex items-center justify-between">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-white/35">
                       {card.label}
                     </p>
                     <div
@@ -668,7 +697,7 @@ const LandingPage = () => {
                   >
                     {card.value}
                     {card.unit && (
-                      <span className="ml-0.5 text-[10px] font-normal text-white/30">
+                      <span className="ml-0.5 text-[10px] font-normal text-slate-400 dark:text-white/30">
                         {card.unit}
                       </span>
                     )}
@@ -685,13 +714,13 @@ const LandingPage = () => {
             {/* Revenue trend + debtors */}
             <div className="grid gap-3 sm:grid-cols-5">
               {/* Mini area chart */}
-              <div className="rounded-xl border border-white/8 bg-white/[0.02] p-4 sm:col-span-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[0.02] sm:col-span-3">
                 <div className="mb-3 flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-white/65">
+                    <p className="text-xs font-semibold text-slate-600 dark:text-white/65">
                       {t('landing.mock_chart_title')}
                     </p>
-                    <p className="mt-0.5 text-[10px] text-white/30">
+                    <p className="mt-0.5 text-[10px] text-slate-400 dark:text-white/30">
                       {t('landing.mock_chart_sub')}
                     </p>
                   </div>
@@ -703,16 +732,16 @@ const LandingPage = () => {
                 <div className="h-14">
                   <MiniRevenueChart />
                 </div>
-                <div className="mt-2 flex items-center gap-1.5 text-[10px] text-white/25">
+                <div className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-white/25">
                   <span className="inline-block h-1.5 w-4 rounded-full bg-cyan-400/60" />
                   {t('landing.mock_chart_period')}
                 </div>
               </div>
 
               {/* Debtors list */}
-              <div className="rounded-xl border border-white/8 bg-white/[0.02] p-4 sm:col-span-2">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[0.02] sm:col-span-2">
                 <div className="mb-3 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-white/65">
+                  <span className="text-xs font-semibold text-slate-600 dark:text-white/65">
                     {t('landing.mock_debtors_title')}
                   </span>
                   <span className="rounded-full border border-rose-400/25 bg-rose-400/10 px-2 py-0.5 text-[10px] font-semibold text-rose-300">
@@ -723,13 +752,13 @@ const LandingPage = () => {
                   {debtors.map((d) => (
                     <div
                       key={d.nameKey}
-                      className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2"
+                      className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/5 dark:bg-white/[0.02]"
                     >
                       <div className="flex items-center gap-2">
                         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-400/15 text-[10px] font-semibold text-rose-300">
                           {t(d.nameKey)[0]}
                         </div>
-                        <span className="text-xs text-white/60">
+                        <span className="text-xs text-slate-600 dark:text-white/60">
                           {t(d.nameKey)}
                         </span>
                       </div>
@@ -737,7 +766,7 @@ const LandingPage = () => {
                         <span className="font-heading tabular-nums text-xs font-semibold text-rose-300">
                           {d.amount}
                         </span>
-                        <span className="text-[10px] text-white/25">
+                        <span className="text-[10px] text-slate-400 dark:text-white/25">
                           {d.days}k
                         </span>
                       </div>
@@ -752,7 +781,7 @@ const LandingPage = () => {
 
       {/* ── Stats bar (count-up on scroll) ───────────────────────────── */}
       <section className="relative z-10 mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 divide-y divide-white/8 overflow-hidden rounded-2xl border border-white/8 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <div className="grid grid-cols-1 divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 dark:divide-white/8 dark:border-white/8 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {(
             [
               { target: 50, suffix: '+', labelKey: 'landing.stats_schools_label' },
@@ -762,13 +791,13 @@ const LandingPage = () => {
           ).map((stat, i) => (
             <div
               key={i}
-              className="bg-white/[0.02] px-8 py-7 text-center"
+              className="bg-slate-50 px-8 py-7 text-center dark:bg-white/[0.02]"
             >
-              <p className="font-heading tabular-nums text-3xl font-bold text-white sm:text-4xl">
+              <p className="font-heading tabular-nums text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">
                 <span data-count-target={stat.target}>0</span>
                 <span className="text-cyan-300">{stat.suffix}</span>
               </p>
-              <p className="mt-2 text-sm text-white/40">{t(stat.labelKey)}</p>
+              <p className="mt-2 text-sm text-slate-500 dark:text-white/40">{t(stat.labelKey)}</p>
             </div>
           ))}
         </div>
@@ -780,7 +809,7 @@ const LandingPage = () => {
           <h2 className="font-heading mb-3 text-2xl font-bold sm:text-3xl">
             {t('landing.howit_title')}
           </h2>
-          <p className="text-sm text-white/40">{t('landing.howit_sub')}</p>
+          <p className="text-sm text-slate-500 dark:text-white/40">{t('landing.howit_sub')}</p>
         </div>
 
         <div className="relative grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -800,15 +829,15 @@ const LandingPage = () => {
           ).map((s) => (
             <div
               key={s.step}
-              className="howit-step relative rounded-2xl border border-white/8 bg-white/[0.025] p-6"
+              className="howit-step relative rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-white/8 dark:bg-white/[0.025]"
             >
               <div className={`mb-4 flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold ${s.bg} ${s.color}`}>
                 {s.step}
               </div>
-              <h3 className="mb-2 text-sm font-semibold text-white">
+              <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">
                 {t(s.titleKey)}
               </h3>
-              <p className="text-sm leading-relaxed text-white/45">
+              <p className="text-sm leading-relaxed text-slate-500 dark:text-white/45">
                 {t(s.bodyKey)}
               </p>
             </div>
@@ -830,7 +859,7 @@ const LandingPage = () => {
           <h2 className="font-heading mb-3 text-2xl font-bold sm:text-3xl">
             {t('landing.benefits_title')}
           </h2>
-          <p className="text-sm text-white/40">{t('landing.benefits_sub')}</p>
+          <p className="text-sm text-slate-500 dark:text-white/40">{t('landing.benefits_sub')}</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           {benefits.map((b) => {
@@ -838,7 +867,7 @@ const LandingPage = () => {
             return (
               <div
                 key={b.titleKey}
-                className={`benefit-card group relative overflow-hidden rounded-2xl border border-white/8 bg-white/[0.03] p-6 transition-colors duration-300 ${b.hoverBorder}`}
+                className={`benefit-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-6 transition-colors duration-300 dark:border-white/8 dark:bg-white/[0.03] ${b.hoverBorder}`}
                 onMouseMove={(e) => {
                   const r = e.currentTarget.getBoundingClientRect();
                   e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
@@ -860,10 +889,10 @@ const LandingPage = () => {
                   >
                     <Icon className={`size-5 ${b.iconColor}`} />
                   </div>
-                  <h3 className="mb-2 text-base font-semibold text-white">
+                  <h3 className="mb-2 text-base font-semibold text-slate-900 dark:text-white">
                     {t(b.titleKey)}
                   </h3>
-                  <p className="text-sm leading-relaxed text-white/45">
+                  <p className="text-sm leading-relaxed text-slate-500 dark:text-white/45">
                     {t(b.bodyKey)}
                   </p>
                 </div>
@@ -879,7 +908,7 @@ const LandingPage = () => {
           <h2 className="font-heading mb-3 text-2xl font-bold sm:text-3xl">
             {t('landing.roles_title')}
           </h2>
-          <p className="text-sm text-white/40">{t('landing.roles_sub')}</p>
+          <p className="text-sm text-slate-500 dark:text-white/40">{t('landing.roles_sub')}</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {(
@@ -894,17 +923,17 @@ const LandingPage = () => {
             return (
               <div
                 key={r.titleKey}
-                className={`role-card group relative overflow-hidden rounded-2xl border border-white/8 bg-white/[0.03] p-5 transition-colors duration-300 ${r.hoverBorder}`}
+                className={`role-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-colors duration-300 dark:border-white/8 dark:bg-white/[0.03] ${r.hoverBorder}`}
               >
                 <div
                   className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl border ${r.iconBg}`}
                 >
                   <Icon className={`size-4 ${r.iconColor}`} />
                 </div>
-                <h3 className="mb-1.5 text-sm font-semibold text-white">
+                <h3 className="mb-1.5 text-sm font-semibold text-slate-900 dark:text-white">
                   {t(r.titleKey)}
                 </h3>
-                <p className="text-xs leading-relaxed text-white/45">
+                <p className="text-xs leading-relaxed text-slate-500 dark:text-white/45">
                   {t(r.bodyKey)}
                 </p>
               </div>
@@ -919,7 +948,7 @@ const LandingPage = () => {
           <h2 className="font-heading mb-3 text-2xl font-bold sm:text-3xl">
             {t('landing.features_title')}
           </h2>
-          <p className="text-sm text-white/40">{t('landing.features_sub')}</p>
+          <p className="text-sm text-slate-500 dark:text-white/40">{t('landing.features_sub')}</p>
         </div>
 
         <div className="space-y-20 sm:space-y-28">
@@ -932,14 +961,14 @@ const LandingPage = () => {
               <h3 className="font-heading mb-4 text-xl font-bold leading-tight sm:text-2xl">
                 {t('landing.feature_debt_title')}
               </h3>
-              <p className="text-sm leading-relaxed text-white/45">
+              <p className="text-sm leading-relaxed text-slate-500 dark:text-white/45">
                 {t('landing.feature_debt_body')}
               </p>
             </div>
             {/* Debt vignette — mirrors StudentsPage table patterns */}
-            <div className="vignette-right rounded-2xl border border-white/8 bg-white/[0.02] p-4 sm:p-5">
+            <div className="vignette-right rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[0.02] sm:p-5">
               <div className="mb-3 flex items-center justify-between">
-                <span className="text-xs font-semibold text-white/60">
+                <span className="text-xs font-semibold text-slate-600 dark:text-white/60">
                   {t('landing.mock_debtors_title')}
                 </span>
                 <span className="rounded-full bg-rose-400/10 px-2 py-0.5 text-[10px] font-semibold text-rose-300">
@@ -950,16 +979,16 @@ const LandingPage = () => {
                 {debtVignette.map((row) => (
                   <div
                     key={row.name}
-                    className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2.5"
+                    className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 dark:border-white/5 dark:bg-white/[0.02]"
                   >
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/8 text-[10px] font-bold text-white/50">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-500 dark:bg-white/8 dark:text-white/50">
                       {row.name[0]}
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-white/80">
+                      <p className="text-xs font-semibold text-slate-700 dark:text-white/80">
                         {row.name}
                       </p>
-                      <p className="text-[10px] text-white/35">{row.course}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-white/35">{row.course}</p>
                     </div>
                     <div className="text-right">
                       {row.paid ? (
@@ -971,7 +1000,7 @@ const LandingPage = () => {
                           <p className="font-heading tabular-nums text-xs font-semibold text-rose-300">
                             {row.debt}
                           </p>
-                          <p className="text-[10px] text-white/25">
+                          <p className="text-[10px] text-slate-400 dark:text-white/25">
                             {row.days}k
                           </p>
                         </div>
@@ -987,13 +1016,13 @@ const LandingPage = () => {
           <div className="feature-row grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
             <div className="order-last lg:order-first">
               {/* Attendance vignette — mirrors AttendancePage patterns */}
-              <div className="vignette-left rounded-2xl border border-white/8 bg-white/[0.02] p-4 sm:p-5">
+              <div className="vignette-left rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[0.02] sm:p-5">
                 <div className="mb-3 flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-white/65">
+                    <p className="text-xs font-semibold text-slate-600 dark:text-white/65">
                       1-guruh · Teoriya
                     </p>
-                    <p className="mt-0.5 text-[10px] text-white/30">
+                    <p className="mt-0.5 text-[10px] text-slate-400 dark:text-white/30">
                       15.06.2026 — 09:00
                     </p>
                   </div>
@@ -1008,13 +1037,13 @@ const LandingPage = () => {
                   {attendanceVignette.map((s) => (
                     <div
                       key={s.name}
-                      className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2"
+                      className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/5 dark:bg-white/[0.02]"
                     >
                       <div className="flex items-center gap-2.5">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/8 text-[10px] font-bold text-white/50">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-500 dark:bg-white/8 dark:text-white/50">
                           {s.name[0]}
                         </div>
-                        <span className="text-xs text-white/70">{s.name}</span>
+                        <span className="text-xs text-slate-600 dark:text-white/70">{s.name}</span>
                       </div>
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${statusCls(s.status)}`}
@@ -1033,7 +1062,7 @@ const LandingPage = () => {
               <h3 className="font-heading mb-4 text-xl font-bold leading-tight sm:text-2xl">
                 {t('landing.feature_att_title')}
               </h3>
-              <p className="text-sm leading-relaxed text-white/45">
+              <p className="text-sm leading-relaxed text-slate-500 dark:text-white/45">
                 {t('landing.feature_att_body')}
               </p>
             </div>
@@ -1048,14 +1077,14 @@ const LandingPage = () => {
               <h3 className="font-heading mb-4 text-xl font-bold leading-tight sm:text-2xl">
                 {t('landing.feature_sch_title')}
               </h3>
-              <p className="text-sm leading-relaxed text-white/45">
+              <p className="text-sm leading-relaxed text-slate-500 dark:text-white/45">
                 {t('landing.feature_sch_body')}
               </p>
             </div>
             {/* Schedule vignette — mirrors SchedulePage week calendar */}
-            <div className="vignette-right rounded-2xl border border-white/8 bg-white/[0.02] p-4 sm:p-5">
+            <div className="vignette-right rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[0.02] sm:p-5">
               <div className="mb-3 flex items-center justify-between">
-                <span className="text-xs font-semibold text-white/65">
+                <span className="text-xs font-semibold text-slate-600 dark:text-white/65">
                   Haftalik jadval
                 </span>
                 <div className="flex gap-1.5">
@@ -1072,7 +1101,7 @@ const LandingPage = () => {
               <div className="grid grid-cols-5 gap-1.5">
                 {SCHEDULE_COLS.map((col) => (
                   <div key={col.day}>
-                    <p className="mb-1.5 text-center text-[10px] font-semibold text-white/30">
+                    <p className="mb-1.5 text-center text-[10px] font-semibold text-slate-400 dark:text-white/30">
                       {col.day}
                     </p>
                     <div className="space-y-1.5">
@@ -1090,7 +1119,7 @@ const LandingPage = () => {
                           >
                             {lesson.group}
                           </p>
-                          <p className="text-[9px] text-white/30">
+                          <p className="text-[9px] text-slate-400 dark:text-white/30">
                             {lesson.time}
                           </p>
                         </div>
@@ -1114,12 +1143,12 @@ const LandingPage = () => {
             <AccordionItem
               key={faq.q}
               value={`faq-${i}`}
-              className="faq-item overflow-hidden rounded-2xl border border-white/8 bg-white/[0.025] px-5"
+              className="faq-item overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 px-5 dark:border-white/8 dark:bg-white/[0.025]"
             >
-              <AccordionTrigger className="py-4 text-left text-sm font-semibold text-white/80 hover:no-underline sm:text-base [&>svg]:shrink-0 [&>svg]:text-white/30">
+              <AccordionTrigger className="py-4 text-left text-sm font-semibold text-slate-700 hover:no-underline dark:text-white/80 sm:text-base [&>svg]:shrink-0 [&>svg]:text-slate-400 dark:[&>svg]:text-white/30">
                 {t(faq.q)}
               </AccordionTrigger>
-              <AccordionContent className="pb-4 text-sm leading-relaxed text-white/45">
+              <AccordionContent className="pb-4 text-sm leading-relaxed text-slate-500 dark:text-white/45">
                 {t(faq.a)}
               </AccordionContent>
             </AccordionItem>
@@ -1137,7 +1166,7 @@ const LandingPage = () => {
           <h2 className="font-heading relative mb-4 text-2xl font-bold sm:text-4xl">
             {t('landing.cta2_title')}
           </h2>
-          <p className="relative mb-8 text-sm text-white/45 sm:text-base">
+          <p className="relative mb-8 text-sm text-slate-500 dark:text-white/45 sm:text-base">
             {t('landing.cta2_sub')}
           </p>
           <div className="relative flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -1154,7 +1183,7 @@ const LandingPage = () => {
             <Button
               size="lg"
               variant="outline"
-              className="active:scale-[0.96] h-12 gap-2 border-white/12 bg-white/5 px-8 text-white transition-all hover:bg-white/10 hover:text-white"
+              className="active:scale-[0.96] h-12 gap-2 border-slate-300 bg-slate-100 px-8 text-slate-700 transition-all hover:bg-slate-200 hover:text-slate-900 dark:border-white/12 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:hover:text-white"
               asChild
             >
               <a href={PHONE_LINK} onClick={() => track('phone_cta_click')}>
@@ -1167,18 +1196,18 @@ const LandingPage = () => {
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────────── */}
-      <footer className="relative z-10 border-t border-white/8">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-white/30 sm:flex-row sm:px-6 lg:px-8">
+      <footer className="relative z-10 border-t border-slate-200 dark:border-white/8">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-slate-400 dark:text-white/30 sm:flex-row sm:px-6 lg:px-8">
           <div className="flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-300/10">
               <ShieldCheck className="size-3.5 text-cyan-200" />
             </div>
-            <span className="font-semibold text-white/45">Auto Maktab CRM</span>
+            <span className="font-semibold text-slate-500 dark:text-white/45">Auto Maktab CRM</span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
             <Link
               to="/login"
-              className="relative transition-colors hover:text-white/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 after:bg-current after:transition-[width] after:duration-300 hover:after:w-full"
+              className="relative transition-colors hover:text-slate-600 dark:hover:text-white/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 after:bg-current after:transition-[width] after:duration-300 hover:after:w-full"
               onClick={() => track('login_click')}
             >
               {t('landing.nav_cta')}
@@ -1187,13 +1216,13 @@ const LandingPage = () => {
               href={TELEGRAM_LINK}
               target="_blank"
               rel="noopener noreferrer"
-              className="transition-colors hover:text-white/55"
+              className="transition-colors hover:text-slate-600 dark:hover:text-white/55"
             >
               Telegram
             </a>
             <a
               href={PHONE_LINK}
-              className="transition-colors hover:text-white/55"
+              className="transition-colors hover:text-slate-600 dark:hover:text-white/55"
               onClick={() => track('phone_footer_click')}
             >
               {PHONE_DISPLAY}
