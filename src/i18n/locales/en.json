@@ -626,6 +626,23 @@
     "faq5_a": "Yes. AutoDrive handles groupless flow too — enroll a student directly and manage attendance and payments without a group.",
     "cta2_title": "Make running your school easier",
     "cta2_sub": "Start with the demo version — no installation needed.",
-    "footer_copy": "© 2026 Auto Maktab CRM"
+    "footer_copy": "© 2026 Auto Maktab CRM",
+    "stats_schools_label": "Driving schools",
+    "stats_students_label": "Students managed",
+    "stats_months_label": "Months of experience",
+    "mock_chart_title": "Revenue trend",
+    "mock_chart_sub": "Last 12 months",
+    "mock_chart_period": "Current period",
+    "features_title": "Feature details",
+    "features_sub": "Every feature built for your workflow",
+    "feature_debt_eyebrow": "Debt tracking",
+    "feature_debt_title": "Keep every payment under control",
+    "feature_debt_body": "Debtor list, remaining balance, overdue days — at a glance. Full report by branch, overdue debts highlighted separately.",
+    "feature_att_eyebrow": "Attendance system",
+    "feature_att_title": "Teachers mark attendance in 2 taps",
+    "feature_att_body": "Open the group list, tap a student — Present / Absent / Late. The attendance log saves automatically, no retry needed.",
+    "feature_sch_eyebrow": "Schedule & groups",
+    "feature_sch_title": "Set the schedule once, it runs itself",
+    "feature_sch_body": "Based on schedule templates, lessons for future weeks are created automatically. Groups, teachers and lesson types — all in one place."
   }
 }

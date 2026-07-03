@@ -138,6 +138,14 @@
   }
 }
 
+/* ─── Landing nav: gains glass on scroll (toggled by GSAP) ─── */
+.nav-scrolled {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(2, 8, 23, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
 /* ─── Custom Scrollbar ─── */
 ::-webkit-scrollbar {
   width: 5px;

@@ -625,7 +625,24 @@
     "faq5_q": "2026 uzluksiz qabulga tayyormisiz?",
     "faq5_a": "Ha. AutoDrive guruhsiz oqimni ham yuritadi — to‘g‘ridan-to‘g‘ri talabani ro‘yxatdan o‘tkazib, davomat va to‘lovni guruhsiz boshqarish mumkin.",
     "cta2_title": "Maktabingizni boshqarishni osonlashtiring",
-    "cta2_sub": "Demo versiyasi bilan boshlang — o‘rnatish shart emas.",
-    "footer_copy": "© 2026 Auto Maktab CRM"
+    "cta2_sub": "Demo versiyasi bilan boshlang — o’rnatish shart emas.",
+    "footer_copy": "© 2026 Auto Maktab CRM",
+    "stats_schools_label": "Avtomaktablar",
+    "stats_students_label": "Talabalar boshqarildi",
+    "stats_months_label": "Ish tajribasi",
+    "mock_chart_title": "Daromad trendi",
+    "mock_chart_sub": "So’nggi 12 oy",
+    "mock_chart_period": "Joriy davr",
+    "features_title": "Batafsil imkoniyatlar",
+    "features_sub": "Har bir funksiya sizning ish jarayoningiz uchun",
+    "feature_debt_eyebrow": "Qarzdorlik nazorati",
+    "feature_debt_title": "Har bir to’lovni nazorat ostida saqlang",
+    "feature_debt_body": "Qarzdor talabalar ro’yxati, qolgan summa, qarz muddati — bir qarashda. Filiallar kesimida to’liq hisobot, muddati o’tgan qarzlar alohida ajratilgan.",
+    "feature_att_eyebrow": "Davomat tizimi",
+    "feature_att_title": "O’qituvchi 2 bosishda belgilaydi",
+    "feature_att_body": "Guruh ro’yxatini oching, talabani bosing — Keldi / Kelmadi / Kechikdi. Davomat jurnali avtomatik saqlanadi, qayta urinib ko’rish shart emas.",
+    "feature_sch_eyebrow": "Jadval va guruhlar",
+    "feature_sch_title": "Haftalik jadval — bir marta sozlang, doim ishlaydi",
+    "feature_sch_body": "Jadval shablonlari asosida kelgusi haftalar uchun darslar avtomatik yaratiladi. Guruhlar, o’qituvchilar va dars turlari — hammasi bir joyda."
   }
 }
