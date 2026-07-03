@@ -20,6 +20,7 @@ import {
   CalendarCheck2,
   CircleDollarSign,
   Clock,
+  Phone,
   Send,
   ShieldCheck,
   TrendingUp,
@@ -29,8 +30,9 @@ import {
 
 import { track } from '@/lib/umami';
 
-// ponytail: const per spec — swap to real handle when confirmed
-const TELEGRAM_LINK = 'https://t.me/automaktab_uz';
+const TELEGRAM_LINK = 'https://t.me/Xamidullo_xudoyberdiyev';
+const PHONE_LINK = 'tel:+998946110066';
+const PHONE_DISPLAY = '+998 94 611 00 66';
 
 gsap.registerPlugin(ScrollTrigger, SplitText, useGSAP);
 
@@ -340,6 +342,34 @@ const LandingPage = () => {
             once: true,
           });
 
+          // ── How it works steps stagger ──────────────────────────────
+          ScrollTrigger.batch('.howit-step', {
+            onEnter: (els) =>
+              gsap.from(els, {
+                y: 40,
+                opacity: 0,
+                stagger: 0.15,
+                duration: 0.7,
+                ease: 'power3.out',
+              }),
+            start: 'top 88%',
+            once: true,
+          });
+
+          // ── Role cards stagger ───────────────────────────────────────
+          ScrollTrigger.batch('.role-card', {
+            onEnter: (els) =>
+              gsap.from(els, {
+                y: 40,
+                opacity: 0,
+                stagger: 0.12,
+                duration: 0.7,
+                ease: 'power3.out',
+              }),
+            start: 'top 88%',
+            once: true,
+          });
+
           // ── Bottom CTA section ───────────────────────────────────────
           gsap.from('.cta-section', {
             y: 36,
@@ -396,6 +426,9 @@ const LandingPage = () => {
     { q: 'landing.faq3_q', a: 'landing.faq3_a' },
     { q: 'landing.faq4_q', a: 'landing.faq4_a' },
     { q: 'landing.faq5_q', a: 'landing.faq5_a' },
+    { q: 'landing.faq6_q', a: 'landing.faq6_a' },
+    { q: 'landing.faq7_q', a: 'landing.faq7_a' },
+    { q: 'landing.faq8_q', a: 'landing.faq8_a' },
   ];
 
   const heroTitle = t('landing.hero_title');
@@ -509,15 +542,25 @@ const LandingPage = () => {
               <span className="font-normal text-white/35">CRM</span>
             </span>
           </div>
-          <Button
-            className="active:scale-[0.96] h-9 gap-1.5 bg-cyan-400 px-5 text-sm text-slate-950 transition-all hover:bg-cyan-300"
-            asChild
-          >
-            <Link to="/login" onClick={() => track('login_click')}>
-              {t('landing.nav_cta')}
-              <ArrowRight className="size-3.5" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-3">
+            <a
+              href={PHONE_LINK}
+              className="hidden items-center gap-1.5 text-sm text-white/40 transition-colors hover:text-white/70 lg:flex"
+              onClick={() => track('phone_click')}
+            >
+              <Phone className="size-3.5" />
+              {PHONE_DISPLAY}
+            </a>
+            <Button
+              className="active:scale-[0.96] h-9 gap-1.5 bg-cyan-400 px-5 text-sm text-slate-950 transition-all hover:bg-cyan-300"
+              asChild
+            >
+              <Link to="/login" onClick={() => track('login_click')}>
+                {t('landing.nav_cta')}
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -731,6 +774,56 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* ── How it works ─────────────────────────────────────────────── */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="mb-12 text-center">
+          <h2 className="font-heading mb-3 text-2xl font-bold sm:text-3xl">
+            {t('landing.howit_title')}
+          </h2>
+          <p className="text-sm text-white/40">{t('landing.howit_sub')}</p>
+        </div>
+
+        <div className="relative grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Connecting line (desktop only) */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-0 right-0 top-[2.25rem] hidden h-px bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent lg:block"
+          />
+
+          {(
+            [
+              { step: 1, titleKey: 'landing.howit_step1_title', bodyKey: 'landing.howit_step1_body', color: 'text-cyan-300', bg: 'bg-cyan-400/10 border-cyan-400/25' },
+              { step: 2, titleKey: 'landing.howit_step2_title', bodyKey: 'landing.howit_step2_body', color: 'text-violet-300', bg: 'bg-violet-400/10 border-violet-400/25' },
+              { step: 3, titleKey: 'landing.howit_step3_title', bodyKey: 'landing.howit_step3_body', color: 'text-emerald-300', bg: 'bg-emerald-400/10 border-emerald-400/25' },
+              { step: 4, titleKey: 'landing.howit_step4_title', bodyKey: 'landing.howit_step4_body', color: 'text-blue-300', bg: 'bg-blue-400/10 border-blue-400/25' },
+            ] as const
+          ).map((s) => (
+            <div
+              key={s.step}
+              className="howit-step relative rounded-2xl border border-white/8 bg-white/[0.025] p-6"
+            >
+              <div className={`mb-4 flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold ${s.bg} ${s.color}`}>
+                {s.step}
+              </div>
+              <h3 className="mb-2 text-sm font-semibold text-white">
+                {t(s.titleKey)}
+              </h3>
+              <p className="text-sm leading-relaxed text-white/45">
+                {t(s.bodyKey)}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* "First month free" badge */}
+        <div className="mt-10 flex justify-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-5 py-2 text-sm font-semibold text-emerald-300">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+            {t('landing.howit_free_badge')}
+          </span>
+        </div>
+      </section>
+
       {/* ── Benefits ─────────────────────────────────────────────────── */}
       <section className="relative z-10 mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
         <div className="mb-10 text-center">
@@ -774,6 +867,46 @@ const LandingPage = () => {
                     {t(b.bodyKey)}
                   </p>
                 </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── Role cards ───────────────────────────────────────────────── */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="mb-10 text-center">
+          <h2 className="font-heading mb-3 text-2xl font-bold sm:text-3xl">
+            {t('landing.roles_title')}
+          </h2>
+          <p className="text-sm text-white/40">{t('landing.roles_sub')}</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {(
+            [
+              { icon: TrendingUp, titleKey: 'landing.role_owner_title', bodyKey: 'landing.role_owner_body', iconColor: 'text-cyan-300', iconBg: 'bg-cyan-400/10 border-cyan-400/20', hoverBorder: 'hover:border-cyan-400/30' },
+              { icon: Users, titleKey: 'landing.role_manager_title', bodyKey: 'landing.role_manager_body', iconColor: 'text-violet-300', iconBg: 'bg-violet-400/10 border-violet-400/20', hoverBorder: 'hover:border-violet-400/30' },
+              { icon: CircleDollarSign, titleKey: 'landing.role_operator_title', bodyKey: 'landing.role_operator_body', iconColor: 'text-emerald-300', iconBg: 'bg-emerald-400/10 border-emerald-400/20', hoverBorder: 'hover:border-emerald-400/30' },
+              { icon: CalendarCheck2, titleKey: 'landing.role_teacher_title', bodyKey: 'landing.role_teacher_body', iconColor: 'text-blue-300', iconBg: 'bg-blue-400/10 border-blue-400/20', hoverBorder: 'hover:border-blue-400/30' },
+            ] as const
+          ).map((r) => {
+            const Icon = r.icon;
+            return (
+              <div
+                key={r.titleKey}
+                className={`role-card group relative overflow-hidden rounded-2xl border border-white/8 bg-white/[0.03] p-5 transition-colors duration-300 ${r.hoverBorder}`}
+              >
+                <div
+                  className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl border ${r.iconBg}`}
+                >
+                  <Icon className={`size-4 ${r.iconColor}`} />
+                </div>
+                <h3 className="mb-1.5 text-sm font-semibold text-white">
+                  {t(r.titleKey)}
+                </h3>
+                <p className="text-xs leading-relaxed text-white/45">
+                  {t(r.bodyKey)}
+                </p>
               </div>
             );
           })}
@@ -1013,10 +1146,10 @@ const LandingPage = () => {
               className="active:scale-[0.96] h-12 gap-2 bg-cyan-400 px-8 text-slate-950 transition-all hover:bg-cyan-300 hover:shadow-[0_0_32px_rgba(34,211,238,0.30)]"
               asChild
             >
-              <Link to="/login" onClick={() => track('demo_click')}>
-                {t('landing.cta_demo')}
-                <ArrowRight className="size-4" />
-              </Link>
+              <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" onClick={() => track('telegram_cta_click')}>
+                <Send className="size-4" />
+                {t('landing.cta_free')}
+              </a>
             </Button>
             <Button
               size="lg"
@@ -1024,9 +1157,9 @@ const LandingPage = () => {
               className="active:scale-[0.96] h-12 gap-2 border-white/12 bg-white/5 px-8 text-white transition-all hover:bg-white/10 hover:text-white"
               asChild
             >
-              <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" onClick={() => track('telegram_click')}>
-                <Send className="size-4" />
-                {t('landing.cta_free')}
+              <a href={PHONE_LINK} onClick={() => track('phone_cta_click')}>
+                <Phone className="size-4" />
+                {t('landing.cta_call')}
               </a>
             </Button>
           </div>
@@ -1057,6 +1190,13 @@ const LandingPage = () => {
               className="transition-colors hover:text-white/55"
             >
               Telegram
+            </a>
+            <a
+              href={PHONE_LINK}
+              className="transition-colors hover:text-white/55"
+              onClick={() => track('phone_footer_click')}
+            >
+              {PHONE_DISPLAY}
             </a>
             <span>{t('landing.footer_copy')}</span>
           </div>
