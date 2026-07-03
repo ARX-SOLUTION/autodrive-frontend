@@ -9,7 +9,6 @@ import { PageLoader } from '@/components/layout/PageLoader';
 import { useAuthStore } from '@/store/authStore';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
-const LandingPrototype = lazy(() => import('./pages/LandingPrototype'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const StudentsPage = lazy(() => import('./pages/StudentsPage'));
 const PaymentsPage = lazy(() => import('./pages/PaymentsPage'));
@@ -56,7 +55,6 @@ const App = () => (
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/prototype/landing" element={<LandingPrototype />} />
             <Route path="/login" element={<LoginPage />} />
             <Route
               element={
