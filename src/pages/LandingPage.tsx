@@ -26,6 +26,8 @@ import {
   Wallet,
 } from 'lucide-react';
 
+import { track } from '@/lib/umami';
+
 // ponytail: const per spec — swap to real handle when confirmed
 const TELEGRAM_LINK = 'https://t.me/automaktab_uz';
 
@@ -431,7 +433,7 @@ const LandingPage = () => {
             className="active:scale-[0.96] h-9 gap-1.5 bg-cyan-400 px-5 text-sm text-slate-950 transition-all hover:bg-cyan-300"
             asChild
           >
-            <Link to="/login">
+            <Link to="/login" onClick={() => track('login_click')}>
               {t('landing.nav_cta')}
               <ArrowRight className="size-3.5" />
             </Link>
@@ -471,7 +473,7 @@ const LandingPage = () => {
               className="active:scale-[0.96] h-12 gap-2 bg-cyan-400 px-8 text-slate-950 transition-all hover:bg-cyan-300 hover:shadow-[0_0_32px_rgba(34,211,238,0.30)]"
               asChild
             >
-              <Link to="/login">
+              <Link to="/login" onClick={() => track('demo_click')}>
                 {t('landing.cta_demo')}
                 <ArrowRight className="size-4" />
               </Link>
@@ -482,7 +484,7 @@ const LandingPage = () => {
               className="active:scale-[0.96] h-12 gap-2 border-white/12 bg-white/5 px-8 text-white transition-all hover:bg-white/10 hover:text-white"
               asChild
             >
-              <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer">
+              <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" onClick={() => track('telegram_click')}>
                 <Send className="size-4" />
                 {t('landing.cta_free')}
               </a>
@@ -920,7 +922,7 @@ const LandingPage = () => {
               className="active:scale-[0.96] h-12 gap-2 bg-cyan-400 px-8 text-slate-950 transition-all hover:bg-cyan-300 hover:shadow-[0_0_32px_rgba(34,211,238,0.30)]"
               asChild
             >
-              <Link to="/login">
+              <Link to="/login" onClick={() => track('demo_click')}>
                 {t('landing.cta_demo')}
                 <ArrowRight className="size-4" />
               </Link>
@@ -931,7 +933,7 @@ const LandingPage = () => {
               className="active:scale-[0.96] h-12 gap-2 border-white/12 bg-white/5 px-8 text-white transition-all hover:bg-white/10 hover:text-white"
               asChild
             >
-              <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer">
+              <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" onClick={() => track('telegram_click')}>
                 <Send className="size-4" />
                 {t('landing.cta_free')}
               </a>
@@ -953,6 +955,7 @@ const LandingPage = () => {
             <Link
               to="/login"
               className="transition-colors hover:text-white/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
+              onClick={() => track('login_click')}
             >
               {t('landing.nav_cta')}
             </Link>

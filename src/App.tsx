@@ -1,4 +1,7 @@
 import { lazy, Suspense } from 'react';
+import { initUmami } from '@/lib/umami';
+
+initUmami(); // ponytail: module-load — runs once, no-op if env vars absent
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster as Sonner } from '@/components/ui/sonner';
