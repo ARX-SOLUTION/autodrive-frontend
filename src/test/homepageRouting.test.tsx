@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import App from '@/App';
 import { useAuthStore } from '@/store/authStore';
 
+// Note: i18n is mocked in setup.ts: t(key) => key.
+// So we search for translation keys, not the actual strings.
+
 describe('homepage routing', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -14,12 +17,9 @@ describe('homepage routing', () => {
 
     render(<App />);
 
-    expect(
-      await screen.findByText(
-        'Avtomaktabingizdagi dars, to‘lov va jadval bir joyda.',
-      ),
-    ).toBeInTheDocument();
-    const loginLinks = screen.getAllByRole('link', { name: 'Kirish' });
+    // landing.faq_title is in a clean h2 tag (i18n mocked -> key is rendered as-is)
+    expect(await screen.findByText('landing.faq_title')).toBeInTheDocument();
+    const loginLinks = screen.getAllByRole('link', { name: 'landing.nav_cta' });
     expect(loginLinks.length).toBeGreaterThan(0);
     expect(loginLinks[0]).toHaveAttribute('href', '/login');
     expect(screen.queryByText('login.title')).not.toBeInTheDocument();
