@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLogin } from '@/services/authService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 
 const LoginPage = () => {
@@ -13,6 +14,13 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const login = useLogin();
+  const logout = useAuthStore((s) => s.logout);
+
+  useEffect(() => {
+    // Always start a direct /login visit from a clean auth state so stale
+    // persisted sessions cannot bounce the user away from the form.
+    logout();
+  }, [logout]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleError = (error: any) => {
