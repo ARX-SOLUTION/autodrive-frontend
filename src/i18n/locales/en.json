@@ -15,7 +15,11 @@
     "audit": "Audit log",
     "profile": "Profile",
     "schedule": "Schedule",
-    "attendance": "Attendance"
+    "attendance": "Attendance",
+    "switchLang": "Switch language",
+    "toggleTheme": "Toggle theme",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode"
   },
   "actions": {
     "logout": "Sign out",

@@ -15,7 +15,11 @@
     "audit": "Audit log",
     "profile": "Profil",
     "schedule": "Dars jadvali",
-    "attendance": "Davomat"
+    "attendance": "Davomat",
+    "switchLang": "Tilni almashtirish",
+    "toggleTheme": "Mavzuni almashtirish",
+    "lightMode": "Yorug' rejim",
+    "darkMode": "Qorong'i rejim"
   },
   "actions": {
     "logout": "Chiqish",
