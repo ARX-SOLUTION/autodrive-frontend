@@ -205,13 +205,11 @@ const KpiCard = ({
   return (
     <Card
       className={cn(
-        'relative overflow-hidden p-5 transition-shadow hover:shadow-md',
-        'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500',
+        'relative overflow-hidden p-5',
+        'transition-all duration-150 hover:shadow-md hover:-translate-y-0.5',
+        'card-enter',
       )}
-      style={{
-        animationDelay: `${animationDelayMs}ms`,
-        animationFillMode: 'backwards',
-      }}
+      style={{ transitionDelay: `${animationDelayMs}ms` }}
     >
       <div className="mb-3 flex items-center justify-between">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -286,14 +284,11 @@ const SectionCard = ({
 }: SectionCardProps) => (
   <Card
     className={cn(
-      'p-5',
-      'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500',
+      'p-5 transition-all duration-150 hover:shadow-md hover:-translate-y-0.5',
+      'card-enter',
       className,
     )}
-    style={{
-      animationDelay: `${staggerDelayMs}ms`,
-      animationFillMode: 'backwards',
-    }}
+    style={{ transitionDelay: `${staggerDelayMs}ms` }}
   >
     <div className="mb-4 flex items-center justify-between gap-3">
       <div className="min-w-0">
@@ -640,7 +635,7 @@ const MainDashboard = () => {
       </section>
 
       {/* ===== Revenue trend + course mix ===== */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+      <section className="cv-auto grid grid-cols-1 gap-4 lg:grid-cols-5">
         <SectionCard
           className="lg:col-span-3"
           staggerDelayMs={200}
@@ -797,7 +792,7 @@ const MainDashboard = () => {
       </section>
 
       {/* ===== Three-column: top branches, recent payments, activity ===== */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <section className="cv-auto grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Top branches */}
         <SectionCard
           staggerDelayMs={280}
@@ -933,79 +928,79 @@ const MainDashboard = () => {
 
         {/* Activity log — owner/manager only (backend gates /audit-logs) */}
         {canViewAudit && (
-        <SectionCard
-          staggerDelayMs={360}
-          title={t('dashboard.activity_title')}
-          subtitle={t('dashboard.activity_sub')}
-        >
-          {activityList.length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              {t('dashboard.activity_empty')}
-            </div>
-          ) : (
-            <ul className="divide-y divide-border">
-              {activityList.map((a) => {
-                const tone =
-                  a.action === 'CREATE'
-                    ? 'success'
-                    : a.action === 'UPDATE'
-                      ? 'info'
-                      : 'destructive';
-                const Icon =
-                  a.action === 'CREATE'
-                    ? Plus
-                    : a.action === 'UPDATE'
-                      ? Pencil
-                      : a.action === 'DELETE'
-                        ? Trash2
-                        : Activity;
-                const verb =
-                  a.action === 'CREATE'
-                    ? t('dashboard.activity_action_create')
-                    : a.action === 'UPDATE'
-                      ? t('dashboard.activity_action_update')
-                      : t('dashboard.activity_action_delete');
-                const toneClass: Record<string, string> = {
-                  success: 'bg-success/10 text-success',
-                  info: 'bg-info/10 text-info',
-                  destructive: 'bg-destructive/10 text-destructive',
-                };
-                return (
-                  <li
-                    key={a.id}
-                    className="grid grid-cols-[auto_1fr_auto] items-start gap-3 py-3"
-                  >
-                    <span
-                      className={cn(
-                        'mt-0.5 grid h-8 w-8 place-items-center rounded-md',
-                        toneClass[tone],
-                      )}
-                      aria-hidden
+          <SectionCard
+            staggerDelayMs={360}
+            title={t('dashboard.activity_title')}
+            subtitle={t('dashboard.activity_sub')}
+          >
+            {activityList.length === 0 ? (
+              <div className="py-10 text-center text-sm text-muted-foreground">
+                {t('dashboard.activity_empty')}
+              </div>
+            ) : (
+              <ul className="divide-y divide-border">
+                {activityList.map((a) => {
+                  const tone =
+                    a.action === 'CREATE'
+                      ? 'success'
+                      : a.action === 'UPDATE'
+                        ? 'info'
+                        : 'destructive';
+                  const Icon =
+                    a.action === 'CREATE'
+                      ? Plus
+                      : a.action === 'UPDATE'
+                        ? Pencil
+                        : a.action === 'DELETE'
+                          ? Trash2
+                          : Activity;
+                  const verb =
+                    a.action === 'CREATE'
+                      ? t('dashboard.activity_action_create')
+                      : a.action === 'UPDATE'
+                        ? t('dashboard.activity_action_update')
+                        : t('dashboard.activity_action_delete');
+                  const toneClass: Record<string, string> = {
+                    success: 'bg-success/10 text-success',
+                    info: 'bg-info/10 text-info',
+                    destructive: 'bg-destructive/10 text-destructive',
+                  };
+                  return (
+                    <li
+                      key={a.id}
+                      className="grid grid-cols-[auto_1fr_auto] items-start gap-3 py-3"
                     >
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <div className="min-w-0 text-sm leading-snug">
-                      <span className="font-semibold">
-                        {a.user?.name ?? 'System'}
+                      <span
+                        className={cn(
+                          'mt-0.5 grid h-8 w-8 place-items-center rounded-md',
+                          toneClass[tone],
+                        )}
+                        aria-hidden
+                      >
+                        <Icon className="h-4 w-4" />
                       </span>
-                      {a.user?.role && (
-                        <span className="text-muted-foreground">
-                          {' '}
-                          ({t(`roles.${a.user.role}`, a.user.role)})
+                      <div className="min-w-0 text-sm leading-snug">
+                        <span className="font-semibold">
+                          {a.user?.name ?? 'System'}
                         </span>
-                      )}{' '}
-                      <span className="text-muted-foreground">{verb}</span>{' '}
-                      <span className="font-medium">{a.entity}</span>
-                    </div>
-                    <span className="text-xs font-medium text-muted-foreground tabular-nums whitespace-nowrap">
-                      {formatRelative(a.createdAt)}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </SectionCard>
+                        {a.user?.role && (
+                          <span className="text-muted-foreground">
+                            {' '}
+                            ({t(`roles.${a.user.role}`, a.user.role)})
+                          </span>
+                        )}{' '}
+                        <span className="text-muted-foreground">{verb}</span>{' '}
+                        <span className="font-medium">{a.entity}</span>
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground tabular-nums whitespace-nowrap">
+                        {formatRelative(a.createdAt)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </SectionCard>
         )}
       </section>
 
@@ -1013,6 +1008,7 @@ const MainDashboard = () => {
       {owner && analytics.branch_stats.length > 1 && (
         <SectionCard
           staggerDelayMs={400}
+          className="cv-auto"
           title={t('dashboard.branch_comparison')}
           subtitle={t('dashboard.top_branches_sub')}
         >
@@ -1163,7 +1159,7 @@ const TeacherDashboard = () => {
         />
       </section>
 
-      <SectionCard title={t('dashboard.result_title')}>
+      <SectionCard title={t('dashboard.result_title')} className="cv-auto">
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={resultData} layout="vertical" barSize={24}>
             <CartesianGrid
