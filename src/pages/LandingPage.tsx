@@ -135,8 +135,7 @@ const LandingPage = () => {
           ScrollTrigger.create({
             start: 'top -80px',
             onEnter: () => navRef.current?.classList.add('nav-scrolled'),
-            onLeaveBack: () =>
-              navRef.current?.classList.remove('nav-scrolled'),
+            onLeaveBack: () => navRef.current?.classList.remove('nav-scrolled'),
           });
 
           // ── Hero entrance ───────────────────────────────────────────
@@ -147,6 +146,21 @@ const LandingPage = () => {
             const heroSplit = SplitText.create('.hero-title', {
               type: 'words',
               mask: 'words',
+            });
+            // bg-clip-text does not paint into SplitText's transformed word
+            // wrappers — re-apply the gradient on the element that owns the text,
+            // otherwise the accent word renders fully transparent.
+            heroSplit.words.forEach((w) => {
+              if (w.closest('.hero-accent')) {
+                w.classList.add(
+                  'bg-gradient-to-r',
+                  'from-cyan-300',
+                  'via-cyan-200',
+                  'to-blue-300',
+                  'bg-clip-text',
+                  'text-transparent',
+                );
+              }
             });
             tl.from('.hero-badge', { y: 24, opacity: 0, duration: 0.5 })
               .from(
@@ -159,11 +173,7 @@ const LandingPage = () => {
                 },
                 '-=0.2',
               )
-              .from(
-                '.hero-sub',
-                { y: 24, opacity: 0, duration: 0.6 },
-                '-=0.35',
-              )
+              .from('.hero-sub', { y: 24, opacity: 0, duration: 0.6 }, '-=0.35')
               .from(
                 '.hero-ctas > *',
                 {
@@ -212,11 +222,7 @@ const LandingPage = () => {
                 { y: 36, opacity: 0, duration: 0.8 },
                 '-=0.2',
               )
-              .from(
-                '.hero-sub',
-                { y: 24, opacity: 0, duration: 0.6 },
-                '-=0.4',
-              )
+              .from('.hero-sub', { y: 24, opacity: 0, duration: 0.6 }, '-=0.4')
               .from(
                 '.hero-ctas',
                 { y: 20, opacity: 0, duration: 0.5 },
@@ -493,9 +499,27 @@ const LandingPage = () => {
   ];
 
   const debtVignette = [
-    { name: 'S. Toshmatov', course: 'Avto maktab', debt: '450 000', paid: false, days: 12 },
-    { name: 'A. Karimov', course: 'Tezkor', debt: '280 000', paid: false, days: 7 },
-    { name: 'N. Yusupova', course: 'Avto maktab', debt: '520 000', paid: false, days: 21 },
+    {
+      name: 'S. Toshmatov',
+      course: 'Avto maktab',
+      debt: '450 000',
+      paid: false,
+      days: 12,
+    },
+    {
+      name: 'A. Karimov',
+      course: 'Tezkor',
+      debt: '280 000',
+      paid: false,
+      days: 7,
+    },
+    {
+      name: 'N. Yusupova',
+      course: 'Avto maktab',
+      debt: '520 000',
+      paid: false,
+      days: 21,
+    },
     { name: 'M. Umarov', course: 'Tezkor', debt: '—', paid: true, days: 0 },
   ];
 
@@ -543,7 +567,9 @@ const LandingPage = () => {
             </div>
             <span className="text-sm font-semibold tracking-tight text-slate-800 dark:text-white/85">
               Auto Maktab{' '}
-              <span className="font-normal text-slate-400 dark:text-white/35">CRM</span>
+              <span className="font-normal text-slate-400 dark:text-white/35">
+                CRM
+              </span>
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -575,10 +601,16 @@ const LandingPage = () => {
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              aria-label={theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}
+              aria-label={
+                theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')
+              }
               className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:text-slate-800 dark:border-white/10 dark:text-white/50 dark:hover:text-white"
             >
-              {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+              {theme === 'dark' ? (
+                <Sun className="size-4" />
+              ) : (
+                <Moon className="size-4" />
+              )}
             </button>
             <Button
               className="active:scale-[0.96] h-9 gap-1.5 bg-cyan-400 px-5 text-sm text-slate-950 transition-all hover:bg-cyan-300"
@@ -604,7 +636,7 @@ const LandingPage = () => {
           <h1 className="hero-title font-heading mb-5 text-balance text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
             {titleBefore}
             <span className="relative inline-block">
-              <span className="relative z-10 bg-gradient-to-r from-cyan-300 via-cyan-200 to-blue-300 bg-clip-text text-transparent">
+              <span className="hero-accent relative z-10 bg-gradient-to-r from-cyan-300 via-cyan-200 to-blue-300 bg-clip-text text-transparent">
                 {heroAccent}
               </span>
               <span
@@ -636,7 +668,12 @@ const LandingPage = () => {
               className="active:scale-[0.96] h-12 gap-2 border-slate-300 bg-slate-100 px-8 text-slate-700 transition-all hover:bg-slate-200 hover:text-slate-900 dark:border-white/12 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:hover:text-white"
               asChild
             >
-              <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" onClick={() => track('telegram_click')}>
+              <a
+                href={TELEGRAM_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => track('telegram_click')}
+              >
                 <Send className="size-4" />
                 {t('landing.cta_free')}
               </a>
@@ -784,9 +821,21 @@ const LandingPage = () => {
         <div className="grid grid-cols-1 divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 dark:divide-white/8 dark:border-white/8 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {(
             [
-              { target: 50, suffix: '+', labelKey: 'landing.stats_schools_label' },
-              { target: 5000, suffix: '+', labelKey: 'landing.stats_students_label' },
-              { target: 12, suffix: ' oy', labelKey: 'landing.stats_months_label' },
+              {
+                target: 50,
+                suffix: '+',
+                labelKey: 'landing.stats_schools_label',
+              },
+              {
+                target: 5000,
+                suffix: '+',
+                labelKey: 'landing.stats_students_label',
+              },
+              {
+                target: 12,
+                suffix: ' oy',
+                labelKey: 'landing.stats_months_label',
+              },
             ] as const
           ).map((stat, i) => (
             <div
@@ -797,7 +846,9 @@ const LandingPage = () => {
                 <span data-count-target={stat.target}>0</span>
                 <span className="text-cyan-300">{stat.suffix}</span>
               </p>
-              <p className="mt-2 text-sm text-slate-500 dark:text-white/40">{t(stat.labelKey)}</p>
+              <p className="mt-2 text-sm text-slate-500 dark:text-white/40">
+                {t(stat.labelKey)}
+              </p>
             </div>
           ))}
         </div>
@@ -809,7 +860,9 @@ const LandingPage = () => {
           <h2 className="font-heading mb-3 text-2xl font-bold sm:text-3xl">
             {t('landing.howit_title')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-white/40">{t('landing.howit_sub')}</p>
+          <p className="text-sm text-slate-500 dark:text-white/40">
+            {t('landing.howit_sub')}
+          </p>
         </div>
 
         <div className="relative grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -821,17 +874,43 @@ const LandingPage = () => {
 
           {(
             [
-              { step: 1, titleKey: 'landing.howit_step1_title', bodyKey: 'landing.howit_step1_body', color: 'text-cyan-300', bg: 'bg-cyan-400/10 border-cyan-400/25' },
-              { step: 2, titleKey: 'landing.howit_step2_title', bodyKey: 'landing.howit_step2_body', color: 'text-violet-300', bg: 'bg-violet-400/10 border-violet-400/25' },
-              { step: 3, titleKey: 'landing.howit_step3_title', bodyKey: 'landing.howit_step3_body', color: 'text-emerald-300', bg: 'bg-emerald-400/10 border-emerald-400/25' },
-              { step: 4, titleKey: 'landing.howit_step4_title', bodyKey: 'landing.howit_step4_body', color: 'text-blue-300', bg: 'bg-blue-400/10 border-blue-400/25' },
+              {
+                step: 1,
+                titleKey: 'landing.howit_step1_title',
+                bodyKey: 'landing.howit_step1_body',
+                color: 'text-cyan-300',
+                bg: 'bg-cyan-400/10 border-cyan-400/25',
+              },
+              {
+                step: 2,
+                titleKey: 'landing.howit_step2_title',
+                bodyKey: 'landing.howit_step2_body',
+                color: 'text-violet-300',
+                bg: 'bg-violet-400/10 border-violet-400/25',
+              },
+              {
+                step: 3,
+                titleKey: 'landing.howit_step3_title',
+                bodyKey: 'landing.howit_step3_body',
+                color: 'text-emerald-300',
+                bg: 'bg-emerald-400/10 border-emerald-400/25',
+              },
+              {
+                step: 4,
+                titleKey: 'landing.howit_step4_title',
+                bodyKey: 'landing.howit_step4_body',
+                color: 'text-blue-300',
+                bg: 'bg-blue-400/10 border-blue-400/25',
+              },
             ] as const
           ).map((s) => (
             <div
               key={s.step}
               className="howit-step relative rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-white/8 dark:bg-white/[0.025]"
             >
-              <div className={`mb-4 flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold ${s.bg} ${s.color}`}>
+              <div
+                className={`mb-4 flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold ${s.bg} ${s.color}`}
+              >
                 {s.step}
               </div>
               <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">
@@ -859,7 +938,9 @@ const LandingPage = () => {
           <h2 className="font-heading mb-3 text-2xl font-bold sm:text-3xl">
             {t('landing.benefits_title')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-white/40">{t('landing.benefits_sub')}</p>
+          <p className="text-sm text-slate-500 dark:text-white/40">
+            {t('landing.benefits_sub')}
+          </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           {benefits.map((b) => {
@@ -870,8 +951,14 @@ const LandingPage = () => {
                 className={`benefit-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-6 transition-colors duration-300 dark:border-white/8 dark:bg-white/[0.03] ${b.hoverBorder}`}
                 onMouseMove={(e) => {
                   const r = e.currentTarget.getBoundingClientRect();
-                  e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
-                  e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
+                  e.currentTarget.style.setProperty(
+                    '--mx',
+                    `${e.clientX - r.left}px`,
+                  );
+                  e.currentTarget.style.setProperty(
+                    '--my',
+                    `${e.clientY - r.top}px`,
+                  );
                 }}
               >
                 <div
@@ -881,7 +968,10 @@ const LandingPage = () => {
                 <div
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                  style={{ background: 'radial-gradient(circle 140px at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.06), transparent)' }}
+                  style={{
+                    background:
+                      'radial-gradient(circle 140px at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.06), transparent)',
+                  }}
                 />
                 <div className="relative">
                   <div
@@ -908,15 +998,45 @@ const LandingPage = () => {
           <h2 className="font-heading mb-3 text-2xl font-bold sm:text-3xl">
             {t('landing.roles_title')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-white/40">{t('landing.roles_sub')}</p>
+          <p className="text-sm text-slate-500 dark:text-white/40">
+            {t('landing.roles_sub')}
+          </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {(
             [
-              { icon: TrendingUp, titleKey: 'landing.role_owner_title', bodyKey: 'landing.role_owner_body', iconColor: 'text-cyan-300', iconBg: 'bg-cyan-400/10 border-cyan-400/20', hoverBorder: 'hover:border-cyan-400/30' },
-              { icon: Users, titleKey: 'landing.role_manager_title', bodyKey: 'landing.role_manager_body', iconColor: 'text-violet-300', iconBg: 'bg-violet-400/10 border-violet-400/20', hoverBorder: 'hover:border-violet-400/30' },
-              { icon: CircleDollarSign, titleKey: 'landing.role_operator_title', bodyKey: 'landing.role_operator_body', iconColor: 'text-emerald-300', iconBg: 'bg-emerald-400/10 border-emerald-400/20', hoverBorder: 'hover:border-emerald-400/30' },
-              { icon: CalendarCheck2, titleKey: 'landing.role_teacher_title', bodyKey: 'landing.role_teacher_body', iconColor: 'text-blue-300', iconBg: 'bg-blue-400/10 border-blue-400/20', hoverBorder: 'hover:border-blue-400/30' },
+              {
+                icon: TrendingUp,
+                titleKey: 'landing.role_owner_title',
+                bodyKey: 'landing.role_owner_body',
+                iconColor: 'text-cyan-300',
+                iconBg: 'bg-cyan-400/10 border-cyan-400/20',
+                hoverBorder: 'hover:border-cyan-400/30',
+              },
+              {
+                icon: Users,
+                titleKey: 'landing.role_manager_title',
+                bodyKey: 'landing.role_manager_body',
+                iconColor: 'text-violet-300',
+                iconBg: 'bg-violet-400/10 border-violet-400/20',
+                hoverBorder: 'hover:border-violet-400/30',
+              },
+              {
+                icon: CircleDollarSign,
+                titleKey: 'landing.role_operator_title',
+                bodyKey: 'landing.role_operator_body',
+                iconColor: 'text-emerald-300',
+                iconBg: 'bg-emerald-400/10 border-emerald-400/20',
+                hoverBorder: 'hover:border-emerald-400/30',
+              },
+              {
+                icon: CalendarCheck2,
+                titleKey: 'landing.role_teacher_title',
+                bodyKey: 'landing.role_teacher_body',
+                iconColor: 'text-blue-300',
+                iconBg: 'bg-blue-400/10 border-blue-400/20',
+                hoverBorder: 'hover:border-blue-400/30',
+              },
             ] as const
           ).map((r) => {
             const Icon = r.icon;
@@ -948,7 +1068,9 @@ const LandingPage = () => {
           <h2 className="font-heading mb-3 text-2xl font-bold sm:text-3xl">
             {t('landing.features_title')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-white/40">{t('landing.features_sub')}</p>
+          <p className="text-sm text-slate-500 dark:text-white/40">
+            {t('landing.features_sub')}
+          </p>
         </div>
 
         <div className="space-y-20 sm:space-y-28">
@@ -988,7 +1110,9 @@ const LandingPage = () => {
                       <p className="text-xs font-semibold text-slate-700 dark:text-white/80">
                         {row.name}
                       </p>
-                      <p className="text-[10px] text-slate-400 dark:text-white/35">{row.course}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-white/35">
+                        {row.course}
+                      </p>
                     </div>
                     <div className="text-right">
                       {row.paid ? (
@@ -1043,7 +1167,9 @@ const LandingPage = () => {
                         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-500 dark:bg-white/8 dark:text-white/50">
                           {s.name[0]}
                         </div>
-                        <span className="text-xs text-slate-600 dark:text-white/70">{s.name}</span>
+                        <span className="text-xs text-slate-600 dark:text-white/70">
+                          {s.name}
+                        </span>
                       </div>
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${statusCls(s.status)}`}
@@ -1175,7 +1301,12 @@ const LandingPage = () => {
               className="active:scale-[0.96] h-12 gap-2 bg-cyan-400 px-8 text-slate-950 transition-all hover:bg-cyan-300 hover:shadow-[0_0_32px_rgba(34,211,238,0.30)]"
               asChild
             >
-              <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" onClick={() => track('telegram_cta_click')}>
+              <a
+                href={TELEGRAM_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => track('telegram_cta_click')}
+              >
                 <Send className="size-4" />
                 {t('landing.cta_free')}
               </a>
@@ -1202,7 +1333,9 @@ const LandingPage = () => {
             <div className="flex h-7 w-7 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-300/10">
               <ShieldCheck className="size-3.5 text-cyan-200" />
             </div>
-            <span className="font-semibold text-slate-500 dark:text-white/45">Auto Maktab CRM</span>
+            <span className="font-semibold text-slate-500 dark:text-white/45">
+              Auto Maktab CRM
+            </span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
             <Link

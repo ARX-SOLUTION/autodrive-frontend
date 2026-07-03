@@ -22,6 +22,14 @@ const LoginPage = () => {
     logout();
   }, [logout]);
 
+  useEffect(() => {
+    const prev = document.title;
+    document.title = 'Kirish | Auto Maktab CRM';
+    return () => {
+      document.title = prev;
+    };
+  }, []);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleError = (error: any) => {
     if (error.response?.status === 429) {
