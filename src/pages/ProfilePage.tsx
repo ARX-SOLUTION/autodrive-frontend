@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useChangePassword } from '@/services/authService';
@@ -10,6 +11,7 @@ import { toast } from 'sonner';
 
 const ProfilePage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const changePasswordMut = useChangePassword();
   const [pwForm, setPwForm] = useState({
@@ -19,8 +21,15 @@ const ProfilePage = () => {
 
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
+    // Captured before the mutation: onSuccess replaces the user in the store
+    // (must_change_password becomes false), so read the flag now.
+    const wasForced = !!user?.must_change_password;
     changePasswordMut.mutate(pwForm, {
-      onSuccess: () => toast.success(t('profile.update_password_success')),
+      onSuccess: () => {
+        toast.success(t('profile.update_password_success'));
+        setPwForm({ currentPassword: '', newPassword: '' });
+        if (wasForced) navigate('/dashboard');
+      },
       onError: () => toast.error(t('common.error')),
     });
   };
