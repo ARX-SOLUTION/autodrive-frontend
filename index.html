@@ -9,37 +9,43 @@
     <meta name="theme-color" content="#1a1f2e" />
     <meta name="robots" content="index, follow" />
     <meta name="color-scheme" content="dark light" />
-    <title>Auto Maktab CRM — Avtomaktab boshqaruv tizimi</title>
+    <title>Avtomaktab CRM — to&#39;lov, davomat, jadval | Auto Maktab</title>
     <meta
       name="description"
-      content="Auto Maktab CRM — O&#39;zbekistondagi avtomaktablar uchun zamonaviy boshqaruv tizimi"
+      content="Qarzdorlar ro&#39;yxati, kunlik tushum, davomat va dars jadvali — bitta tizimda. Birinchi oy bepul, o&#39;rnatish shart emas: brauzerda ishlaydi."
     />
     <meta name="author" content="Auto Maktab" />
 
     <meta
       property="og:title"
-      content="Auto Maktab CRM — Avtomaktab boshqaruv tizimi"
+      content="Avtomaktab CRM — to&#39;lov, davomat, jadval | Auto Maktab"
     />
     <meta
       name="twitter:title"
-      content="Auto Maktab CRM — Avtomaktab boshqaruv tizimi"
+      content="Avtomaktab CRM — to&#39;lov, davomat, jadval | Auto Maktab"
     />
     <meta
       property="og:description"
-      content="Auto Maktab CRM — O&#39;zbekistondagi avtomaktablar uchun zamonaviy boshqaruv tizimi"
+      content="Qarzdorlar ro&#39;yxati, kunlik tushum, davomat va dars jadvali — bitta tizimda. Birinchi oy bepul, o&#39;rnatish shart emas: brauzerda ishlaydi."
     />
     <meta
       name="twitter:description"
-      content="Auto Maktab CRM — O&#39;zbekistondagi avtomaktablar uchun zamonaviy boshqaruv tizimi"
+      content="Qarzdorlar ro&#39;yxati, kunlik tushum, davomat va dars jadvali — bitta tizimda. Birinchi oy bepul, o&#39;rnatish shart emas: brauzerda ishlaydi."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://automaktab.uz/" />
     <meta property="og:site_name" content="Auto Maktab CRM" />
     <meta property="og:locale" content="uz_UZ" />
     <meta property="og:locale:alternate" content="ru_RU" />
-    <meta property="og:image" content="https://automaktab.uz/favicon.png" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:image" content="https://automaktab.uz/favicon.png" />
+    <meta property="og:image" content="https://automaktab.uz/og-banner.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Auto Maktab CRM — avtomaktabingizning har bir so&#39;mi nazoratda"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://automaktab.uz/og-banner.png" />
     <link rel="preconnect" href="https://api.automaktab.uz" crossorigin />
     <script type="application/ld+json">
       {
@@ -78,7 +84,9 @@
       (function () {
         try {
           var stored = localStorage.getItem('theme');
-          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var prefersDark = window.matchMedia(
+            '(prefers-color-scheme: dark)',
+          ).matches;
           var theme = stored || (prefersDark ? 'dark' : 'light');
           if (theme === 'dark') document.documentElement.classList.add('dark');
         } catch (e) {}
@@ -88,6 +96,19 @@
 
   <body>
     <div id="root"></div>
+    <noscript>
+      <p>
+        <strong>Auto Maktab CRM</strong> — avtomaktablar uchun boshqaruv tizimi.
+        Qarzdorlar ro&#39;yxati, kunlik tushum, davomat va dars jadvali — bitta
+        tizimda. Birinchi oy bepul, o&#39;rnatish shart emas: brauzerda
+        ishlaydi.
+      </p>
+      <p>
+        Telefon: <a href="tel:+998946110066">+998 94 611 00 66</a> · Demo
+        so&#39;rash:
+        <a href="https://t.me/Xamidullo_xudoyberdiyev">Telegram</a>
+      </p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
