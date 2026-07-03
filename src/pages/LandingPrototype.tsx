@@ -292,8 +292,19 @@ const PrimaryButton = ({
   }[tone];
 
   if (href) {
+    const isInternal = href.startsWith('/');
+    const sharedClassName = cn(buttonBase, toneClass);
+
+    if (isInternal) {
+      return (
+        <Link className={sharedClassName} to={href}>
+          {children}
+        </Link>
+      );
+    }
+
     return (
-      <a className={cn(buttonBase, toneClass)} href={href}>
+      <a className={sharedClassName} href={href}>
         {children}
       </a>
     );
@@ -310,14 +321,22 @@ const SecondaryButton = ({
   href?: string;
 }) => {
   if (href) {
+    const isInternal = href.startsWith('/');
+    const sharedClassName = cn(
+      buttonBase,
+      'border border-white/12 bg-white/[0.04] text-white/90 hover:border-white/20 hover:bg-white/[0.08]',
+    );
+
+    if (isInternal) {
+      return (
+        <Link className={sharedClassName} to={href}>
+          {children}
+        </Link>
+      );
+    }
+
     return (
-      <a
-        className={cn(
-          buttonBase,
-          'border border-white/12 bg-white/[0.04] text-white/90 hover:border-white/20 hover:bg-white/[0.08]',
-        )}
-        href={href}
-      >
+      <a className={sharedClassName} href={href}>
         {children}
       </a>
     );
