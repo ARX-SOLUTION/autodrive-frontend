@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "@/api/axiosInstance";
 import { useAuthStore } from "@/store/authStore";
 import { Payment, PaymentSnapshot, PaymentSummary } from "@/types/payment";
+import { track } from '@/lib/umami';
 
 const toLocalDateStr = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -120,6 +121,7 @@ export const useCreatePayment = () => {
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
       qc.invalidateQueries({ queryKey: ['students'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
+      track('payment_create');
     },
   });
 };
@@ -136,6 +138,7 @@ export const useDeletePayment = () => {
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
       qc.invalidateQueries({ queryKey: ['students'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
+      track('payment_delete');
     },
   });
 };

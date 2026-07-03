@@ -7,6 +7,7 @@ import {
   BatchAttendancePayload,
   PaginatedLessons,
 } from '@/types/attendance';
+import { track } from '@/lib/umami';
 
 export const useLessons = (page = 1, limit = 50) => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
@@ -49,6 +50,7 @@ export const useCreateLesson = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['lessons'] });
+      track('lesson_create');
     },
   });
 };
@@ -65,6 +67,7 @@ export const useBatchAttendance = () => {
       qc.invalidateQueries({
         queryKey: ['lessons', 'detail', variables.lessonId],
       });
+      track('attendance_mark');
     },
   });
 };

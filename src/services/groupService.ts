@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { Group, GroupOverview, GroupsById } from '@/types/group';
+import { track } from '@/lib/umami';
 
 export const useGroups = () => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
@@ -70,6 +71,7 @@ export const useCreateGroup = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['groups'] });
       qc.invalidateQueries({ queryKey: ['groups-overview'] });
+      track('group_create');
     },
   });
 };

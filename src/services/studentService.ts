@@ -3,6 +3,7 @@ import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { Student, CourseType } from '@/types/student';
 import type { CreateStudentPayload } from '@/components/ui/StudentModal';
+import { track } from '@/lib/umami';
 
 export const useStudents = (
   courseType?: CourseType,
@@ -48,6 +49,7 @@ export const useCreateStudent = () => {
       qc.invalidateQueries({ queryKey: ['payments'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
+      track('student_create');
     },
   });
 };
@@ -67,6 +69,7 @@ export const useUpdateStudent = () => {
       qc.invalidateQueries({ queryKey: ['payments'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
+      track('student_update');
     },
   });
 };
@@ -82,6 +85,7 @@ export const useDeleteStudent = () => {
       qc.invalidateQueries({ queryKey: ['payments'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
+      track('student_delete');
     },
   });
 };

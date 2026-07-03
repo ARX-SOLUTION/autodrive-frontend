@@ -4,6 +4,7 @@ import type { AxiosError } from 'axios';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { AuthResponse, LoginCredentials, User } from '@/types/user';
+import { track } from '@/lib/umami';
 
 const loginApi = async (creds: LoginCredentials): Promise<AuthResponse> => {
   const { data } = await axiosInstance.post('/auth/login', creds);
@@ -14,7 +15,10 @@ export const useLogin = () => {
   const setAuth = useAuthStore((s) => s.setAuth);
   return useMutation({
     mutationFn: loginApi,
-    onSuccess: (data) => setAuth(data.token, data.user),
+    onSuccess: (data) => {
+      setAuth(data.token, data.user);
+      track('login_success', { role: data.user.role });
+    },
   });
 };
 

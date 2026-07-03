@@ -13,6 +13,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { UploadCloud } from 'lucide-react';
+import { track } from '@/lib/umami';
 
 interface ImportStudentsModalProps {
   open: boolean;
@@ -46,6 +47,7 @@ export default function ImportStudentsModal({
       } else {
         toast.success(t('students.import.success', { count: successCount }));
       }
+      if (successCount > 0) track('import_students', { count: successCount });
       qc.invalidateQueries({ queryKey: ['students'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
