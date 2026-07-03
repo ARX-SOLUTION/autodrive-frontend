@@ -34,6 +34,8 @@ const queryClient = new QueryClient({
   },
 });
 
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+
 const OwnerRoute = ({ children }: { children: React.ReactNode }) => {
   const isOwner = useAuthStore((s) => s.isOwner);
   if (!isOwner()) return <Navigate to="/dashboard" replace />;
@@ -53,17 +55,16 @@ const App = () => (
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/prototype/landing" element={<LandingPrototype />} />
             <Route path="/login" element={<LoginPage />} />
             <Route
-              path="/"
               element={
                 <ProtectedRoute>
                   <AppLayout />
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route
                 path="branches"
