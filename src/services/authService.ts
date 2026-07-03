@@ -59,10 +59,22 @@ export const useRestoreSession = () => {
 
 export const useChangePassword = () => {
   const queryClient = useQueryClient();
+  const setAuth = useAuthStore((s) => s.setAuth);
   return useMutation({
-    mutationFn: (dto: { currentPassword: string; newPassword: string }) =>
-      axiosInstance.post('/auth/change-password', dto),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['me'] }),
+    mutationFn: async (dto: {
+      currentPassword: string;
+      newPassword: string;
+    }): Promise<AuthResponse> => {
+      const { data } = await axiosInstance.post('/auth/change-password', dto);
+      return data.data;
+    },
+    onSuccess: (data) => {
+      // The backend bumps tokenVersion (kills old sessions) and returns a
+      // fresh token — adopt it so THIS session survives the change; without
+      // it the next request 401s and the user is dumped back to /login.
+      if (data?.token && data?.user) setAuth(data.token, data.user);
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+    },
   });
 };
 
