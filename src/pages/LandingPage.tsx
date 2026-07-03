@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { SplitText } from 'gsap/SplitText';
 import { useGSAP } from '@gsap/react';
 import {
   Accordion,
@@ -31,7 +32,7 @@ import { track } from '@/lib/umami';
 // ponytail: const per spec — swap to real handle when confirmed
 const TELEGRAM_LINK = 'https://t.me/automaktab_uz';
 
-gsap.registerPlugin(ScrollTrigger, useGSAP);
+gsap.registerPlugin(ScrollTrigger, SplitText, useGSAP);
 
 // ── Static SVG revenue sparkline (no recharts on landing chunk) ───────────
 const MiniRevenueChart = () => (
@@ -115,12 +116,12 @@ const LandingPage = () => {
       mm.add(
         {
           motion: '(prefers-reduced-motion: no-preference)',
-          reduce: '(prefers-reduced-motion: reduce)',
+          isDesktop: '(min-width: 1024px)',
         },
         (ctx) => {
-          const { motion } = ctx.conditions as {
+          const { motion, isDesktop } = ctx.conditions as {
             motion: boolean;
-            reduce: boolean;
+            isDesktop: boolean;
           };
           if (!motion) return;
 
@@ -133,28 +134,96 @@ const LandingPage = () => {
           });
 
           // ── Hero entrance ───────────────────────────────────────────
-          const tl = gsap.timeline({
-            defaults: { ease: 'power3.out', duration: 0.7 },
-          });
-          tl.from('.hero-badge', { y: 24, opacity: 0, duration: 0.5 })
-            .from(
-              '.hero-title',
-              { y: 36, opacity: 0, duration: 0.8 },
-              '-=0.2',
-            )
-            .from('.hero-sub', { y: 24, opacity: 0, duration: 0.6 }, '-=0.4')
-            .from(
-              '.hero-ctas',
-              { y: 20, opacity: 0, duration: 0.5 },
-              '-=0.35',
-            )
-            .from(
-              '.hero-mock-wrapper',
-              { y: 56, opacity: 0, duration: 0.9, ease: 'power3.out' },
-              '-=0.25',
-            );
+          const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-          // ── Hero glow: parallax scrub ───────────────────────────────
+          if (isDesktop) {
+            // SplitText word-mask reveal — each word rises from behind clip
+            const heroSplit = SplitText.create('.hero-title', {
+              type: 'words',
+              mask: 'words',
+            });
+            tl.from('.hero-badge', { y: 24, opacity: 0, duration: 0.5 })
+              .from(
+                heroSplit.words,
+                {
+                  yPercent: 110,
+                  stagger: 0.07,
+                  duration: 0.65,
+                  ease: 'power4.out',
+                },
+                '-=0.2',
+              )
+              .from(
+                '.hero-sub',
+                { y: 24, opacity: 0, duration: 0.6 },
+                '-=0.35',
+              )
+              .from(
+                '.hero-ctas > *',
+                {
+                  y: 18,
+                  opacity: 0,
+                  scale: 0.92,
+                  stagger: 0.12,
+                  duration: 0.5,
+                  ease: 'back.out(1.7)',
+                },
+                '-=0.35',
+              )
+              .from(
+                '.hero-mock-wrapper',
+                { y: 60, opacity: 0, duration: 0.9, ease: 'power3.out' },
+                '-=0.25',
+              );
+
+            // ── Mock: slow float after entry (6–8s yoyo) ─────────────
+            // ponytail: delay matches approx. timeline end (~2.2s)
+            gsap.to('.hero-mock-wrapper', {
+              y: -10,
+              duration: 7,
+              ease: 'sine.inOut',
+              yoyo: true,
+              repeat: -1,
+              delay: 2.5,
+            });
+
+            // ── Mock: gentle parallax scrub (one tasteful scrub moment)
+            gsap.to('.hero-mock-wrapper', {
+              yPercent: 8,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: '.hero-mock-section',
+                start: 'top bottom',
+                end: 'bottom top',
+                scrub: 1.5,
+              },
+            });
+          } else {
+            // Mobile: simple block entrance, no split/float/scrub
+            tl.from('.hero-badge', { y: 24, opacity: 0, duration: 0.5 })
+              .from(
+                '.hero-title',
+                { y: 36, opacity: 0, duration: 0.8 },
+                '-=0.2',
+              )
+              .from(
+                '.hero-sub',
+                { y: 24, opacity: 0, duration: 0.6 },
+                '-=0.4',
+              )
+              .from(
+                '.hero-ctas',
+                { y: 20, opacity: 0, duration: 0.5 },
+                '-=0.35',
+              )
+              .from(
+                '.hero-mock-wrapper',
+                { y: 56, opacity: 0, duration: 0.9, ease: 'power3.out' },
+                '-=0.25',
+              );
+          }
+
+          // ── Hero glow: parallax scrub + breathing pulse ─────────────
           gsap.to('.hero-glow-orb', {
             y: -80,
             ease: 'none',
@@ -165,8 +234,15 @@ const LandingPage = () => {
               scrub: true,
             },
           });
+          gsap.to('.hero-glow-orb', {
+            scale: 1.08,
+            duration: 4,
+            ease: 'sine.inOut',
+            yoyo: true,
+            repeat: -1,
+          });
 
-          // ── Stats count-up ──────────────────────────────────────────
+          // ── Stats count-up (eases out, fires once) ──────────────────
           if (containerRef.current) {
             containerRef.current
               .querySelectorAll<HTMLElement>('[data-count-target]')
@@ -193,11 +269,11 @@ const LandingPage = () => {
               });
           }
 
-          // ── Benefit cards stagger ───────────────────────────────────
+          // ── Benefit cards: y-rise stagger ───────────────────────────
           ScrollTrigger.batch('.benefit-card', {
             onEnter: (els) =>
               gsap.from(els, {
-                y: 40,
+                y: 48,
                 opacity: 0,
                 stagger: 0.12,
                 duration: 0.7,
@@ -207,7 +283,7 @@ const LandingPage = () => {
             once: true,
           });
 
-          // ── Feature rows reveal ─────────────────────────────────────
+          // ── Feature rows: fade + y stagger ──────────────────────────
           ScrollTrigger.batch('.feature-row', {
             onEnter: (els) =>
               gsap.from(els, {
@@ -221,12 +297,13 @@ const LandingPage = () => {
             once: true,
           });
 
-          // ── Vignettes slide in from edges ───────────────────────────
+          // ── Feature vignettes: alternating x-slide + rotation settle ─
           gsap.utils.toArray<HTMLElement>('.vignette-right').forEach((el) =>
             gsap.from(el, {
-              x: 36,
+              x: 48,
+              rotation: 1.5,
               opacity: 0,
-              duration: 0.8,
+              duration: 0.9,
               ease: 'power3.out',
               scrollTrigger: {
                 trigger: el,
@@ -237,9 +314,10 @@ const LandingPage = () => {
           );
           gsap.utils.toArray<HTMLElement>('.vignette-left').forEach((el) =>
             gsap.from(el, {
-              x: -36,
+              x: -48,
+              rotation: -1.5,
               opacity: 0,
-              duration: 0.8,
+              duration: 0.9,
               ease: 'power3.out',
               scrollTrigger: {
                 trigger: el,
@@ -249,18 +327,20 @@ const LandingPage = () => {
             }),
           );
 
-          // ── FAQ + bottom CTA ────────────────────────────────────────
-          gsap.from('.faq-section', {
-            y: 36,
-            opacity: 0,
-            duration: 0.7,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: '.faq-section',
-              start: 'top 88%',
-              once: true,
-            },
+          // ── FAQ items: subtle fade only, staggered ──────────────────
+          ScrollTrigger.batch('.faq-item', {
+            onEnter: (els) =>
+              gsap.from(els, {
+                opacity: 0,
+                stagger: 0.1,
+                duration: 0.5,
+                ease: 'power2.out',
+              }),
+            start: 'top 90%',
+            once: true,
           });
+
+          // ── Bottom CTA section ───────────────────────────────────────
           gsap.from('.cta-section', {
             y: 36,
             opacity: 0,
@@ -408,7 +488,7 @@ const LandingPage = () => {
     >
       {/* ── Background glows ─────────────────────────────────────────── */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="hero-glow-orb absolute -top-40 left-1/2 h-[900px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(34,211,238,0.12)_0%,transparent_70%)]" />
+        <div className="hero-glow-orb will-change-transform absolute -top-40 left-1/2 h-[900px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(34,211,238,0.12)_0%,transparent_70%)]" />
         <div className="absolute right-[-5%] top-1/3 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.07)_0%,transparent_70%)]" />
         <div className="absolute bottom-1/4 left-[-5%] h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,rgba(52,211,153,0.05)_0%,transparent_70%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
@@ -494,8 +574,8 @@ const LandingPage = () => {
       </section>
 
       {/* ── Dashboard Mock ───────────────────────────────────────────── */}
-      <section className="relative z-10 mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="hero-mock-wrapper overflow-hidden rounded-[24px] border border-white/10 bg-slate-900/70 shadow-[0_40px_100px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+      <section className="hero-mock-section relative z-10 mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="hero-mock-wrapper will-change-transform overflow-hidden rounded-[24px] border border-white/10 bg-slate-900/70 shadow-[0_40px_100px_rgba(0,0,0,0.55)] backdrop-blur-xl">
           {/* Browser chrome */}
           <div className="flex items-center gap-2 border-b border-white/8 bg-white/[0.015] px-5 py-3">
             <span className="h-2.5 w-2.5 rounded-full bg-rose-400/40" />
@@ -666,9 +746,20 @@ const LandingPage = () => {
               <div
                 key={b.titleKey}
                 className={`benefit-card group relative overflow-hidden rounded-2xl border border-white/8 bg-white/[0.03] p-6 transition-colors duration-300 ${b.hoverBorder}`}
+                onMouseMove={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
+                  e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
+                }}
               >
                 <div
                   className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${b.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-100`}
+                />
+                {/* ponytail: CSS var trick — no per-frame GSAP, just a repaint on mouse move */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                  style={{ background: 'radial-gradient(circle 140px at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.06), transparent)' }}
                 />
                 <div className="relative">
                   <div
@@ -890,7 +981,7 @@ const LandingPage = () => {
             <AccordionItem
               key={faq.q}
               value={`faq-${i}`}
-              className="overflow-hidden rounded-2xl border border-white/8 bg-white/[0.025] px-5"
+              className="faq-item overflow-hidden rounded-2xl border border-white/8 bg-white/[0.025] px-5"
             >
               <AccordionTrigger className="py-4 text-left text-sm font-semibold text-white/80 hover:no-underline sm:text-base [&>svg]:shrink-0 [&>svg]:text-white/30">
                 {t(faq.q)}
@@ -954,7 +1045,7 @@ const LandingPage = () => {
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
             <Link
               to="/login"
-              className="transition-colors hover:text-white/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
+              className="relative transition-colors hover:text-white/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 after:bg-current after:transition-[width] after:duration-300 hover:after:w-full"
               onClick={() => track('login_click')}
             >
               {t('landing.nav_cta')}
