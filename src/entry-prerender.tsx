@@ -1,5 +1,6 @@
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import i18n from './i18n';
 import LandingPage from './pages/LandingPage';
 
@@ -7,9 +8,12 @@ import LandingPage from './pages/LandingPage';
 // Forced to uz so Node's navigator.language can't leak another locale into the snapshot.
 export async function render(): Promise<string> {
   await i18n.changeLanguage('uz');
+  const queryClient = new QueryClient();
   return renderToString(
-    <StaticRouter location="/">
-      <LandingPage />
-    </StaticRouter>,
+    <QueryClientProvider client={queryClient}>
+      <StaticRouter location="/">
+        <LandingPage />
+      </StaticRouter>
+    </QueryClientProvider>,
   );
 }

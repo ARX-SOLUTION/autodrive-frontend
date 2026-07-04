@@ -695,6 +695,35 @@
     "pain_card3_title": "Branch summary takes a full day",
     "pain_card3_body": "Numbers are scattered — you have to pull them together every time",
     "pain_bridge": "AutoDrive brings all of this into one panel.",
-    "cta2_risk": "First month free · no install · cancel any time"
+    "cta2_risk": "First month free · no install · cancel any time",
+    "demo_form_eyebrow": "Request a demo",
+    "demo_form_title": "Leave your details",
+    "demo_form_sub": "Tell us about your school and we'll get back to you"
+  },
+  "demo_form": {
+    "full_name_label": "Full name",
+    "full_name_placeholder": "e.g. John Smith",
+    "phone_label": "Phone number",
+    "phone_placeholder": "+998 90 123 45 67",
+    "region_label": "Region",
+    "region_placeholder": "Select a region",
+    "center_name_label": "School name",
+    "center_name_placeholder": "e.g. Speed Auto School",
+    "student_count_label": "Number of students",
+    "student_count_placeholder": "Approximate count",
+    "note_label": "Note",
+    "note_placeholder": "Any question or extra info...",
+    "submit": "Send request",
+    "submitting": "Sending...",
+    "success_title": "Request received!",
+    "success_body": "We'll get back to you shortly. Usually within 15 minutes.",
+    "error_generic": "Something went wrong. Please try again.",
+    "disclaimer": "We will not spam you",
+    "validation": {
+      "full_name_required": "Full name is required",
+      "phone_required": "Phone number is required",
+      "phone_invalid": "Enter a valid phone number (+998 XX XXX XX XX)",
+      "region_required": "Please select a region"
+    }
   }
 }

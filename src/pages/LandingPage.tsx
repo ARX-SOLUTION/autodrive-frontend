@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 
 import { track } from '@/lib/umami';
+import { DemoForm } from '@/components/landing/DemoForm';
 
 const TELEGRAM_LINK = 'https://t.me/Xamidullo_xudoyberdiyev';
 const PHONE_LINK = 'tel:+998946110066';
@@ -397,6 +398,19 @@ const LandingPage = () => {
               }),
             start: 'top 88%',
             once: true,
+          });
+
+          // ── Demo form section reveal ─────────────────────────────────
+          gsap.from('.demo-form-section', {
+            y: 48,
+            opacity: 0,
+            duration: 0.8,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: '.demo-form-section',
+              start: 'top 88%',
+              once: true,
+            },
           });
 
           // ── Bottom CTA section ───────────────────────────────────────
@@ -1346,6 +1360,22 @@ const LandingPage = () => {
             </AccordionItem>
           ))}
         </Accordion>
+      </section>
+
+      {/* ── Demo lead-capture form ───────────────────────────────────── */}
+      <section className="demo-form-section relative z-10 mx-auto max-w-3xl px-4 pb-24 sm:px-6 lg:px-8">
+        <div className="mb-10 text-center">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
+            {t('landing.demo_form_eyebrow')}
+          </p>
+          <h2 className="font-heading mb-3 text-2xl font-bold sm:text-3xl">
+            {t('landing.demo_form_title')}
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-white/40">
+            {t('landing.demo_form_sub')}
+          </p>
+        </div>
+        <DemoForm />
       </section>
 
       {/* ── Bottom CTA ───────────────────────────────────────────────── */}
