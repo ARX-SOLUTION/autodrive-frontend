@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { gsap } from 'gsap';
@@ -35,6 +35,8 @@ import {
 
 import { track } from '@/lib/umami';
 import { DemoForm } from '@/components/landing/DemoForm';
+import { useBlogPosts } from '@/services/blogService';
+import { localizedField } from '@/lib/blog';
 
 const TELEGRAM_LINK = 'https://t.me/Xamidullo_xudoyberdiyev';
 const PHONE_LINK = 'tel:+998946110066';
@@ -112,6 +114,19 @@ const LandingPage = () => {
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const containerRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
+  const blogSectionRef = useRef<HTMLDivElement>(null);
+  const { data: blogPosts } = useBlogPosts();
+  const recentPosts = useMemo(
+    () =>
+      [...(blogPosts ?? [])]
+        .sort(
+          (a, b) =>
+            new Date(b.published_at).getTime() -
+            new Date(a.published_at).getTime(),
+        )
+        .slice(0, 3),
+    [blogPosts],
+  );
 
   useEffect(() => {
     if (hasHydrated && isAuthenticated) {
@@ -432,6 +447,29 @@ const LandingPage = () => {
     { scope: containerRef },
   );
 
+  // ── Blog teaser cards: separate hook, cards arrive after async fetch ─────
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add('(prefers-reduced-motion: no-preference)', () => {
+        ScrollTrigger.batch('.blog-teaser-card', {
+          onEnter: (els) =>
+            gsap.from(els, {
+              y: 48,
+              opacity: 0,
+              stagger: 0.12,
+              duration: 0.7,
+              ease: 'power3.out',
+            }),
+          start: 'top 88%',
+          once: true,
+        });
+      });
+      return () => mm.revert();
+    },
+    { scope: blogSectionRef, dependencies: [recentPosts.length] },
+  );
+
   // ── Static data ──────────────────────────────────────────────────────────
   const benefits = [
     {
@@ -606,6 +644,13 @@ const LandingPage = () => {
             </span>
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              to="/blog"
+              className="hidden items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-slate-700 dark:text-white/40 dark:hover:text-white/70 lg:flex"
+              onClick={() => track('blog_nav_click')}
+            >
+              {t('landing.nav_blog')}
+            </Link>
             <a
               href={PHONE_LINK}
               className="hidden items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-slate-700 dark:text-white/40 dark:hover:text-white/70 lg:flex"
@@ -1338,6 +1383,77 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+
+      {/* ── Blog teaser ──────────────────────────────────────────────── */}
+      {recentPosts.length > 0 && (
+        <section
+          ref={blogSectionRef}
+          className="relative z-10 mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8"
+        >
+          <div className="mb-10 text-center">
+            <h2 className="font-heading mb-3 text-2xl font-bold sm:text-3xl">
+              {t('landing.blog_title')}
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-white/40">
+              {t('landing.blog_sub')}
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {recentPosts.map((post) => {
+              const title = localizedField(post, 'title', i18n.language);
+              const excerpt = localizedField(post, 'excerpt', i18n.language);
+              return (
+                <Link
+                  key={post.slug}
+                  to={`/blog/${post.slug}`}
+                  className="blog-teaser-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 transition-colors duration-300 hover:border-cyan-400/30 dark:border-white/8 dark:bg-white/[0.03]"
+                >
+                  {post.cover_image_url && (
+                    <div className="aspect-video w-full overflow-hidden bg-muted">
+                      <img
+                        src={post.cover_image_url}
+                        alt={title}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                  )}
+                  <div className="p-5">
+                    {post.tags.length > 0 && (
+                      <div className="mb-2 flex flex-wrap gap-1.5">
+                        {post.tags.slice(0, 2).map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-500 dark:border-white/10 dark:text-white/45"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <h3 className="mb-1.5 line-clamp-2 text-base font-semibold text-balance text-slate-900 dark:text-white">
+                      {title}
+                    </h3>
+                    <p className="line-clamp-2 text-sm leading-relaxed text-slate-500 dark:text-white/45">
+                      {excerpt}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+          <div className="mt-8 flex justify-center">
+            <Link
+              to="/blog"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-600 transition-colors hover:text-cyan-700 dark:text-cyan-300 dark:hover:text-cyan-200"
+              onClick={() => track('blog_view_all_click')}
+            >
+              {t('landing.blog_view_all')}
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* ── FAQ ──────────────────────────────────────────────────────── */}
       <section className="faq-section relative z-10 mx-auto max-w-2xl px-4 pb-24 sm:px-6 lg:px-8">
