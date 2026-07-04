@@ -52,8 +52,8 @@ const formatTime = (iso: string) => {
 };
 
 const lessonTypeColor: Record<LessonType, string> = {
-  theory: 'border-l-blue-500 bg-blue-50',
-  practice: 'border-l-green-500 bg-green-50',
+  theory: 'border-l-primary bg-primary/10',
+  practice: 'border-l-success bg-success/10',
 };
 
 const SchedulePage = () => {
@@ -196,7 +196,7 @@ const SchedulePage = () => {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">{t('schedule.title')}</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {format(weekStart, 'dd.MM.yyyy')} — {format(weekEnd, 'dd.MM.yyyy')}
           </p>
         </div>
@@ -228,7 +228,7 @@ const SchedulePage = () => {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex items-center gap-4 text-sm text-gray-500">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="inline-block h-3 w-3 rounded bg-blue-500" />{' '}
             {t('schedule.legend_theory')}
@@ -257,13 +257,13 @@ const SchedulePage = () => {
             return (
               <div
                 key={key}
-                className={`min-h-[200px] rounded-lg border bg-white p-2 ${
-                  isToday ? 'ring-2 ring-blue-200' : ''
+                className={`min-h-[200px] rounded-lg border bg-card p-2 ${
+                  isToday ? 'ring-2 ring-primary/30' : ''
                 }`}
               >
                 <div
                   className={`mb-2 text-center text-sm font-medium ${
-                    isToday ? 'text-blue-600' : 'text-gray-600'
+                    isToday ? 'text-primary' : 'text-foreground'
                   }`}
                 >
                   <div>{format(day, 'EEE')}</div>
@@ -271,7 +271,7 @@ const SchedulePage = () => {
                 </div>
                 <div className="space-y-1">
                   {dayLessons.length === 0 ? (
-                    <p className="text-xs text-gray-300 text-center py-4">—</p>
+                    <p className="text-xs text-muted-foreground/50 text-center py-4">—</p>
                   ) : (
                     dayLessons.map((lesson) => (
                       <div
@@ -279,15 +279,15 @@ const SchedulePage = () => {
                         className={`rounded border-l-4 p-1.5 text-xs ${lessonTypeColor[lesson.lesson_type]}`}
                       >
                         <p className="font-medium truncate">{lesson.title}</p>
-                        <p className="text-gray-500">
+                        <p className="text-muted-foreground">
                           {formatTime(lesson.date)}
                         </p>
                         {lesson.teacher_name && (
-                          <p className="text-gray-400 truncate">
+                          <p className="text-muted-foreground truncate">
                             {lesson.teacher_name}
                           </p>
                         )}
-                        <p className="text-gray-400">
+                        <p className="text-muted-foreground">
                           {lesson.present_count}/{lesson.total_count}
                         </p>
                       </div>
@@ -302,10 +302,10 @@ const SchedulePage = () => {
       )}
 
       {/* Templates section */}
-      <div className="rounded-lg border bg-white">
+      <div className="rounded-lg border bg-card">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h2 className="font-semibold">{t('schedule.templates')}</h2>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted-foreground">
             {t('schedule.count_label', { count: (templates || []).length })}
           </span>
         </div>
@@ -331,15 +331,15 @@ const SchedulePage = () => {
                   <span className="font-medium text-sm">
                     {DAY_LABELS[t.day_of_week]}
                   </span>
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-foreground">
                     {t.start_time}—{t.end_time}
                   </span>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded bg-gray-100">
+                  <span className="text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
                     {lessonTypeLabel[t.lesson_type]}
                   </span>
-                  <span className="text-sm text-gray-500">{t.group_name}</span>
+                  <span className="text-sm text-muted-foreground">{t.group_name}</span>
                   {t.teacher_name && (
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-muted-foreground">
                       {t.teacher_name}
                     </span>
                   )}
@@ -363,11 +363,11 @@ const SchedulePage = () => {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Yangi template</DialogTitle>
+            <DialogTitle>{t('schedule.template_title')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreateTemplate} className="space-y-4">
             <div>
-              <Label>Guruh</Label>
+              <Label>{t('schedule.group_label')}</Label>
               <Select value={formGroupId} onValueChange={setFormGroupId}>
                 <SelectTrigger>
                   <SelectValue placeholder={t('schedule.group_placeholder')} />
@@ -382,7 +382,7 @@ const SchedulePage = () => {
               </Select>
             </div>
             <div>
-              <Label>Hafta kuni</Label>
+              <Label>{t('schedule.day_label')}</Label>
               <Select value={formDayOfWeek} onValueChange={setFormDayOfWeek}>
                 <SelectTrigger>
                   <SelectValue />
@@ -398,7 +398,7 @@ const SchedulePage = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Boshlanish vaqti</Label>
+                <Label>{t('schedule.start_time')}</Label>
                 <Input
                   type="time"
                   value={formStartTime}
@@ -406,7 +406,7 @@ const SchedulePage = () => {
                 />
               </div>
               <div>
-                <Label>Tugash vaqti</Label>
+                <Label>{t('schedule.end_time')}</Label>
                 <Input
                   type="time"
                   value={formEndTime}
@@ -468,7 +468,7 @@ const SchedulePage = () => {
                 value={genWeeks}
                 onChange={(e) => setGenWeeks(e.target.value)}
               />
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {t('schedule.weeks_hint')}
               </p>
             </div>
@@ -514,7 +514,7 @@ const SchedulePage = () => {
       {/* Delete Confirm */}
       <ConfirmDialog
         open={!!deleteId}
-        onOpenChange={() => setDeleteId(null)}
+        onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
         title={t('schedule.delete_title')}
         description={t('schedule.delete_desc')}

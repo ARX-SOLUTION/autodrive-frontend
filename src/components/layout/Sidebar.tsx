@@ -106,6 +106,7 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
               key={item.path}
               to={item.path}
               onClick={onNavigate}
+              aria-label={t(item.labelKey)}
               className={cn(
                 'flex items-center text-sm font-medium transition-colors rounded-lg',
                 collapsed
@@ -145,6 +146,7 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
               onNavigate?.();
               logoutMutation.mutate();
             }}
+            aria-label={t('actions.logout', 'Chiqish')}
             className={cn(
               'flex items-center rounded-lg text-sm text-muted-foreground hover:text-destructive transition-colors',
               collapsed ? 'justify-center w-10 h-10' : 'gap-2 px-2 py-2',

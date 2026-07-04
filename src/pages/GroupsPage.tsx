@@ -404,6 +404,12 @@ const GroupsPage = () => {
                       key={g.id}
                       className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/10"
                       onClick={() => setDetailGroup(g)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') setDetailGroup(g);
+                        if (e.key === ' ') { e.preventDefault(); setDetailGroup(g); }
+                      }}
                     >
                       <td className="px-4 py-3 text-center text-muted-foreground">
                         {startIndex + idx + 1}
@@ -782,8 +788,9 @@ const GroupsPage = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>{t('groups.name')} *</Label>
+              <Label htmlFor="group-name">{t('groups.name')} *</Label>
               <Input
+                id="group-name"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 required
@@ -792,9 +799,9 @@ const GroupsPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('common.branch')} *</Label>
+              <Label htmlFor="group-branch">{t('common.branch')} *</Label>
               <Select value={formBranchId} onValueChange={setFormBranchId}>
-                <SelectTrigger className="bg-secondary border-border">
+                <SelectTrigger id="group-branch" className="bg-secondary border-border">
                   <SelectValue placeholder={t('common.select_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -807,9 +814,9 @@ const GroupsPage = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{t('groups.course_type')} *</Label>
+              <Label htmlFor="group-course-type">{t('groups.course_type')} *</Label>
               <Select value={formCourseType} onValueChange={setFormCourseType}>
-                <SelectTrigger className="bg-secondary border-border">
+                <SelectTrigger id="group-course-type" className="bg-secondary border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

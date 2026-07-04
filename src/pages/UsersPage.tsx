@@ -363,8 +363,9 @@ const UsersPage = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>{t('users.name_label')} *</Label>
+              <Label htmlFor="user-name">{t('users.name_label')} *</Label>
               <Input
+                id="user-name"
                 value={form.fullName}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, fullName: e.target.value }))
@@ -374,8 +375,9 @@ const UsersPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('users.email_label')} *</Label>
+              <Label htmlFor="user-email">{t('users.email_label')} *</Label>
               <Input
+                id="user-email"
                 type="email"
                 value={form.email}
                 onChange={(e) =>
@@ -386,8 +388,9 @@ const UsersPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('users.password_label')} *</Label>
+              <Label htmlFor="user-password">{t('users.password_label')} *</Label>
               <Input
+                id="user-password"
                 type="password"
                 value={form.password}
                 onChange={(e) =>
@@ -398,8 +401,9 @@ const UsersPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('common.phone')}</Label>
+              <Label htmlFor="user-phone">{t('common.phone')}</Label>
               <Input
+                id="user-phone"
                 value={form.phone}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, phone: e.target.value }))
@@ -409,13 +413,13 @@ const UsersPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('common.branch')} *</Label>
+              <Label htmlFor="user-branch">{t('common.branch')} *</Label>
               <Select
                 value={form.branchId}
                 onValueChange={(v) => setForm((f) => ({ ...f, branchId: v }))}
                 disabled={(branches || []).length === 0}
               >
-                <SelectTrigger className="bg-secondary border-border">
+                <SelectTrigger id="user-branch" className="bg-secondary border-border">
                   <SelectValue
                     placeholder={
                       (branches || []).length === 0

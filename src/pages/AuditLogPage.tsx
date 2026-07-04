@@ -522,7 +522,7 @@ const AuditLogPage = () => {
                     : format(dateFrom, 'dd.MM.yyyy')}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 max-w-[calc(100vw-2rem)] overflow-x-auto" align="start">
               <Calendar
                 mode="range"
                 selected={{ from: dateFrom, to: dateTo }}
@@ -612,6 +612,12 @@ const AuditLogPage = () => {
                       key={log.id}
                       className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
                       onClick={() => setSelectedLog(log)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') setSelectedLog(log);
+                        if (e.key === ' ') { e.preventDefault(); setSelectedLog(log); }
+                      }}
                     >
                       <td className="px-4 py-3 text-center text-muted-foreground">
                         {(page - 1) * LIMIT + idx + 1}

@@ -381,8 +381,9 @@ const OperatorsPage = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>{t('operators.first_name')} *</Label>
+              <Label htmlFor="operator-name">{t('operators.first_name')} *</Label>
               <Input
+                id="operator-name"
                 value={form.fullName}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, fullName: e.target.value }))
@@ -392,8 +393,9 @@ const OperatorsPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('operators.phone')} *</Label>
+              <Label htmlFor="operator-phone">{t('operators.phone')} *</Label>
               <Input
+                id="operator-phone"
                 value={form.phone}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, phone: e.target.value }))
@@ -404,12 +406,12 @@ const OperatorsPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('operators.branch')}</Label>
+              <Label htmlFor="operator-branch">{t('operators.branch')}</Label>
               <Select
                 value={form.branchId}
                 onValueChange={(v) => setForm((f) => ({ ...f, branchId: v }))}
               >
-                <SelectTrigger className="bg-secondary border-border">
+                <SelectTrigger id="operator-branch" className="bg-secondary border-border">
                   <SelectValue placeholder={t('common.select_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>

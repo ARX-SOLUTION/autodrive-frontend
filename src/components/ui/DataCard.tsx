@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface DataCardField {
@@ -34,6 +34,16 @@ export const DataCard = ({
   return (
     <div
       onClick={onClick}
+      {...(interactive
+        ? {
+            role: 'button',
+            tabIndex: 0,
+            onKeyDown: (e: React.KeyboardEvent) => {
+              if (e.key === 'Enter') onClick?.();
+              if (e.key === ' ') { e.preventDefault(); onClick?.(); }
+            },
+          }
+        : {})}
       className={cn(
         'relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm transition-colors',
         accent && 'pl-5',

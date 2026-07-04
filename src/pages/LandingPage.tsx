@@ -1218,7 +1218,7 @@ const LandingPage = () => {
                   </div>
                   <button
                     type="button"
-                    className="min-h-[44px] rounded-lg bg-cyan-400/15 px-3 py-1.5 text-[11px] font-semibold text-cyan-600 dark:text-cyan-300 transition-colors hover:bg-cyan-400/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-400"
+                    className="min-h-[44px] rounded-lg bg-cyan-400/15 px-3 py-1.5 text-[11px] font-semibold text-cyan-700 dark:text-cyan-300 transition-colors hover:bg-cyan-400/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-700"
                   >
                     Saqlash
                   </button>

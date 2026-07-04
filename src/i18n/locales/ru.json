@@ -573,7 +573,12 @@
     "weeks_error": "Количество недель должно быть от 1 до 12",
     "generate_error": "Ошибка при создании занятий",
     "group_placeholder": "Выберите группу",
-    "count_label": "{{count}} шаблонов"
+    "count_label": "{{count}} шаблонов",
+    "template_title": "Новый шаблон",
+    "group_label": "Группа",
+    "day_label": "День недели",
+    "start_time": "Время начала",
+    "end_time": "Время окончания"
   },
   "documents": {
     "title": "Документы",
@@ -586,7 +591,10 @@
     "search_placeholder": "Поиск...",
     "student_name": "Студент",
     "doc_type": "Тип документа",
-    "status": "Статус"
+    "status": "Статус",
+    "coming_soon": "Скоро",
+    "empty_title": "Нет документов",
+    "empty_desc": "Модуль документов скоро будет запущен"
   },
   "notfound": {
     "title": "Страница не найдена",

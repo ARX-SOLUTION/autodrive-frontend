@@ -76,22 +76,25 @@ const ProfilePage = () => {
         {/* Info */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label>{t('profile.name')}</Label>
+            <Label htmlFor="profile-name">{t('profile.name')}</Label>
             <Input
+              id="profile-name"
               defaultValue={user?.name}
               className="mt-1.5 bg-secondary border-border"
             />
           </div>
           <div>
-            <Label>Email</Label>
+            <Label htmlFor="profile-email">Email</Label>
             <Input
+              id="profile-email"
               defaultValue={user?.email}
               className="mt-1.5 bg-secondary border-border"
             />
           </div>
           <div>
-            <Label>{t('profile.phone')}</Label>
+            <Label htmlFor="profile-phone">{t('profile.phone')}</Label>
             <Input
+              id="profile-phone"
               defaultValue={user?.phone || ''}
               className="mt-1.5 bg-secondary border-border"
             />
@@ -109,8 +112,9 @@ const ProfilePage = () => {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label>{t('profile.current_password')}</Label>
+              <Label htmlFor="profile-current-password">{t('profile.current_password')}</Label>
               <Input
+                id="profile-current-password"
                 type="password"
                 className="mt-1.5 bg-secondary border-border"
                 value={pwForm.currentPassword}
@@ -120,8 +124,9 @@ const ProfilePage = () => {
               />
             </div>
             <div>
-              <Label>{t('profile.new_password')}</Label>
+              <Label htmlFor="profile-new-password">{t('profile.new_password')}</Label>
               <Input
+                id="profile-new-password"
                 type="password"
                 className="mt-1.5 bg-secondary border-border"
                 value={pwForm.newPassword}
