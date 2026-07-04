@@ -698,7 +698,11 @@
     "cta2_risk": "Birinchi oy bepul · o’rnatishsiz · istalgan vaqt bekor qilinadi",
     "demo_form_eyebrow": "Demo so’rov",
     "demo_form_title": "Demo qoldiring",
-    "demo_form_sub": "Ma’lumotlaringizni qoldiring — biz siz bilan bog’lanamiz"
+    "demo_form_sub": "Ma’lumotlaringizni qoldiring — biz siz bilan bog’lanamiz",
+    "nav_blog": "Blog",
+    "blog_title": "Blogdan so’nggi maqolalar",
+    "blog_sub": "Avtomaktab egalari uchun maslahatlar va yangiliklar",
+    "blog_view_all": "Hammasini ko’rish"
   },
   "demo_form": {
     "full_name_label": "To’liq ism va familiya",

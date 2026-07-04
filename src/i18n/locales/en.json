@@ -698,7 +698,11 @@
     "cta2_risk": "First month free · no install · cancel any time",
     "demo_form_eyebrow": "Request a demo",
     "demo_form_title": "Leave your details",
-    "demo_form_sub": "Tell us about your school and we'll get back to you"
+    "demo_form_sub": "Tell us about your school and we'll get back to you",
+    "nav_blog": "Blog",
+    "blog_title": "Latest from the blog",
+    "blog_sub": "Tips and news for driving school owners",
+    "blog_view_all": "View all"
   },
   "demo_form": {
     "full_name_label": "Full name and surname",
