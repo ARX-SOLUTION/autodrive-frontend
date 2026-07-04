@@ -37,6 +37,8 @@ const queryClient = new QueryClient({
 });
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+const BlogPage = lazy(() => import('./pages/BlogPage'));
+const BlogPostPage = lazy(() => import('./pages/BlogPostPage'));
 
 const OwnerRoute = ({ children }: { children: React.ReactNode }) => {
   const isOwner = useAuthStore((s) => s.isOwner);
@@ -58,6 +60,8 @@ const App = () => (
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route
               element={

@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import tailwindcssAnimate from 'tailwindcss-animate';
+import typography from '@tailwindcss/typography';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const designTokensPreset = require('@autodrive/design-tokens/tailwind-preset');
 
@@ -75,5 +76,7 @@ export default {
       },
     },
   },
-  plugins: [tailwindcssAnimate],
+  // ponytail: @tailwindcss/typography was already a devDependency (unused) —
+  // wiring it in gives the blog post body `prose` classes for free.
+  plugins: [tailwindcssAnimate, typography],
 } satisfies Config;
