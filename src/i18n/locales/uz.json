@@ -695,6 +695,35 @@
     "pain_card3_title": "Filiallar hisoboti — kun ketadi",
     "pain_card3_body": "Raqamlar bir joyda emas, har safar yig’ish kerak",
     "pain_bridge": "AutoDrive shularning barchasini bitta panelga yig’adi.",
-    "cta2_risk": "Birinchi oy bepul · o’rnatishsiz · istalgan vaqt bekor qilinadi"
+    "cta2_risk": "Birinchi oy bepul · o’rnatishsiz · istalgan vaqt bekor qilinadi",
+    "demo_form_eyebrow": "Demo so’rov",
+    "demo_form_title": "Demo qoldiring",
+    "demo_form_sub": "Ma’lumotlaringizni qoldiring — biz siz bilan bog’lanamiz"
+  },
+  "demo_form": {
+    "full_name_label": "To’liq ism",
+    "full_name_placeholder": "Masalan: Mansur Karimov",
+    "phone_label": "Telefon raqam",
+    "phone_placeholder": "+998 90 123 45 67",
+    "region_label": "Viloyat",
+    "region_placeholder": "Viloyatni tanlang",
+    "center_name_label": "Avtomaktab nomi",
+    "center_name_placeholder": "Masalan: Tezkor Avto",
+    "student_count_label": "O’quvchilar soni",
+    "student_count_placeholder": "Taxminiy soni",
+    "note_label": "Izoh",
+    "note_placeholder": "Savol yoki qo’shimcha ma’lumot...",
+    "submit": "Yuborish",
+    "submitting": "Yuborilmoqda...",
+    "success_title": "So’rovingiz qabul qilindi!",
+    "success_body": "Tez orada siz bilan bog’lanamiz. Odatda 15 daqiqa ichida javob beramiz.",
+    "error_generic": "Xatolik yuz berdi. Qayta urinib ko’ring.",
+    "disclaimer": "Spam xabar yuborimaymiz",
+    "validation": {
+      "full_name_required": "To’liq ism kiritish majburiy",
+      "phone_required": "Telefon raqam kiritish majburiy",
+      "phone_invalid": "To’g’ri telefon raqam kiriting (+998 XX XXX XX XX)",
+      "region_required": "Viloyatni tanlash majburiy"
+    }
   }
 }

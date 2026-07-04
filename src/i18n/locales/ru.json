@@ -695,6 +695,35 @@
     "pain_card3_title": "Сводка по филиалам — целый день",
     "pain_card3_body": "Данные разбросаны, каждый раз собираем заново",
     "pain_bridge": "AutoDrive собирает всё это в одну панель.",
-    "cta2_risk": "Первый месяц бесплатно · без установки · отмените в любое время"
+    "cta2_risk": "Первый месяц бесплатно · без установки · отмените в любое время",
+    "demo_form_eyebrow": "Запрос демо",
+    "demo_form_title": "Оставьте заявку",
+    "demo_form_sub": "Расскажите о вашей школе — мы свяжемся с вами"
+  },
+  "demo_form": {
+    "full_name_label": "Полное имя",
+    "full_name_placeholder": "Например: Иван Иванов",
+    "phone_label": "Номер телефона",
+    "phone_placeholder": "+998 90 123 45 67",
+    "region_label": "Регион",
+    "region_placeholder": "Выберите регион",
+    "center_name_label": "Название автошколы",
+    "center_name_placeholder": "Например: Скоростная Автошкола",
+    "student_count_label": "Количество учеников",
+    "student_count_placeholder": "Приблизительное количество",
+    "note_label": "Примечание",
+    "note_placeholder": "Вопрос или дополнительная информация...",
+    "submit": "Отправить заявку",
+    "submitting": "Отправка...",
+    "success_title": "Заявка получена!",
+    "success_body": "Мы свяжемся с вами в ближайшее время. Обычно в течение 15 минут.",
+    "error_generic": "Что-то пошло не так. Попробуйте ещё раз.",
+    "disclaimer": "Мы не будем отправлять вам спам",
+    "validation": {
+      "full_name_required": "Полное имя обязательно",
+      "phone_required": "Номер телефона обязателен",
+      "phone_invalid": "Введите корректный номер (+998 XX XXX XX XX)",
+      "region_required": "Выберите регион"
+    }
   }
 }
