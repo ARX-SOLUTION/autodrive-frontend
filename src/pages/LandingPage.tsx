@@ -18,8 +18,10 @@ import {
   AlertTriangle,
   ArrowRight,
   BadgeCheck,
+  Building2,
   CalendarCheck2,
   CircleDollarSign,
+  ClipboardList,
   Clock,
   Moon,
   Phone,
@@ -283,6 +285,20 @@ const LandingPage = () => {
                 });
               });
           }
+
+          // ── Pain cards: y-rise stagger (mobile = simple fade+rise) ──
+          ScrollTrigger.batch('.pain-card', {
+            onEnter: (els) =>
+              gsap.from(els, {
+                y: 48,
+                opacity: 0,
+                stagger: 0.12,
+                duration: 0.7,
+                ease: 'power3.out',
+              }),
+            start: 'top 88%',
+            once: true,
+          });
 
           // ── Benefit cards: y-rise stagger ───────────────────────────
           ScrollTrigger.batch('.benefit-card', {
@@ -819,35 +835,79 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ── Stats bar (count-up on scroll) ───────────────────────────── */}
+      {/* ── Problem / pain ───────────────────────────────────────────── */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="mx-auto mb-10 max-w-2xl text-center">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
+            {t('landing.pain_eyebrow')}
+          </p>
+          <p className="text-base leading-relaxed text-slate-600 dark:text-white/55 sm:text-lg">
+            {t('landing.pain_lead')}
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {(
+            [
+              {
+                icon: AlertTriangle,
+                titleKey: 'landing.pain_card1_title',
+                bodyKey: 'landing.pain_card1_body',
+              },
+              {
+                icon: ClipboardList,
+                titleKey: 'landing.pain_card2_title',
+                bodyKey: 'landing.pain_card2_body',
+              },
+              {
+                icon: Building2,
+                titleKey: 'landing.pain_card3_title',
+                bodyKey: 'landing.pain_card3_body',
+              },
+            ] as const
+          ).map((p) => {
+            const Icon = p.icon;
+            return (
+              <div
+                key={p.titleKey}
+                className="pain-card relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-white/8 dark:bg-white/[0.03]"
+              >
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-rose-400/20 bg-rose-400/10">
+                  <Icon className="size-5 text-rose-600 dark:text-rose-300" />
+                </div>
+                <h3 className="mb-2 text-base font-semibold text-slate-900 dark:text-white">
+                  {t(p.titleKey)}
+                </h3>
+                <p className="text-sm leading-relaxed text-slate-500 dark:text-white/45">
+                  {t(p.bodyKey)}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-10 text-center text-base font-semibold text-slate-800 dark:text-white/85 sm:text-lg">
+          {t('landing.pain_bridge')}
+        </p>
+      </section>
+
+      {/* ── Capability facts (honest — true regardless of customer count) ─ */}
       <section className="relative z-10 mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 dark:divide-white/8 dark:border-white/8 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {(
             [
+              { value: '∞', labelKey: 'landing.stats_schools_label' },
               {
-                target: 50,
-                suffix: '+',
-                labelKey: 'landing.stats_schools_label',
-              },
-              {
-                target: 5000,
-                suffix: '+',
+                value: t('landing.stats_val2'),
                 labelKey: 'landing.stats_students_label',
               },
-              {
-                target: 12,
-                suffix: ' oy',
-                labelKey: 'landing.stats_months_label',
-              },
+              { value: '0', labelKey: 'landing.stats_months_label' },
             ] as const
           ).map((stat, i) => (
             <div
               key={i}
               className="bg-slate-50 px-8 py-7 text-center dark:bg-white/[0.02]"
             >
-              <p className="font-heading tabular-nums text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">
-                <span data-count-target={stat.target}>0</span>
-                <span className="text-cyan-600 dark:text-cyan-300">{stat.suffix}</span>
+              <p className="font-heading tabular-nums text-3xl font-bold text-cyan-600 dark:text-cyan-300 sm:text-4xl">
+                {stat.value}
               </p>
               <p className="mt-2 text-sm text-slate-500 dark:text-white/40">
                 {t(stat.labelKey)}
@@ -855,6 +915,9 @@ const LandingPage = () => {
             </div>
           ))}
         </div>
+        <p className="mt-4 text-center text-xs text-slate-400 dark:text-white/30">
+          {t('landing.stats_sub')}
+        </p>
       </section>
 
       {/* ── How it works ─────────────────────────────────────────────── */}
@@ -1326,6 +1389,9 @@ const LandingPage = () => {
               </a>
             </Button>
           </div>
+          <p className="relative mt-5 text-xs text-slate-500 dark:text-white/40">
+            {t('landing.cta2_risk')}
+          </p>
         </div>
       </section>
 
