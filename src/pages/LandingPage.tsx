@@ -257,33 +257,6 @@ const LandingPage = () => {
             repeat: -1,
           });
 
-          // ── Stats count-up (eases out, fires once) ──────────────────
-          if (containerRef.current) {
-            containerRef.current
-              .querySelectorAll<HTMLElement>('[data-count-target]')
-              .forEach((el) => {
-                const target = parseFloat(
-                  el.getAttribute('data-count-target') || '0',
-                );
-                const counter = { val: 0 };
-                gsap.to(counter, {
-                  val: target,
-                  duration: 1.8,
-                  ease: 'power2.out',
-                  onUpdate() {
-                    el.textContent = Math.round(counter.val).toLocaleString(
-                      'uz-UZ',
-                    );
-                  },
-                  scrollTrigger: {
-                    trigger: el,
-                    start: 'top 90%',
-                    once: true,
-                  },
-                });
-              });
-          }
-
           // ── Benefit cards: y-rise stagger ───────────────────────────
           ScrollTrigger.batch('.benefit-card', {
             onEnter: (els) =>
@@ -363,6 +336,20 @@ const LandingPage = () => {
                 opacity: 0,
                 stagger: 0.15,
                 duration: 0.7,
+                ease: 'power3.out',
+              }),
+            start: 'top 88%',
+            once: true,
+          });
+
+          // ── Problem/pain items: subtle fade + rise ──────────────────
+          ScrollTrigger.batch('.pain-item', {
+            onEnter: (els) =>
+              gsap.from(els, {
+                y: 28,
+                opacity: 0,
+                stagger: 0.1,
+                duration: 0.6,
                 ease: 'power3.out',
               }),
             start: 'top 88%',
@@ -819,25 +806,22 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ── Stats bar (count-up on scroll) ───────────────────────────── */}
+      {/* ── Capability facts (honest — true regardless of customer count) ─ */}
       <section className="relative z-10 mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 dark:divide-white/8 dark:border-white/8 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {(
             [
               {
-                target: 50,
-                suffix: '+',
-                labelKey: 'landing.stats_schools_label',
+                valueKey: 'landing.stats_branches_value',
+                labelKey: 'landing.stats_branches_label',
               },
               {
-                target: 5000,
-                suffix: '+',
-                labelKey: 'landing.stats_students_label',
+                valueKey: 'landing.stats_addstudent_value',
+                labelKey: 'landing.stats_addstudent_label',
               },
               {
-                target: 12,
-                suffix: ' oy',
-                labelKey: 'landing.stats_months_label',
+                valueKey: 'landing.stats_install_value',
+                labelKey: 'landing.stats_install_label',
               },
             ] as const
           ).map((stat, i) => (
@@ -845,9 +829,8 @@ const LandingPage = () => {
               key={i}
               className="bg-slate-50 px-8 py-7 text-center dark:bg-white/[0.02]"
             >
-              <p className="font-heading tabular-nums text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">
-                <span data-count-target={stat.target}>0</span>
-                <span className="text-cyan-600 dark:text-cyan-300">{stat.suffix}</span>
+              <p className="font-heading tabular-nums text-3xl font-bold text-cyan-600 dark:text-cyan-300 sm:text-4xl">
+                {t(stat.valueKey)}
               </p>
               <p className="mt-2 text-sm text-slate-500 dark:text-white/40">
                 {t(stat.labelKey)}
@@ -855,6 +838,45 @@ const LandingPage = () => {
             </div>
           ))}
         </div>
+        <p className="mt-4 text-center text-sm text-slate-500 dark:text-white/40">
+          {t('landing.stats_subline')}
+        </p>
+      </section>
+
+      {/* ── Problem / pain (recognition) ─────────────────────────────── */}
+      <section className="relative z-10 mx-auto max-w-3xl px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <p className="pain-item mb-3 text-sm font-semibold uppercase tracking-wide text-cyan-600 dark:text-cyan-300">
+            {t('landing.pain_eyebrow')}
+          </p>
+          <p className="pain-item mx-auto max-w-2xl text-balance text-lg text-slate-600 dark:text-white/70 sm:text-xl">
+            {t('landing.pain_lead')}
+          </p>
+        </div>
+        <div className="mt-8 space-y-3">
+          {(
+            [
+              { Icon: Wallet, bodyKey: 'landing.pain1' },
+              { Icon: CalendarCheck2, bodyKey: 'landing.pain2' },
+              { Icon: Clock, bodyKey: 'landing.pain3' },
+            ] as const
+          ).map(({ Icon, bodyKey }, i) => (
+            <div
+              key={i}
+              className="pain-item flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-left dark:border-white/8 dark:bg-white/[0.02]"
+            >
+              <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-rose-400/10 text-rose-600 dark:text-rose-300">
+                <Icon className="size-4" />
+              </div>
+              <p className="text-sm text-slate-600 dark:text-white/65">
+                {t(bodyKey)}
+              </p>
+            </div>
+          ))}
+        </div>
+        <p className="pain-item mt-8 text-center text-base font-semibold text-slate-900 dark:text-white">
+          {t('landing.pain_bridge')}
+        </p>
       </section>
 
       {/* ── How it works ─────────────────────────────────────────────── */}
@@ -1326,6 +1348,9 @@ const LandingPage = () => {
               </a>
             </Button>
           </div>
+          <p className="relative mt-5 text-xs text-slate-500 dark:text-white/40">
+            {t('landing.cta2_reassure')}
+          </p>
         </div>
       </section>
 

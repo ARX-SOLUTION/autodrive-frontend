@@ -631,9 +631,6 @@
     "cta2_title": "Maktabingizni bugundan nazoratga oling",
     "cta2_sub": "Demo versiyasi bilan boshlang — o’rnatish shart emas.",
     "footer_copy": "© 2026 Auto Maktab CRM",
-    "stats_schools_label": "Cheksiz filial",
-    "stats_students_label": "Talaba qo'shish",
-    "stats_months_label": "O'rnatish kerak emas",
     "stats_val2": "2 daqiqa",
     "stats_sub": "24/7 brauzerda ishlaydi · kunlik zaxira nusxa",
     "mock_chart_title": "Daromad trendi",
@@ -679,7 +676,7 @@
     "faq8_a": "Yo’q. Har bir maktab ma’lumotlari to’liq izolyatsiyalangan — kunlik zaxira nusxa olinadi.",
     "cta_call": "Qo’ng’iroq qiling",
     "pain_eyebrow": "Tanish holatmi?",
-    "pain_lead": "Oy oxirida kim to’ladi, kim to’lamadi — daftar, Excel, Telegram. Filiallar bo’yicha raqamlarni yig’ish kun ketadi.",
+    "pain_lead": "Oy oxiri. Kim to’ladi, kim qarz, qaysi filial orqada — hammasi daftar, Excel va Telegram’da tarqoq.",
     "pain_card1_title": "Qarzdorlarni qo’lda sanash",
     "pain_card1_body": "Kim to’lamadi, qancha qoldi — bir qarashda bilib bo’lmaydi",
     "pain_card2_title": "Davomat daftarda",
@@ -687,6 +684,17 @@
     "pain_card3_title": "Filiallar hisoboti — kun ketadi",
     "pain_card3_body": "Raqamlar bir joyda emas, har safar yig’ish kerak",
     "pain_bridge": "AutoDrive shularning barchasini bitta panelga yig’adi.",
-    "cta2_risk": "Birinchi oy bepul · o’rnatishsiz · istalgan vaqt bekor qilinadi"
+    "cta2_risk": "Birinchi oy bepul · o’rnatishsiz · istalgan vaqt bekor qilinadi",
+    "stats_branches_value": "∞",
+    "stats_branches_label": "Filial",
+    "stats_addstudent_value": "2 daqiqa",
+    "stats_addstudent_label": "Talaba qo’shish",
+    "stats_install_value": "0",
+    "stats_install_label": "O’rnatish",
+    "stats_subline": "Brauzerda 24/7 ishlaydi · kunlik zaxira nusxa",
+    "pain1": "Qarzdorlarni qo’lda sanaysiz — kim to’lamadi, qancha qoldi, aniq bilib bo’lmaydi.",
+    "pain2": "Davomat daftarda — yo’qoladi, har o’qituvchi har xil yuritadi.",
+    "pain3": "Filiallar hisobotini yig’ishga kun ketadi — raqamlar bir joyda emas.",
+    "cta2_reassure": "Birinchi oy bepul · o’rnatishsiz · istalgan vaqt bekor qilinadi"
   }
 }
