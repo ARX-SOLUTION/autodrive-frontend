@@ -701,7 +701,7 @@
     "demo_form_sub": "Tell us about your school and we'll get back to you"
   },
   "demo_form": {
-    "full_name_label": "Full name",
+    "full_name_label": "Full name and surname",
     "full_name_placeholder": "e.g. John Smith",
     "phone_label": "Phone number",
     "phone_placeholder": "+998 90 123 45 67",
@@ -720,7 +720,7 @@
     "error_generic": "Something went wrong. Please try again.",
     "disclaimer": "We will not spam you",
     "validation": {
-      "full_name_required": "Full name is required",
+      "full_name_required": "Enter your full name and surname",
       "phone_required": "Phone number is required",
       "phone_invalid": "Enter a valid phone number (+998 XX XXX XX XX)",
       "region_required": "Please select a region"
