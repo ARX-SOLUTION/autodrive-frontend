@@ -725,5 +725,23 @@
       "phone_invalid": "Введите корректный номер (+998 XX XXX XX XX)",
       "region_required": "Выберите регион"
     }
+  },
+  "blog": {
+    "nav_back": "Главная",
+    "hero_title": "Блог",
+    "hero_subtitle": "Советы и новости для владельцев автошкол",
+    "search_placeholder": "Поиск статей...",
+    "filter_all": "Все",
+    "empty_title": "Статьи не найдены",
+    "empty_desc": "Попробуйте другое ключевое слово или тег",
+    "reading_time": "{{count}} мин чтения",
+    "views": "{{count}} просмотров",
+    "share": "Поделиться",
+    "share_copied": "Ссылка скопирована",
+    "share_telegram": "Поделиться в Telegram",
+    "share_copy_link": "Скопировать ссылку",
+    "related_title": "Похожие статьи",
+    "not_found_title": "Статья не найдена",
+    "not_found_desc": "Эта статья не существует или была удалена"
   }
 }
