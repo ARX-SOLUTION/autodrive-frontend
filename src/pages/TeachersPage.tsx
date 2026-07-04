@@ -208,8 +208,8 @@ const TeachersPage = () => {
         />
       </div>
       <div className="glass-card overflow-hidden">
-        <div className="hidden md:block">
-          <table className="w-full text-sm">
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full min-w-[600px] text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
                 <th className="px-4 py-3 text-center font-medium text-muted-foreground">
