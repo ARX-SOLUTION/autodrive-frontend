@@ -193,14 +193,14 @@ const SchedulePage = () => {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">{t('schedule.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">
             {format(weekStart, 'dd.MM.yyyy')} — {format(weekEnd, 'dd.MM.yyyy')}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {canEdit && (
             <>
               <Button variant="outline" onClick={() => setGenerateOpen(true)}>
@@ -216,7 +216,7 @@ const SchedulePage = () => {
       </div>
 
       {/* Calendar navigation */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={prevWeek}>
             <ChevronLeft className="h-4 w-4" />
@@ -248,7 +248,8 @@ const SchedulePage = () => {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-7 gap-2">
+        <div className="overflow-x-auto">
+        <div className="grid grid-cols-7 gap-2 min-w-[700px]">
           {weekDays.map((day) => {
             const key = format(day, 'yyyy-MM-dd');
             const dayLessons = lessonsByDay.get(key) || [];
@@ -297,6 +298,7 @@ const SchedulePage = () => {
             );
           })}
         </div>
+        </div>
       )}
 
       {/* Templates section */}
@@ -323,9 +325,9 @@ const SchedulePage = () => {
             {templates.map((t) => (
               <div
                 key={t.id}
-                className="flex items-center justify-between px-4 py-2"
+                className="flex flex-wrap items-center justify-between gap-2 px-4 py-2"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="font-medium text-sm">
                     {DAY_LABELS[t.day_of_week]}
                   </span>
