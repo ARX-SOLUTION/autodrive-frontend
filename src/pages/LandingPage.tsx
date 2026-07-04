@@ -154,9 +154,12 @@ const LandingPage = () => {
               if (w.closest('.hero-accent')) {
                 w.classList.add(
                   'bg-gradient-to-r',
-                  'from-cyan-300',
-                  'via-cyan-200',
-                  'to-blue-300',
+                  'from-cyan-600',
+                  'via-cyan-500',
+                  'to-blue-600',
+                  'dark:from-cyan-300',
+                  'dark:via-cyan-200',
+                  'dark:to-blue-300',
                   'bg-clip-text',
                   'text-transparent',
                 );
@@ -406,7 +409,7 @@ const LandingPage = () => {
       titleKey: 'landing.benefit1_title',
       bodyKey: 'landing.benefit1_body',
       gradient: 'from-cyan-400/20 to-cyan-400/0',
-      iconColor: 'text-cyan-300',
+      iconColor: 'text-cyan-600 dark:text-cyan-300',
       iconBg: 'bg-cyan-400/10 border-cyan-400/20',
       hoverBorder: 'hover:border-cyan-400/30',
     },
@@ -415,7 +418,7 @@ const LandingPage = () => {
       titleKey: 'landing.benefit2_title',
       bodyKey: 'landing.benefit2_body',
       gradient: 'from-violet-400/20 to-violet-400/0',
-      iconColor: 'text-violet-300',
+      iconColor: 'text-violet-600 dark:text-violet-300',
       iconBg: 'bg-violet-400/10 border-violet-400/20',
       hoverBorder: 'hover:border-violet-400/30',
     },
@@ -424,7 +427,7 @@ const LandingPage = () => {
       titleKey: 'landing.benefit3_title',
       bodyKey: 'landing.benefit3_body',
       gradient: 'from-emerald-400/20 to-emerald-400/0',
-      iconColor: 'text-emerald-300',
+      iconColor: 'text-emerald-600 dark:text-emerald-300',
       iconBg: 'bg-emerald-400/10 border-emerald-400/20',
       hoverBorder: 'hover:border-emerald-400/30',
     },
@@ -455,8 +458,8 @@ const LandingPage = () => {
       value: '4 800 000',
       unit: "so'm",
       Icon: Wallet,
-      tone: 'text-cyan-300',
-      iconBg: 'bg-cyan-400/10 text-cyan-300',
+      tone: 'text-cyan-600 dark:text-cyan-300',
+      iconBg: 'bg-cyan-400/10 text-cyan-600 dark:text-cyan-300',
       delta: '+12.4%',
       deltaUp: true,
     },
@@ -465,8 +468,8 @@ const LandingPage = () => {
       value: '147',
       unit: '',
       Icon: Users,
-      tone: 'text-blue-300',
-      iconBg: 'bg-blue-400/10 text-blue-300',
+      tone: 'text-blue-600 dark:text-blue-300',
+      iconBg: 'bg-blue-400/10 text-blue-600 dark:text-blue-300',
       delta: '+8 yangi',
       deltaUp: true,
     },
@@ -475,8 +478,8 @@ const LandingPage = () => {
       value: '1 250 000',
       unit: "so'm",
       Icon: AlertTriangle,
-      tone: 'text-amber-300',
-      iconBg: 'bg-amber-400/10 text-amber-300',
+      tone: 'text-amber-600 dark:text-amber-300',
+      iconBg: 'bg-amber-400/10 text-amber-600 dark:text-amber-300',
       delta: '3 ta talaba',
       deltaUp: false,
     },
@@ -485,8 +488,8 @@ const LandingPage = () => {
       value: '38',
       unit: '',
       Icon: BadgeCheck,
-      tone: 'text-emerald-300',
-      iconBg: 'bg-emerald-400/10 text-emerald-300',
+      tone: 'text-emerald-600 dark:text-emerald-300',
+      iconBg: 'bg-emerald-400/10 text-emerald-600 dark:text-emerald-300',
       delta: "94% o'tish",
       deltaUp: true,
     },
@@ -536,10 +539,10 @@ const LandingPage = () => {
 
   const statusCls = (s: 'present' | 'absent' | 'late') =>
     s === 'present'
-      ? 'bg-emerald-400/10 text-emerald-300'
+      ? 'bg-emerald-400/10 text-emerald-600 dark:text-emerald-300'
       : s === 'absent'
-        ? 'bg-rose-400/10 text-rose-300'
-        : 'bg-amber-400/10 text-amber-300';
+        ? 'bg-rose-400/10 text-rose-600 dark:text-rose-300'
+        : 'bg-amber-400/10 text-amber-600 dark:text-amber-300';
 
   return (
     <div
@@ -563,7 +566,7 @@ const LandingPage = () => {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-cyan-300/25 bg-cyan-300/10 shadow-[0_0_28px_rgba(34,211,238,0.16)]">
-              <ShieldCheck className="size-4 text-cyan-200" />
+              <ShieldCheck className="size-4 text-cyan-600 dark:text-cyan-200" />
             </div>
             <span className="text-sm font-semibold tracking-tight text-slate-800 dark:text-white/85">
               Auto Maktab{' '}
@@ -628,7 +631,7 @@ const LandingPage = () => {
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section className="hero-section relative z-10 mx-auto max-w-7xl px-4 pb-12 pt-12 sm:px-6 sm:pt-20 lg:px-8 lg:pt-28">
         <div className="mx-auto max-w-3xl text-center">
-          <div className="hero-badge mb-7 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/[0.08] px-4 py-1.5 text-xs font-medium text-cyan-100/80 backdrop-blur">
+          <div className="hero-badge mb-7 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/[0.08] px-4 py-1.5 text-xs font-medium text-cyan-700 dark:text-cyan-100/80 backdrop-blur">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400" />
             {t('landing.hero_badge')}
           </div>
@@ -636,7 +639,7 @@ const LandingPage = () => {
           <h1 className="hero-title font-heading mb-5 text-balance text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
             {titleBefore}
             <span className="relative inline-block">
-              <span className="hero-accent relative z-10 bg-gradient-to-r from-cyan-300 via-cyan-200 to-blue-300 bg-clip-text text-transparent">
+              <span className="hero-accent relative z-10 bg-gradient-to-r from-cyan-600 via-cyan-500 to-blue-600 bg-clip-text text-transparent dark:from-cyan-300 dark:via-cyan-200 dark:to-blue-300">
                 {heroAccent}
               </span>
               <span
@@ -706,7 +709,7 @@ const LandingPage = () => {
                   {t('dashboard.hero_subtitle')}
                 </p>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-300">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                 {t('dashboard.live_label')}
               </span>
@@ -761,7 +764,7 @@ const LandingPage = () => {
                       {t('landing.mock_chart_sub')}
                     </p>
                   </div>
-                  <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-300">
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-300">
                     <TrendingUp className="size-3" />
                     +18%
                   </span>
@@ -781,7 +784,7 @@ const LandingPage = () => {
                   <span className="text-xs font-semibold text-slate-600 dark:text-white/65">
                     {t('landing.mock_debtors_title')}
                   </span>
-                  <span className="rounded-full border border-rose-400/25 bg-rose-400/10 px-2 py-0.5 text-[10px] font-semibold text-rose-300">
+                  <span className="rounded-full border border-rose-400/25 bg-rose-400/10 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:text-rose-300">
                     3
                   </span>
                 </div>
@@ -792,7 +795,7 @@ const LandingPage = () => {
                       className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/5 dark:bg-white/[0.02]"
                     >
                       <div className="flex items-center gap-2">
-                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-400/15 text-[10px] font-semibold text-rose-300">
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-400/15 text-[10px] font-semibold text-rose-600 dark:text-rose-300">
                           {t(d.nameKey)[0]}
                         </div>
                         <span className="text-xs text-slate-600 dark:text-white/60">
@@ -800,7 +803,7 @@ const LandingPage = () => {
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-heading tabular-nums text-xs font-semibold text-rose-300">
+                        <span className="font-heading tabular-nums text-xs font-semibold text-rose-600 dark:text-rose-300">
                           {d.amount}
                         </span>
                         <span className="text-[10px] text-slate-400 dark:text-white/25">
@@ -844,7 +847,7 @@ const LandingPage = () => {
             >
               <p className="font-heading tabular-nums text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">
                 <span data-count-target={stat.target}>0</span>
-                <span className="text-cyan-300">{stat.suffix}</span>
+                <span className="text-cyan-600 dark:text-cyan-300">{stat.suffix}</span>
               </p>
               <p className="mt-2 text-sm text-slate-500 dark:text-white/40">
                 {t(stat.labelKey)}
@@ -878,28 +881,28 @@ const LandingPage = () => {
                 step: 1,
                 titleKey: 'landing.howit_step1_title',
                 bodyKey: 'landing.howit_step1_body',
-                color: 'text-cyan-300',
+                color: 'text-cyan-600 dark:text-cyan-300',
                 bg: 'bg-cyan-400/10 border-cyan-400/25',
               },
               {
                 step: 2,
                 titleKey: 'landing.howit_step2_title',
                 bodyKey: 'landing.howit_step2_body',
-                color: 'text-violet-300',
+                color: 'text-violet-600 dark:text-violet-300',
                 bg: 'bg-violet-400/10 border-violet-400/25',
               },
               {
                 step: 3,
                 titleKey: 'landing.howit_step3_title',
                 bodyKey: 'landing.howit_step3_body',
-                color: 'text-emerald-300',
+                color: 'text-emerald-600 dark:text-emerald-300',
                 bg: 'bg-emerald-400/10 border-emerald-400/25',
               },
               {
                 step: 4,
                 titleKey: 'landing.howit_step4_title',
                 bodyKey: 'landing.howit_step4_body',
-                color: 'text-blue-300',
+                color: 'text-blue-600 dark:text-blue-300',
                 bg: 'bg-blue-400/10 border-blue-400/25',
               },
             ] as const
@@ -925,7 +928,7 @@ const LandingPage = () => {
 
         {/* "First month free" badge */}
         <div className="mt-10 flex justify-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-5 py-2 text-sm font-semibold text-emerald-300">
+          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-5 py-2 text-sm font-semibold text-emerald-600 dark:text-emerald-300">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
             {t('landing.howit_free_badge')}
           </span>
@@ -1009,7 +1012,7 @@ const LandingPage = () => {
                 icon: TrendingUp,
                 titleKey: 'landing.role_owner_title',
                 bodyKey: 'landing.role_owner_body',
-                iconColor: 'text-cyan-300',
+                iconColor: 'text-cyan-600 dark:text-cyan-300',
                 iconBg: 'bg-cyan-400/10 border-cyan-400/20',
                 hoverBorder: 'hover:border-cyan-400/30',
               },
@@ -1017,7 +1020,7 @@ const LandingPage = () => {
                 icon: Users,
                 titleKey: 'landing.role_manager_title',
                 bodyKey: 'landing.role_manager_body',
-                iconColor: 'text-violet-300',
+                iconColor: 'text-violet-600 dark:text-violet-300',
                 iconBg: 'bg-violet-400/10 border-violet-400/20',
                 hoverBorder: 'hover:border-violet-400/30',
               },
@@ -1025,7 +1028,7 @@ const LandingPage = () => {
                 icon: CircleDollarSign,
                 titleKey: 'landing.role_operator_title',
                 bodyKey: 'landing.role_operator_body',
-                iconColor: 'text-emerald-300',
+                iconColor: 'text-emerald-600 dark:text-emerald-300',
                 iconBg: 'bg-emerald-400/10 border-emerald-400/20',
                 hoverBorder: 'hover:border-emerald-400/30',
               },
@@ -1033,7 +1036,7 @@ const LandingPage = () => {
                 icon: CalendarCheck2,
                 titleKey: 'landing.role_teacher_title',
                 bodyKey: 'landing.role_teacher_body',
-                iconColor: 'text-blue-300',
+                iconColor: 'text-blue-600 dark:text-blue-300',
                 iconBg: 'bg-blue-400/10 border-blue-400/20',
                 hoverBorder: 'hover:border-blue-400/30',
               },
@@ -1093,7 +1096,7 @@ const LandingPage = () => {
                 <span className="text-xs font-semibold text-slate-600 dark:text-white/60">
                   {t('landing.mock_debtors_title')}
                 </span>
-                <span className="rounded-full bg-rose-400/10 px-2 py-0.5 text-[10px] font-semibold text-rose-300">
+                <span className="rounded-full bg-rose-400/10 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:text-rose-300">
                   4 ta qarzdor
                 </span>
               </div>
@@ -1116,12 +1119,12 @@ const LandingPage = () => {
                     </div>
                     <div className="text-right">
                       {row.paid ? (
-                        <span className="rounded-full bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                        <span className="rounded-full bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-300">
                           To&apos;liq
                         </span>
                       ) : (
                         <div>
-                          <p className="font-heading tabular-nums text-xs font-semibold text-rose-300">
+                          <p className="font-heading tabular-nums text-xs font-semibold text-rose-600 dark:text-rose-300">
                             {row.debt}
                           </p>
                           <p className="text-[10px] text-slate-400 dark:text-white/25">
@@ -1152,7 +1155,7 @@ const LandingPage = () => {
                   </div>
                   <button
                     type="button"
-                    className="min-h-[44px] rounded-lg bg-cyan-400/15 px-3 py-1.5 text-[11px] font-semibold text-cyan-300 transition-colors hover:bg-cyan-400/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-400"
+                    className="min-h-[44px] rounded-lg bg-cyan-400/15 px-3 py-1.5 text-[11px] font-semibold text-cyan-600 dark:text-cyan-300 transition-colors hover:bg-cyan-400/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-400"
                   >
                     Saqlash
                   </button>
@@ -1214,11 +1217,11 @@ const LandingPage = () => {
                   Haftalik jadval
                 </span>
                 <div className="flex gap-1.5">
-                  <span className="flex items-center gap-1 rounded-md bg-cyan-400/10 px-2 py-1 text-[10px] font-semibold text-cyan-300">
+                  <span className="flex items-center gap-1 rounded-md bg-cyan-400/10 px-2 py-1 text-[10px] font-semibold text-cyan-600 dark:text-cyan-300">
                     <span className="h-1.5 w-1.5 rounded-sm bg-cyan-400" />
                     Teoriya
                   </span>
-                  <span className="flex items-center gap-1 rounded-md bg-amber-400/10 px-2 py-1 text-[10px] font-semibold text-amber-300">
+                  <span className="flex items-center gap-1 rounded-md bg-amber-400/10 px-2 py-1 text-[10px] font-semibold text-amber-600 dark:text-amber-300">
                     <span className="h-1.5 w-1.5 rounded-sm bg-amber-400" />
                     Amaliy
                   </span>
@@ -1241,7 +1244,7 @@ const LandingPage = () => {
                           }`}
                         >
                           <p
-                            className={`text-[9px] font-semibold ${lesson.type === 'T' ? 'text-cyan-300' : 'text-amber-300'}`}
+                            className={`text-[9px] font-semibold ${lesson.type === 'T' ? 'text-cyan-600 dark:text-cyan-300' : 'text-amber-600 dark:text-amber-300'}`}
                           >
                             {lesson.group}
                           </p>
@@ -1331,7 +1334,7 @@ const LandingPage = () => {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-slate-400 dark:text-white/30 sm:flex-row sm:px-6 lg:px-8">
           <div className="flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-300/10">
-              <ShieldCheck className="size-3.5 text-cyan-200" />
+              <ShieldCheck className="size-3.5 text-cyan-600 dark:text-cyan-200" />
             </div>
             <span className="font-semibold text-slate-500 dark:text-white/45">
               Auto Maktab CRM
