@@ -573,7 +573,12 @@
     "weeks_error": "Number of weeks must be between 1 and 12",
     "generate_error": "Error generating lessons",
     "group_placeholder": "Select group",
-    "count_label": "{{count}} templates"
+    "count_label": "{{count}} templates",
+    "template_title": "New template",
+    "group_label": "Group",
+    "day_label": "Day of week",
+    "start_time": "Start time",
+    "end_time": "End time"
   },
   "documents": {
     "title": "Documents",
@@ -586,7 +591,10 @@
     "search_placeholder": "Search...",
     "student_name": "Student",
     "doc_type": "Document type",
-    "status": "Status"
+    "status": "Status",
+    "coming_soon": "Coming soon",
+    "empty_title": "No documents",
+    "empty_desc": "The documents module will be available soon"
   },
   "notfound": {
     "title": "Page not found",

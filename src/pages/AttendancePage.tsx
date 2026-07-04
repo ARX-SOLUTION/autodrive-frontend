@@ -50,10 +50,10 @@ const formatDate = (d: string) => {
 };
 
 const statusColors: Record<AttendanceStatus, string> = {
-  present: 'text-green-600 bg-green-50',
-  absent: 'text-red-600 bg-red-50',
-  late: 'text-yellow-600 bg-yellow-50',
-  excused: 'text-blue-600 bg-blue-50',
+  present: 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30',
+  absent: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30',
+  late: 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30',
+  excused: 'text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-900/30',
 };
 
 const AttendancePage = () => {
@@ -187,23 +187,23 @@ const AttendancePage = () => {
       ) : (
         <div className="space-y-2">
           {lessons.map((lesson) => (
-            <div key={lesson.id} className="rounded-lg border bg-white">
+            <div key={lesson.id} className="rounded-lg border bg-card">
               <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-4">
-                  <Calendar className="h-5 w-5 text-gray-400" />
+                  <Calendar className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="font-medium">{lesson.title}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       {formatDate(lesson.date)} —{' '}
                       {lesson.group_name || t('attendance.unknown_group')}
-                      <span className="ml-2 text-xs uppercase text-gray-400">
+                      <span className="ml-2 text-xs uppercase text-muted-foreground">
                         {lesson.lesson_type === 'theory' ? 'Teoriya' : 'Amaliy'}
                       </span>
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-muted-foreground">
                     {
                       lesson.attendance.filter((a) => a.status === 'present')
                         .length
@@ -242,14 +242,14 @@ const AttendancePage = () => {
               {detailId === lesson.id && detailLesson?.id === lesson.id && (
                 <div className="border-t px-4 pb-4 pt-2">
                   {detailLesson.attendance.length === 0 ? (
-                    <p className="py-4 text-center text-sm text-gray-400">
+                    <p className="py-4 text-center text-sm text-muted-foreground">
                       {t('attendance.no_students')}
                     </p>
                   ) : (
                     <div className="overflow-x-auto">
                     <table className="w-full min-w-[400px] text-sm">
                       <thead>
-                        <tr className="border-b text-left text-gray-500">
+                        <tr className="border-b text-left text-muted-foreground">
                           <th className="pb-2 font-medium">
                             {t('attendance.table_student')}
                           </th>
@@ -410,7 +410,7 @@ const AttendancePage = () => {
       {/* Delete Confirm */}
       <ConfirmDialog
         open={!!deleteId}
-        onOpenChange={() => setDeleteId(null)}
+        onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
         title={t('attendance.delete_title')}
         description={t('attendance.delete_desc')}

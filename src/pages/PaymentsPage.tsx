@@ -339,7 +339,7 @@ const PaymentsPage = () => {
           {isOwner() && (
             <Button
               variant="outline"
-              className="gap-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-950 font-semibold"
+              className="gap-2 border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-950 font-semibold"
               onClick={exportToExcel}
             >
               <Download className="h-4 w-4" /> {t('payments.export_excel')}
@@ -503,7 +503,7 @@ const PaymentsPage = () => {
                     : format(dateFrom, 'dd.MM.yyyy')}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 max-w-[calc(100vw-2rem)] overflow-x-auto" align="start">
               <Calendar
                 mode="range"
                 selected={{ from: dateFrom, to: dateTo }}

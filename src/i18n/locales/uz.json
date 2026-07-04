@@ -573,7 +573,12 @@
     "weeks_error": "Haftalar soni 1-12 oralig'ida bo'lishi kerak",
     "generate_error": "Darslarni yaratishda xatolik",
     "group_placeholder": "Guruhni tanlang",
-    "count_label": "{{count}} ta template"
+    "count_label": "{{count}} ta template",
+    "template_title": "Yangi template",
+    "group_label": "Guruh",
+    "day_label": "Hafta kuni",
+    "start_time": "Boshlanish vaqti",
+    "end_time": "Tugash vaqti"
   },
   "documents": {
     "title": "Hujjatlar",
@@ -586,7 +591,10 @@
     "search_placeholder": "Qidirish...",
     "student_name": "Talaba",
     "doc_type": "Hujjat turi",
-    "status": "Holati"
+    "status": "Holati",
+    "coming_soon": "Tez orada",
+    "empty_title": "Hujjatlar yo'q",
+    "empty_desc": "Hujjatlar moduli tez orada ishga tushiriladi"
   },
   "notfound": {
     "title": "Sahifa topilmadi",

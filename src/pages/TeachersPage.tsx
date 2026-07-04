@@ -398,8 +398,9 @@ const TeachersPage = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>{t('teachers.first_name')} *</Label>
+              <Label htmlFor="teacher-name">{t('teachers.first_name')} *</Label>
               <Input
+                id="teacher-name"
                 value={form.fullName}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, fullName: e.target.value }))
@@ -409,8 +410,9 @@ const TeachersPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('teachers.phone')} *</Label>
+              <Label htmlFor="teacher-phone">{t('teachers.phone')} *</Label>
               <Input
+                id="teacher-phone"
                 value={form.phone}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, phone: e.target.value }))
@@ -421,7 +423,7 @@ const TeachersPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('teachers.specialization')} *</Label>
+              <Label htmlFor="teacher-spec">{t('teachers.specialization')} *</Label>
               <Select
                 value={form.specialization}
                 onValueChange={(v) =>
@@ -431,7 +433,7 @@ const TeachersPage = () => {
                   }))
                 }
               >
-                <SelectTrigger className="bg-secondary border-border">
+                <SelectTrigger id="teacher-spec" className="bg-secondary border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -445,12 +447,12 @@ const TeachersPage = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{t('teachers.branch')}</Label>
+              <Label htmlFor="teacher-branch">{t('teachers.branch')}</Label>
               <Select
                 value={form.branchId}
                 onValueChange={(v) => setForm((f) => ({ ...f, branchId: v }))}
               >
-                <SelectTrigger className="bg-secondary border-border">
+                <SelectTrigger id="teacher-branch" className="bg-secondary border-border">
                   <SelectValue placeholder={t('common.select_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>

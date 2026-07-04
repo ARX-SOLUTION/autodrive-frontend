@@ -434,7 +434,7 @@ const StudentsPage = () => {
                   : format(dateFrom, 'dd.MM.yyyy')}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent className="w-auto p-0 max-w-[calc(100vw-2rem)] overflow-x-auto" align="start">
             <Calendar
               mode="range"
               selected={{ from: dateFrom, to: dateTo }}
