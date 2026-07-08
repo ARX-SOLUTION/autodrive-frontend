@@ -90,7 +90,9 @@
     "previous": "Oldingi",
     "next": "Keyingi",
     "all_operators": "Barcha operatorlar",
-    "count_unit": "ta"
+    "count_unit": "ta",
+    "show_password": "Parolni ko'rsatish",
+    "hide_password": "Parolni yashirish"
   },
   "login": {
     "title": "Tizimga kirish",

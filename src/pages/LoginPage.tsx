@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useLogin } from '@/services/authService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
@@ -88,9 +89,8 @@ const LoginPage = () => {
           </div>
           <div>
             <Label htmlFor="password">{t('login.password_label')}</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={t('login.password_placeholder')}

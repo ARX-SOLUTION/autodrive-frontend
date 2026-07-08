@@ -90,7 +90,9 @@
     "previous": "Назад",
     "next": "Вперёд",
     "all_operators": "Все операторы",
-    "count_unit": "шт"
+    "count_unit": "шт",
+    "show_password": "Показать пароль",
+    "hide_password": "Скрыть пароль"
   },
   "login": {
     "title": "Вход в систему",
