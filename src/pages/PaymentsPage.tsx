@@ -22,15 +22,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { usePagination } from '@/hooks/usePagination';
+import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
 import { useBranches } from '@/services/branchService';
 import {
+  fetchAllPayments,
   useCreatePayment,
-  usePayments,
+  usePaymentsPage,
   usePaymentSnapshot,
 } from '@/services/paymentService';
-import { useStudents } from '@/services/studentService';
 import { useAuthStore } from '@/store/authStore';
 import { format } from 'date-fns';
 import {
@@ -109,49 +110,71 @@ const PaymentsPage = () => {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [sortField, setSortField] = useState('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
 
-  const hasDebt =
-    paymentStatus === 'unpaid'
-      ? true
-      : paymentStatus === 'paid'
-        ? false
-        : undefined;
+  const SERVER_PAGE_SIZE = 50;
+  const debouncedSearch = useDebounce(search, 300);
+  const activeCourseType =
+    courseTypeFilter !== 'all' ? courseTypeFilter : undefined;
+  const activePaymentStatus =
+    paymentStatus === 'paid' || paymentStatus === 'unpaid'
+      ? paymentStatus
+      : undefined;
+  const activePaymentMethod =
+    paymentMethodFilter !== 'all' ? paymentMethodFilter : undefined;
 
   const {
-    data: payments,
+    data: paymentsPage,
     isLoading,
     isFetching,
-  } = usePayments(
+  } = usePaymentsPage(
     branchId,
-    courseTypeFilter !== 'all' ? courseTypeFilter : undefined,
+    activeCourseType,
     dateFrom,
     dateTo,
+    currentPage,
+    SERVER_PAGE_SIZE,
+    {
+      search: debouncedSearch,
+      paymentStatus: activePaymentStatus,
+      paymentMethod: activePaymentMethod,
+      sortBy: sortField,
+      sortOrder: sortDir,
+    },
   );
   const hasDateFilter = !!dateFrom || !!dateTo;
   const { data: snapshot } = usePaymentSnapshot(branchId);
   const { data: branches } = useBranches();
-  const { data: tezkorStudents } = useStudents(
-    'tezkor',
-    branchId,
-    1,
-    500,
-    undefined,
-    {
-      enabled: modalOpen,
-    },
-  );
-  const { data: avtoStudents } = useStudents(
-    'avto_maktab',
-    branchId,
-    1,
-    500,
-    undefined,
-    {
-      enabled: modalOpen,
-    },
-  );
-  const allStudents = [...(tezkorStudents ?? []), ...(avtoStudents ?? [])];
   const createPayment = useCreatePayment();
+
+  const paymentQueryFilters = useMemo(
+    () => ({
+      branchId,
+      courseType: activeCourseType,
+      startDate: dateFrom,
+      endDate: dateTo,
+      search: debouncedSearch,
+      paymentStatus: activePaymentStatus,
+      paymentMethod: activePaymentMethod,
+      sortBy: sortField,
+      sortOrder: sortDir,
+    }),
+    [
+      branchId,
+      activeCourseType,
+      dateFrom,
+      dateTo,
+      debouncedSearch,
+      activePaymentStatus,
+      activePaymentMethod,
+      sortField,
+      sortDir,
+    ],
+  );
+
+  const canQueryPayments =
+    !!branchId || user?.role === 'owner' || user?.role === 'dev';
 
   useEffect(() => {
     if (isOwner()) {
@@ -163,37 +186,50 @@ const PaymentsPage = () => {
     }
   }, [isOwner, t]);
 
-  // Client-side filter for search/status/method (date is server-side)
-  const filtered = useMemo(
-    () =>
-      (payments || []).filter((p) => {
-        const matchSearch = (p.student_name || '')
-          .toLowerCase()
-          .includes(search.toLowerCase());
-        let matchStatus = true;
-        if (paymentStatus === 'paid') matchStatus = p.remaining_debt <= 0;
-        else if (paymentStatus === 'unpaid') matchStatus = p.remaining_debt > 0;
-        let matchPaymentMethod = true;
-        if (paymentMethodFilter !== 'all')
-          matchPaymentMethod = p.payment_method === paymentMethodFilter;
-        return matchSearch && matchStatus && matchPaymentMethod;
-      }),
-    [payments, search, paymentStatus, paymentMethodFilter],
-  );
+  const hasAnyFilter =
+    hasDateFilter ||
+    paymentStatus !== 'all' ||
+    paymentMethodFilter !== 'all' ||
+    courseTypeFilter !== 'all' ||
+    !!debouncedSearch;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    branchId,
+    activeCourseType,
+    dateFrom,
+    dateTo,
+    debouncedSearch,
+    activePaymentStatus,
+    activePaymentMethod,
+    sortField,
+    sortDir,
+  ]);
+
+  const { data: summaryPayments = [] } = useQuery({
+    queryKey: ['payments-summary-list', paymentQueryFilters],
+    queryFn: () => fetchAllPayments(paymentQueryFilters),
+    enabled: canQueryPayments && hasAnyFilter,
+  });
+
+  const visiblePayments = paymentsPage?.data ?? [];
+  const totalPayments = paymentsPage?.meta.total ?? visiblePayments.length;
+  const totalPages = Math.max(1, paymentsPage?.meta.totalPages ?? 1);
 
   const displayedSummary = useMemo(
     () => ({
-      period_collected: filtered.reduce(
+      period_collected: summaryPayments.reduce(
         (sum, p) => sum + (p.amount_paid || 0),
         0,
       ),
-      period_payments_count: filtered.length,
-      period_debt: filtered.reduce(
+      period_payments_count: summaryPayments.length,
+      period_debt: summaryPayments.reduce(
         (sum, p) => sum + (p.remaining_debt || 0),
         0,
       ),
     }),
-    [filtered],
+    [summaryPayments],
   );
 
   const toggleSort = (field: string) => {
@@ -203,33 +239,6 @@ const PaymentsPage = () => {
       setSortDir('asc');
     }
   };
-
-  const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => {
-      const va = a[sortField as keyof typeof a];
-      const vb = b[sortField as keyof typeof b];
-      if (va == null && vb == null) return 0;
-      if (va == null) return 1;
-      if (vb == null) return -1;
-      if (typeof va === 'string' && typeof vb === 'string') {
-        return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-      }
-      return sortDir === 'asc'
-        ? va < vb
-          ? -1
-          : va > vb
-            ? 1
-            : 0
-        : va > vb
-          ? -1
-          : va < vb
-            ? 1
-            : 0;
-    });
-  }, [filtered, sortField, sortDir]);
-
-  const { currentPage, totalPages, paginatedItems, setCurrentPage } =
-    usePagination(sorted);
 
   const handlePaymentSubmit = (data: CreatePaymentPayload) => {
     createPayment.mutate(data, {
@@ -242,40 +251,42 @@ const PaymentsPage = () => {
   };
 
   const exportToExcel = async () => {
-    const XLSX = await import('xlsx');
-    const rows = sorted.map((p, idx) => ({
-      '#': idx + 1,
-      [t('payments.student_name')]: p.student_name,
-      [t('common.branch')]: p.branch_name,
-      [t('payments.course_fast')]:
-        p.course_type === 'tezkor'
-          ? t('payments.course_fast')
-          : t('payments.course_school'),
-      [t('payments.total_price')]: p.total_price,
-      [t('payments.amount_paid')]: p.amount_paid,
-      [t('payments.remaining_debt')]: p.remaining_debt,
-      [t('payments.payment_method')]:
-        p.payment_method === 'naqd'
-          ? t('payments.payment_cash')
-          : p.payment_method === 'karta'
-            ? t('payments.payment_card')
-            : t('payments.payment_transfer'),
-      [t('payments.operator')]: p.recorded_by || t('common.na'),
-      [t('common.date')]: formatDate(p.date),
-    }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, t('payments.title'));
-    XLSX.writeFile(wb, `tolovlar_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
+    setIsExporting(true);
+    try {
+      const XLSX = await import('xlsx');
+      const exportRows = await fetchAllPayments(paymentQueryFilters);
+      const rows = exportRows.map((p, idx) => ({
+        '#': idx + 1,
+        [t('payments.student_name')]: p.student_name,
+        [t('common.branch')]: p.branch_name,
+        [t('payments.course_fast')]:
+          p.course_type === 'tezkor'
+            ? t('payments.course_fast')
+            : t('payments.course_school'),
+        [t('payments.total_price')]: p.total_price,
+        [t('payments.amount_paid')]: p.amount_paid,
+        [t('payments.remaining_debt')]: p.remaining_debt,
+        [t('payments.payment_method')]:
+          p.payment_method === 'naqd'
+            ? t('payments.payment_cash')
+            : p.payment_method === 'karta'
+              ? t('payments.payment_card')
+              : t('payments.payment_transfer'),
+        [t('payments.operator')]: p.recorded_by || t('common.na'),
+        [t('common.date')]: formatDate(p.date),
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, t('payments.title'));
+      XLSX.writeFile(wb, `tolovlar_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
+    } catch {
+      toast.error(t('common.error'));
+    } finally {
+      setIsExporting(false);
+    }
   };
 
-  const startIndex = (currentPage - 1) * 10;
-  const hasAnyFilter =
-    hasDateFilter ||
-    paymentStatus !== 'all' ||
-    paymentMethodFilter !== 'all' ||
-    courseTypeFilter !== 'all' ||
-    !!search;
+  const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
 
   const setPreset = (
     preset: 'today' | 'week' | 'month' | 'lastMonth' | 'all',
@@ -341,6 +352,7 @@ const PaymentsPage = () => {
               variant="outline"
               className="gap-2 border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-950 font-semibold"
               onClick={exportToExcel}
+              disabled={totalPayments === 0 || isExporting}
             >
               <Download className="h-4 w-4" /> {t('payments.export_excel')}
             </Button>
@@ -503,7 +515,10 @@ const PaymentsPage = () => {
                     : format(dateFrom, 'dd.MM.yyyy')}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 max-w-[calc(100vw-2rem)] overflow-x-auto" align="start">
+            <PopoverContent
+              className="w-auto p-0 max-w-[calc(100vw-2rem)] overflow-x-auto"
+              align="start"
+            >
               <Calendar
                 mode="range"
                 selected={{ from: dateFrom, to: dateTo }}
@@ -543,7 +558,7 @@ const PaymentsPage = () => {
               {t('payments.selected_results')}
             </h2>
             <span className="text-xs text-muted-foreground">
-              {t('payments.by_count', { count: filtered.length })}
+              {t('payments.by_count', { count: totalPayments })}
             </span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 tabular-nums">
@@ -573,7 +588,7 @@ const PaymentsPage = () => {
             {t('payments.payment_list')}
           </h2>
           <span className="text-xs text-muted-foreground">
-            {t('payments.count_result', { count: filtered.length })}
+            {t('payments.count_result', { count: totalPayments })}
           </span>
         </div>
         <div className="relative">
@@ -690,7 +705,7 @@ const PaymentsPage = () => {
                           </td>
                         </tr>
                       ))
-                    ) : paginatedItems?.length === 0 ? (
+                    ) : visiblePayments.length === 0 ? (
                       <tr>
                         <td colSpan={10} className="p-0">
                           <EmptyState
@@ -701,7 +716,7 @@ const PaymentsPage = () => {
                         </td>
                       </tr>
                     ) : (
-                      paginatedItems?.map((p, idx) => (
+                      visiblePayments.map((p, idx) => (
                         <tr
                           key={p.id}
                           className="table-row-striped border-b border-border/50"
@@ -772,8 +787,8 @@ const PaymentsPage = () => {
                 [...Array(4)].map((_, i) => (
                   <Skeleton key={i} className="h-28 w-full rounded-lg" />
                 ))
-              ) : paginatedItems && paginatedItems.length > 0 ? (
-                paginatedItems.map((p) => (
+              ) : visiblePayments.length > 0 ? (
+                visiblePayments.map((p) => (
                   <DataCard
                     key={p.id}
                     title={p.student_name}
@@ -832,7 +847,13 @@ const PaymentsPage = () => {
         onClose={() => setModalOpen(false)}
         onSubmit={handlePaymentSubmit}
         loading={createPayment.isPending}
-        students={allStudents}
+        branchId={branchId}
+        courseType={
+          courseTypeFilter === 'tezkor' || courseTypeFilter === 'avto_maktab'
+            ? courseTypeFilter
+            : undefined
+        }
+        hasDebtOnly
       />
     </div>
   );

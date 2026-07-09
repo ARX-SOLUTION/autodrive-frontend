@@ -323,12 +323,7 @@ const MainDashboard = () => {
     courseType,
   );
   const { data: snapshot } = usePaymentSnapshot(branchId);
-  const { data: recentPayments } = usePayments(
-    courseType,
-    undefined,
-    undefined,
-    branchId,
-  );
+  const { data: recentPayments } = usePayments(branchId, courseType);
   const { data: auditData } = useAuditLogs({ page: 1, limit: 6 });
   const { data: branches } = useBranches();
 

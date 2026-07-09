@@ -50,7 +50,8 @@ const formatDate = (d: string) => {
 };
 
 const statusColors: Record<AttendanceStatus, string> = {
-  present: 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30',
+  present:
+    'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30',
   absent: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30',
   late: 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30',
   excused: 'text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-900/30',
@@ -219,6 +220,17 @@ const AttendancePage = () => {
                         setAttendanceState({});
                       }
                     }}
+                    aria-label={
+                      detailId === lesson.id
+                        ? t('common.close')
+                        : t('common.view')
+                    }
+                    title={
+                      detailId === lesson.id
+                        ? t('common.close')
+                        : t('common.view')
+                    }
+                    className="h-11 min-w-11"
                   >
                     <Eye className="h-4 w-4" />
                     {detailId === lesson.id ? (
@@ -232,6 +244,9 @@ const AttendancePage = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => setDeleteId(lesson.id)}
+                      aria-label={t('attendance.delete_title')}
+                      title={t('attendance.delete_title')}
+                      className="h-11 w-11"
                     >
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
@@ -246,64 +261,118 @@ const AttendancePage = () => {
                       {t('attendance.no_students')}
                     </p>
                   ) : (
-                    <div className="overflow-x-auto">
-                    <table className="w-full min-w-[400px] text-sm">
-                      <thead>
-                        <tr className="border-b text-left text-muted-foreground">
-                          <th className="pb-2 font-medium">
-                            {t('attendance.table_student')}
-                          </th>
-                          <th className="pb-2 font-medium">
-                            {t('attendance.table_status')}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                    <>
+                      <div className="grid gap-2 md:hidden">
                         {detailLesson.attendance.map((rec) => (
-                          <tr key={rec.id} className="border-b last:border-0">
-                            <td className="py-2">{rec.student_name}</td>
-                            <td className="py-2">
-                              {canEdit ? (
-                                <Select
-                                  value={attendanceState[rec.id] || rec.status}
-                                  onValueChange={(v) =>
-                                    handleStatusChange(
-                                      rec.id,
-                                      v as AttendanceStatus,
-                                    )
-                                  }
+                          <div
+                            key={rec.id}
+                            className="rounded-lg border bg-background p-3"
+                          >
+                            <p className="mb-2 font-medium">
+                              {rec.student_name}
+                            </p>
+                            {canEdit ? (
+                              <Select
+                                value={attendanceState[rec.id] || rec.status}
+                                onValueChange={(v) =>
+                                  handleStatusChange(
+                                    rec.id,
+                                    v as AttendanceStatus,
+                                  )
+                                }
+                              >
+                                <SelectTrigger
+                                  className={`h-11 w-full ${statusColors[attendanceState[rec.id] || rec.status]}`}
                                 >
-                                  <SelectTrigger
-                                    className={`w-32 ${statusColors[attendanceState[rec.id] || rec.status]}`}
-                                  >
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {(
-                                      Object.entries(statusLabels) as [
-                                        AttendanceStatus,
-                                        string,
-                                      ][]
-                                    ).map(([key, label]) => (
-                                      <SelectItem key={key} value={key}>
-                                        {label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              ) : (
-                                <span
-                                  className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${statusColors[rec.status]}`}
-                                >
-                                  {statusLabels[rec.status]}
-                                </span>
-                              )}
-                            </td>
-                          </tr>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {(
+                                    Object.entries(statusLabels) as [
+                                      AttendanceStatus,
+                                      string,
+                                    ][]
+                                  ).map(([key, label]) => (
+                                    <SelectItem key={key} value={key}>
+                                      {label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <span
+                                className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${statusColors[rec.status]}`}
+                              >
+                                {statusLabels[rec.status]}
+                              </span>
+                            )}
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
-                    </div>
+                      </div>
+                      <div className="hidden overflow-x-auto md:block">
+                        <table className="w-full min-w-[400px] text-sm">
+                          <thead>
+                            <tr className="border-b text-left text-muted-foreground">
+                              <th className="pb-2 font-medium">
+                                {t('attendance.table_student')}
+                              </th>
+                              <th className="pb-2 font-medium">
+                                {t('attendance.table_status')}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {detailLesson.attendance.map((rec) => (
+                              <tr
+                                key={rec.id}
+                                className="border-b last:border-0"
+                              >
+                                <td className="py-2">{rec.student_name}</td>
+                                <td className="py-2">
+                                  {canEdit ? (
+                                    <Select
+                                      value={
+                                        attendanceState[rec.id] || rec.status
+                                      }
+                                      onValueChange={(v) =>
+                                        handleStatusChange(
+                                          rec.id,
+                                          v as AttendanceStatus,
+                                        )
+                                      }
+                                    >
+                                      <SelectTrigger
+                                        className={`w-32 ${statusColors[attendanceState[rec.id] || rec.status]}`}
+                                      >
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {(
+                                          Object.entries(statusLabels) as [
+                                            AttendanceStatus,
+                                            string,
+                                          ][]
+                                        ).map(([key, label]) => (
+                                          <SelectItem key={key} value={key}>
+                                            {label}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  ) : (
+                                    <span
+                                      className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${statusColors[rec.status]}`}
+                                    >
+                                      {statusLabels[rec.status]}
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
                   )}
                   {canEdit && (
                     <div className="mt-3 flex justify-end">
