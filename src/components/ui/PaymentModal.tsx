@@ -18,14 +18,15 @@ import {
 } from '@/components/ui/popover';
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { ChevronsUpDown, Check } from 'lucide-react';
+import { ChevronsUpDown, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useStudentsPage } from '@/services/studentService';
 import {
   Select,
   SelectContent,
@@ -41,7 +42,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { PaymentMethod } from '@/types/student';
+import { CourseType, PaymentMethod } from '@/types/student';
 
 export interface CreatePaymentPayload {
   student_id: string;
@@ -61,7 +62,10 @@ interface PaymentModalProps {
   onClose: () => void;
   onSubmit: (data: CreatePaymentPayload) => void;
   loading?: boolean;
-  students: Student[]; // student list for the combobox
+  students?: Student[];
+  branchId?: string;
+  courseType?: CourseType;
+  hasDebtOnly?: boolean;
 }
 
 const paymentMethodLabels: Record<PaymentMethod, string> = {
@@ -87,7 +91,10 @@ const PaymentModal = ({
   onClose,
   onSubmit,
   loading,
-  students,
+  students = [],
+  branchId,
+  courseType,
+  hasDebtOnly = true,
 }: PaymentModalProps) => {
   const { t } = useTranslation();
   const form = useForm<PaymentFormValues>({
@@ -100,15 +107,36 @@ const PaymentModal = ({
   });
 
   const [studentPopoverOpen, setStudentPopoverOpen] = useState(false);
+  const [studentSearch, setStudentSearch] = useState('');
+  const [selectedStudentCache, setSelectedStudentCache] = useState<
+    Student | undefined
+  >();
+  const debouncedStudentSearch = useDebounce(studentSearch, 300);
+
+  const {
+    data: studentPage,
+    isFetching: isStudentsFetching,
+    isError: isStudentsError,
+  } = useStudentsPage(courseType, branchId, 1, 20, undefined, {
+    enabled: open && studentPopoverOpen,
+    search: debouncedStudentSearch,
+    hasDebt: hasDebtOnly,
+    sortBy: 'last_name',
+    sortOrder: 'asc',
+  });
 
   useEffect(() => {
     if (open) {
       form.reset({ student_id: '', amount: 0, payment_method: 'naqd' });
+      setStudentSearch('');
+      setSelectedStudentCache(undefined);
     }
   }, [open, form]);
 
   const studentId = form.watch('student_id');
-  const selectedStudent = students.find((s) => s.id === studentId);
+  const studentOptions = studentPage?.data ?? students;
+  const selectedStudent =
+    studentOptions.find((s) => s.id === studentId) ?? selectedStudentCache;
 
   const handleSubmit = form.handleSubmit((values) => {
     onSubmit(values);
@@ -160,39 +188,64 @@ const PaymentModal = ({
                       className="w-full p-0"
                       align="start"
                     >
-                      <Command>
+                      <Command shouldFilter={false}>
                         <CommandInput
                           placeholder={t('payments.search_placeholder')}
+                          value={studentSearch}
+                          onValueChange={setStudentSearch}
                         />
                         <CommandList>
-                          <CommandEmpty>{t('payments.not_found')}</CommandEmpty>
-                          <CommandGroup>
-                            {students.map((s) => (
-                              <CommandItem
-                                key={s.id}
-                                value={`${s.last_name} ${s.first_name}`}
-                                onSelect={() => {
-                                  field.onChange(s.id);
-                                  setStudentPopoverOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    'mr-2 h-4 w-4',
-                                    field.value === s.id
-                                      ? 'opacity-100'
-                                      : 'opacity-0',
+                          {isStudentsFetching ? (
+                            <div className="flex items-center justify-center gap-2 px-3 py-6 text-sm text-muted-foreground">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              {t('common.loading')}
+                            </div>
+                          ) : isStudentsError ? (
+                            <div className="px-3 py-6 text-center text-sm text-destructive">
+                              {t('common.error')}
+                            </div>
+                          ) : studentOptions.length === 0 ? (
+                            <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                              {t('payments.not_found')}
+                            </div>
+                          ) : (
+                            <CommandGroup>
+                              {studentOptions.map((s) => (
+                                <CommandItem
+                                  key={s.id}
+                                  value={s.id}
+                                  onSelect={() => {
+                                    field.onChange(s.id);
+                                    setSelectedStudentCache(s);
+                                    setStudentPopoverOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      'mr-2 h-4 w-4',
+                                      field.value === s.id
+                                        ? 'opacity-100'
+                                        : 'opacity-0',
+                                    )}
+                                  />
+                                  {s.last_name} {s.first_name}
+                                  {s.debt !== undefined && s.debt > 0 && (
+                                    <span className="ml-auto text-xs text-destructive tabular-nums">
+                                      {formatMoney(s.debt)} so'm
+                                    </span>
                                   )}
-                                />
-                                {s.last_name} {s.first_name}
-                                {s.debt !== undefined && s.debt > 0 && (
-                                  <span className="ml-auto text-xs text-destructive tabular-nums">
-                                    {formatMoney(s.debt)} so'm
-                                  </span>
-                                )}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          )}
+                          {!isStudentsFetching &&
+                            (studentPage?.meta.total ?? 0) >
+                              studentOptions.length && (
+                              <div className="border-t px-3 py-2 text-center text-xs text-muted-foreground">
+                                {studentOptions.length} /{' '}
+                                {studentPage?.meta.total}
+                              </div>
+                            )}
                         </CommandList>
                       </Command>
                     </PopoverContent>

@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useChangePassword } from '@/services/authService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { User, Shield, Building2, Mail, Phone } from 'lucide-react';
 import { toast } from 'sonner';
@@ -112,10 +113,11 @@ const ProfilePage = () => {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="profile-current-password">{t('profile.current_password')}</Label>
-              <Input
+              <Label htmlFor="profile-current-password">
+                {t('profile.current_password')}
+              </Label>
+              <PasswordInput
                 id="profile-current-password"
-                type="password"
                 className="mt-1.5 bg-secondary border-border"
                 value={pwForm.currentPassword}
                 onChange={(e) =>
@@ -124,10 +126,11 @@ const ProfilePage = () => {
               />
             </div>
             <div>
-              <Label htmlFor="profile-new-password">{t('profile.new_password')}</Label>
-              <Input
+              <Label htmlFor="profile-new-password">
+                {t('profile.new_password')}
+              </Label>
+              <PasswordInput
                 id="profile-new-password"
-                type="password"
                 className="mt-1.5 bg-secondary border-border"
                 value={pwForm.newPassword}
                 onChange={(e) =>

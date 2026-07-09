@@ -5,14 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
-import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import {
-  useStudents,
+  fetchAllStudents,
+  useStudentsPage,
   useCreateStudent,
   useUpdateStudent,
   useDeleteStudent,
-  searchStudents,
 } from '@/services/studentService';
 import { useBranches } from '@/services/branchService';
 import { useOperators } from '@/services/operatorService';
@@ -54,7 +53,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { usePagination } from '@/hooks/usePagination';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { formatPhone } from '@/lib/phoneFormater';
 
@@ -142,6 +140,8 @@ const StudentsPage = () => {
   const [sortField, setSortField] = useState('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -149,24 +149,21 @@ const StudentsPage = () => {
   const { data: operators } = useOperators();
 
   const SERVER_PAGE_SIZE = 50;
-  const { currentPage, setCurrentPage } = usePagination([], SERVER_PAGE_SIZE);
 
-  const { data: students, isLoading: isStudentsLoading } = useStudents(
+  const { data: studentsPage, isLoading: isStudentsLoading } = useStudentsPage(
     courseType,
     branchId,
     currentPage,
     SERVER_PAGE_SIZE,
     operatorId,
+    {
+      search: debouncedSearch,
+      dateFrom,
+      dateTo,
+      sortBy: sortField,
+      sortOrder: sortDir,
+    },
   );
-
-  const { data: searchResults, isLoading: isSearchLoading } = useQuery({
-    queryKey: ['searchStudents', debouncedSearch],
-    queryFn: () => searchStudents(debouncedSearch),
-    enabled: debouncedSearch.trim().length > 0,
-  });
-
-  const isLoading = debouncedSearch ? isSearchLoading : isStudentsLoading;
-  const currentData = debouncedSearch ? searchResults : students;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -177,64 +174,14 @@ const StudentsPage = () => {
     debouncedSearch,
     dateFrom,
     dateTo,
-    setCurrentPage,
+    sortField,
+    sortDir,
   ]);
 
-  const filtered = useMemo(() => {
-    return (currentData || []).filter((s) => {
-      const matchSearch = debouncedSearch
-        ? true
-        : s?.last_name
-            ?.toLowerCase()
-            .includes(debouncedSearch?.toLowerCase()) ||
-          s?.first_name
-            ?.toLowerCase()
-            .includes(debouncedSearch?.toLowerCase()) ||
-          s?.phone?.includes(debouncedSearch);
-
-      let matchDate = true;
-      if (dateFrom || dateTo) {
-        const created = new Date(s.created_at);
-        if (dateFrom && created < dateFrom) matchDate = false;
-        if (dateTo) {
-          const toEnd = new Date(dateTo);
-          toEnd.setHours(23, 59, 59, 999);
-          if (created > toEnd) matchDate = false;
-        }
-      }
-      return matchSearch && matchDate;
-    });
-  }, [currentData, debouncedSearch, dateFrom, dateTo]);
-
-  const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => {
-      const va = a[sortField as keyof typeof a];
-      const vb = b[sortField as keyof typeof b];
-      if (va == null && vb == null) return 0;
-      if (va == null) return 1;
-      if (vb == null) return -1;
-      if (typeof va === 'string' && typeof vb === 'string') {
-        return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-      }
-      return sortDir === 'asc'
-        ? va < vb
-          ? -1
-          : va > vb
-            ? 1
-            : 0
-        : va > vb
-          ? -1
-          : va < vb
-            ? 1
-            : 0;
-    });
-  }, [filtered, sortField, sortDir]);
-
-  const hasMorePages = sorted.length === SERVER_PAGE_SIZE;
-  const serverTotalPages = Math.max(
-    1,
-    hasMorePages ? currentPage + 1 : currentPage,
-  );
+  const isLoading = isStudentsLoading;
+  const sorted = studentsPage?.data ?? [];
+  const totalStudents = studentsPage?.meta.total ?? sorted.length;
+  const serverTotalPages = Math.max(1, studentsPage?.meta.totalPages ?? 1);
 
   const createMutation = useCreateStudent();
   const updateMutation = useUpdateStudent();
@@ -249,25 +196,42 @@ const StudentsPage = () => {
   };
 
   const exportToExcel = async () => {
-    const XLSX = await import('xlsx');
-    const rows = sorted.map((s, idx) => ({
-      '#': idx + 1,
-      [t('students.first_name')]: s.first_name,
-      [t('students.last_name')]: s.last_name,
-      [t('students.phone')]: formatPhone(s.phone),
-      [t('students.course_fast')]:
-        s.course_type === 'tezkor'
-          ? t('students.course_fast')
-          : t('students.course_school'),
-      [t('common.branch')]: s.branch_name ?? t('common.na'),
-      [t('students.group')]: s.group_name ?? t('common.na'),
-      [t('students.total_price')]: s.total_price,
-      [t('students.debt')]: s.debt,
-    }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, t('students.title'));
-    XLSX.writeFile(wb, `talabalar_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
+    setIsExporting(true);
+    try {
+      const XLSX = await import('xlsx');
+      const exportRows = await fetchAllStudents({
+        courseType,
+        branchId,
+        operatorId,
+        search: debouncedSearch,
+        dateFrom,
+        dateTo,
+        sortBy: sortField,
+        sortOrder: sortDir,
+      });
+      const rows = exportRows.map((s, idx) => ({
+        '#': idx + 1,
+        [t('students.first_name')]: s.first_name,
+        [t('students.last_name')]: s.last_name,
+        [t('students.phone')]: formatPhone(s.phone),
+        [t('students.course_fast')]:
+          s.course_type === 'tezkor'
+            ? t('students.course_fast')
+            : t('students.course_school'),
+        [t('common.branch')]: s.branch_name ?? t('common.na'),
+        [t('students.group')]: s.group_name ?? t('common.na'),
+        [t('students.total_price')]: s.total_price,
+        [t('students.debt')]: s.debt,
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, t('students.title'));
+      XLSX.writeFile(wb, `talabalar_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
+    } catch {
+      toast.error(t('common.error'));
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleDelete = () => {
@@ -333,7 +297,7 @@ const StudentsPage = () => {
             {t('students.title')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {t('students.count', { count: filtered?.length || 0 })}
+            {t('students.count', { count: totalStudents })}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -341,7 +305,7 @@ const StudentsPage = () => {
             variant="outline"
             className="gap-2"
             onClick={exportToExcel}
-            disabled={sorted.length === 0}
+            disabled={totalStudents === 0 || isExporting}
           >
             <Download className="h-4 w-4" /> {t('students.export_excel')}
           </Button>
@@ -434,7 +398,10 @@ const StudentsPage = () => {
                   : format(dateFrom, 'dd.MM.yyyy')}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 max-w-[calc(100vw-2rem)] overflow-x-auto" align="start">
+          <PopoverContent
+            className="w-auto p-0 max-w-[calc(100vw-2rem)] overflow-x-auto"
+            align="start"
+          >
             <Calendar
               mode="range"
               selected={{ from: dateFrom, to: dateTo }}
@@ -815,14 +782,18 @@ const StudentsPage = () => {
                           <div className="flex items-center justify-center gap-1">
                             <button
                               onClick={() => openEdit(s)}
-                              className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                              aria-label={t('common.edit')}
+                              title={t('common.edit')}
+                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
                             {isOwner() && (
                               <button
                                 onClick={() => setDeleteId(s.id)}
-                                className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                aria-label={t('common.delete')}
+                                title={t('common.delete')}
+                                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -831,7 +802,7 @@ const StudentsPage = () => {
                         </td>
                       </tr>
                     ))}
-                {!isLoading && filtered?.length === 0 && (
+                {!isLoading && totalStudents === 0 && (
                   <tr>
                     <td colSpan={16} className="p-0">
                       <EmptyState
@@ -901,14 +872,18 @@ const StudentsPage = () => {
                     <>
                       <button
                         onClick={() => openEdit(s)}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        aria-label={t('common.edit')}
+                        title={t('common.edit')}
+                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       {isOwner() && (
                         <button
                           onClick={() => setDeleteId(s.id)}
-                          className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                          aria-label={t('common.delete')}
+                          title={t('common.delete')}
+                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>

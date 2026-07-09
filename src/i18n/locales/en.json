@@ -47,6 +47,7 @@
     "edit": "Edit",
     "create": "Create",
     "close": "Close",
+    "view": "View",
     "confirm": "Confirm",
     "yes": "Yes",
     "no": "No",
@@ -90,7 +91,9 @@
     "previous": "Previous",
     "next": "Next",
     "all_operators": "All operators",
-    "count_unit": ""
+    "count_unit": "",
+    "show_password": "Show password",
+    "hide_password": "Hide password"
   },
   "login": {
     "title": "Sign in",

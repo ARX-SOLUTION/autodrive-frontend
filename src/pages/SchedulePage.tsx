@@ -218,13 +218,27 @@ const SchedulePage = () => {
       {/* Calendar navigation */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={prevWeek}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={prevWeek}
+            aria-label={t('schedule.prev_week')}
+            title={t('schedule.prev_week')}
+            className="h-11 w-11"
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="sm" onClick={thisWeek}>
             <CalendarDays className="mr-2 h-4 w-4" /> {t('schedule.today')}
           </Button>
-          <Button variant="outline" size="icon" onClick={nextWeek}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={nextWeek}
+            aria-label={t('schedule.next_week')}
+            title={t('schedule.next_week')}
+            className="h-11 w-11"
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -248,57 +262,125 @@ const SchedulePage = () => {
           ))}
         </div>
       ) : (
-        <div className="overflow-x-auto">
-        <div className="grid grid-cols-7 gap-2 min-w-[700px]">
-          {weekDays.map((day) => {
-            const key = format(day, 'yyyy-MM-dd');
-            const dayLessons = lessonsByDay.get(key) || [];
-            const isToday = isSameDay(day, today);
-            return (
-              <div
-                key={key}
-                className={`min-h-[200px] rounded-lg border bg-card p-2 ${
-                  isToday ? 'ring-2 ring-primary/30' : ''
-                }`}
-              >
-                <div
-                  className={`mb-2 text-center text-sm font-medium ${
-                    isToday ? 'text-primary' : 'text-foreground'
+        <>
+          <div className="grid gap-3 md:hidden">
+            {weekDays.map((day) => {
+              const key = format(day, 'yyyy-MM-dd');
+              const dayLessons = lessonsByDay.get(key) || [];
+              const isToday = isSameDay(day, today);
+              return (
+                <section
+                  key={key}
+                  className={`rounded-lg border bg-card p-3 ${
+                    isToday ? 'ring-2 ring-primary/30' : ''
                   }`}
                 >
-                  <div>{format(day, 'EEE')}</div>
-                  <div className="text-lg font-bold">{format(day, 'd')}</div>
-                </div>
-                <div className="space-y-1">
-                  {dayLessons.length === 0 ? (
-                    <p className="text-xs text-muted-foreground/50 text-center py-4">—</p>
-                  ) : (
-                    dayLessons.map((lesson) => (
-                      <div
-                        key={lesson.id}
-                        className={`rounded border-l-4 p-1.5 text-xs ${lessonTypeColor[lesson.lesson_type]}`}
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p
+                        className={`text-sm font-semibold ${
+                          isToday ? 'text-primary' : 'text-foreground'
+                        }`}
                       >
-                        <p className="font-medium truncate">{lesson.title}</p>
-                        <p className="text-muted-foreground">
-                          {formatTime(lesson.date)}
-                        </p>
-                        {lesson.teacher_name && (
-                          <p className="text-muted-foreground truncate">
-                            {lesson.teacher_name}
+                        {format(day, 'EEEE')}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(day, 'dd.MM.yyyy')}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+                      {dayLessons.length}
+                    </span>
+                  </div>
+                  {dayLessons.length === 0 ? (
+                    <p className="py-2 text-sm text-muted-foreground">—</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {dayLessons.map((lesson) => (
+                        <article
+                          key={lesson.id}
+                          className={`rounded border-l-4 p-3 text-sm ${lessonTypeColor[lesson.lesson_type]}`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="font-medium">{lesson.title}</p>
+                            <span className="shrink-0 tabular-nums text-muted-foreground">
+                              {formatTime(lesson.date)}
+                            </span>
+                          </div>
+                          {lesson.teacher_name && (
+                            <p className="mt-1 text-muted-foreground">
+                              {lesson.teacher_name}
+                            </p>
+                          )}
+                          <p className="mt-1 text-muted-foreground">
+                            {lesson.present_count}/{lesson.total_count}
                           </p>
-                        )}
-                        <p className="text-muted-foreground">
-                          {lesson.present_count}/{lesson.total_count}
-                        </p>
-                      </div>
-                    ))
+                        </article>
+                      ))}
+                    </div>
                   )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        </div>
+                </section>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
+            <div className="grid min-w-[700px] grid-cols-7 gap-2">
+              {weekDays.map((day) => {
+                const key = format(day, 'yyyy-MM-dd');
+                const dayLessons = lessonsByDay.get(key) || [];
+                const isToday = isSameDay(day, today);
+                return (
+                  <div
+                    key={key}
+                    className={`min-h-[200px] rounded-lg border bg-card p-2 ${
+                      isToday ? 'ring-2 ring-primary/30' : ''
+                    }`}
+                  >
+                    <div
+                      className={`mb-2 text-center text-sm font-medium ${
+                        isToday ? 'text-primary' : 'text-foreground'
+                      }`}
+                    >
+                      <div>{format(day, 'EEE')}</div>
+                      <div className="text-lg font-bold">
+                        {format(day, 'd')}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      {dayLessons.length === 0 ? (
+                        <p className="py-4 text-center text-xs text-muted-foreground/50">
+                          —
+                        </p>
+                      ) : (
+                        dayLessons.map((lesson) => (
+                          <div
+                            key={lesson.id}
+                            className={`rounded border-l-4 p-1.5 text-xs ${lessonTypeColor[lesson.lesson_type]}`}
+                          >
+                            <p className="truncate font-medium">
+                              {lesson.title}
+                            </p>
+                            <p className="text-muted-foreground">
+                              {formatTime(lesson.date)}
+                            </p>
+                            {lesson.teacher_name && (
+                              <p className="truncate text-muted-foreground">
+                                {lesson.teacher_name}
+                              </p>
+                            )}
+                            <p className="text-muted-foreground">
+                              {lesson.present_count}/{lesson.total_count}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
       )}
 
       {/* Templates section */}
@@ -337,7 +419,9 @@ const SchedulePage = () => {
                   <span className="text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
                     {lessonTypeLabel[t.lesson_type]}
                   </span>
-                  <span className="text-sm text-muted-foreground">{t.group_name}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t.group_name}
+                  </span>
                   {t.teacher_name && (
                     <span className="text-xs text-muted-foreground">
                       {t.teacher_name}
@@ -349,6 +433,9 @@ const SchedulePage = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => setDeleteId(t.id)}
+                    aria-label={t('schedule.delete_title')}
+                    title={t('schedule.delete_title')}
+                    className="h-11 w-11"
                   >
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>

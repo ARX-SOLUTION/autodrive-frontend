@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/authStore';
 import { extractErrorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -388,10 +389,11 @@ const UsersPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="user-password">{t('users.password_label')} *</Label>
-              <Input
+              <Label htmlFor="user-password">
+                {t('users.password_label')} *
+              </Label>
+              <PasswordInput
                 id="user-password"
-                type="password"
                 value={form.password}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, password: e.target.value }))
@@ -419,7 +421,10 @@ const UsersPage = () => {
                 onValueChange={(v) => setForm((f) => ({ ...f, branchId: v }))}
                 disabled={(branches || []).length === 0}
               >
-                <SelectTrigger id="user-branch" className="bg-secondary border-border">
+                <SelectTrigger
+                  id="user-branch"
+                  className="bg-secondary border-border"
+                >
                   <SelectValue
                     placeholder={
                       (branches || []).length === 0
