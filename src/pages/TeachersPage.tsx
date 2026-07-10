@@ -58,7 +58,7 @@ const TeachersPage = () => {
     specialization: 'THEORY' as Specialization,
   });
 
-  const { data: teachers, isLoading } = useTeachers();
+  const { data: teachers, isLoading, isError, refetch } = useTeachers();
   const { data: branches } = useBranches();
   const createMut = useCreateTeacher();
   const updateMut = useUpdateTeacher();
@@ -378,8 +378,16 @@ const TeachersPage = () => {
                 />
               ))}
         </div>
-        {filtered.length === 0 && !isLoading && (
-          <EmptyState icon={Users} title={t('teachers.not_found')} />
+        {isError ? (
+          <EmptyState
+            title={t('common.error')}
+            action={{ label: t('common.retry'), onClick: () => refetch() }}
+          />
+        ) : (
+          filtered.length === 0 &&
+          !isLoading && (
+            <EmptyState icon={Users} title={t('teachers.not_found')} />
+          )
         )}
       </div>
 
@@ -423,7 +431,9 @@ const TeachersPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="teacher-spec">{t('teachers.specialization')} *</Label>
+              <Label htmlFor="teacher-spec">
+                {t('teachers.specialization')} *
+              </Label>
               <Select
                 value={form.specialization}
                 onValueChange={(v) =>
@@ -433,7 +443,10 @@ const TeachersPage = () => {
                   }))
                 }
               >
-                <SelectTrigger id="teacher-spec" className="bg-secondary border-border">
+                <SelectTrigger
+                  id="teacher-spec"
+                  className="bg-secondary border-border"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -452,7 +465,10 @@ const TeachersPage = () => {
                 value={form.branchId}
                 onValueChange={(v) => setForm((f) => ({ ...f, branchId: v }))}
               >
-                <SelectTrigger id="teacher-branch" className="bg-secondary border-border">
+                <SelectTrigger
+                  id="teacher-branch"
+                  className="bg-secondary border-border"
+                >
                   <SelectValue placeholder={t('common.select_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>

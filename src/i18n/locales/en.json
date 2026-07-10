@@ -59,6 +59,7 @@
     "creating": "Creating...",
     "deleting": "Deleting...",
     "error": "An error occurred",
+    "retry": "Retry",
     "success": "Success",
     "not_found": "Not found",
     "no_data": "No data found",

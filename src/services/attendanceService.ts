@@ -28,13 +28,12 @@ export const useLessons = (page = 1, limit = 50) => {
 };
 
 export const useLessonById = ({ id }: { id: string }) =>
-  useQuery<Lesson | null>({
+  useQuery<Lesson>({
     queryKey: ['lessons', 'detail', id],
-    queryFn: async () =>
-      axiosInstance
-        .get(`/lessons/${id}`)
-        .then(({ data }) => data?.data || data)
-        .catch(() => null),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/lessons/${id}`);
+      return data?.data || data;
+    },
     enabled: !!id,
   });
 

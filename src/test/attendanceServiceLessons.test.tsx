@@ -2,7 +2,7 @@ import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { useLessons } from '@/services/attendanceService';
+import { useLessons, useLessonById } from '@/services/attendanceService';
 import { useAuthStore } from '@/store/authStore';
 import axiosInstance from '@/api/axiosInstance';
 import { User } from '@/types/user';
@@ -56,5 +56,35 @@ describe('useLessons', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.data).toHaveLength(1);
     expect(result.current.data?.data[0].id).toBe('l1');
+  });
+});
+
+// Regression test for autodrive-6cq.5.17: useLessonById used to
+// `.catch(() => null)`, so a real backend failure resolved as a
+// successful "not found" instead of surfacing isError.
+describe('useLessonById', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    useAuthStore.getState().setAuth('token', user);
+  });
+
+  it('surfaces isError instead of swallowing the request failure as null', async () => {
+    (axiosInstance.get as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error('network down'),
+    );
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useLessonById({ id: 'l1' }), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data).toBeUndefined();
   });
 });

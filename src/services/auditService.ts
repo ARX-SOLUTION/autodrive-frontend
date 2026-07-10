@@ -1,10 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
-import axiosInstance from "@/api/axiosInstance";
-import { useAuthStore } from "@/store/authStore";
-import { AuditLogsResponse } from "@/types/audit";
+import { useQuery } from '@tanstack/react-query';
+import axiosInstance from '@/api/axiosInstance';
+import { useAuthStore } from '@/store/authStore';
+import { AuditLogsResponse } from '@/types/audit';
 
 const toLocalDateStr = (d: Date): string =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export const useAuditLogs = (params: {
   entity?: string;
@@ -20,26 +20,24 @@ export const useAuditLogs = (params: {
   // Backend gates /audit-logs to owner/manager/dev — don't fire for others (operator/teacher → 403).
   const canViewAudit = role === 'owner' || role === 'manager' || role === 'dev';
   return useQuery<AuditLogsResponse>({
-    queryKey: ["audit-logs", { ...params, branchId }],
+    queryKey: ['audit-logs', { ...params, branchId }],
     enabled: canViewAudit,
     queryFn: async () => {
-      try {
-        const { data: res } = await axiosInstance.get("/audit-logs", {
-          params: {
-            entity: params.entity,
-            action: params.action,
-            userId: params.userId,
-            startDate: params.startDate ? toLocalDateStr(params.startDate) : undefined,
-            endDate: params.endDate ? toLocalDateStr(params.endDate) : undefined,
-            page: params.page,
-            limit: params.limit,
-            branch_id: branchId,
-          },
-        });
-        return res?.data || res;
-      } catch {
-        return { data: [], total: 0, page: 1, limit: 50 };
-      }
+      const { data: res } = await axiosInstance.get('/audit-logs', {
+        params: {
+          entity: params.entity,
+          action: params.action,
+          userId: params.userId,
+          startDate: params.startDate
+            ? toLocalDateStr(params.startDate)
+            : undefined,
+          endDate: params.endDate ? toLocalDateStr(params.endDate) : undefined,
+          page: params.page,
+          limit: params.limit,
+          branch_id: branchId,
+        },
+      });
+      return res?.data || res;
     },
   });
 };

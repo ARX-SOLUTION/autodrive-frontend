@@ -11,15 +11,11 @@ export const useGroups = () => {
   return useQuery<Group[]>({
     queryKey: ['groups', branchId],
     queryFn: async () => {
-      try {
-        const { data: res } = await axiosInstance.get('/groups');
-        const arr = res?.data?.data || res?.data;
-        if (Array.isArray(arr)) return arr;
-        if (Array.isArray(res)) return res;
-        return [];
-      } catch {
-        return [];
-      }
+      const { data: res } = await axiosInstance.get('/groups');
+      const arr = res?.data?.data || res?.data;
+      if (Array.isArray(arr)) return arr;
+      if (Array.isArray(res)) return res;
+      return [];
     },
     enabled: !!branchId || isCrossTenantRole,
   });
@@ -32,15 +28,11 @@ export const useGroupsOverview = () => {
   return useQuery<GroupOverview[]>({
     queryKey: ['groups-overview', branchId],
     queryFn: async () => {
-      try {
-        const { data: res } = await axiosInstance.get('/groups/overview');
-        const arr = res?.data?.data || res?.data;
-        if (Array.isArray(arr)) return arr;
-        if (Array.isArray(res)) return res;
-        return [];
-      } catch {
-        return [];
-      }
+      const { data: res } = await axiosInstance.get('/groups/overview');
+      const arr = res?.data?.data || res?.data;
+      if (Array.isArray(arr)) return arr;
+      if (Array.isArray(res)) return res;
+      return [];
     },
     enabled: !!branchId || isCrossTenantRole,
   });
@@ -49,11 +41,10 @@ export const useGroupsOverview = () => {
 export const useGroupsById = ({ id }: { id: string }) =>
   useQuery<GroupsById>({
     queryKey: ['groups', 'detail', id],
-    queryFn: async () =>
-      axiosInstance
-        .get(`/groups/${id}`)
-        .then(({ data }) => data?.data || data)
-        .catch(() => null),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/groups/${id}`);
+      return data?.data || data;
+    },
     enabled: !!id,
   });
 

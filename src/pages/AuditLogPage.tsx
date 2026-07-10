@@ -241,7 +241,7 @@ const AuditLogPage = () => {
     }
   };
 
-  const { data, isLoading } = useAuditLogs({
+  const { data, isLoading, isError, refetch } = useAuditLogs({
     entity: entityFilter !== 'all' ? entityFilter : undefined,
     action: actionFilter !== 'all' ? actionFilter : undefined,
     startDate: dateFrom,
@@ -522,7 +522,10 @@ const AuditLogPage = () => {
                     : format(dateFrom, 'dd.MM.yyyy')}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 max-w-[calc(100vw-2rem)] overflow-x-auto" align="start">
+            <PopoverContent
+              className="w-auto p-0 max-w-[calc(100vw-2rem)] overflow-x-auto"
+              align="start"
+            >
               <Calendar
                 mode="range"
                 selected={{ from: dateFrom, to: dateTo }}
@@ -597,6 +600,18 @@ const AuditLogPage = () => {
                       </td>
                     </tr>
                   ))
+                ) : isError ? (
+                  <tr>
+                    <td colSpan={7} className="p-0">
+                      <EmptyState
+                        title={t('common.error')}
+                        action={{
+                          label: t('common.retry'),
+                          onClick: () => refetch(),
+                        }}
+                      />
+                    </td>
+                  </tr>
                 ) : sorted.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="p-0">
@@ -616,7 +631,10 @@ const AuditLogPage = () => {
                       tabIndex={0}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') setSelectedLog(log);
-                        if (e.key === ' ') { e.preventDefault(); setSelectedLog(log); }
+                        if (e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedLog(log);
+                        }
                       }}
                     >
                       <td className="px-4 py-3 text-center text-muted-foreground">
@@ -660,6 +678,11 @@ const AuditLogPage = () => {
             [...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-24 w-full" />
             ))
+          ) : isError ? (
+            <EmptyState
+              title={t('common.error')}
+              action={{ label: t('common.retry'), onClick: () => refetch() }}
+            />
           ) : sorted.length === 0 ? (
             <EmptyState icon={ShieldCheck} title={t('audit.not_found')} />
           ) : (

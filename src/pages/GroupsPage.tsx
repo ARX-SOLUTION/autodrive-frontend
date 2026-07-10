@@ -66,7 +66,12 @@ const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
 
 const GroupsPage = () => {
   const { t } = useTranslation();
-  const { data: groups, isLoading } = useGroups();
+  const {
+    data: groups,
+    isLoading,
+    isError: isGroupsError,
+    refetch: refetchGroups,
+  } = useGroups();
   const { data: overview } = useGroupsOverview();
   const { data: branches } = useBranches();
   const { data: operators } = useOperators();
@@ -95,7 +100,12 @@ const GroupsPage = () => {
 
   const branchList = branches || [];
 
-  const { data: groupData, isLoading: groupsByIdLoading } = useGroupsById({
+  const {
+    data: groupData,
+    isLoading: groupsByIdLoading,
+    isError: isGroupDetailError,
+    refetch: refetchGroupDetail,
+  } = useGroupsById({
     id: detailGroup?.id || '',
   });
 
@@ -408,7 +418,10 @@ const GroupsPage = () => {
                       tabIndex={0}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') setDetailGroup(g);
-                        if (e.key === ' ') { e.preventDefault(); setDetailGroup(g); }
+                        if (e.key === ' ') {
+                          e.preventDefault();
+                          setDetailGroup(g);
+                        }
                       }}
                     >
                       <td className="px-4 py-3 text-center text-muted-foreground">
@@ -546,8 +559,19 @@ const GroupsPage = () => {
                 />
               ))}
         </div>
-        {filteredGroups.length === 0 && !isLoading && (
-          <EmptyState icon={Layers} title={t('groups.not_found')} />
+        {isGroupsError ? (
+          <EmptyState
+            title={t('common.error')}
+            action={{
+              label: t('common.retry'),
+              onClick: () => refetchGroups(),
+            }}
+          />
+        ) : (
+          filteredGroups.length === 0 &&
+          !isLoading && (
+            <EmptyState icon={Layers} title={t('groups.not_found')} />
+          )
         )}
       </div>
 
@@ -648,6 +672,21 @@ const GroupsPage = () => {
                       </td>
                     </tr>
                   ))
+                ) : isGroupDetailError ? (
+                  <tr>
+                    <td colSpan={15} className="py-12 text-center">
+                      <div className="flex items-center justify-center gap-3 text-sm text-destructive">
+                        <span>{t('common.error')}</span>
+                        <Button
+                          variant="link"
+                          className="h-auto p-0"
+                          onClick={() => refetchGroupDetail()}
+                        >
+                          {t('common.retry')}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
                 ) : !groupData?.students?.length ? (
                   <tr>
                     <td
@@ -801,7 +840,10 @@ const GroupsPage = () => {
             <div className="space-y-2">
               <Label htmlFor="group-branch">{t('common.branch')} *</Label>
               <Select value={formBranchId} onValueChange={setFormBranchId}>
-                <SelectTrigger id="group-branch" className="bg-secondary border-border">
+                <SelectTrigger
+                  id="group-branch"
+                  className="bg-secondary border-border"
+                >
                   <SelectValue placeholder={t('common.select_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -814,9 +856,14 @@ const GroupsPage = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="group-course-type">{t('groups.course_type')} *</Label>
+              <Label htmlFor="group-course-type">
+                {t('groups.course_type')} *
+              </Label>
               <Select value={formCourseType} onValueChange={setFormCourseType}>
-                <SelectTrigger id="group-course-type" className="bg-secondary border-border">
+                <SelectTrigger
+                  id="group-course-type"
+                  className="bg-secondary border-border"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
