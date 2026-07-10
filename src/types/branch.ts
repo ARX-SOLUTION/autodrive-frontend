@@ -7,4 +7,7 @@ export interface Branch {
   manager_name?: string;
   active_students: number;
   created_at: string;
+  revenue?: number;
+  debt?: number;
+  today_payment?: number;
 }

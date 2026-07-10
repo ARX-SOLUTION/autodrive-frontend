@@ -206,7 +206,12 @@
     "manager": "Manager",
     "students": "Students",
     "created": "Created",
-    "status": "Status"
+    "status": "Status",
+    "detail": {
+      "revenue": "Revenue",
+      "debt": "Debt",
+      "today_payment": "Today's payment"
+    }
   },
   "groups": {
     "title": "Groups",

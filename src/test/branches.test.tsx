@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import BranchesPage from '@/pages/BranchesPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -48,7 +49,9 @@ const queryClient = new QueryClient({
 const renderComponent = () => {
   return render(
     <QueryClientProvider client={queryClient}>
-      <BranchesPage />
+      <MemoryRouter>
+        <BranchesPage />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 };
@@ -103,5 +106,29 @@ describe('BranchesPage Component', () => {
     expect(nameInput.value).toBe('Test Branch 1');
     expect(addressInput.value).toBe('Test Location 1');
     expect(phoneInput.value).toBe('+998901234567');
+  });
+
+  // autodrive-6ef.19: card navigates to branch detail; edit/delete buttons
+  // stopPropagation so they don't also trigger navigation.
+  it('navigates to the detail page when a card is clicked, but not via the edit button', () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/branches']}>
+          <Routes>
+            <Route path="/branches" element={<BranchesPage />} />
+            <Route
+              path="/branches/:id"
+              element={<div>branch-detail-page</div>}
+            />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(screen.getAllByLabelText('common.edit')[0]);
+    expect(screen.queryByText('branch-detail-page')).toBeNull();
+
+    fireEvent.click(screen.getAllByText('Test Branch 1')[0]);
+    expect(screen.getByText('branch-detail-page')).toBeTruthy();
   });
 });

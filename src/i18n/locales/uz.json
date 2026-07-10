@@ -206,7 +206,12 @@
     "manager": "Menejer",
     "students": "Talabalar",
     "created": "Yaratilgan",
-    "status": "Holat"
+    "status": "Holat",
+    "detail": {
+      "revenue": "Tushum",
+      "debt": "Qarzdorlik",
+      "today_payment": "Bugungi to'lov"
+    }
   },
   "groups": {
     "title": "Guruhlar",

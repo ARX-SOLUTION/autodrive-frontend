@@ -206,7 +206,12 @@
     "manager": "Менеджер",
     "students": "Студенты",
     "created": "Создан",
-    "status": "Статус"
+    "status": "Статус",
+    "detail": {
+      "revenue": "Выручка",
+      "debt": "Задолженность",
+      "today_payment": "Платёж за сегодня"
+    }
   },
   "groups": {
     "title": "Группы",
