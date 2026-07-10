@@ -14,10 +14,12 @@ import {
 } from '@/components/ui/dialog';
 import { UploadCloud } from 'lucide-react';
 import { track } from '@/lib/umami';
+import { useAuthStore } from '@/store/authStore';
 
 interface ImportStudentsModalProps {
   open: boolean;
   onClose: () => void;
+  branchId?: string;
 }
 
 const SAMPLE_CSV = `firstName,lastName,phone,courseType
@@ -28,21 +30,29 @@ Jane,Smith,+998909876543,avto_maktab
 export default function ImportStudentsModal({
   open,
   onClose,
+  branchId,
 }: ImportStudentsModalProps) {
   const { t } = useTranslation();
+  const isOwner = useAuthStore((s) => s.isOwner);
   const [file, setFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
+  // Owners span multiple branches — bulk-create needs to know which one.
+  // Managers/operators/teachers are already scoped server-side.
+  const branchRequired = isOwner() && !branchId;
 
   const mutation = useMutation({
-    mutationFn: bulkCreateStudents,
+    mutationFn: (f: File) => bulkCreateStudents(f, branchId),
     onSuccess: (res) => {
       const { successCount = 0, errorCount = 0 } = res?.data ?? res ?? {};
       if (errorCount > 0 && successCount === 0) {
         toast.error(t('common.error'));
       } else if (errorCount > 0) {
         toast.warning(
-          t('students.import.partial', { success: successCount, errors: errorCount }),
+          t('students.import.partial', {
+            success: successCount,
+            errors: errorCount,
+          }),
         );
       } else {
         toast.success(t('students.import.success', { count: successCount }));
@@ -117,7 +127,7 @@ export default function ImportStudentsModal({
           </div>
           <Button
             className="w-full gap-2"
-            disabled={!file || mutation.isPending}
+            disabled={!file || mutation.isPending || branchRequired}
             onClick={handleUpload}
           >
             <UploadCloud className="h-4 w-4" />
@@ -125,6 +135,11 @@ export default function ImportStudentsModal({
               ? t('students.import.uploading')
               : t('students.import.upload_button')}
           </Button>
+          {branchRequired && (
+            <p className="text-sm text-destructive">
+              {t('students.import.branch_required')}
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>

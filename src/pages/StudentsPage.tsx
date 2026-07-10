@@ -925,6 +925,7 @@ const StudentsPage = () => {
       <ImportStudentsModal
         open={importModalOpen}
         onClose={() => setImportModalOpen(false)}
+        branchId={branchId}
       />
 
       <ConfirmDialog

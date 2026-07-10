@@ -315,7 +315,8 @@
       "uploading": "Yuklanmoqda...",
       "upload_button": "Yuklash",
       "success": "{{count}} ta talaba yuklandi",
-      "partial": "{{success}} yuklandi, {{errors}} ta xato"
+      "partial": "{{success}} yuklandi, {{errors}} ta xato",
+      "branch_required": "Talabalarni yuklashdan oldin filialni tanlang."
     }
   },
   "exams": {

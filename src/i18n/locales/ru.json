@@ -315,7 +315,8 @@
       "uploading": "Загрузка...",
       "upload_button": "Загрузить",
       "success": "{{count}} студентов загружено",
-      "partial": "{{success}} загружено, {{errors}} ошибок"
+      "partial": "{{success}} загружено, {{errors}} ошибок",
+      "branch_required": "Сначала выберите филиал для импорта студентов."
     }
   },
   "exams": {

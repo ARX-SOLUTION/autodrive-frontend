@@ -217,9 +217,10 @@ export const searchStudents = async (q: string): Promise<Student[]> => {
   return result.data;
 };
 
-export const bulkCreateStudents = async (file: File) => {
+export const bulkCreateStudents = async (file: File, branchId?: string) => {
   const formData = new FormData();
   formData.append('file', file);
+  if (branchId) formData.append('branch_id', branchId);
   const { data } = await axiosInstance.post('/students/bulk-create', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
