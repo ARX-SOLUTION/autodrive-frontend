@@ -42,6 +42,7 @@ import {
 import { useBranches } from '@/services/branchService';
 import { toast } from 'sonner';
 import { User } from '@/types/user';
+import { RoleGate } from '@/components/RoleGate';
 
 const TeachersPage = () => {
   const { t } = useTranslation();
@@ -459,27 +460,34 @@ const TeachersPage = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="teacher-branch">{t('teachers.branch')}</Label>
-              <Select
-                value={form.branchId}
-                onValueChange={(v) => setForm((f) => ({ ...f, branchId: v }))}
-              >
-                <SelectTrigger
-                  id="teacher-branch"
-                  className="bg-secondary border-border"
+            {/* Only cross-branch roles pick a branch; a manager/operator's
+                branch is fixed by their JWT and the backend auto-assigns it
+                (assertBranchScope). GET /branches is owner/dev-only, so showing
+                this Select to a manager rendered an empty, un-fillable dropdown
+                that blocked adding a teacher. */}
+            <RoleGate cap="assignBranch">
+              <div className="space-y-2">
+                <Label htmlFor="teacher-branch">{t('teachers.branch')}</Label>
+                <Select
+                  value={form.branchId}
+                  onValueChange={(v) => setForm((f) => ({ ...f, branchId: v }))}
                 >
-                  <SelectValue placeholder={t('common.select_placeholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {(branches || []).map((b) => (
-                    <SelectItem key={b.id} value={b.id}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  <SelectTrigger
+                    id="teacher-branch"
+                    className="bg-secondary border-border"
+                  >
+                    <SelectValue placeholder={t('common.select_placeholder')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(branches || []).map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </RoleGate>
             <div className="flex justify-end gap-3 pt-2">
               <Button
                 type="button"

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,6 +48,7 @@ export interface CreatePaymentPayload {
   student_id: string;
   amount: number;
   payment_method: PaymentMethod;
+  idempotency_key: string;
 }
 
 interface Student {
@@ -66,6 +67,12 @@ interface PaymentModalProps {
   branchId?: string;
   courseType?: CourseType;
   hasDebtOnly?: boolean;
+  // Relation-add (bd 6ef.6): when set, the student is fixed (e.g. an
+  // "Add payment" button on a student detail card) — the picker is hidden and
+  // this id is pinned. UX-only: the backend still derives tenant scope from
+  // the JWT and never trusts this value.
+  lockedStudentId?: string;
+  lockedStudentName?: string;
 }
 
 const paymentMethodLabels: Record<PaymentMethod, string> = {
@@ -95,6 +102,8 @@ const PaymentModal = ({
   branchId,
   courseType,
   hasDebtOnly = true,
+  lockedStudentId,
+  lockedStudentName,
 }: PaymentModalProps) => {
   const { t } = useTranslation();
   const form = useForm<PaymentFormValues>({
@@ -112,6 +121,9 @@ const PaymentModal = ({
     Student | undefined
   >();
   const debouncedStudentSearch = useDebounce(studentSearch, 300);
+  // ponytail (M1): stable per modal-open, so a retried/double-clicked submit
+  // reuses the same key; reopening the modal for a new payment gets a fresh one.
+  const idempotencyKeyRef = useRef(crypto.randomUUID());
 
   const {
     data: studentPage,
@@ -127,11 +139,16 @@ const PaymentModal = ({
 
   useEffect(() => {
     if (open) {
-      form.reset({ student_id: '', amount: 0, payment_method: 'naqd' });
+      form.reset({
+        student_id: lockedStudentId ?? '',
+        amount: 0,
+        payment_method: 'naqd',
+      });
       setStudentSearch('');
       setSelectedStudentCache(undefined);
+      idempotencyKeyRef.current = crypto.randomUUID();
     }
-  }, [open, form]);
+  }, [open, form, lockedStudentId]);
 
   const studentId = form.watch('student_id');
   const studentOptions = studentPage?.data ?? students;
@@ -139,13 +156,13 @@ const PaymentModal = ({
     studentOptions.find((s) => s.id === studentId) ?? selectedStudentCache;
 
   const handleSubmit = form.handleSubmit((values) => {
-    onSubmit(values);
+    onSubmit({ ...values, idempotency_key: idempotencyKeyRef.current });
   });
 
   const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => !o && !loading && onClose()}>
       <DialogContent className="max-w-md bg-card border-border">
         <DialogHeader>
           <DialogTitle className="font-heading">
@@ -161,95 +178,109 @@ const PaymentModal = ({
               render={({ field }) => (
                 <FormItem className="space-y-2">
                   <FormLabel>{t('payments.student_name')} *</FormLabel>
-                  <Popover
-                    open={studentPopoverOpen}
-                    onOpenChange={setStudentPopoverOpen}
-                  >
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          role="combobox"
-                          className="w-full justify-between bg-secondary border-border font-normal"
-                        >
-                          {selectedStudent
-                            ? `${selectedStudent.last_name} ${selectedStudent.first_name}`
-                            : t('students.select_student', {
-                                defaultValue: 'Select a student',
-                              })}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      onWheel={(e) => e.stopPropagation()}
-                      style={{ width: 'var(--radix-popover-trigger-width)' }}
-                      className="w-full p-0"
-                      align="start"
+                  {lockedStudentId ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled
+                      className="w-full justify-start bg-secondary border-border font-normal opacity-100"
                     >
-                      <Command shouldFilter={false}>
-                        <CommandInput
-                          placeholder={t('payments.search_placeholder')}
-                          value={studentSearch}
-                          onValueChange={setStudentSearch}
-                        />
-                        <CommandList>
-                          {isStudentsFetching ? (
-                            <div className="flex items-center justify-center gap-2 px-3 py-6 text-sm text-muted-foreground">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              {t('common.loading')}
-                            </div>
-                          ) : isStudentsError ? (
-                            <div className="px-3 py-6 text-center text-sm text-destructive">
-                              {t('common.error')}
-                            </div>
-                          ) : studentOptions.length === 0 ? (
-                            <div className="px-3 py-6 text-center text-sm text-muted-foreground">
-                              {t('payments.not_found')}
-                            </div>
-                          ) : (
-                            <CommandGroup>
-                              {studentOptions.map((s) => (
-                                <CommandItem
-                                  key={s.id}
-                                  value={s.id}
-                                  onSelect={() => {
-                                    field.onChange(s.id);
-                                    setSelectedStudentCache(s);
-                                    setStudentPopoverOpen(false);
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      'mr-2 h-4 w-4',
-                                      field.value === s.id
-                                        ? 'opacity-100'
-                                        : 'opacity-0',
-                                    )}
-                                  />
-                                  {s.last_name} {s.first_name}
-                                  {s.debt !== undefined && s.debt > 0 && (
-                                    <span className="ml-auto text-xs text-destructive tabular-nums">
-                                      {formatMoney(s.debt)} so'm
-                                    </span>
-                                  )}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          )}
-                          {!isStudentsFetching &&
-                            (studentPage?.meta.total ?? 0) >
-                              studentOptions.length && (
-                              <div className="border-t px-3 py-2 text-center text-xs text-muted-foreground">
-                                {studentOptions.length} /{' '}
-                                {studentPage?.meta.total}
+                      {lockedStudentName ??
+                        t('students.select_student', {
+                          defaultValue: 'Student',
+                        })}
+                    </Button>
+                  ) : (
+                    <Popover
+                      open={studentPopoverOpen}
+                      onOpenChange={setStudentPopoverOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            role="combobox"
+                            className="w-full justify-between bg-secondary border-border font-normal"
+                          >
+                            {selectedStudent
+                              ? `${selectedStudent.last_name} ${selectedStudent.first_name}`
+                              : t('students.select_student', {
+                                  defaultValue: 'Select a student',
+                                })}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        onWheel={(e) => e.stopPropagation()}
+                        style={{ width: 'var(--radix-popover-trigger-width)' }}
+                        className="w-full p-0"
+                        align="start"
+                      >
+                        <Command shouldFilter={false}>
+                          <CommandInput
+                            placeholder={t('payments.search_placeholder')}
+                            value={studentSearch}
+                            onValueChange={setStudentSearch}
+                          />
+                          <CommandList>
+                            {isStudentsFetching ? (
+                              <div className="flex items-center justify-center gap-2 px-3 py-6 text-sm text-muted-foreground">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                {t('common.loading')}
                               </div>
+                            ) : isStudentsError ? (
+                              <div className="px-3 py-6 text-center text-sm text-destructive">
+                                {t('common.error')}
+                              </div>
+                            ) : studentOptions.length === 0 ? (
+                              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                                {t('payments.not_found')}
+                              </div>
+                            ) : (
+                              <CommandGroup>
+                                {studentOptions.map((s) => (
+                                  <CommandItem
+                                    key={s.id}
+                                    value={s.id}
+                                    onSelect={() => {
+                                      field.onChange(s.id);
+                                      setSelectedStudentCache(s);
+                                      setStudentPopoverOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        'mr-2 h-4 w-4',
+                                        field.value === s.id
+                                          ? 'opacity-100'
+                                          : 'opacity-0',
+                                      )}
+                                    />
+                                    {s.last_name} {s.first_name}
+                                    {s.debt !== undefined && s.debt > 0 && (
+                                      <span className="ml-auto text-xs text-destructive tabular-nums">
+                                        {formatMoney(s.debt)} so'm
+                                      </span>
+                                    )}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
                             )}
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                            {!isStudentsFetching &&
+                              (studentPage?.meta.total ?? 0) >
+                                studentOptions.length && (
+                                <div className="border-t px-3 py-2 text-center text-xs text-muted-foreground">
+                                  {studentOptions.length} /{' '}
+                                  {studentPage?.meta.total}
+                                </div>
+                              )}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -321,7 +352,12 @@ const PaymentModal = ({
             />
 
             <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={loading}
+              >
                 {t('common.cancel')}
               </Button>
               <Button

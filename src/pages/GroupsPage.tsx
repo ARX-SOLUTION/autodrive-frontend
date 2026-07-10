@@ -50,7 +50,7 @@ import {
 import { toast } from 'sonner';
 import { usePagination } from '@/hooks/usePagination';
 import PaginationControls from '@/components/ui/PaginationControls';
-import { useAuthStore } from '@/store/authStore';
+import { useCan } from '@/hooks/useCan';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -79,7 +79,7 @@ const GroupsPage = () => {
   const updateMutation = useUpdateGroup();
   const deleteMutation = useDeleteGroup();
   const updateStudentMutation = useUpdateStudent();
-  const isOwner = useAuthStore((s) => s.isOwner);
+  const canManageGroups = useCan('manageGroups');
 
   const [search, setSearch] = useState('');
   const [courseTypeFilter, setCourseTypeFilter] = useState('all');
@@ -477,7 +477,7 @@ const GroupsPage = () => {
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
-                          {isOwner() && (
+                          {canManageGroups && (
                             <button
                               aria-label={t('common.delete')}
                               onClick={(e) => {
@@ -542,7 +542,7 @@ const GroupsPage = () => {
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
-                      {isOwner() && (
+                      {canManageGroups && (
                         <button
                           aria-label={t('common.delete')}
                           onClick={(e) => {

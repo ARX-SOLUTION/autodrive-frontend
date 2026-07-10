@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
-import { useAuthStore } from '@/store/authStore';
+import { useIsCrossTenant } from '@/hooks/useCan';
 import { Student, CourseType } from '@/types/student';
 import type { CreateStudentPayload } from '@/components/ui/StudentModal';
 import { track } from '@/lib/umami';
@@ -88,9 +88,8 @@ export const useStudentsPage = (
   operatorId?: string,
   options?: StudentListOptions,
 ) => {
-  const role = useAuthStore((s) => s.user?.role);
-  const isOwnerOrDev = role === 'owner' || role === 'dev';
-  const baseEnabled = !!branchId || isOwnerOrDev;
+  const isCrossTenant = useIsCrossTenant();
+  const baseEnabled = !!branchId || isCrossTenant;
   return useQuery<ListResponse<Student>>({
     queryKey: [
       'students',
@@ -127,9 +126,8 @@ export const useStudents = (
   operatorId?: string,
   options?: StudentListOptions,
 ) => {
-  const role = useAuthStore((s) => s.user?.role);
-  const isOwnerOrDev = role === 'owner' || role === 'dev';
-  const baseEnabled = !!branchId || isOwnerOrDev;
+  const isCrossTenant = useIsCrossTenant();
+  const baseEnabled = !!branchId || isCrossTenant;
   return useQuery<ListResponse<Student>, Error, Student[]>({
     queryKey: [
       'students',
@@ -158,6 +156,17 @@ export const useStudents = (
     select: (result) => result.data,
   });
 };
+
+// Single student for the detail card (header + Ma'lumot/Imtihonlar tabs).
+export const useStudent = (id?: string) =>
+  useQuery<Student>({
+    queryKey: ['student', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/students/${id}`);
+      return data?.data ?? data;
+    },
+  });
 
 export const useCreateStudent = () => {
   const qc = useQueryClient();
@@ -188,6 +197,7 @@ export const useUpdateStudent = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['students'] });
+      qc.invalidateQueries({ queryKey: ['student'] });
       qc.invalidateQueries({ queryKey: ['payments'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });

@@ -290,7 +290,11 @@
       "course": "Course",
       "debt": "Debt",
       "status": "Status",
-      "date": "Date"
+      "date": "Date",
+      "total_price": "Total price",
+      "tab_info": "Info",
+      "tab_payments": "Payments",
+      "tab_exams": "Exams"
     },
     "tab_info": "Details",
     "tab_exams": "Exams",
@@ -318,6 +322,11 @@
       "success": "{{count}} students imported",
       "partial": "{{success}} imported, {{errors}} row errors",
       "branch_required": "Select a branch first to import students."
+    },
+    "no_debt": "No debt",
+    "course": {
+      "tezkor": "Express",
+      "avto_maktab": "Full course"
     }
   },
   "exams": {
@@ -387,6 +396,18 @@
       "method": "Payment method",
       "operator": "Operator",
       "course": "Course type"
+    },
+    "method": {
+      "naqd": "Cash",
+      "karta": "Card",
+      "perechisleniya": "Transfer"
+    },
+    "empty": "No payments",
+    "table": {
+      "date": "Date",
+      "amount": "Amount",
+      "method": "Method",
+      "operator": "Operator"
     }
   },
   "audit": {

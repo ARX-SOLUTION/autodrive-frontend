@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/authStore';
+import { useCan } from '@/hooks/useCan';
 import { useBranches } from '@/services/branchService';
 import { useGroups } from '@/services/groupService';
 import { User } from '@/types/user';
@@ -128,7 +129,7 @@ const StudentModal = ({
   defaultBranchId,
 }: StudentModalProps) => {
   const { t } = useTranslation();
-  const isOwner = useAuthStore((s) => s.isOwner);
+  const canAssignBranch = useCan('assignBranch');
   const user = useAuthStore((s) => s.user);
   const { data: branches } = useBranches();
   const { data: groups } = useGroups();
@@ -140,7 +141,7 @@ const StudentModal = ({
     last_name: '',
     phone: '',
     course_type: courseType,
-    branch_id: isOwner() ? defaultBranchId || '' : user?.branch_id || '',
+    branch_id: canAssignBranch ? defaultBranchId || '' : user?.branch_id || '',
     payment_method: 'naqd',
     result: 'oqimoqda',
     has_document: false,
@@ -417,7 +418,7 @@ const StudentModal = ({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t('students.detail.branch')}</FormLabel>
-                        {isOwner() ? (
+                        {canAssignBranch ? (
                           <Select
                             value={field.value || ''}
                             onValueChange={field.onChange}

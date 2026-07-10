@@ -290,7 +290,11 @@
       "course": "Kurs",
       "debt": "Qarz",
       "status": "Holat",
-      "date": "Sana"
+      "date": "Sana",
+      "total_price": "Umumiy narx",
+      "tab_info": "Ma'lumot",
+      "tab_payments": "To'lovlar",
+      "tab_exams": "Imtihonlar"
     },
     "tab_info": "Ma'lumotlar",
     "tab_exams": "Imtihonlar",
@@ -318,6 +322,11 @@
       "success": "{{count}} ta talaba yuklandi",
       "partial": "{{success}} yuklandi, {{errors}} ta xato",
       "branch_required": "Talabalarni yuklashdan oldin filialni tanlang."
+    },
+    "no_debt": "Qarzsiz",
+    "course": {
+      "tezkor": "Tezkor",
+      "avto_maktab": "Avtomaktab"
     }
   },
   "exams": {
@@ -387,6 +396,18 @@
       "method": "To'lov turi",
       "operator": "Operator",
       "course": "Kurs turi"
+    },
+    "method": {
+      "naqd": "Naqd",
+      "karta": "Karta",
+      "perechisleniya": "O'tkazma"
+    },
+    "empty": "To'lov yo'q",
+    "table": {
+      "date": "Sana",
+      "amount": "Summa",
+      "method": "Usul",
+      "operator": "Operator"
     }
   },
   "audit": {

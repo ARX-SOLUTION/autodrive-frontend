@@ -25,14 +25,14 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { useAuthStore } from '@/store/authStore';
+import { useCan } from '@/hooks/useCan';
+import type { Capability } from '@/lib/permissions';
 
 type NavEntry = {
   labelKey: string;
   path: string;
   icon: typeof LayoutDashboard;
-  ownerOnly?: boolean;
-  branchAccess?: boolean;
+  cap?: Capability;
 };
 
 const NAV_ENTRIES: NavEntry[] = [
@@ -41,7 +41,7 @@ const NAV_ENTRIES: NavEntry[] = [
     labelKey: 'nav.branches',
     path: '/branches',
     icon: Building2,
-    branchAccess: true,
+    cap: 'manageBranches',
   },
   { labelKey: 'nav.schedule', path: '/schedule', icon: Calendar },
   { labelKey: 'nav.attendance', path: '/attendance', icon: ClipboardCheck },
@@ -52,16 +52,26 @@ const NAV_ENTRIES: NavEntry[] = [
     labelKey: 'nav.operators',
     path: '/operators',
     icon: Headphones,
-    branchAccess: true,
+    cap: 'manageStaff',
   },
-  { labelKey: 'nav.teachers', path: '/teachers', icon: Users, branchAccess: true },
+  {
+    labelKey: 'nav.teachers',
+    path: '/teachers',
+    icon: Users,
+    cap: 'manageStaff',
+  },
   {
     labelKey: 'nav.users',
     path: '/users',
     icon: UserCog,
-    ownerOnly: true,
+    cap: 'manageUsers',
   },
-  { labelKey: 'nav.audit', path: '/audit', icon: ShieldCheck, ownerOnly: true },
+  {
+    labelKey: 'nav.audit',
+    path: '/audit',
+    icon: ShieldCheck,
+    cap: 'viewAudit',
+  },
   { labelKey: 'nav.profile', path: '/profile', icon: User },
 ];
 
@@ -73,14 +83,14 @@ interface CommandPaletteProps {
 export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const isOwner = useAuthStore((s) => s.isOwner());
-  const canViewBranches = useAuthStore((s) => s.canViewBranches());
+  const gate: Record<string, boolean> = {
+    manageBranches: useCan('manageBranches'),
+    manageStaff: useCan('manageStaff'),
+    manageUsers: useCan('manageUsers'),
+    viewAudit: useCan('viewAudit'),
+  };
 
-  const visibleNav = NAV_ENTRIES.filter((n) => {
-    if (n.branchAccess) return canViewBranches;
-    if (n.ownerOnly) return isOwner;
-    return true;
-  });
+  const visibleNav = NAV_ENTRIES.filter((n) => !n.cap || gate[n.cap]);
 
   const go = (path: string) => {
     onOpenChange(false);

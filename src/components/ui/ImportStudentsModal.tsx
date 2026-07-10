@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { UploadCloud } from 'lucide-react';
 import { track } from '@/lib/umami';
-import { useAuthStore } from '@/store/authStore';
+import { useIsCrossTenant } from '@/hooks/useCan';
 
 interface ImportStudentsModalProps {
   open: boolean;
@@ -33,13 +33,13 @@ export default function ImportStudentsModal({
   branchId,
 }: ImportStudentsModalProps) {
   const { t } = useTranslation();
-  const isOwner = useAuthStore((s) => s.isOwner);
+  const isCrossTenant = useIsCrossTenant();
   const [file, setFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
-  // Owners span multiple branches — bulk-create needs to know which one.
-  // Managers/operators/teachers are already scoped server-side.
-  const branchRequired = isOwner() && !branchId;
+  // Cross-tenant roles (owner/dev) span multiple branches — bulk-create needs
+  // to know which one. Managers/operators/teachers are already scoped server-side.
+  const branchRequired = isCrossTenant && !branchId;
 
   const mutation = useMutation({
     mutationFn: (f: File) => bulkCreateStudents(f, branchId),

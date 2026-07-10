@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
-import { useAuthStore } from '@/store/authStore';
+import { useIsCrossTenant } from '@/hooks/useCan';
 import { CourseType } from '@/types/student';
 
 export interface DashboardAnalytics {
@@ -30,11 +30,10 @@ export const useDashboardAnalytics = (
   branchId?: string,
   courseType?: CourseType,
 ) => {
-  const role = useAuthStore((s) => s.user?.role);
-  const isOwnerOrDev = role === 'owner' || role === 'dev';
+  const isCrossTenant = useIsCrossTenant();
   return useQuery<DashboardAnalytics>({
     queryKey: ['dashboard', branchId, courseType],
-    enabled: !!branchId || isOwnerOrDev,
+    enabled: !!branchId || isCrossTenant,
     queryFn: async () => {
       const { data: res } = await axiosInstance.get('/dashboard/analytics', {
         params: { branch_id: branchId, course_type: courseType },

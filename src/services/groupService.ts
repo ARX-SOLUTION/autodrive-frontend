@@ -1,13 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
+import { useIsCrossTenant } from '@/hooks/useCan';
 import { Group, GroupOverview, GroupsById } from '@/types/group';
 import { track } from '@/lib/umami';
 
 export const useGroups = () => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
-  const role = useAuthStore((s) => s.user?.role);
-  const isCrossTenantRole = role === 'owner' || role === 'dev';
+  const isCrossTenant = useIsCrossTenant();
   return useQuery<Group[]>({
     queryKey: ['groups', branchId],
     queryFn: async () => {
@@ -17,14 +17,13 @@ export const useGroups = () => {
       if (Array.isArray(res)) return res;
       return [];
     },
-    enabled: !!branchId || isCrossTenantRole,
+    enabled: !!branchId || isCrossTenant,
   });
 };
 
 export const useGroupsOverview = () => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
-  const role = useAuthStore((s) => s.user?.role);
-  const isCrossTenantRole = role === 'owner' || role === 'dev';
+  const isCrossTenant = useIsCrossTenant();
   return useQuery<GroupOverview[]>({
     queryKey: ['groups-overview', branchId],
     queryFn: async () => {
@@ -34,7 +33,7 @@ export const useGroupsOverview = () => {
       if (Array.isArray(res)) return res;
       return [];
     },
-    enabled: !!branchId || isCrossTenantRole,
+    enabled: !!branchId || isCrossTenant,
   });
 };
 

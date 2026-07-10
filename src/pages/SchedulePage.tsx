@@ -40,7 +40,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/store/authStore';
+import { useCan } from '@/hooks/useCan';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 const formatTime = (iso: string) => {
@@ -83,8 +83,7 @@ const SchedulePage = () => {
   const deleteTemplate = useDeleteTemplate();
   const generateLessons = useGenerateLessons();
 
-  const role = useAuthStore((s) => s.user?.role);
-  const canEdit = role === 'owner' || role === 'manager' || role === 'operator';
+  const canEdit = useCan('manageSchedule');
 
   // Dialog state
   const [createOpen, setCreateOpen] = useState(false);

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
-import { useAuthStore } from '@/store/authStore';
+import { useIsCrossTenant } from '@/hooks/useCan';
 import { Payment, PaymentSnapshot, PaymentSummary } from '@/types/payment';
 import { track } from '@/lib/umami';
 import type { ListResponse } from '@/types/list';
@@ -21,6 +21,7 @@ export interface PaymentListFilters {
   paymentMethod?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  studentId?: string;
 }
 
 export const toPaymentQueryParams = ({
@@ -35,6 +36,7 @@ export const toPaymentQueryParams = ({
   paymentMethod,
   sortBy,
   sortOrder,
+  studentId,
 }: PaymentListFilters) => ({
   branch_id: branchId,
   course_type: courseType,
@@ -47,6 +49,7 @@ export const toPaymentQueryParams = ({
   payment_method: paymentMethod,
   sort_by: sortBy,
   sort_order: sortOrder,
+  student_id: studentId,
 });
 
 export const fetchPaymentsPage = async (
@@ -87,8 +90,7 @@ export const usePaymentsPage = (
     'branchId' | 'courseType' | 'startDate' | 'endDate' | 'page' | 'limit'
   >,
 ) => {
-  const role = useAuthStore((s) => s.user?.role);
-  const isOwnerOrDev = role === 'owner' || role === 'dev';
+  const isCrossTenant = useIsCrossTenant();
   return useQuery<ListResponse<Payment>>({
     queryKey: [
       'payments',
@@ -104,7 +106,7 @@ export const usePaymentsPage = (
       options?.sortBy,
       options?.sortOrder,
     ],
-    enabled: !!branchId || isOwnerOrDev,
+    enabled: !!branchId || isCrossTenant,
     queryFn: () =>
       fetchPaymentsPage({
         branchId,
@@ -124,11 +126,10 @@ export const usePayments = (
   startDate?: Date,
   endDate?: Date,
 ) => {
-  const role = useAuthStore((s) => s.user?.role);
-  const isOwnerOrDev = role === 'owner' || role === 'dev';
+  const isCrossTenant = useIsCrossTenant();
   return useQuery<ListResponse<Payment>, Error, Payment[]>({
     queryKey: ['payments', branchId, courseType, startDate, endDate],
-    enabled: !!branchId || isOwnerOrDev,
+    enabled: !!branchId || isCrossTenant,
     queryFn: () =>
       fetchPaymentsPage({
         branchId,
@@ -140,12 +141,28 @@ export const usePayments = (
   });
 };
 
+// Per-student payment ledger for the student detail card "To'lovlar" tab.
+// Reuses GET /payments with a student_id filter; the broad ['payments']
+// invalidation in useCreatePayment/useDeletePayment refreshes this key for free.
+export const useStudentPayments = (studentId?: string, page = 1, limit = 20) =>
+  useQuery<ListResponse<Payment>>({
+    queryKey: ['payments', 'student', studentId, page, limit],
+    enabled: !!studentId,
+    queryFn: () =>
+      fetchPaymentsPage({
+        studentId,
+        page,
+        limit,
+        sortBy: 'date',
+        sortOrder: 'desc',
+      }),
+  });
+
 export const usePaymentSnapshot = (branchId?: string) => {
-  const role = useAuthStore((s) => s.user?.role);
-  const isOwnerOrDev = role === 'owner' || role === 'dev';
+  const isCrossTenant = useIsCrossTenant();
   return useQuery<PaymentSnapshot>({
     queryKey: ['payment-snapshot', branchId],
-    enabled: !!branchId || isOwnerOrDev,
+    enabled: !!branchId || isCrossTenant,
     queryFn: async () => {
       const { data: res } = await axiosInstance.get('/payments/snapshot', {
         params: { branch_id: branchId },
@@ -164,8 +181,7 @@ export const usePaymentSummary = (
   course_type?: string,
   enabled = true,
 ) => {
-  const role = useAuthStore((s) => s.user?.role);
-  const isOwnerOrDev = role === 'owner' || role === 'dev';
+  const isCrossTenant = useIsCrossTenant();
   return useQuery<PaymentSummary>({
     queryKey: [
       'payment-summary',
@@ -176,7 +192,7 @@ export const usePaymentSummary = (
       payment_type,
       course_type,
     ],
-    enabled: enabled && (!!branchId || isOwnerOrDev),
+    enabled: enabled && (!!branchId || isCrossTenant),
     queryFn: async () => {
       const { data: res } = await axiosInstance.get('/payments/summary', {
         params: {
@@ -200,6 +216,7 @@ export const useCreatePayment = () => {
       student_id: string;
       amount: number;
       payment_method: string;
+      idempotency_key: string;
     }) => {
       const { data } = await axiosInstance.post('/payments', payment);
       return data?.data || data;
@@ -209,6 +226,7 @@ export const useCreatePayment = () => {
       qc.invalidateQueries({ queryKey: ['payment-summary'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
       qc.invalidateQueries({ queryKey: ['students'] });
+      qc.invalidateQueries({ queryKey: ['student'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       track('payment_create');
     },
@@ -226,6 +244,7 @@ export const useDeletePayment = () => {
       qc.invalidateQueries({ queryKey: ['payment-summary'] });
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
       qc.invalidateQueries({ queryKey: ['students'] });
+      qc.invalidateQueries({ queryKey: ['student'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       track('payment_delete');
     },

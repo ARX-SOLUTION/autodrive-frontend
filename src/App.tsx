@@ -9,11 +9,12 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageLoader } from '@/components/layout/PageLoader';
-import { useAuthStore } from '@/store/authStore';
+import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const StudentsPage = lazy(() => import('./pages/StudentsPage'));
+const StudentDetailPage = lazy(() => import('./pages/StudentDetailPage'));
 const PaymentsPage = lazy(() => import('./pages/PaymentsPage'));
 const OperatorsPage = lazy(() => import('./pages/OperatorsPage'));
 const TeachersPage = lazy(() => import('./pages/TeachersPage'));
@@ -41,14 +42,16 @@ const BlogPage = lazy(() => import('./pages/BlogPage'));
 const BlogPostPage = lazy(() => import('./pages/BlogPostPage'));
 
 const OwnerRoute = ({ children }: { children: React.ReactNode }) => {
-  const isOwner = useAuthStore((s) => s.isOwner);
-  if (!isOwner()) return <Navigate to="/dashboard" replace />;
+  // owner + dev (dev is a strict superset of owner) — company-wide admin routes
+  const isCrossTenant = useIsCrossTenant();
+  if (!isCrossTenant) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
 const BranchAccessRoute = ({ children }: { children: React.ReactNode }) => {
-  const canViewBranches = useAuthStore((s) => s.canViewBranches);
-  if (!canViewBranches()) return <Navigate to="/dashboard" replace />;
+  // owner + manager (+ dev) — management-level access to branch/staff sections
+  const canManageStaff = useCan('manageStaff');
+  if (!canManageStaff) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
@@ -74,13 +77,14 @@ const App = () => (
               <Route
                 path="branches"
                 element={
-                  <BranchAccessRoute>
+                  <OwnerRoute>
                     <BranchesPage />
-                  </BranchAccessRoute>
+                  </OwnerRoute>
                 }
               />
               <Route path="groups" element={<GroupsPage />} />
               <Route path="students" element={<StudentsPage />} />
+              <Route path="students/:id" element={<StudentDetailPage />} />
               <Route path="payments" element={<PaymentsPage />} />
               <Route
                 path="operators"
