@@ -186,7 +186,43 @@
     "activity_action_create": "создал",
     "activity_action_update": "обновил",
     "activity_action_delete": "удалил",
-    "live_label": "Онлайн"
+    "live_label": "Онлайн",
+    "v2": {
+      "title": "Контроль выручки",
+      "subtitle": "Фокус на выручке, задолженности и филиалах.",
+      "period": "Период",
+      "this_month": "Этот месяц",
+      "today": "Сегодня",
+      "from": "С",
+      "to": "По",
+      "branch": "Филиал",
+      "course": "Курс",
+      "refresh": "Обновить",
+      "today_revenue": "Выручка сегодня",
+      "today_meta": "Часовой пояс Asia/Tashkent",
+      "period_revenue": "Выручка за период",
+      "previous_period": "Предыдущий период: {{value}}",
+      "outstanding_debt": "Общая задолженность",
+      "debtors": "{{count}} студентов с долгом",
+      "coverage": "Покрытие платежей",
+      "coverage_meta": "{{paid}} полностью · {{partial}} частично",
+      "revenue_trend": "Тренд выручки",
+      "recovery": "Очередь по долгам",
+      "recovery_subtitle": "Сначала самые крупные задолженности.",
+      "open_payments": "Платежи",
+      "view_data": "Показать данные",
+      "branch_performance": "Показатели филиалов",
+      "branch_subtitle": "Выручка за период и текущая задолженность.",
+      "manage_branches": "Филиалы",
+      "collection_status": "Статус платежей",
+      "collection_subtitle": "Текущее покрытие активных студентов.",
+      "operations": "Операционный контроль",
+      "operations_subtitle": "Действия после проверки выручки.",
+      "quick_actions": "Быстрые действия",
+      "quick_actions_subtitle": "Частые действия в одном месте.",
+      "updated": "Обновлено",
+      "revenue_chart_summary": "Тренд выручки: {{total}} всего"
+    }
   },
   "branches": {
     "title": "Филиалы",
@@ -206,7 +242,12 @@
     "manager": "Менеджер",
     "students": "Студенты",
     "created": "Создан",
-    "status": "Статус"
+    "status": "Статус",
+    "detail": {
+      "revenue": "Выручка",
+      "debt": "Задолженность",
+      "today_payment": "Платёж за сегодня"
+    }
   },
   "groups": {
     "title": "Группы",

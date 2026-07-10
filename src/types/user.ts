@@ -10,6 +10,7 @@ export interface User {
   branch_name?: string;
   company_id?: string;
   company_status?: CompanyStatus;
+  company_features?: Record<string, boolean>;
   phone?: string;
   avatar?: string;
   specialization?: Specialization;

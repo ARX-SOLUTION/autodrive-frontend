@@ -647,19 +647,26 @@ const StudentsPage = () => {
                   : sorted?.map((s, idx) => (
                       <tr
                         key={s.id}
-                        className="table-row-striped border-b border-border/50"
+                        className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
+                        onClick={() => {
+                          if (window.getSelection()?.toString()) return;
+                          navigate(`/students/${s.id}`);
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') navigate(`/students/${s.id}`);
+                          if (e.key === ' ') {
+                            e.preventDefault();
+                            navigate(`/students/${s.id}`);
+                          }
+                        }}
                       >
                         <td className="px-4 py-3 text-center text-muted-foreground">
                           {startIndex + idx + 1}
                         </td>
                         <td className="px-4 py-3 font-medium">
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/students/${s.id}`)}
-                            className="text-left hover:text-primary hover:underline"
-                          >
-                            {capitalize(s.last_name)}
-                          </button>
+                          {capitalize(s.last_name)}
                         </td>
                         <td className="px-4 py-3">
                           {capitalize(s.first_name)}
@@ -794,7 +801,10 @@ const StudentsPage = () => {
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-1">
                             <button
-                              onClick={() => openEdit(s)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEdit(s);
+                              }}
                               aria-label={t('common.edit')}
                               title={t('common.edit')}
                               className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
@@ -803,7 +813,10 @@ const StudentsPage = () => {
                             </button>
                             {isCrossTenant && (
                               <button
-                                onClick={() => setDeleteId(s.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteId(s.id);
+                                }}
                                 aria-label={t('common.delete')}
                                 title={t('common.delete')}
                                 className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
@@ -881,10 +894,14 @@ const StudentsPage = () => {
                   title={`${capitalize(s.first_name)} ${capitalize(s.last_name)}`}
                   subtitle={formatPhone(s.phone)}
                   fields={fields}
+                  onClick={() => navigate(`/students/${s.id}`)}
                   actions={
                     <>
                       <button
-                        onClick={() => openEdit(s)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEdit(s);
+                        }}
                         aria-label={t('common.edit')}
                         title={t('common.edit')}
                         className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
@@ -893,7 +910,10 @@ const StudentsPage = () => {
                       </button>
                       {isCrossTenant && (
                         <button
-                          onClick={() => setDeleteId(s.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteId(s.id);
+                          }}
                           aria-label={t('common.delete')}
                           title={t('common.delete')}
                           className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"

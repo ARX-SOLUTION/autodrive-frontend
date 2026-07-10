@@ -50,6 +50,7 @@ import {
 } from 'lucide-react';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
+import CompanyRevenueDashboard from '@/pages/dashboard/CompanyRevenueDashboard';
 
 // ---------- Formatting helpers ----------
 
@@ -310,7 +311,7 @@ const SectionCard = ({
 
 // ---------- Main dashboard ----------
 
-const MainDashboard = () => {
+const LegacyMainDashboard = () => {
   const { t, i18n } = useTranslation();
   const isCrossTenant = useIsCrossTenant();
   const user = useAuthStore((s) => s.user);
@@ -1184,7 +1185,10 @@ const TeacherDashboard = () => {
 const DashboardPage = () => {
   const user = useAuthStore((s) => s.user);
   if (user?.role === 'teacher') return <TeacherDashboard />;
-  return <MainDashboard />;
+  if (user?.company_features?.company_dashboard_v2 === false) {
+    return <LegacyMainDashboard />;
+  }
+  return <CompanyRevenueDashboard />;
 };
 
 export default DashboardPage;

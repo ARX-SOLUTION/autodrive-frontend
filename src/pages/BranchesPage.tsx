@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
   useBranches,
   useCreateBranch,
@@ -36,6 +37,7 @@ const EMPTY_FORM: FormState = { name: '', location: '', phone: '' };
 
 const BranchesPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const canManageBranches = useAuthStore((s) => s.canManageBranches);
   const { data: branches, isLoading } = useBranches();
   const createMut = useCreateBranch();
@@ -142,7 +144,20 @@ const BranchesPage = () => {
               </div>
             ) : (
               (branches || []).map((b) => (
-                <div key={b.id} className="glass-card p-5 animate-slide-in">
+                <div
+                  key={b.id}
+                  onClick={() => navigate(`/branches/${b.id}`)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') navigate(`/branches/${b.id}`);
+                    if (e.key === ' ') {
+                      e.preventDefault();
+                      navigate(`/branches/${b.id}`);
+                    }
+                  }}
+                  className="glass-card p-5 animate-slide-in cursor-pointer hover:border-primary/40 transition-colors"
+                >
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-heading text-lg font-semibold text-balance">
@@ -163,14 +178,20 @@ const BranchesPage = () => {
                       {canManageBranches() && (
                         <>
                           <button
-                            onClick={() => openEdit(b)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEdit(b);
+                            }}
                             aria-label={t('common.edit')}
                             className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
                           <button
-                            onClick={() => setDeleteId(b.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(b.id);
+                            }}
                             aria-label={t('common.delete')}
                             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                           >
@@ -216,6 +237,7 @@ const BranchesPage = () => {
               key={b.id}
               title={b.name}
               subtitle={b.location}
+              onClick={() => navigate(`/branches/${b.id}`)}
               fields={[
                 { label: t('branches.students'), value: b.active_students },
                 {
@@ -235,14 +257,20 @@ const BranchesPage = () => {
                 canManageBranches() ? (
                   <>
                     <button
-                      onClick={() => openEdit(b)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEdit(b);
+                      }}
                       aria-label={t('common.edit')}
                       className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={() => setDeleteId(b.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteId(b.id);
+                      }}
                       aria-label={t('common.delete')}
                       className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                     >

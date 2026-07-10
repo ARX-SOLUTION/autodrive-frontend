@@ -186,7 +186,43 @@
     "activity_action_create": "yaratdi",
     "activity_action_update": "tahrirladi",
     "activity_action_delete": "o'chirdi",
-    "live_label": "Jonli"
+    "live_label": "Jonli",
+    "v2": {
+      "title": "Revenue control",
+      "subtitle": "Tushum, qarzdorlik va filiallar bo‘yicha boshqaruv ko‘rinishi.",
+      "period": "Davr",
+      "this_month": "Bu oy",
+      "today": "Bugun",
+      "from": "Dan",
+      "to": "Gacha",
+      "branch": "Filial",
+      "course": "Kurs",
+      "refresh": "Yangilash",
+      "today_revenue": "Bugungi tushum",
+      "today_meta": "Asia/Tashkent bo‘yicha",
+      "period_revenue": "Tanlangan davr tushumi",
+      "previous_period": "Oldingi davr: {{value}}",
+      "outstanding_debt": "Jami qarzdorlik",
+      "debtors": "{{count}} ta qarzdor student",
+      "coverage": "Payment coverage",
+      "coverage_meta": "{{paid}} to‘liq · {{partial}} qisman",
+      "revenue_trend": "Tushum trendi",
+      "recovery": "Qarzdorlik recovery queue",
+      "recovery_subtitle": "Eng katta qarzlar birinchi ko‘rsatiladi.",
+      "open_payments": "To‘lovlar",
+      "view_data": "Ma’lumotlarni ko‘rish",
+      "branch_performance": "Filial performance",
+      "branch_subtitle": "Tanlangan davr tushumi va joriy qarzdorlik.",
+      "manage_branches": "Filiallar",
+      "collection_status": "To‘lov holati",
+      "collection_subtitle": "Active studentlar bo‘yicha joriy coverage.",
+      "operations": "Operational follow-through",
+      "operations_subtitle": "Revenue qaroridan keyingi bajariladigan ishlar.",
+      "quick_actions": "Tezkor amallar",
+      "quick_actions_subtitle": "Eng ko‘p ishlatiladigan harakatlar.",
+      "updated": "Yangilandi",
+      "revenue_chart_summary": "Tushum trendi: {{total}} jami"
+    }
   },
   "branches": {
     "title": "Filiallar",
@@ -206,7 +242,12 @@
     "manager": "Menejer",
     "students": "Talabalar",
     "created": "Yaratilgan",
-    "status": "Holat"
+    "status": "Holat",
+    "detail": {
+      "revenue": "Tushum",
+      "debt": "Qarzdorlik",
+      "today_payment": "Bugungi to'lov"
+    }
   },
   "groups": {
     "title": "Guruhlar",

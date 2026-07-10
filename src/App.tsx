@@ -21,6 +21,7 @@ const TeachersPage = lazy(() => import('./pages/TeachersPage'));
 const AttendancePage = lazy(() => import('./pages/AttendancePage'));
 const SchedulePage = lazy(() => import('./pages/SchedulePage'));
 const BranchesPage = lazy(() => import('./pages/BranchesPage'));
+const BranchDetailPage = lazy(() => import('./pages/BranchDetailPage'));
 const GroupsPage = lazy(() => import('./pages/GroupsPage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
@@ -79,6 +80,14 @@ const App = () => (
                 element={
                   <OwnerRoute>
                     <BranchesPage />
+                  </OwnerRoute>
+                }
+              />
+              <Route
+                path="branches/:id"
+                element={
+                  <OwnerRoute>
+                    <BranchDetailPage />
                   </OwnerRoute>
                 }
               />
