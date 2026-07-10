@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
+import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import {
   useDashboardAnalytics,
   useTeacherAnalytics,
@@ -311,11 +312,11 @@ const SectionCard = ({
 
 const MainDashboard = () => {
   const { t, i18n } = useTranslation();
-  const isOwner = useAuthStore((s) => s.isOwner);
+  const isCrossTenant = useIsCrossTenant();
   const user = useAuthStore((s) => s.user);
   const [courseType, setCourseType] = useState<CourseType | undefined>();
   const [branchId, setBranchId] = useState<string | undefined>(
-    isOwner() ? undefined : user?.branch_id || undefined,
+    isCrossTenant ? undefined : user?.branch_id || undefined,
   );
 
   const { data: analytics, isLoading } = useDashboardAnalytics(
@@ -327,8 +328,8 @@ const MainDashboard = () => {
   const { data: auditData } = useAuditLogs({ page: 1, limit: 6 });
   const { data: branches } = useBranches();
 
-  const owner = isOwner();
-  const canViewAudit = owner || user?.role === 'manager';
+  const canViewAllBranches = useCan('viewAllBranches');
+  const canViewAudit = useCan('viewAudit');
 
   // ---- Derived values ----
   const revenueSeries = useMemo(
@@ -532,7 +533,7 @@ const MainDashboard = () => {
               </TabsTrigger>
             </TabsList>
           </Tabs>
-          {owner && (
+          {canViewAllBranches && (
             <Select
               value={branchId || 'all'}
               onValueChange={(v) => setBranchId(v === 'all' ? undefined : v)}
@@ -798,7 +799,7 @@ const MainDashboard = () => {
             <div className="py-10 text-center text-sm text-muted-foreground">
               {t('dashboard.top_branches_empty')}
             </div>
-          ) : owner ? (
+          ) : canViewAllBranches ? (
             <ResponsiveContainer
               width="100%"
               height={Math.max(180, topBranches.length * 40)}
@@ -921,7 +922,7 @@ const MainDashboard = () => {
           )}
         </SectionCard>
 
-        {/* Activity log — owner/manager only (backend gates /audit-logs) */}
+        {/* Activity log — viewAudit (owner/dev); backend gates /audit-logs */}
         {canViewAudit && (
           <SectionCard
             staggerDelayMs={360}
@@ -1000,7 +1001,7 @@ const MainDashboard = () => {
       </section>
 
       {/* ===== Owner-only: branch comparison ===== */}
-      {owner && analytics.branch_stats.length > 1 && (
+      {canViewAllBranches && analytics.branch_stats.length > 1 && (
         <SectionCard
           staggerDelayMs={400}
           className="cv-auto"

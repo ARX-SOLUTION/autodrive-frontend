@@ -38,7 +38,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/store/authStore';
+import { useCan } from '@/hooks/useCan';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 const formatDate = (d: string) => {
@@ -78,14 +78,9 @@ const AttendancePage = () => {
     excused: t('attendance.status.excused'),
   };
 
-  const role = useAuthStore((s) => s.user?.role);
-  const canEdit =
-    role === 'owner' ||
-    role === 'manager' ||
-    role === 'operator' ||
-    role === 'teacher';
-  // teacher can mark attendance but cannot create lessons (backend @Roles)
-  const canCreate = canEdit && role !== 'teacher';
+  const canEdit = useCan('takeAttendance');
+  // teacher can mark attendance but cannot create/delete lessons
+  const canCreate = useCan('manageSchedule');
   const groupOptions = groups || [];
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -243,7 +238,7 @@ const AttendancePage = () => {
                       <ChevronDown className="ml-1 h-4 w-4" />
                     )}
                   </Button>
-                  {canEdit && role !== 'teacher' && (
+                  {canCreate && (
                     <Button
                       variant="ghost"
                       size="sm"

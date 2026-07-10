@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useUsers, useCreateManager } from '@/services/userService';
 import { useBranches } from '@/services/branchService';
-import { useAuthStore } from '@/store/authStore';
+import { RoleGate } from '@/components/RoleGate';
 import { extractErrorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,7 +63,6 @@ const roleLabel = (role?: string) => {
 const UsersPage = () => {
   const { t } = useTranslation();
   const { data: users, isLoading } = useUsers('manager');
-  const isOwner = useAuthStore((s) => s.user?.role === 'owner');
   const { data: branches } = useBranches();
   const createMut = useCreateManager();
   const [sortField, setSortField] = useState('name');
@@ -158,11 +157,11 @@ const UsersPage = () => {
             {t('users.count', { count: (users || []).length })}
           </p>
         </div>
-        {isOwner && (
+        <RoleGate cap="manageStaff">
           <Button className="gap-2" onClick={openCreate}>
             <Plus className="h-4 w-4" /> {t('users.add')}
           </Button>
-        )}
+        </RoleGate>
       </div>
 
       <div className="hidden md:block glass-card overflow-hidden">

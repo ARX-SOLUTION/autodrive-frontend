@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
+import { useIsCrossTenant } from '@/hooks/useCan';
 import {
   Lesson,
   CreateLessonPayload,
@@ -12,8 +13,7 @@ import { parseListResponse } from '@/lib/listResponse';
 
 export const useLessons = (page = 1, limit = 50) => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
-  const role = useAuthStore((s) => s.user?.role);
-  const isCrossTenantRole = role === 'owner' || role === 'dev';
+  const isCrossTenant = useIsCrossTenant();
   return useQuery<PaginatedLessons>({
     queryKey: ['lessons', branchId, page, limit],
     queryFn: async () => {
@@ -23,7 +23,7 @@ export const useLessons = (page = 1, limit = 50) => {
       const { data, meta } = parseListResponse<Lesson>(res, page, limit);
       return { data, total: meta.total, page, limit };
     },
-    enabled: !!branchId || isCrossTenantRole,
+    enabled: !!branchId || isCrossTenant,
   });
 };
 

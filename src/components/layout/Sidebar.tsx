@@ -2,6 +2,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useLogout } from '@/services/authService';
+import { useCan } from '@/hooks/useCan';
+import type { Capability } from '@/lib/permissions';
 import {
   LayoutDashboard,
   Building2,
@@ -28,8 +30,9 @@ type NavItem = {
   path: string;
   labelKey: string;
   icon: typeof LayoutDashboard;
-  ownerOnly?: boolean;
-  branchAccess?: boolean;
+  // Capability required to see this item; absent = visible to everyone.
+  // Must match the route guard in App.tsx for the same path.
+  cap?: Capability;
 };
 
 const navItems: NavItem[] = [
@@ -38,7 +41,7 @@ const navItems: NavItem[] = [
     path: '/branches',
     labelKey: 'nav.branches',
     icon: Building2,
-    branchAccess: true,
+    cap: 'manageBranches',
   },
   { path: '/schedule', labelKey: 'nav.schedule', icon: Calendar },
   { path: '/attendance', labelKey: 'nav.attendance', icon: ClipboardCheck },
@@ -49,16 +52,26 @@ const navItems: NavItem[] = [
     path: '/operators',
     labelKey: 'nav.operators',
     icon: Headphones,
-    branchAccess: true,
+    cap: 'manageStaff',
   },
-  { path: '/teachers', labelKey: 'nav.teachers', icon: Users, branchAccess: true },
+  {
+    path: '/teachers',
+    labelKey: 'nav.teachers',
+    icon: Users,
+    cap: 'manageStaff',
+  },
   {
     path: '/users',
     labelKey: 'nav.users',
     icon: UserCog,
-    ownerOnly: true,
+    cap: 'manageUsers',
   },
-  { path: '/audit', labelKey: 'nav.audit', icon: ShieldCheck, ownerOnly: true },
+  {
+    path: '/audit',
+    labelKey: 'nav.audit',
+    icon: ShieldCheck,
+    cap: 'viewAudit',
+  },
   { path: '/profile', labelKey: 'nav.profile', icon: User },
 ];
 
@@ -72,14 +85,16 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
 
-  const isOwner = useAuthStore((s) => s.isOwner);
-  const canViewBranches = useAuthStore((s) => s.canViewBranches);
-  const logoutMutation = useLogout();
-  const canSee = (item: NavItem) => {
-    if (item.branchAccess) return canViewBranches();
-    if (item.ownerOnly) return isOwner();
-    return true;
+  // Precompute every gate (hooks can't run in a loop). Keyed by capability so
+  // canSee is a plain lookup that mirrors CommandPalette and the App.tsx guards.
+  const gate: Partial<Record<Capability, boolean>> = {
+    manageBranches: useCan('manageBranches'),
+    manageStaff: useCan('manageStaff'),
+    manageUsers: useCan('manageUsers'),
+    viewAudit: useCan('viewAudit'),
   };
+  const logoutMutation = useLogout();
+  const canSee = (item: NavItem) => !item.cap || gate[item.cap] === true;
   const filteredItems = navItems.filter(canSee);
 
   const roleLabel =

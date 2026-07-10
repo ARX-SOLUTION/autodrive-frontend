@@ -5,8 +5,9 @@ import { vi, describe, it, expect } from 'vitest';
 import ImportStudentsModal from '@/components/ui/ImportStudentsModal';
 
 vi.mock('@/store/authStore', () => ({
+  // The modal reads role via useIsCrossTenant (owner||dev) → provide user.role.
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
-    selector({ isOwner: () => true }),
+    selector({ user: { role: 'owner' }, isOwner: () => true }),
 }));
 
 vi.mock('@/services/studentService', () => ({

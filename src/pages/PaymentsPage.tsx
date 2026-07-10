@@ -24,6 +24,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useIsCrossTenant } from '@/hooks/useCan';
 import { cn } from '@/lib/utils';
 import { useBranches } from '@/services/branchService';
 import {
@@ -68,10 +69,19 @@ const formatMoney = (n: number) =>
   new Intl.NumberFormat('uz-UZ').format(n || 0) + " so'm";
 
 // Date preset helpers
-const today = () => {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
+const UZ_OFFSET_MS = 5 * 60 * 60 * 1000;
+// ponytail (L2): "today" means Tashkent's calendar day, not the device
+// OS's — matches the backend's hardcoded UZ+5 day-bucket math (uzDayStart/
+// uzDayEnd) so a device in another timezone can't pick a day that's off by
+// one right around midnight UZ time. Returns a local-midnight Date for that
+// Tashkent day, so downstream setDate()/toLocalDateStr() keep working as-is.
+export const today = () => {
+  const tashkentNow = new Date(Date.now() + UZ_OFFSET_MS);
+  return new Date(
+    tashkentNow.getUTCFullYear(),
+    tashkentNow.getUTCMonth(),
+    tashkentNow.getUTCDate(),
+  );
 };
 const weekAgo = () => {
   const d = today();
@@ -96,10 +106,10 @@ const lastMonthEnd = () => {
 
 const PaymentsPage = () => {
   const { t } = useTranslation();
-  const isOwner = useAuthStore((s) => s.isOwner);
+  const isCrossTenant = useIsCrossTenant();
   const user = useAuthStore((s) => s.user);
   const [branchId, setBranchId] = useState<string | undefined>(
-    isOwner() ? undefined : user?.branch_id || undefined,
+    isCrossTenant ? undefined : user?.branch_id || undefined,
   );
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -124,6 +134,30 @@ const PaymentsPage = () => {
   const activePaymentMethod =
     paymentMethodFilter !== 'all' ? paymentMethodFilter : undefined;
 
+  // ponytail (L3): reset the page synchronously during render (React's
+  // "adjust state while rendering" pattern) instead of a separate reactive
+  // effect — otherwise the stale page number fires one wasted request for
+  // the new filters before the effect corrects it on the next render.
+  const filterSignature = JSON.stringify([
+    branchId,
+    activeCourseType,
+    dateFrom?.getTime(),
+    dateTo?.getTime(),
+    debouncedSearch,
+    activePaymentStatus,
+    activePaymentMethod,
+    sortField,
+    sortDir,
+  ]);
+  const [prevFilterSignature, setPrevFilterSignature] =
+    useState(filterSignature);
+  const effectivePage =
+    filterSignature === prevFilterSignature ? currentPage : 1;
+  if (filterSignature !== prevFilterSignature) {
+    setPrevFilterSignature(filterSignature);
+    setCurrentPage(1);
+  }
+
   const {
     data: paymentsPage,
     isLoading,
@@ -133,7 +167,7 @@ const PaymentsPage = () => {
     activeCourseType,
     dateFrom,
     dateTo,
-    currentPage,
+    effectivePage,
     SERVER_PAGE_SIZE,
     {
       search: debouncedSearch,
@@ -173,18 +207,17 @@ const PaymentsPage = () => {
     ],
   );
 
-  const canQueryPayments =
-    !!branchId || user?.role === 'owner' || user?.role === 'dev';
+  const canQueryPayments = !!branchId || isCrossTenant;
 
   useEffect(() => {
-    if (isOwner()) {
+    if (isCrossTenant) {
       toast.info(t('payments.export_info'), {
         description: t('payments.export_desc'),
         duration: 5000,
         icon: <Download className="h-4 w-4" />,
       });
     }
-  }, [isOwner, t]);
+  }, [isCrossTenant, t]);
 
   const hasAnyFilter =
     hasDateFilter ||
@@ -192,20 +225,6 @@ const PaymentsPage = () => {
     paymentMethodFilter !== 'all' ||
     courseTypeFilter !== 'all' ||
     !!debouncedSearch;
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [
-    branchId,
-    activeCourseType,
-    dateFrom,
-    dateTo,
-    debouncedSearch,
-    activePaymentStatus,
-    activePaymentMethod,
-    sortField,
-    sortDir,
-  ]);
 
   const { data: summaryPayments = [] } = useQuery({
     queryKey: ['payments-summary-list', paymentQueryFilters],
@@ -347,7 +366,7 @@ const PaymentsPage = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {isOwner() && (
+          {isCrossTenant && (
             <Button
               variant="outline"
               className="gap-2 border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-950 font-semibold"
@@ -437,7 +456,7 @@ const PaymentsPage = () => {
 
         {/* Filter row */}
         <div className="flex flex-wrap items-center gap-3">
-          {isOwner() && (
+          {isCrossTenant && (
             <Select
               value={branchId || 'all'}
               onValueChange={(v) => setBranchId(v === 'all' ? undefined : v)}

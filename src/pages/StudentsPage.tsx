@@ -2,9 +2,10 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
+import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useDebounce } from '@/hooks/useDebounce';
 import {
   fetchAllStudents,
@@ -82,7 +83,8 @@ export const formatDateTime = (d: string) => {
 
 const StudentsPage = () => {
   const { t } = useTranslation();
-  const isOwner = useAuthStore((s) => s.isOwner);
+  const isCrossTenant = useIsCrossTenant();
+  const canManageStaff = useCan('manageStaff');
   const user = useAuthStore((s) => s.user);
 
   // Filter state lives in the URL so reload / share / bookmark preserves
@@ -91,6 +93,7 @@ const StudentsPage = () => {
   // keeps the browser-history short — every keystroke in the search box
   // would otherwise push a history entry.
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const setParam = (key: string, value: string | undefined) => {
     setSearchParams(
       (prev) => {
@@ -108,7 +111,9 @@ const StudentsPage = () => {
   const setCourseType = (v: CourseType) =>
     setParam('course_type', v === 'tezkor' ? undefined : v);
 
-  const defaultBranchId = isOwner() ? undefined : user?.branch_id || undefined;
+  const defaultBranchId = isCrossTenant
+    ? undefined
+    : user?.branch_id || undefined;
   const branchId = searchParams.get('branch_id') ?? defaultBranchId;
   const setBranchId = (v: string | undefined) => setParam('branch_id', v);
 
@@ -339,7 +344,7 @@ const StudentsPage = () => {
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        {isOwner() && (
+        {isCrossTenant && (
           <Select
             value={branchId || 'all'}
             onValueChange={(v) => setBranchId(v === 'all' ? undefined : v)}
@@ -359,27 +364,28 @@ const StudentsPage = () => {
         )}
 
         {/* Operator filter — owner va manager uchun */}
-        {(isOwner() || user?.role === 'manager') &&
-          (operators || []).length > 0 && (
-            <Select
-              value={operatorId || 'all'}
-              onValueChange={(v) => setOperatorId(v === 'all' ? undefined : v)}
-            >
-              <SelectTrigger className="w-44 bg-secondary border-border">
-                <SelectValue placeholder={t('students.operator')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('common.all_operators')}</SelectItem>
-                {(operators || [])
-                  .filter((op) => isOwner() || op.branch_id === user?.branch_id)
-                  .map((op) => (
-                    <SelectItem key={op.id} value={op.id}>
-                      {op.name || op.email}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          )}
+        {canManageStaff && (operators || []).length > 0 && (
+          <Select
+            value={operatorId || 'all'}
+            onValueChange={(v) => setOperatorId(v === 'all' ? undefined : v)}
+          >
+            <SelectTrigger className="w-44 bg-secondary border-border">
+              <SelectValue placeholder={t('students.operator')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all_operators')}</SelectItem>
+              {(operators || [])
+                .filter(
+                  (op) => isCrossTenant || op.branch_id === user?.branch_id,
+                )
+                .map((op) => (
+                  <SelectItem key={op.id} value={op.id}>
+                    {op.name || op.email}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        )}
 
         {/* Date filter — single or range */}
         <Popover>
@@ -647,7 +653,13 @@ const StudentsPage = () => {
                           {startIndex + idx + 1}
                         </td>
                         <td className="px-4 py-3 font-medium">
-                          {capitalize(s.last_name)}
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/students/${s.id}`)}
+                            className="text-left hover:text-primary hover:underline"
+                          >
+                            {capitalize(s.last_name)}
+                          </button>
                         </td>
                         <td className="px-4 py-3">
                           {capitalize(s.first_name)}
@@ -789,7 +801,7 @@ const StudentsPage = () => {
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
-                            {isOwner() && (
+                            {isCrossTenant && (
                               <button
                                 onClick={() => setDeleteId(s.id)}
                                 aria-label={t('common.delete')}
@@ -879,7 +891,7 @@ const StudentsPage = () => {
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
-                      {isOwner() && (
+                      {isCrossTenant && (
                         <button
                           onClick={() => setDeleteId(s.id)}
                           aria-label={t('common.delete')}

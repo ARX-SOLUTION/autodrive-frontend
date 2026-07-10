@@ -290,7 +290,11 @@
       "course": "Курс",
       "debt": "Долг",
       "status": "Статус",
-      "date": "Дата"
+      "date": "Дата",
+      "total_price": "Общая цена",
+      "tab_info": "Информация",
+      "tab_payments": "Платежи",
+      "tab_exams": "Экзамены"
     },
     "tab_info": "Данные",
     "tab_exams": "Экзамены",
@@ -318,6 +322,11 @@
       "success": "{{count}} студентов загружено",
       "partial": "{{success}} загружено, {{errors}} ошибок",
       "branch_required": "Сначала выберите филиал для импорта студентов."
+    },
+    "no_debt": "Без долга",
+    "course": {
+      "tezkor": "Экспресс",
+      "avto_maktab": "Автошкола"
     }
   },
   "exams": {
@@ -387,6 +396,18 @@
       "method": "Способ оплаты",
       "operator": "Оператор",
       "course": "Тип курса"
+    },
+    "method": {
+      "naqd": "Наличные",
+      "karta": "Карта",
+      "perechisleniya": "Перечисление"
+    },
+    "empty": "Платежей нет",
+    "table": {
+      "date": "Дата",
+      "amount": "Сумма",
+      "method": "Способ",
+      "operator": "Оператор"
     }
   },
   "audit": {

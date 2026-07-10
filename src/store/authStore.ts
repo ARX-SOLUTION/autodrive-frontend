@@ -1,6 +1,7 @@
 import { User } from '@/types/user';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { isCrossTenantRole } from '@/lib/permissions';
 
 interface AuthState {
   token: string | null;
@@ -11,6 +12,8 @@ interface AuthState {
   setUser: (user: User) => void;
   logout: () => void;
   isOwner: () => boolean;
+  isDev: () => boolean;
+  isCrossTenant: () => boolean;
   canViewBranches: () => boolean;
   canManageBranches: () => boolean;
   setHasHydrated: (state: boolean) => void;
@@ -37,6 +40,9 @@ export const useAuthStore = create<AuthState>()(
           hasHydrated: true,
         }),
       isOwner: () => get().user?.role === 'owner',
+      isDev: () => get().user?.role === 'dev',
+      // owner or dev — the cross-branch roles (single source: permissions.ts)
+      isCrossTenant: () => isCrossTenantRole(get().user?.role),
       canViewBranches: () => {
         const role = get().user?.role;
         return role === 'owner' || role === 'manager';

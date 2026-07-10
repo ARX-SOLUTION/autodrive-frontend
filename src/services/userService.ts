@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
+import { useIsCrossTenant } from '@/hooks/useCan';
 import { User } from '@/types/user';
 
 export const useUsers = (role?: string) => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
-  const actorRole = useAuthStore((s) => s.user?.role);
-  const isCrossTenantRole = actorRole === 'owner' || actorRole === 'dev';
+  const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
     queryKey: ['users', branchId, role],
     queryFn: async () => {
@@ -18,7 +18,7 @@ export const useUsers = (role?: string) => {
       if (Array.isArray(res)) return res;
       return [];
     },
-    enabled: !!branchId || isCrossTenantRole,
+    enabled: !!branchId || isCrossTenant,
   });
 };
 
@@ -33,14 +33,14 @@ export const useCreateManager = () => {
       phone?: string;
       branchId: string;
     }) => {
-      const { data } = await axiosInstance.post("/users", {
+      const { data } = await axiosInstance.post('/users', {
         ...m,
-        role: "manager",
+        role: 'manager',
       });
       return data?.data || data;
     },
     onSuccess: () =>
-      qc.invalidateQueries({ queryKey: ["users", activeCompanyId] }),
+      qc.invalidateQueries({ queryKey: ['users', activeCompanyId] }),
   });
 };
 
