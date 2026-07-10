@@ -2,9 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { Branch } from '@/types/branch';
 
-export const useBranches = () =>
+export const useBranches = (enabled = true) =>
   useQuery<Branch[]>({
     queryKey: ['branches'],
+    enabled,
     queryFn: async () => {
       const { data: res } = await axiosInstance.get('/branches');
       const arr = res?.data?.data || res?.data;

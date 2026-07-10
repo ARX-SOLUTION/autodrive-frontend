@@ -60,3 +60,131 @@ export const useTeacherAnalytics = () => {
     },
   });
 };
+
+export interface CompanyOverviewQuery {
+  branchId?: string;
+  courseType?: CourseType;
+  companyId?: string;
+  from?: string;
+  to?: string;
+  granularity?: 'day' | 'week';
+}
+
+export interface CompanyOverview {
+  timezone: 'Asia/Tashkent';
+  filters: {
+    branch_id?: string;
+    course_type?: string;
+    from: string;
+    to: string;
+    granularity: 'day' | 'week';
+  };
+  freshness: { generated_at: string; data_through: string | null };
+  kpis: {
+    revenue: {
+      today: number;
+      period: number;
+      previous_period: number;
+      period_from?: string;
+      period_to?: string;
+      period_to_inclusive?: string;
+      previous_period_from?: string;
+      previous_period_to?: string;
+      previous_period_to_inclusive?: string;
+      delta_percent: number | null;
+      currency: 'UZS';
+    };
+    debt: {
+      current_outstanding: number;
+      students_with_debt: number;
+      avg_per_debtor: number;
+    };
+    students: {
+      active: number;
+      new: number;
+      new_previous_period?: number;
+      completed: number;
+      dropped: number;
+    };
+    result_stats?: { oqimoqda: number; topshirdi: number; yiqildi: number };
+    course_mix: { tezkor: number; avto_maktab: number };
+    collection: {
+      paid: number;
+      partial: number;
+      debt: number;
+      coverage_rate: number;
+    };
+  };
+  revenue_trend: Array<{
+    period_start: string;
+    amount: number;
+    payment_count: number;
+  }>;
+  enrollment_trend?: Array<{
+    month: string;
+    tezkor: number;
+    avto_maktab: number;
+  }>;
+  branch_performance: Array<{
+    id: string;
+    name: string;
+    active_students: number;
+    collected_revenue: number;
+    outstanding_debt: number;
+    new_students: number;
+    collection_rate: number;
+  }>;
+  recovery_queue: Array<{
+    student_id: string;
+    student_name: string;
+    branch_name: string;
+    course_type: string;
+    debt: number;
+    total_price: number;
+    last_payment_at: string | null;
+  }>;
+  operations: {
+    next_lessons: Array<{
+      id: string;
+      title: string;
+      date: string;
+      lesson_type: string;
+      group_name: string;
+      branch_id: string;
+    }>;
+    incomplete_attendance_lessons: Array<{
+      id: string;
+      title: string;
+      date: string;
+      group_name: string;
+      branch_id: string;
+    }>;
+    attendance_status: Record<string, number>;
+  };
+}
+
+export const useCompanyOverview = (query: CompanyOverviewQuery = {}) => {
+  const isCrossTenant = useIsCrossTenant();
+  const enabled = !!query.branchId || isCrossTenant || !!query.companyId;
+  return useQuery<CompanyOverview>({
+    queryKey: ['company-dashboard', query],
+    enabled,
+    queryFn: async () => {
+      const { data: res } = await axiosInstance.get(
+        '/dashboard/company-overview',
+        {
+          params: {
+            branch_id: query.branchId,
+            course_type: query.courseType,
+            company_id: query.companyId,
+            from: query.from,
+            to: query.to,
+            granularity: query.granularity,
+          },
+        },
+      );
+      return res?.data || res;
+    },
+    staleTime: 30_000,
+  });
+};
