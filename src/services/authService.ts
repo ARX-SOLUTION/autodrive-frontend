@@ -35,6 +35,7 @@ export const useRestoreSession = () => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
+  const queryClient = useQueryClient();
 
   const query = useQuery<User>({
     queryKey: ['me'],
@@ -51,8 +52,11 @@ export const useRestoreSession = () => {
   }, [query.data, setUser]);
 
   useEffect(() => {
-    if ((query.error as AxiosError)?.response?.status === 401) logout();
-  }, [query.error, logout]);
+    if ((query.error as AxiosError)?.response?.status === 401) {
+      logout();
+      queryClient.clear();
+    }
+  }, [query.error, logout, queryClient]);
 
   return query;
 };

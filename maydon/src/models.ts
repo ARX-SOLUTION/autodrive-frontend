@@ -3,14 +3,14 @@
  */
 
 export type BookingStatus =
-  | "pending"
-  | "confirmed"
-  | "rejected"
-  | "expired"
-  | "cancelled"
-  | "completed";
+  | 'pending'
+  | 'confirmed'
+  | 'rejected'
+  | 'expired'
+  | 'cancelled'
+  | 'completed';
 
-export type BookingSource = "user" | "admin" | "recurring";
+export type BookingSource = 'user' | 'admin' | 'recurring';
 
 export interface Booking {
   id: string;

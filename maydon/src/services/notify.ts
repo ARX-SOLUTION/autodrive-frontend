@@ -2,12 +2,16 @@
  * Notification Service — Bot messages
  */
 
-import type { Booking, User } from "./models.ts";
-import { getSettings } from "./kv.ts";
+import type { Booking, User } from './models.ts';
+import { getSettings } from './kv.ts';
 
 interface BotContext {
   sendMessage: (chatId: number, text: string, options?: any) => Promise<void>;
-  editMessageText: (chatId: number, messageId: number, text: string) => Promise<void>;
+  editMessageText: (
+    chatId: number,
+    messageId: number,
+    text: string,
+  ) => Promise<void>;
 }
 
 export async function notifyNewRequest(
@@ -17,16 +21,17 @@ export async function notifyNewRequest(
   user: User,
   queuePosition: number,
 ): Promise<void> {
-  const text = `🆕 **Yangi so'rov**\n\n` +
+  const text =
+    `🆕 **Yangi so'rov**\n\n` +
     `👤 ${user.name}\n` +
-    `📞 ${user.phone ?? "N/A"}\n` +
+    `📞 ${user.phone ?? 'N/A'}\n` +
     `📅 ${booking.date}\n` +
     `⏰ ${booking.start} - ${booking.end}\n` +
     `🔢 Navbat: #${queuePosition}\n\n` +
     `[Yozish](tg://user?id=${user.telegramId})`;
 
   await bot.sendMessage(adminChatId, text, {
-    parse_mode: "Markdown",
+    parse_mode: 'Markdown',
   });
 }
 
@@ -36,7 +41,8 @@ export async function notifyUserQueued(
   booking: Booking,
   queuePosition: number,
 ): Promise<void> {
-  const text = `✅ So'rovingiz qabul qilindi!\n\n` +
+  const text =
+    `✅ So'rovingiz qabul qilindi!\n\n` +
     `📅 ${booking.date}\n` +
     `⏰ ${booking.start} - ${booking.end}\n` +
     `🔢 Siz navbatda #${queuePosition}\n\n` +
@@ -50,12 +56,13 @@ export async function notifyUserConfirmed(
   userId: number,
   booking: Booking,
 ): Promise<void> {
-  const text = `✅ **Tasdiqlandi!**\n\n` +
+  const text =
+    `✅ **Tasdiqlandi!**\n\n` +
     `📅 ${booking.date}\n` +
     `⏰ ${booking.start} - ${booking.end}\n\n` +
     `Kelishingizni kutamiz!`;
 
-  await bot.sendMessage(userId, text, { parse_mode: "Markdown" });
+  await bot.sendMessage(userId, text, { parse_mode: 'Markdown' });
 }
 
 export async function notifyUserRejected(
@@ -65,7 +72,8 @@ export async function notifyUserRejected(
   reason: string,
   alternativeSlots?: Array<{ start: string; end: string }>,
 ): Promise<void> {
-  let text = `❌ **Rad etildi**\n\n` +
+  let text =
+    `❌ **Rad etildi**\n\n` +
     `📅 ${booking.date}\n` +
     `⏰ ${booking.start} - ${booking.end}\n\n` +
     `Sabab: ${reason}`;
@@ -77,7 +85,7 @@ export async function notifyUserRejected(
     }
   }
 
-  await bot.sendMessage(userId, text, { parse_mode: "Markdown" });
+  await bot.sendMessage(userId, text, { parse_mode: 'Markdown' });
 }
 
 export async function notifyUserExpired(
@@ -85,7 +93,8 @@ export async function notifyUserExpired(
   userId: number,
   booking: Booking,
 ): Promise<void> {
-  const text = `⏰ **Muddati o'tdi**\n\n` +
+  const text =
+    `⏰ **Muddati o'tdi**\n\n` +
     `📅 ${booking.date}\n` +
     `⏰ ${booking.start} - ${booking.end}\n\n` +
     `Admin javob bermadi. Qayta so'rov yuborishingiz mumkin.`;
@@ -99,7 +108,8 @@ export async function notifySlotAvailable(
   booking: Booking,
   pendingCount: number,
 ): Promise<void> {
-  const text = `🔓 **Slot bo'shadi!**\n\n` +
+  const text =
+    `🔓 **Slot bo'shadi!**\n\n` +
     `📅 ${booking.date}\n` +
     `⏰ ${booking.start} - ${booking.end}\n\n` +
     `Navbatda ${pendingCount} ta so'rov bor.`;

@@ -2,27 +2,27 @@
  * KV Client & Key Helpers
  */
 
-import type { Booking, User, Admin, Settings, Recurring } from "./models.ts";
+import type { Booking, User, Admin, Settings, Recurring } from './models.ts';
 
-const KV_PATH = Deno.env.get("KV_PATH") ?? "maydon_kv";
+const KV_PATH = Deno.env.get('KV_PATH') ?? 'maydon_kv';
 
 export const kv = await Deno.openKv(KV_PATH);
 
 // ========== Key Builders ==========
 
 export const keys = {
-  settings: ["settings"] as const,
-  admin: (telegramId: number) => ["admins", telegramId] as const,
-  user: (telegramId: number) => ["users", telegramId] as const,
-  booking: (id: string) => ["bookings", id] as const,
+  settings: ['settings'] as const,
+  admin: (telegramId: number) => ['admins', telegramId] as const,
+  user: (telegramId: number) => ['users', telegramId] as const,
+  booking: (id: string) => ['bookings', id] as const,
   bookingByDay: (date: string, id: string) =>
-    ["bookings_by_day", date, id] as const,
+    ['bookings_by_day', date, id] as const,
   bookingByUser: (telegramId: number, id: string) =>
-    ["bookings_by_user", telegramId, id] as const,
+    ['bookings_by_user', telegramId, id] as const,
   pendingByCreated: (createdAt: string, id: string) =>
-    ["pending_by_created", createdAt, id] as const,
-  dayVersion: (date: string) => ["day_version", date] as const,
-  recurring: (id: string) => ["recurring", id] as const,
+    ['pending_by_created', createdAt, id] as const,
+  dayVersion: (date: string) => ['day_version', date] as const,
+  recurring: (id: string) => ['recurring', id] as const,
 };
 
 // ========== CRUD Helpers ==========
@@ -61,7 +61,7 @@ export async function getBooking(id: string): Promise<Booking | null> {
 
 export async function getBookingsByDay(date: string): Promise<Booking[]> {
   const entries = await kv.list<Booking>({
-    prefix: keys.bookingByDay(date, ""),
+    prefix: keys.bookingByDay(date, ''),
   });
   const bookings: Booking[] = [];
   for await (const entry of entries) {
@@ -75,7 +75,7 @@ export async function getBookingsByUser(
   telegramId: number,
 ): Promise<Booking[]> {
   const entries = await kv.list<string>({
-    prefix: keys.bookingByUser(telegramId, ""),
+    prefix: keys.bookingByUser(telegramId, ''),
   });
   const bookings: Booking[] = [];
   for await (const entry of entries) {
@@ -87,12 +87,12 @@ export async function getBookingsByUser(
 
 export async function getPendingRequests(): Promise<Booking[]> {
   const entries = await kv.list<string>({
-    prefix: keys.pendingByCreated("", ""),
+    prefix: keys.pendingByCreated('', ''),
   });
   const bookings: Booking[] = [];
   for await (const entry of entries) {
     const booking = await getBooking(entry.value);
-    if (booking && booking.status === "pending") {
+    if (booking && booking.status === 'pending') {
       bookings.push(booking);
     }
   }
@@ -105,7 +105,7 @@ export async function getRecurring(id: string): Promise<Recurring | null> {
 }
 
 export async function getAllRecurring(): Promise<Recurring[]> {
-  const entries = await kv.list<Recurring>({ prefix: keys.recurring("") });
+  const entries = await kv.list<Recurring>({ prefix: keys.recurring('') });
   const recurring: Recurring[] = [];
   for await (const entry of entries) {
     recurring.push(entry.value);
@@ -119,8 +119,8 @@ export async function initDefaultSettings(): Promise<void> {
   const existing = await getSettings();
   if (!existing) {
     await upsertSettings({
-      openTime: "08:00",
-      closeTime: "23:00",
+      openTime: '08:00',
+      closeTime: '23:00',
       horizonDays: 7,
       minDurMin: 60,
       maxDurMin: 180,

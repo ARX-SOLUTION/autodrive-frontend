@@ -2,27 +2,27 @@
  * API Routes — User endpoints
  */
 
-import { Hono } from "hono";
-import { authMiddleware } from "../auth.ts";
-import { getUser, upsertUser, getBookingsByUser } from "../kv.ts";
-import { createBooking } from "../services/booking.ts";
-import { getAvailabilityRange } from "../services/availability.ts";
+import { Hono } from 'hono';
+import { authMiddleware } from '../auth.ts';
+import { getUser, upsertUser, getBookingsByUser } from '../kv.ts';
+import { createBooking } from '../services/booking.ts';
+import { getAvailabilityRange } from '../services/availability.ts';
 
 const api = new Hono();
 
 // Apply auth to all routes
-api.use("/*", authMiddleware());
+api.use('/*', authMiddleware());
 
 // GET /api/me — User profile
-api.get("/me", async (c: any) => {
-  const auth = c.get("auth");
+api.get('/me', async (c: any) => {
+  const auth = c.get('auth');
   let user = await getUser(auth.userId);
 
   if (!user) {
     // Create user on first visit
     user = {
       telegramId: auth.userId,
-      name: auth.userName ?? "Unknown",
+      name: auth.userName ?? 'Unknown',
       isBlocked: false,
       createdAt: new Date().toISOString(),
     };
@@ -39,13 +39,13 @@ api.get("/me", async (c: any) => {
 });
 
 // POST /api/me/phone — Link phone (from bot contact)
-api.post("/me/phone", async (c: any) => {
-  const auth = c.get("auth");
+api.post('/me/phone', async (c: any) => {
+  const auth = c.get('auth');
   const { phone } = await c.req.json();
 
   const user = await getUser(auth.userId);
   if (!user) {
-    return c.json({ error: "User not found" }, 404);
+    return c.json({ error: 'User not found' }, 404);
   }
 
   user.phone = phone;
@@ -55,12 +55,12 @@ api.post("/me/phone", async (c: any) => {
 });
 
 // GET /api/availability — Get available slots
-api.get("/availability", async (c: any) => {
-  const from = c.req.query("from");
-  const to = c.req.query("to");
+api.get('/availability', async (c: any) => {
+  const from = c.req.query('from');
+  const to = c.req.query('to');
 
   if (!from || !to) {
-    return c.json({ error: "Missing from/to params" }, 400);
+    return c.json({ error: 'Missing from/to params' }, 400);
   }
 
   try {
@@ -72,10 +72,10 @@ api.get("/availability", async (c: any) => {
 });
 
 // GET /api/bookings/my — User's bookings
-api.get("/bookings/my", async (c: any) => {
-  const auth = c.get("auth");
+api.get('/bookings/my', async (c: any) => {
+  const auth = c.get('auth');
   const bookings = await getBookingsByUser(auth.userId);
-  
+
   return c.json({
     bookings: bookings.map((b) => ({
       id: b.id,
@@ -89,12 +89,12 @@ api.get("/bookings/my", async (c: any) => {
 });
 
 // POST /api/bookings — Create booking request
-api.post("/bookings", async (c: any) => {
-  const auth = c.get("auth");
+api.post('/bookings', async (c: any) => {
+  const auth = c.get('auth');
   const { date, start, end } = await c.req.json();
 
   if (!date || !start || !end) {
-    return c.json({ error: "Missing required fields" }, 400);
+    return c.json({ error: 'Missing required fields' }, 400);
   }
 
   const result = await createBooking(
@@ -104,7 +104,7 @@ api.post("/bookings", async (c: any) => {
     date,
     start,
     end,
-    "user"
+    'user',
   );
 
   if (!result.success) {
@@ -113,10 +113,10 @@ api.post("/bookings", async (c: any) => {
 
   // Notify admins
   try {
-    const { notifyAdminsNewRequest } = await import("../bot/handlers.ts");
+    const { notifyAdminsNewRequest } = await import('../bot/handlers.ts');
     await notifyAdminsNewRequest(result.booking!);
   } catch (e) {
-    console.error("Failed to notify admins:", e);
+    console.error('Failed to notify admins:', e);
   }
 
   return c.json({

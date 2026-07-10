@@ -2,9 +2,9 @@
  * Availability Service — Get free/busy slots
  */
 
-import { getBookingsByDay, getSettings } from "./kv.ts";
-import type { Booking } from "./models.ts";
-import { timeToMinutes, minutesToTime, overlaps } from "./booking.ts";
+import { getBookingsByDay, getSettings } from './kv.ts';
+import type { Booking } from './models.ts';
+import { timeToMinutes, minutesToTime, overlaps } from './booking.ts';
 
 export interface TimeSlot {
   start: string;
@@ -20,11 +20,13 @@ export async function getDayAvailability(date: string): Promise<{
 }> {
   const settings = await getSettings();
   if (!settings) {
-    throw new Error("Settings not initialized");
+    throw new Error('Settings not initialized');
   }
 
   const bookings = await getBookingsByDay(date);
-  const confirmedBookings = bookings.filter((b: Booking) => b.status === "confirmed");
+  const confirmedBookings = bookings.filter(
+    (b: Booking) => b.status === 'confirmed',
+  );
 
   const openMin = timeToMinutes(settings.openTime);
   const closeMin = timeToMinutes(settings.closeTime);
@@ -38,7 +40,7 @@ export async function getDayAvailability(date: string): Promise<{
     const endTime = minutesToTime(endMin);
 
     const overlappingBooking = confirmedBookings.find((b: Booking) =>
-      overlaps(startTime, endTime, b.start, b.end)
+      overlaps(startTime, endTime, b.start, b.end),
     );
 
     slots.push({
@@ -65,12 +67,8 @@ export async function getAvailabilityRange(
   const start = new Date(fromDate);
   const end = new Date(toDate);
 
-  for (
-    let d = new Date(start);
-    d <= end;
-    d.setDate(d.getDate() + 1)
-  ) {
-    const dateStr = d.toISOString().split("T")[0];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const dateStr = d.toISOString().split('T')[0];
     const day = await getDayAvailability(dateStr);
     result[dateStr] = day.slots;
   }
@@ -78,7 +76,11 @@ export async function getAvailabilityRange(
   return result;
 }
 
-export function findFreeRanges(slots: TimeSlot[], minDurationMin: number, maxDurationMin: number): Array<{
+export function findFreeRanges(
+  slots: TimeSlot[],
+  minDurationMin: number,
+  maxDurationMin: number,
+): Array<{
   start: string;
   end: string;
   durationMin: number;

@@ -59,6 +59,7 @@
     "creating": "Creating...",
     "deleting": "Deleting...",
     "error": "An error occurred",
+    "retry": "Retry",
     "success": "Success",
     "not_found": "Not found",
     "no_data": "No data found",
@@ -315,7 +316,8 @@
       "uploading": "Uploading...",
       "upload_button": "Upload",
       "success": "{{count}} students imported",
-      "partial": "{{success}} imported, {{errors}} row errors"
+      "partial": "{{success}} imported, {{errors}} row errors",
+      "branch_required": "Select a branch first to import students."
     }
   },
   "exams": {

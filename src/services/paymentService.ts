@@ -147,19 +147,10 @@ export const usePaymentSnapshot = (branchId?: string) => {
     queryKey: ['payment-snapshot', branchId],
     enabled: !!branchId || isOwnerOrDev,
     queryFn: async () => {
-      try {
-        const { data: res } = await axiosInstance.get('/payments/snapshot', {
-          params: { branch_id: branchId },
-        });
-        return res?.data || res;
-      } catch {
-        return {
-          today_income: 0,
-          this_month_income: 0,
-          current_total_debt: 0,
-          students_with_debt: 0,
-        };
-      }
+      const { data: res } = await axiosInstance.get('/payments/snapshot', {
+        params: { branch_id: branchId },
+      });
+      return res?.data || res;
     },
   });
 };
@@ -187,25 +178,17 @@ export const usePaymentSummary = (
     ],
     enabled: enabled && (!!branchId || isOwnerOrDev),
     queryFn: async () => {
-      try {
-        const { data: res } = await axiosInstance.get('/payments/summary', {
-          params: {
-            branchId,
-            startDate: startDate ? toLocalDateStr(startDate) : undefined,
-            endDate: endDate ? toLocalDateStr(endDate) : undefined,
-            paymentStatus: payment_status,
-            payment_type,
-            course_type,
-          },
-        });
-        return res?.data || res;
-      } catch {
-        return {
-          period_collected: 0,
-          period_payments_count: 0,
-          period_debt: 0,
-        };
-      }
+      const { data: res } = await axiosInstance.get('/payments/summary', {
+        params: {
+          branchId,
+          startDate: startDate ? toLocalDateStr(startDate) : undefined,
+          endDate: endDate ? toLocalDateStr(endDate) : undefined,
+          paymentStatus: payment_status,
+          payment_type,
+          course_type,
+        },
+      });
+      return res?.data || res;
     },
   });
 };

@@ -1,4 +1,3 @@
-```
 # Dependencies
 node_modules/
 
@@ -79,4 +78,10 @@ Thumbs.db
 .pytest_cache/
 .nyc_output/
 coverage/
-```
+
+# Project-local Codex skills
+.codex/
+
+*storybook.log
+storybook-static/
+.vercel

@@ -8,6 +8,7 @@ import {
   PaginatedLessons,
 } from '@/types/attendance';
 import { track } from '@/lib/umami';
+import { parseListResponse } from '@/lib/listResponse';
 
 export const useLessons = (page = 1, limit = 50) => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
@@ -19,25 +20,20 @@ export const useLessons = (page = 1, limit = 50) => {
       const { data: res } = await axiosInstance.get('/lessons', {
         params: { page, limit },
       });
-      if (res && typeof res.total === 'number') return res as PaginatedLessons;
-      if (Array.isArray(res?.data))
-        return { data: res.data, total: res.data.length, page, limit };
-      if (Array.isArray(res))
-        return { data: res, total: res.length, page, limit };
-      return { data: [], total: 0, page, limit };
+      const { data, meta } = parseListResponse<Lesson>(res, page, limit);
+      return { data, total: meta.total, page, limit };
     },
     enabled: !!branchId || isCrossTenantRole,
   });
 };
 
 export const useLessonById = ({ id }: { id: string }) =>
-  useQuery<Lesson | null>({
+  useQuery<Lesson>({
     queryKey: ['lessons', 'detail', id],
-    queryFn: async () =>
-      axiosInstance
-        .get(`/lessons/${id}`)
-        .then(({ data }) => data?.data || data)
-        .catch(() => null),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/lessons/${id}`);
+      return data?.data || data;
+    },
     enabled: !!id,
   });
 

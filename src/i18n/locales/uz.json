@@ -59,6 +59,7 @@
     "creating": "Yaratilmoqda...",
     "deleting": "O'chirilmoqda...",
     "error": "Xatolik yuz berdi",
+    "retry": "Qayta urinish",
     "success": "Muvaffaqiyatli",
     "not_found": "Topilmadi",
     "no_data": "Ma'lumot topilmadi",
@@ -315,7 +316,8 @@
       "uploading": "Yuklanmoqda...",
       "upload_button": "Yuklash",
       "success": "{{count}} ta talaba yuklandi",
-      "partial": "{{success}} yuklandi, {{errors}} ta xato"
+      "partial": "{{success}} yuklandi, {{errors}} ta xato",
+      "branch_required": "Talabalarni yuklashdan oldin filialni tanlang."
     }
   },
   "exams": {

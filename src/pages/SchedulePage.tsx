@@ -404,27 +404,27 @@ const SchedulePage = () => {
           />
         ) : (
           <div className="divide-y">
-            {templates.map((t) => (
+            {templates.map((tpl) => (
               <div
-                key={t.id}
+                key={tpl.id}
                 className="flex flex-wrap items-center justify-between gap-2 px-4 py-2"
               >
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="font-medium text-sm">
-                    {DAY_LABELS[t.day_of_week]}
+                    {DAY_LABELS[tpl.day_of_week]}
                   </span>
                   <span className="text-sm text-foreground">
-                    {t.start_time}—{t.end_time}
+                    {tpl.start_time}—{tpl.end_time}
                   </span>
                   <span className="text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
-                    {lessonTypeLabel[t.lesson_type]}
+                    {lessonTypeLabel[tpl.lesson_type]}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    {t.group_name}
+                    {tpl.group_name}
                   </span>
-                  {t.teacher_name && (
+                  {tpl.teacher_name && (
                     <span className="text-xs text-muted-foreground">
-                      {t.teacher_name}
+                      {tpl.teacher_name}
                     </span>
                   )}
                 </div>
@@ -432,7 +432,7 @@ const SchedulePage = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setDeleteId(t.id)}
+                    onClick={() => setDeleteId(tpl.id)}
                     aria-label={t('schedule.delete_title')}
                     title={t('schedule.delete_title')}
                     className="h-11 w-11"

@@ -2,20 +2,31 @@
  * Telegram Bot — grammY handlers
  */
 
-import { Bot, InlineKeyboard } from "grammy";
-import type { Booking, User } from "./models.ts";
-import { getPendingRequests, getUser, upsertUser, getAdmin, kv, keys } from "../kv.ts";
-import { confirmBooking, rejectBooking, cancelBooking } from "../services/booking.ts";
+import { Bot, InlineKeyboard } from 'grammy';
+import type { Booking, User } from './models.ts';
+import {
+  getPendingRequests,
+  getUser,
+  upsertUser,
+  getAdmin,
+  kv,
+  keys,
+} from '../kv.ts';
+import {
+  confirmBooking,
+  rejectBooking,
+  cancelBooking,
+} from '../services/booking.ts';
 import {
   notifyNewRequest,
   notifyUserQueued,
   notifyUserConfirmed,
   notifyUserRejected,
-} from "../services/notify.ts";
+} from '../services/notify.ts';
 
-const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
+const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
 if (!botToken) {
-  throw new Error("TELEGRAM_BOT_TOKEN not set");
+  throw new Error('TELEGRAM_BOT_TOKEN not set');
 }
 
 export const bot = new Bot(botToken);
@@ -26,20 +37,20 @@ const botContext = {
     try {
       await bot.api.sendMessage(chatId, text, options);
     } catch (e) {
-      console.error("Failed to send message:", e);
+      console.error('Failed to send message:', e);
     }
   },
   editMessageText: async (chatId: number, messageId: number, text: string) => {
     try {
       await bot.api.editMessageText(chatId, messageId, text);
     } catch (e) {
-      console.error("Failed to edit message:", e);
+      console.error('Failed to edit message:', e);
     }
   },
 };
 
 // /start command
-bot.command("start", async (ctx) => {
+bot.command('start', async (ctx) => {
   const userId = ctx.from?.id;
   if (!userId) return;
 
@@ -47,7 +58,7 @@ bot.command("start", async (ctx) => {
   if (!user) {
     user = {
       telegramId: userId,
-      name: ctx.from.first_name ?? "Unknown",
+      name: ctx.from.first_name ?? 'Unknown',
       username: ctx.from.username,
       isBlocked: false,
       createdAt: new Date().toISOString(),
@@ -57,16 +68,20 @@ bot.command("start", async (ctx) => {
 
   const isAdmin = !!(await getAdmin(userId));
 
-  const welcomeText = `Assalomu alaykum, ${user.name}! 👋\n\n` +
+  const welcomeText =
+    `Assalomu alaykum, ${user.name}! 👋\n\n` +
     `Bu Maydon Booking boti.\n` +
     `Futbol maydonini band qilish uchun Mini App'dan foydalaning.\n\n` +
-    (isAdmin ? "✅ Siz adminsiz." : "");
+    (isAdmin ? '✅ Siz adminsiz.' : '');
 
   const keyboard = new InlineKeyboard();
-  keyboard.url("📅 Band qilish", Deno.env.get("MINI_APP_URL") ?? "https://maydon.uz");
+  keyboard.url(
+    '📅 Band qilish',
+    Deno.env.get('MINI_APP_URL') ?? 'https://maydon.uz',
+  );
 
   if (!user.phone) {
-    keyboard.text("📞 Telefon raqam yuborish", "contact");
+    keyboard.text('📞 Telefon raqam yuborish', 'contact');
   }
 
   await ctx.reply(welcomeText, {
@@ -75,7 +90,7 @@ bot.command("start", async (ctx) => {
 });
 
 // Contact handler
-bot.on("contact", async (ctx) => {
+bot.on('contact', async (ctx) => {
   const userId = ctx.from?.id;
   const contact = ctx.message?.contact;
 
@@ -87,44 +102,46 @@ bot.on("contact", async (ctx) => {
   user.phone = contact.phone_number;
   await upsertUser(user);
 
-  await ctx.reply("✅ Raqamingiz saqlandi!");
+  await ctx.reply('✅ Raqamingiz saqlandi!');
 });
 
 // Callback query handler for inline buttons
 bot.callbackQuery(async (ctx) => {
   const data = ctx.callbackQuery?.data;
-  if (!data || typeof data !== "string") return;
+  if (!data || typeof data !== 'string') return;
 
-  const [action, bookingId] = data.split(":");
+  const [action, bookingId] = data.split(':');
   const userId = ctx.from?.id;
 
   // Check admin
   const isAdmin = !!(await getAdmin(userId!));
   if (!isAdmin) {
-    await ctx.answerCallbackQuery({ text: "Faqat adminlar uchun" });
+    await ctx.answerCallbackQuery({ text: 'Faqat adminlar uchun' });
     return;
   }
 
   switch (action) {
-    case "confirm":
+    case 'confirm':
       const confirmResult = await confirmBooking(bookingId);
       if (confirmResult.success) {
-        await ctx.answerCallbackQuery({ text: "✅ Tasdiqlandi" });
+        await ctx.answerCallbackQuery({ text: '✅ Tasdiqlandi' });
         // TODO: Update message
       } else {
-        await ctx.answerCallbackQuery({ text: "❌ Xato: " + confirmResult.error });
+        await ctx.answerCallbackQuery({
+          text: '❌ Xato: ' + confirmResult.error,
+        });
       }
       break;
 
-    case "reject":
+    case 'reject':
       await rejectBooking(bookingId);
-      await ctx.answerCallbackQuery({ text: "❌ Rad etildi" });
+      await ctx.answerCallbackQuery({ text: '❌ Rad etildi' });
       // TODO: Update message
       break;
 
-    case "cancel":
+    case 'cancel':
       await cancelBooking(bookingId);
-      await ctx.answerCallbackQuery({ text: "⚠️ Bekor qilindi" });
+      await ctx.answerCallbackQuery({ text: '⚠️ Bekor qilindi' });
       break;
 
     default:
@@ -138,11 +155,12 @@ export async function notifyAdminsNewRequest(booking: Booking): Promise<void> {
   if (!user) return;
 
   const pending = await getPendingRequests();
-  const queuePosition = pending.findIndex((b: Booking) => b.id === booking.id) + 1;
+  const queuePosition =
+    pending.findIndex((b: Booking) => b.id === booking.id) + 1;
 
   // Get all admins
   const admins = await Array.fromAsync(kv.list({ prefix: keys.admin(0) }));
-  
+
   for (const entry of admins) {
     const adminId = (entry as any).key[1] as number;
     await notifyNewRequest(botContext, adminId, booking, user, queuePosition);
@@ -165,5 +183,11 @@ export async function notifyUserRejection(
   alternativeSlots?: Array<{ start: string; end: string }>,
 ): Promise<void> {
   if (!booking.userId) return;
-  await notifyUserRejected(botContext, booking.userId, booking, reason, alternativeSlots);
+  await notifyUserRejected(
+    botContext,
+    booking.userId,
+    booking,
+    reason,
+    alternativeSlots,
+  );
 }

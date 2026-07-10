@@ -52,7 +52,7 @@ const OperatorsPage = () => {
   const [editItem, setEditItem] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({ fullName: '', phone: '', branchId: '' });
-  const { data: operators, isLoading } = useOperators();
+  const { data: operators, isLoading, isError, refetch } = useOperators();
   const { data: branches } = useBranches();
   const createMut = useCreateOperator();
   const updateMut = useUpdateOperator();
@@ -361,8 +361,16 @@ const OperatorsPage = () => {
                 />
               ))}
         </div>
-        {filtered.length === 0 && !isLoading && (
-          <EmptyState icon={Headphones} title={t('operators.not_found')} />
+        {isError ? (
+          <EmptyState
+            title={t('common.error')}
+            action={{ label: t('common.retry'), onClick: () => refetch() }}
+          />
+        ) : (
+          filtered.length === 0 &&
+          !isLoading && (
+            <EmptyState icon={Headphones} title={t('operators.not_found')} />
+          )
         )}
       </div>
 
@@ -381,7 +389,9 @@ const OperatorsPage = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="operator-name">{t('operators.first_name')} *</Label>
+              <Label htmlFor="operator-name">
+                {t('operators.first_name')} *
+              </Label>
               <Input
                 id="operator-name"
                 value={form.fullName}
@@ -411,7 +421,10 @@ const OperatorsPage = () => {
                 value={form.branchId}
                 onValueChange={(v) => setForm((f) => ({ ...f, branchId: v }))}
               >
-                <SelectTrigger id="operator-branch" className="bg-secondary border-border">
+                <SelectTrigger
+                  id="operator-branch"
+                  className="bg-secondary border-border"
+                >
                   <SelectValue placeholder={t('common.select_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>

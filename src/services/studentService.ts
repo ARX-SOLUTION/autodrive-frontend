@@ -7,7 +7,7 @@ import { track } from '@/lib/umami';
 import type { ListResponse } from '@/types/list';
 import { parseListResponse } from '@/lib/listResponse';
 
-const toLocalDateStr = (d: Date): string =>
+export const toLocalDateStr = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 interface StudentListOptions {
@@ -217,9 +217,10 @@ export const searchStudents = async (q: string): Promise<Student[]> => {
   return result.data;
 };
 
-export const bulkCreateStudents = async (file: File) => {
+export const bulkCreateStudents = async (file: File, branchId?: string) => {
   const formData = new FormData();
   formData.append('file', file);
+  if (branchId) formData.append('branch_id', branchId);
   const { data } = await axiosInstance.post('/students/bulk-create', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });

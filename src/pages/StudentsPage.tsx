@@ -12,6 +12,7 @@ import {
   useCreateStudent,
   useUpdateStudent,
   useDeleteStudent,
+  toLocalDateStr,
 } from '@/services/studentService';
 import { useBranches } from '@/services/branchService';
 import { useOperators } from '@/services/operatorService';
@@ -120,7 +121,7 @@ const StudentsPage = () => {
     [rawDateFrom],
   );
   const setDateFrom = (v: Date | undefined) =>
-    setParam('date_from', v ? v.toISOString().slice(0, 10) : undefined);
+    setParam('date_from', v ? toLocalDateStr(v) : undefined);
 
   const rawDateTo = searchParams.get('date_to');
   const dateTo = useMemo(
@@ -128,7 +129,7 @@ const StudentsPage = () => {
     [rawDateTo],
   );
   const setDateTo = (v: Date | undefined) =>
-    setParam('date_to', v ? v.toISOString().slice(0, 10) : undefined);
+    setParam('date_to', v ? toLocalDateStr(v) : undefined);
 
   const operatorId = searchParams.get('operator_id') ?? undefined;
   const setOperatorId = (v: string | undefined) => setParam('operator_id', v);
@@ -924,6 +925,7 @@ const StudentsPage = () => {
       <ImportStudentsModal
         open={importModalOpen}
         onClose={() => setImportModalOpen(false)}
+        branchId={branchId}
       />
 
       <ConfirmDialog
