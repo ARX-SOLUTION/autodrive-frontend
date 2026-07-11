@@ -209,7 +209,7 @@
       "today_revenue": "Bugungi tushum",
       "today_meta": "Asia/Tashkent bo‘yicha",
       "period_revenue": "Tanlangan davr tushumi",
-      "previous_period": "Oldingi davr: {{value}}",
+      "previous_period": "Oldingi davr",
       "outstanding_debt": "Jami qarzdorlik",
       "debtors": "{{count}} ta qarzdor student",
       "coverage": "Payment coverage",
@@ -229,7 +229,18 @@
       "quick_actions": "Tezkor amallar",
       "quick_actions_subtitle": "Eng ko‘p ishlatiladigan harakatlar.",
       "updated": "Yangilandi",
-      "revenue_chart_summary": "Tushum trendi: {{total}} jami"
+      "revenue_chart_summary": "Tushum trendi: {{total}} jami",
+      "granularity": "Granulyarlik",
+      "daily": "Kunlik",
+      "weekly": "Haftalik",
+      "sort_by": "Saralash",
+      "revenue_table_caption": "Tushum trendi maʼlumotlari",
+      "error_title": "Dashboard maʼlumotlarini yuklab bo'lmadi",
+      "error_subtitle": "Ulanishni tekshiring va qayta urinib ko'ring.",
+      "kpi_section_label": "Tushum boshqaruvi KPI'lari",
+      "coverage_bar_label": "{{rate}}% to'liq to'langan",
+      "last_payment_none": "Payment yo‘q",
+      "attendance_no_data": "Davomat maʼlumoti yo‘q"
     }
   },
   "branches": {
