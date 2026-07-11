@@ -277,7 +277,9 @@
       "student": "Talaba",
       "payment": "To'lov",
       "amount": "Summa",
-      "method": "To'lov turi"
+      "method": "To'lov turi",
+      "tab_schedule": "Jadval",
+      "no_schedule": "Dars jadvali yo'q"
     }
   },
   "students": {

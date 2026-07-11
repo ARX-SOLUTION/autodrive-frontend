@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect } from 'vitest';
 import SchedulePage from '@/pages/SchedulePage';
 import { ScheduleTemplate } from '@/types/schedule';
@@ -36,7 +37,13 @@ vi.mock('@/services/groupService', () => ({
 
 describe('SchedulePage', () => {
   it('renders the templates list without crashing when templates exist', () => {
-    expect(() => render(<SchedulePage />)).not.toThrow();
+    expect(() =>
+      render(
+        <MemoryRouter>
+          <SchedulePage />
+        </MemoryRouter>,
+      ),
+    ).not.toThrow();
     expect(screen.getByText('Group A')).toBeInTheDocument();
   });
 });

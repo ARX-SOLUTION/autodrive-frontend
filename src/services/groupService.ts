@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { useIsCrossTenant } from '@/hooks/useCan';
-import { Group, GroupOverview, GroupsById } from '@/types/group';
+import { Group, GroupOverview } from '@/types/group';
 import { track } from '@/lib/umami';
 
 export const useGroups = () => {
@@ -37,8 +37,8 @@ export const useGroupsOverview = () => {
   });
 };
 
-export const useGroupsById = ({ id }: { id: string }) =>
-  useQuery<GroupsById>({
+export const useGroup = (id?: string) =>
+  useQuery<Group>({
     queryKey: ['groups', 'detail', id],
     queryFn: async () => {
       const { data } = await axiosInstance.get(`/groups/${id}`);

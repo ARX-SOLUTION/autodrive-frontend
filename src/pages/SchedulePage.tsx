@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { addDays, startOfWeek, format, parseISO, isSameDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import {
@@ -58,6 +59,7 @@ const lessonTypeColor: Record<LessonType, string> = {
 
 const SchedulePage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const today = new Date();
 
   const lessonTypeLabel: Record<LessonType, string> = {
@@ -418,9 +420,12 @@ const SchedulePage = () => {
                   <span className="text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
                     {lessonTypeLabel[tpl.lesson_type]}
                   </span>
-                  <span className="text-sm text-muted-foreground">
+                  <button
+                    onClick={() => navigate(`/groups/${tpl.group_id}`)}
+                    className="text-sm text-muted-foreground hover:text-primary hover:underline"
+                  >
                     {tpl.group_name}
-                  </span>
+                  </button>
                   {tpl.teacher_name && (
                     <span className="text-xs text-muted-foreground">
                       {tpl.teacher_name}

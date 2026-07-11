@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
   useGroups,
@@ -7,21 +8,14 @@ import {
   useCreateGroup,
   useUpdateGroup,
   useDeleteGroup,
-  useGroupsById,
 } from '@/services/groupService';
-import { useUpdateStudent } from '@/services/studentService';
-import { useOperators } from '@/services/operatorService';
 import { useBranches } from '@/services/branchService';
 import { Group } from '@/types/group';
-import { Student } from '@/types/student';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import StudentModal, {
-  CreateStudentPayload,
-} from '@/components/ui/StudentModal';
 import {
   Dialog,
   DialogContent,
@@ -42,7 +36,6 @@ import {
   Trash2,
   ChevronDown,
   ChevronRight,
-  Eye,
   ChevronUp,
   ChevronsUpDown,
   Layers,
@@ -62,10 +55,9 @@ const formatDate = (d: string) => {
   }
 };
 
-const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
-
 const GroupsPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const {
     data: groups,
     isLoading,
@@ -74,11 +66,9 @@ const GroupsPage = () => {
   } = useGroups();
   const { data: overview } = useGroupsOverview();
   const { data: branches } = useBranches();
-  const { data: operators } = useOperators();
   const createMutation = useCreateGroup();
   const updateMutation = useUpdateGroup();
   const deleteMutation = useDeleteGroup();
-  const updateStudentMutation = useUpdateStudent();
   const canManageGroups = useCan('manageGroups');
 
   const [search, setSearch] = useState('');
@@ -91,23 +81,12 @@ const GroupsPage = () => {
   const [expandedBranches, setExpandedBranches] = useState<
     Record<string, boolean>
   >({});
-  const [detailGroup, setDetailGroup] = useState<Group | null>(null);
-  const [editStudent, setEditStudent] = useState<Student | null>(null);
 
   const [formName, setFormName] = useState('');
   const [formBranchId, setFormBranchId] = useState('');
   const [formCourseType, setFormCourseType] = useState<string>('avto_maktab');
 
   const branchList = branches || [];
-
-  const {
-    data: groupData,
-    isLoading: groupsByIdLoading,
-    isError: isGroupDetailError,
-    refetch: refetchGroupDetail,
-  } = useGroupsById({
-    id: detailGroup?.id || '',
-  });
 
   const filteredGroups = (groups || []).filter((g) => {
     const matchesSearch = g.name.toLowerCase().includes(search.toLowerCase());
@@ -210,22 +189,6 @@ const GroupsPage = () => {
       },
       onError: () => toast.error(t('common.error')),
     });
-  };
-
-  const handleStudentEdit = (data: CreateStudentPayload) => {
-    if (!editStudent) return;
-    updateStudentMutation.mutate(
-      { id: editStudent.id, ...data } as Parameters<
-        typeof updateStudentMutation.mutate
-      >[0],
-      {
-        onSuccess: () => {
-          toast.success(t('students.updated'));
-          setEditStudent(null);
-        },
-        onError: () => toast.error(t('common.error')),
-      },
-    );
   };
 
   const toggleBranch = (id: string) =>
@@ -413,14 +376,17 @@ const GroupsPage = () => {
                     <tr
                       key={g.id}
                       className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/10"
-                      onClick={() => setDetailGroup(g)}
+                      onClick={() => {
+                        if (window.getSelection()?.toString()) return;
+                        navigate(`/groups/${g.id}`);
+                      }}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') setDetailGroup(g);
+                        if (e.key === 'Enter') navigate(`/groups/${g.id}`);
                         if (e.key === ' ') {
                           e.preventDefault();
-                          setDetailGroup(g);
+                          navigate(`/groups/${g.id}`);
                         }
                       }}
                     >
@@ -457,16 +423,6 @@ const GroupsPage = () => {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
-                          <button
-                            aria-label={t('groups.view')}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDetailGroup(g);
-                            }}
-                            className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </button>
                           <button
                             aria-label={t('common.edit')}
                             onClick={(e) => {
@@ -506,7 +462,7 @@ const GroupsPage = () => {
                   key={g.id}
                   title={g.name}
                   subtitle={g.branch_name || getBranchName(g.branch_id)}
-                  onClick={() => setDetailGroup(g)}
+                  onClick={() => navigate(`/groups/${g.id}`)}
                   fields={[
                     {
                       label: t('groups.course_type'),
@@ -579,242 +535,6 @@ const GroupsPage = () => {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
-      />
-
-      {/* Group Detail Modal */}
-      <Dialog
-        open={!!detailGroup}
-        onOpenChange={(o) => !o && setDetailGroup(null)}
-      >
-        <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="font-heading">
-              {detailGroup?.name} &mdash; {t('students.title')}
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
-                (
-                {detailGroup?.course_type === 'avto_maktab'
-                  ? t('groups.course_school')
-                  : t('groups.course_fast')}{' '}
-                &middot;{' '}
-                {detailGroup?.branch_name ||
-                  getBranchName(detailGroup?.branch_id || '')}
-                )
-              </span>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="px-3 py-3 text-center font-medium text-muted-foreground">
-                    #
-                  </th>
-                  <th className="px-3 py-3 text-left font-medium text-muted-foreground">
-                    {t('students.last_name')}
-                  </th>
-                  <th className="px-3 py-3 text-left font-medium text-muted-foreground">
-                    {t('students.first_name')}
-                  </th>
-                  <th className="px-3 py-3 text-left font-medium text-muted-foreground">
-                    {t('students.phone')}
-                  </th>
-                  <th className="px-3 py-3 text-right font-medium text-muted-foreground">
-                    {t('students.total_price')}
-                  </th>
-                  {detailGroup?.course_type === 'tezkor' ? (
-                    <th className="px-3 py-3 text-right font-medium text-muted-foreground">
-                      {t('students.amount_paid')}
-                    </th>
-                  ) : (
-                    <th className="px-3 py-3 text-right font-medium text-muted-foreground">
-                      {t('students.initial_payment')}
-                    </th>
-                  )}
-                  <th className="px-3 py-3 text-right font-medium text-muted-foreground">
-                    {t('students.debt')}
-                  </th>
-                  <th className="px-3 py-3 text-center font-medium text-muted-foreground">
-                    {t('students.payment_method')}
-                  </th>
-                  <th className="px-3 py-3 text-center font-medium text-muted-foreground">
-                    {t('students.document')}
-                  </th>
-                  {detailGroup?.course_type === 'avto_maktab' && (
-                    <>
-                      <th className="px-3 py-3 text-center font-medium text-muted-foreground">
-                        O83
-                      </th>
-                      <th className="px-3 py-3 text-left font-medium text-muted-foreground">
-                        {t('students.contract_number')}
-                      </th>
-                    </>
-                  )}
-                  <th className="px-3 py-3 text-center font-medium text-muted-foreground">
-                    {t('students.result')}
-                  </th>
-                  <th className="px-3 py-3 text-left font-medium text-muted-foreground">
-                    {t('students.operator')}
-                  </th>
-                  <th className="px-3 py-3 text-left font-medium text-muted-foreground">
-                    {t('common.date')}
-                  </th>
-                  <th className="px-3 py-3 text-center font-medium text-muted-foreground">
-                    {t('common.actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {groupsByIdLoading ? (
-                  [...Array(3)].map((_, i) => (
-                    <tr key={i} className="border-b border-border/50">
-                      <td colSpan={15} className="p-4">
-                        <Skeleton className="h-5 w-full" />
-                      </td>
-                    </tr>
-                  ))
-                ) : isGroupDetailError ? (
-                  <tr>
-                    <td colSpan={15} className="py-12 text-center">
-                      <div className="flex items-center justify-center gap-3 text-sm text-destructive">
-                        <span>{t('common.error')}</span>
-                        <Button
-                          variant="link"
-                          className="h-auto p-0"
-                          onClick={() => refetchGroupDetail()}
-                        >
-                          {t('common.retry')}
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ) : !groupData?.students?.length ? (
-                  <tr>
-                    <td
-                      colSpan={15}
-                      className="py-12 text-center text-muted-foreground"
-                    >
-                      {t('students.not_found')}
-                    </td>
-                  </tr>
-                ) : (
-                  groupData?.students?.map((s, idx) => (
-                    <tr
-                      key={s.id}
-                      className="table-row-striped border-b border-border/50"
-                    >
-                      <td className="px-3 py-3 text-center text-muted-foreground">
-                        {idx + 1}
-                      </td>
-                      <td className="px-3 py-3 font-medium">{s?.last_name}</td>
-                      <td className="px-3 py-3">{s?.first_name}</td>
-                      <td className="px-3 py-3 text-muted-foreground">
-                        {s?.phone}
-                      </td>
-                      <td className="px-3 py-3 text-right tabular-nums">
-                        {formatMoney(s?.total_price)}
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        {detailGroup?.course_type === 'tezkor'
-                          ? formatMoney(s?.amount_paid || 0)
-                          : formatMoney(s?.initial_payment || 0)}
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <span
-                          className={
-                            s?.debt > 0 ? 'text-destructive' : 'text-success'
-                          }
-                        >
-                          {s?.debt > 0 ? formatMoney(s?.debt) : t('common.na')}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-center text-muted-foreground">
-                        {s?.payment_method === 'naqd'
-                          ? t('students.payment_cash')
-                          : s?.payment_method === 'karta'
-                            ? t('students.payment_card')
-                            : t('students.payment_transfer')}
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <span
-                          className={
-                            s?.has_document
-                              ? 'text-success'
-                              : 'text-destructive'
-                          }
-                        >
-                          {s?.has_document ? '+' : '-'}
-                        </span>
-                      </td>
-                      {detailGroup?.course_type === 'avto_maktab' && (
-                        <>
-                          <td className="px-3 py-3 text-center">
-                            <span
-                              className={
-                                s?.o83 ? 'text-success' : 'text-destructive'
-                              }
-                            >
-                              {s?.o83 ? '+' : '-'}
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 text-muted-foreground">
-                            {s?.contract_number || t('common.na')}
-                          </td>
-                        </>
-                      )}
-                      <td className="px-3 py-3 text-center">
-                        {s?.result === 'topshirdi' ? (
-                          <span className="text-success">{'\u2713'}</span>
-                        ) : s?.result === 'yiqildi' ? (
-                          <span className="text-destructive">{'\u2717'}</span>
-                        ) : (
-                          <span className="text-muted-foreground">
-                            {t('common.na')}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3 text-muted-foreground">
-                        {s?.registered_by || t('common.na')}
-                      </td>
-                      <td className="px-3 py-3 text-muted-foreground tabular-nums">
-                        {formatDate(s?.created_at)}
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <button
-                          onClick={() => setEditStudent(s)}
-                          className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {t('groups.total_students', {
-              count: groupData?.active_students || 0,
-            })}
-          </p>
-        </DialogContent>
-      </Dialog>
-
-      {/* Student Edit Modal (from group detail) */}
-      <StudentModal
-        open={!!editStudent}
-        onClose={() => setEditStudent(null)}
-        onSubmit={handleStudentEdit}
-        loading={updateStudentMutation.isPending}
-        student={editStudent}
-        courseType={detailGroup?.course_type || 'avto_maktab'}
-        operators={operators || []}
-        disabledFields={[
-          'total_price',
-          'payment_method',
-          'initial_payment',
-          'debt',
-        ]}
       />
 
       {/* Create/Edit Modal */}

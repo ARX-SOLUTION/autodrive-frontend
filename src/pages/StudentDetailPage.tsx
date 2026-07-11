@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Pencil, Plus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -33,6 +33,7 @@ const StudentDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
 
   const { data: student, isLoading, isError } = useStudent(id);
   const canRecordPayment = useCan('recordPayment');
@@ -96,6 +97,10 @@ const StudentDetailPage = () => {
   }
 
   const fullName = `${student.last_name} ${student.first_name}`.trim();
+  const initialTab =
+    searchParams.get('tab') === 'payments' && canRecordPayment
+      ? 'payments'
+      : 'info';
 
   return (
     <div className="space-y-6">
@@ -144,7 +149,7 @@ const StudentDetailPage = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="info">
+      <Tabs defaultValue={initialTab}>
         <TabsList>
           <TabsTrigger value="info">
             {t('students.detail.tab_info')}
@@ -182,6 +187,31 @@ const StudentDetailPage = () => {
               label={t('students.detail.debt')}
               value={money(student.debt)}
             />
+            <Field
+              label={t('students.payment_method')}
+              value={methodLabels[student.payment_method]}
+            />
+            <Field
+              label={t('students.has_document')}
+              value={
+                <span
+                  className={
+                    student.has_document ? 'text-success' : 'text-destructive'
+                  }
+                >
+                  {student.has_document ? '+' : '-'}
+                </span>
+              }
+            />
+            <Field
+              label={t('students.amount_paid')}
+              value={money(student.amount_paid)}
+            />
+            <Field
+              label={t('students.operator')}
+              value={student.registered_by ?? t('common.na')}
+            />
+            <Field label={t('students.notes')} value={student.notes || '—'} />
           </dl>
         </TabsContent>
 
@@ -247,7 +277,7 @@ const BackButton = ({
   </button>
 );
 
-const Field = ({ label, value }: { label: string; value: string }) => (
+const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
   <div className="flex flex-col gap-0.5">
     <dt className="text-xs uppercase tracking-wide text-muted-foreground">
       {label}
