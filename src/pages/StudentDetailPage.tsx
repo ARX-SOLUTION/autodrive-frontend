@@ -21,7 +21,9 @@ import {
   useCreatePayment,
 } from '@/services/paymentService';
 import { useOperators } from '@/services/operatorService';
+import { useAttendanceHistory } from '@/services/attendanceService';
 import { useCan } from '@/hooks/useCan';
+import { statusColors } from '@/lib/attendanceStatus';
 import type { PaymentMethod } from '@/types/student';
 
 const money = (n?: number) =>
@@ -165,6 +167,9 @@ const StudentDetailPage = () => {
           <TabsTrigger value="exams">
             {t('students.detail.tab_exams')}
           </TabsTrigger>
+          <TabsTrigger value="attendance">
+            {t('students.detail.tab_attendance')}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
@@ -240,6 +245,10 @@ const StudentDetailPage = () => {
           <div className="glass-card p-5">
             <StudentExamsTab student={student} />
           </div>
+        </TabsContent>
+
+        <TabsContent value="attendance">
+          <AttendanceHistoryTab studentId={student.id} />
         </TabsContent>
       </Tabs>
 
@@ -348,6 +357,63 @@ const PaymentsTab = ({
                   </td>
                   <td className="px-4 py-2 text-muted-foreground">
                     {p.recorded_by ?? '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const AttendanceHistoryTab = ({ studentId }: { studentId: string }) => {
+  const { t } = useTranslation();
+  const { data, isLoading } = useAttendanceHistory(studentId);
+  const rows = data ?? [];
+
+  return (
+    <div className="glass-card overflow-hidden">
+      {isLoading ? (
+        <div className="space-y-2 p-4">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="p-6">
+          <EmptyState title={t('common.no_data')} />
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[480px] text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="px-4 py-2 font-medium">
+                  {t('students.detail.date')}
+                </th>
+                <th className="px-4 py-2 font-medium">
+                  {t('attendance.lesson_group')}
+                </th>
+                <th className="px-4 py-2 font-medium">
+                  {t('attendance.table_status')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((record) => (
+                <tr
+                  key={record.id}
+                  className="border-b border-border last:border-0"
+                >
+                  <td className="px-4 py-2">{record.date?.slice(0, 10)}</td>
+                  <td className="px-4 py-2">{record.group_name}</td>
+                  <td className="px-4 py-2">
+                    <span
+                      className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${statusColors[record.status]}`}
+                    >
+                      {t(`attendance.status_${record.status}`)}
+                    </span>
                   </td>
                 </tr>
               ))}

@@ -266,7 +266,10 @@
     "detail": {
       "revenue": "Revenue",
       "debt": "Debt",
-      "today_payment": "Today's payment"
+      "today_payment": "Today's payment",
+      "revenue_trend": "6-month revenue",
+      "top_debtors": "Top debtors",
+      "view_all_debtors": "View all"
     }
   },
   "groups": {
@@ -361,7 +364,8 @@
       "total_price": "Total price",
       "tab_info": "Info",
       "tab_payments": "Payments",
-      "tab_exams": "Exams"
+      "tab_exams": "Exams",
+      "tab_attendance": "Attendance"
     },
     "tab_info": "Details",
     "tab_exams": "Exams",

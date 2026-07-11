@@ -47,3 +47,10 @@ export interface PaginatedLessons {
   page: number;
   limit: number;
 }
+
+export interface AttendanceHistoryRecord {
+  id: string;
+  date: string;
+  group_name: string;
+  status: AttendanceStatus;
+}

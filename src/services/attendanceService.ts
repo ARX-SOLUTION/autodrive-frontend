@@ -7,6 +7,7 @@ import {
   CreateLessonPayload,
   BatchAttendancePayload,
   PaginatedLessons,
+  AttendanceHistoryRecord,
 } from '@/types/attendance';
 import { track } from '@/lib/umami';
 import { parseListResponse } from '@/lib/listResponse';
@@ -32,6 +33,20 @@ export const useLessons = (page = 1, limit = 50) => {
     enabled: !!branchId || isCrossTenant,
   });
 };
+
+// A student's attendance history across lessons (autodrive-6ef.26) — distinct
+// from useLessons/useLessonById, which query per-lesson rosters.
+export const useAttendanceHistory = (studentId?: string, limit = 20) =>
+  useQuery<AttendanceHistoryRecord[]>({
+    queryKey: ['attendance', 'history', studentId, limit],
+    queryFn: async () => {
+      const { data: res } = await axiosInstance.get('/attendance', {
+        params: { student_id: studentId, limit },
+      });
+      return res?.data?.data || res?.data || [];
+    },
+    enabled: !!studentId,
+  });
 
 export const useLessonById = ({ id }: { id: string }) =>
   useQuery<Lesson>({

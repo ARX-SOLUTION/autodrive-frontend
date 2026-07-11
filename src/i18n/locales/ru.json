@@ -266,7 +266,10 @@
     "detail": {
       "revenue": "Выручка",
       "debt": "Задолженность",
-      "today_payment": "Платёж за сегодня"
+      "today_payment": "Платёж за сегодня",
+      "revenue_trend": "Выручка за 6 месяцев",
+      "top_debtors": "Крупнейшие должники",
+      "view_all_debtors": "Смотреть всё"
     }
   },
   "groups": {
@@ -361,7 +364,8 @@
       "total_price": "Общая цена",
       "tab_info": "Информация",
       "tab_payments": "Платежи",
-      "tab_exams": "Экзамены"
+      "tab_exams": "Экзамены",
+      "tab_attendance": "Посещаемость"
     },
     "tab_info": "Данные",
     "tab_exams": "Экзамены",
