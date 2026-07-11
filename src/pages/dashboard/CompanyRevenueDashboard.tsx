@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { format } from 'date-fns';
 import {
   AlertTriangle,
   ArrowDownRight,
@@ -43,13 +44,10 @@ import { cn } from '@/lib/utils';
 
 const UZ_TIMEZONE = 'Asia/Tashkent';
 
-const numberFormatter = new Intl.NumberFormat('uz-UZ');
 const moneyFormatter = new Intl.NumberFormat('uz-UZ', {
   maximumFractionDigits: 0,
 });
 
-const formatNumber = (value: number) =>
-  numberFormatter.format(Math.round(value || 0));
 const formatMoney = (value: number) =>
   `${moneyFormatter.format(Math.round(value || 0))} so'm`;
 const formatDate = (
@@ -62,6 +60,10 @@ const formatDate = (
     month: 'short',
     ...options,
   }).format(new Date(value));
+// uz-UZ Intl month:'short' renders as an unresolved skeleton (e.g. "M07 1")
+// in some browsers — use the codebase's dd.MM.yyyy convention instead.
+const formatShortDate = (value: string | Date) =>
+  format(new Date(value), 'dd.MM.yyyy');
 
 const todayInUz = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: UZ_TIMEZONE }).format(
@@ -392,7 +394,7 @@ const RevenueChart = ({
   const { t } = useTranslation();
   const chartData = data.map((item) => ({
     ...item,
-    label: formatDate(item.period_start, { month: 'short', day: 'numeric' }),
+    label: formatShortDate(item.period_start),
   }));
   const total = data.reduce((sum, item) => sum + item.amount, 0);
   return (
@@ -691,8 +693,8 @@ const CompanyRevenueDashboard = () => {
         <KpiCard
           label={t('dashboard.v2.outstanding_debt', 'Jami qarzdorlik')}
           value={formatMoney(kpis.debt.current_outstanding)}
-          meta={t('dashboard.v2.debtors', '{{value}} ta qarzdor student', {
-            value: formatNumber(kpis.debt.students_with_debt),
+          meta={t('dashboard.v2.debtors', '{{count}} ta qarzdor student', {
+            count: kpis.debt.students_with_debt,
           })}
           icon={AlertTriangle}
           tone="warning"
@@ -773,7 +775,7 @@ const CompanyRevenueDashboard = () => {
                     </span>
                     <span className="block text-[11px] text-muted-foreground">
                       {student.last_payment_at
-                        ? formatDate(student.last_payment_at)
+                        ? formatShortDate(student.last_payment_at)
                         : 'Payment yo‘q'}
                     </span>
                   </span>

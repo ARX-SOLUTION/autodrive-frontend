@@ -23,6 +23,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useIsCrossTenant } from '@/hooks/useCan';
@@ -54,7 +59,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 const formatDate = (d: string) => {
@@ -211,16 +216,6 @@ const PaymentsPage = () => {
 
   const canQueryPayments = !!branchId || isCrossTenant;
 
-  useEffect(() => {
-    if (isCrossTenant) {
-      toast.info(t('payments.export_info'), {
-        description: t('payments.export_desc'),
-        duration: 5000,
-        icon: <Download className="h-4 w-4" />,
-      });
-    }
-  }, [isCrossTenant, t]);
-
   const hasAnyFilter =
     hasDateFilter ||
     paymentStatus !== 'all' ||
@@ -369,14 +364,24 @@ const PaymentsPage = () => {
         </div>
         <div className="flex flex-wrap gap-2">
           {isCrossTenant && (
-            <Button
-              variant="outline"
-              className="gap-2 border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-950 font-semibold"
-              onClick={exportToExcel}
-              disabled={totalPayments === 0 || isExporting}
-            >
-              <Download className="h-4 w-4" /> {t('payments.export_excel')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="gap-2 border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-950 font-semibold"
+                  onClick={exportToExcel}
+                  disabled={totalPayments === 0 || isExporting}
+                >
+                  <Download className="h-4 w-4" /> {t('payments.export_excel')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="font-medium">{t('payments.export_info')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('payments.export_desc')}
+                </p>
+              </TooltipContent>
+            </Tooltip>
           )}
           <Button className="gap-2" onClick={() => setModalOpen(true)}>
             <Plus className="h-4 w-4" /> {t('payments.add_payment')}
