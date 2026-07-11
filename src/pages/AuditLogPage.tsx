@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { useAuditLogs } from '@/services/auditService';
+import { useUsers } from '@/services/userService';
+import { useDebounce } from '@/hooks/useDebounce';
 import {
   formatAuditDate,
   formatAuditAction,
@@ -86,9 +88,26 @@ const AuditLogPage = () => {
     }
   };
 
+  // Resolve the typed name to a real user id so filtering happens server-side
+  // across ALL pages, not just the ~50 rows already loaded (autodrive-6cq.5.51).
+  const debouncedSearch = useDebounce(search, 300);
+  const { data: users } = useUsers();
+  const searchUserId = useMemo(() => {
+    const q = debouncedSearch.trim().toLowerCase();
+    if (!q) return undefined;
+    const matches = (users || []).filter((u) =>
+      u.name?.toLowerCase().includes(q),
+    );
+    // ponytail: exactly one match -> filter by that user's real id; 0 or 2+
+    // matches -> sentinel id forces an empty result instead of silently
+    // showing unrelated entries (backend only supports exact userId match).
+    return matches.length === 1 ? matches[0].id : '__no_match__';
+  }, [debouncedSearch, users]);
+
   const { data, isLoading, isError, refetch } = useAuditLogs({
     entity: entityFilter !== 'all' ? entityFilter : undefined,
     action: actionFilter !== 'all' ? actionFilter : undefined,
+    userId: searchUserId,
     startDate: dateFrom,
     endDate: dateTo,
     page,
@@ -99,12 +118,7 @@ const AuditLogPage = () => {
   const total = data?.meta?.total || 0;
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
-  const filtered = logs.filter((l) => {
-    const name = l.user_name?.toLowerCase() || '';
-    return !search || name.includes(search.toLowerCase());
-  });
-
-  const sorted = [...filtered].sort((a, b) => {
+  const sorted = [...logs].sort((a, b) => {
     let va: unknown, vb: unknown;
     if (sortField === 'userName') {
       va = a.user_name || '';

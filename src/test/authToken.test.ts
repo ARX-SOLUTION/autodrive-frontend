@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import axiosInstance from '@/api/axiosInstance';
+import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/store/authStore';
 import { User } from '@/types/user';
 
@@ -31,15 +32,14 @@ describe('auth persisted token clearing', () => {
     expect(persistedToken()).toBeNull();
   });
 
-  it('a protected-endpoint 401 triggers logout via the interceptor', async () => {
-    // Interceptor sets window.location.href on logout; stub navigation.
-    const original = window.location;
-    // @ts-expect-error jsdom navigation is not implemented
-    delete window.location;
-    (window as { location: Location }).location = { href: '' } as Location;
-
+  it('a protected-endpoint 401 triggers logout + cache clear via the interceptor (no hard reload)', async () => {
     // Token is never in localStorage — confirm the invariant holds pre-401 too
     expect(persistedToken()).toBeNull();
+
+    // Seed the shared query cache so we can prove it gets wiped — a hard
+    // window.location.href reload used to do this implicitly; the SPA-nav
+    // fix (autodrive-6cq.5.9) must clear it explicitly instead.
+    queryClient.setQueryData(['tenant-data'], { leaked: true });
 
     axiosInstance.defaults.adapter = async (config) =>
       Promise.reject({
@@ -49,10 +49,14 @@ describe('auth persisted token clearing', () => {
       });
 
     await expect(axiosInstance.get('/students')).rejects.toBeTruthy();
-    // After 401-triggered logout, user state is also cleared
-    expect(persistedToken()).toBeNull();
 
-    (window as { location: Location }).location = original;
+    // After 401-triggered logout: user cleared, query cache cleared, and no
+    // window.location.href hard reload (ProtectedRoute reacts to the store
+    // change with SPA navigation instead).
+    expect(persistedToken()).toBeNull();
+    expect(persistedUser()).toBeNull();
+    expect(queryClient.getQueryData(['tenant-data'])).toBeUndefined();
+
     delete axiosInstance.defaults.adapter;
   });
 });

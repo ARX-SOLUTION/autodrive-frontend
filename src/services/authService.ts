@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import type { AxiosError } from 'axios';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
@@ -85,12 +86,13 @@ export const useChangePassword = () => {
 export const useLogout = () => {
   const logout = useAuthStore((s) => s.logout);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   return useMutation({
     mutationFn: () => axiosInstance.post('/auth/logout'),
     onSettled: () => {
       logout();
       queryClient.clear();
-      window.location.href = '/login';
+      navigate('/login');
     },
   });
 };

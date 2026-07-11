@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLogin } from '@/services/authService';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const login = useLogin();
   const logout = useAuthStore((s) => s.logout);
 
@@ -44,7 +45,9 @@ const LoginPage = () => {
 
   const onSuccess = () => {
     toast.success(t('login.success'));
-    navigate('/dashboard');
+    // Return to the page a session-expiry redirect came from, if any.
+    const from = (location.state as { from?: string } | null)?.from;
+    navigate(from && from !== '/login' ? from : '/dashboard');
   };
 
   const handleSubmit = (e: React.FormEvent) => {

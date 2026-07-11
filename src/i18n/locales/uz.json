@@ -94,7 +94,10 @@
     "all_operators": "Barcha operatorlar",
     "count_unit": "ta",
     "show_password": "Parolni ko'rsatish",
-    "hide_password": "Parolni yashirish"
+    "hide_password": "Parolni yashirish",
+    "update_available": "Yangi versiya mavjud",
+    "update_reload": "Yangilash",
+    "offline_banner": "Internet aloqasi yo'q"
   },
   "login": {
     "title": "Tizimga kirish",
@@ -109,7 +112,8 @@
     "rate_limit": "Ko'p urinishlar. Iltimos 1 daqiqa kuting.",
     "network_error": "Server bilan ulanish yo'q.",
     "demo": "Demo sifatida kirish",
-    "demo_hint": "Namuna ma'lumotlar bilan tanishing"
+    "demo_hint": "Namuna ma'lumotlar bilan tanishing",
+    "session_expired": "Sessiya muddati tugadi, qaytadan kiring"
   },
   "dashboard": {
     "title": "Dashboard",

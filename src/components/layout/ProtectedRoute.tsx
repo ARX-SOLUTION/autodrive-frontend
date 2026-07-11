@@ -9,7 +9,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const user = useAuthStore((s) => s.user);
   const { isLoading } = useRestoreSession();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
 
   if (!hasHydrated) {
     return (
@@ -34,7 +34,10 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  // Preserve where the user was so LoginPage can send them back after
+  // re-auth (session-expired 401 mid-app should not lose the current page).
+  if (!isAuthenticated)
+    return <Navigate to="/login" state={{ from: pathname + search }} replace />;
 
   if (user?.must_change_password && pathname !== '/profile') {
     return <Navigate to="/profile" replace />;
