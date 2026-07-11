@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface SummaryCardProps {
   title: string;
@@ -8,6 +9,7 @@ interface SummaryCardProps {
   trend?: string;
   trendDown?: boolean;
   className?: string;
+  isLoading?: boolean;
 }
 
 export const SummaryCard = ({
@@ -17,14 +19,19 @@ export const SummaryCard = ({
   trend,
   trendDown,
   className,
+  isLoading,
 }: SummaryCardProps) => (
   <div className={cn('glass-card p-5 animate-slide-in', className)}>
     <div className="flex items-start justify-between">
       <div>
         <p className="text-sm text-muted-foreground">{title}</p>
-        <p className="mt-1.5 text-2xl font-heading font-bold text-foreground tabular-nums">
-          {value}
-        </p>
+        {isLoading ? (
+          <Skeleton className="mt-1.5 h-8 w-24" />
+        ) : (
+          <p className="mt-1.5 text-2xl font-heading font-bold text-foreground tabular-nums">
+            {value}
+          </p>
+        )}
         {trend && (
           <p
             className={cn(

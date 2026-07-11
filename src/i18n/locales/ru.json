@@ -258,6 +258,7 @@
     "deleted": "Филиал удалён",
     "subtitle": "Управление всеми филиалами",
     "subtitle_readonly": "Информация о филиале (только просмотр)",
+    "form_desc": "Введите данные филиала",
     "manager": "Менеджер",
     "students": "Студенты",
     "created": "Создан",
@@ -291,6 +292,7 @@
     "view": "Просмотр",
     "created": "Создан",
     "total_students": "Всего: {{count}} студентов",
+    "form_desc": "Введите данные группы",
     "detail": {
       "title": "Информация о группе",
       "student": "Студент",
@@ -392,7 +394,8 @@
     "course": {
       "tezkor": "Экспресс",
       "avto_maktab": "Автошкола"
-    }
+    },
+    "form_desc": "Введите данные студента"
   },
   "exams": {
     "add_title": "Добавить результат",
@@ -402,7 +405,8 @@
     "score_optional": "Балл (необязательно)",
     "passed": "Сдал (Passed)",
     "added": "Результат добавлен",
-    "date_required": "Дата обязательна"
+    "date_required": "Дата обязательна",
+    "add_desc": "Введите данные результата экзамена"
   },
   "payments": {
     "title": "Платежи",
@@ -473,7 +477,14 @@
       "amount": "Сумма",
       "method": "Способ",
       "operator": "Оператор"
-    }
+    },
+    "validation": {
+      "select_student": "Выберите студента",
+      "enter_amount": "Введите сумму платежа",
+      "amount_positive": "Сумма платежа должна быть больше 0",
+      "select_method": "Выберите способ оплаты"
+    },
+    "add_desc": "Введите данные студента и платежа"
   },
   "audit": {
     "title": "Аудит",
@@ -535,6 +546,7 @@
     "updated": "Оператор обновлён",
     "deleted": "Оператор удалён",
     "count": "{{count}} операторов",
+    "form_desc": "Введите данные оператора",
     "detail": {
       "email": "Email",
       "branch": "Филиал",
@@ -560,7 +572,8 @@
     "updated": "Преподаватель обновлён",
     "deleted": "Преподаватель удалён",
     "count": "{{count}} преподавателей",
-    "search_placeholder": "Поиск..."
+    "search_placeholder": "Поиск...",
+    "form_desc": "Введите данные преподавателя"
   },
   "users": {
     "title": "Пользователи",
@@ -573,6 +586,7 @@
     "password_label": "Пароль",
     "added": "Менеджер добавлен",
     "no_branches": "Нет филиалов — сначала создайте филиал",
+    "add_desc": "Введите данные нового менеджера",
     "detail": {
       "role": "Роль",
       "branch": "Филиал",
@@ -630,7 +644,8 @@
     "toggle_present": "Пришёл",
     "toggle_late": "Опоздал",
     "toggle_absent": "Нет",
-    "marked_progress": "Отмечено {{marked}} из {{total}}"
+    "marked_progress": "Отмечено {{marked}} из {{total}}",
+    "add_lesson_desc": "Введите данные нового занятия"
   },
   "schedule": {
     "title": "Расписание",
@@ -679,7 +694,8 @@
     "start_time": "Время начала",
     "end_time": "Время окончания",
     "status_marked": "Отмечено",
-    "status_pending": "Ожидает"
+    "status_pending": "Ожидает",
+    "template_desc": "Введите данные шаблона расписания"
   },
   "documents": {
     "title": "Документы",

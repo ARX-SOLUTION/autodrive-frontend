@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -453,6 +454,9 @@ const TeachersPage = () => {
             <DialogTitle className="font-heading">
               {editItem ? t('teachers.edit') : t('teachers.add')}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              {t('teachers.form_desc')}
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">

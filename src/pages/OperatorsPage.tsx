@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -436,6 +437,9 @@ const OperatorsPage = () => {
             <DialogTitle className="font-heading">
               {editItem ? t('operators.edit') : t('operators.add')}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              {t('operators.form_desc')}
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">

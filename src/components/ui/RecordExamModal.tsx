@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -99,6 +100,9 @@ export const RecordExamModal = ({
           <DialogTitle className="font-heading">
             {t('exams.add_title')}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {t('exams.add_desc')}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-4">

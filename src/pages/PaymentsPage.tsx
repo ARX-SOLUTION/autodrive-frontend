@@ -229,7 +229,8 @@ const PaymentsPage = () => {
     },
   );
   const hasDateFilter = !!dateFrom || !!dateTo;
-  const { data: snapshot } = usePaymentSnapshot(branchId);
+  const { data: snapshot, isLoading: isSnapshotLoading } =
+    usePaymentSnapshot(branchId);
   const { data: branches } = useBranches();
   const createPayment = useCreatePayment();
 
@@ -433,21 +434,25 @@ const PaymentsPage = () => {
             title={t('payments.stats.today_income')}
             value={formatMoney(snapshot?.today_income || 0)}
             icon={<Sun className="h-5 w-5" />}
+            isLoading={isSnapshotLoading}
           />
           <SummaryCard
             title={t('payments.stats.month_income')}
             value={formatMoney(snapshot?.this_month_income || 0)}
             icon={<TrendingUp className="h-5 w-5" />}
+            isLoading={isSnapshotLoading}
           />
           <SummaryCard
             title={t('payments.stats.total_debt')}
             value={formatMoney(snapshot?.current_total_debt || 0)}
             icon={<AlertTriangle className="h-5 w-5" />}
+            isLoading={isSnapshotLoading}
           />
           <SummaryCard
             title={t('payments.stats.debtor_students')}
             value={`${snapshot?.students_with_debt || 0} ${t('common.count_unit')}`}
             icon={<Users className="h-5 w-5" />}
+            isLoading={isSnapshotLoading}
           />
         </div>
       </section>

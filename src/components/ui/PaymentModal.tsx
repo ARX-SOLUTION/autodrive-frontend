@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -84,12 +85,12 @@ const paymentMethodLabels: Record<PaymentMethod, string> = {
 };
 
 const paymentSchema = z.object({
-  student_id: z.string().min(1, 'Select a student'),
+  student_id: z.string().min(1, 'payments.validation.select_student'),
   amount: z.coerce
-    .number({ invalid_type_error: 'Enter payment amount' })
-    .positive('Payment amount must be greater than 0'),
+    .number({ invalid_type_error: 'payments.validation.enter_amount' })
+    .positive('payments.validation.amount_positive'),
   payment_method: z.enum(['naqd', 'karta', 'perechisleniya'], {
-    required_error: 'Select payment method',
+    required_error: 'payments.validation.select_method',
   }),
 });
 
@@ -177,6 +178,9 @@ const PaymentModal = ({
             <DialogTitle className="font-heading">
               {t('payments.add_payment')}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              {t('payments.add_desc')}
+            </DialogDescription>
           </DialogHeader>
 
           <Form {...form}>
@@ -184,7 +188,7 @@ const PaymentModal = ({
               <FormField
                 control={form.control}
                 name="student_id"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem className="space-y-2">
                     <FormLabel>{t('payments.student_name')} *</FormLabel>
                     {lockedStudentId ? (
@@ -292,7 +296,10 @@ const PaymentModal = ({
                         </PopoverContent>
                       </Popover>
                     )}
-                    <FormMessage />
+                    <FormMessage>
+                      {fieldState.error &&
+                        t(fieldState.error.message as string)}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -311,7 +318,7 @@ const PaymentModal = ({
               <FormField
                 control={form.control}
                 name="amount"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem className="space-y-2">
                     <FormLabel>{t('payments.amount')} *</FormLabel>
                     <FormControl>
@@ -329,7 +336,10 @@ const PaymentModal = ({
                         }
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>
+                      {fieldState.error &&
+                        t(fieldState.error.message as string)}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -337,7 +347,7 @@ const PaymentModal = ({
               <FormField
                 control={form.control}
                 name="payment_method"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem className="space-y-2">
                     <FormLabel>{t('payments.payment_method')} *</FormLabel>
                     <Select
@@ -357,7 +367,10 @@ const PaymentModal = ({
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage>
+                      {fieldState.error &&
+                        t(fieldState.error.message as string)}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
