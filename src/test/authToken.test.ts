@@ -36,7 +36,7 @@ describe('auth persisted token clearing', () => {
     const original = window.location;
     // @ts-expect-error jsdom navigation is not implemented
     delete window.location;
-    window.location = { href: '' } as Location;
+    (window as { location: Location }).location = { href: '' } as Location;
 
     // Token is never in localStorage — confirm the invariant holds pre-401 too
     expect(persistedToken()).toBeNull();
@@ -52,7 +52,7 @@ describe('auth persisted token clearing', () => {
     // After 401-triggered logout, user state is also cleared
     expect(persistedToken()).toBeNull();
 
-    window.location = original;
+    (window as { location: Location }).location = original;
     delete axiosInstance.defaults.adapter;
   });
 });

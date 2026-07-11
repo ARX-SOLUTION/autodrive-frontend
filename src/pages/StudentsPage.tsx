@@ -36,7 +36,9 @@ import {
 } from '@/components/ui/popover';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import StudentModal from '@/components/ui/StudentModal';
+import StudentModal, {
+  type CreateStudentPayload,
+} from '@/components/ui/StudentModal';
 import ImportStudentsModal from '@/components/ui/ImportStudentsModal';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -62,7 +64,7 @@ const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
 const capitalize = (str?: string) =>
   str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
 
-export const formatDate = (d: string) => {
+export const formatDate = (d?: string) => {
   try {
     if (!d) return '—';
     const date = new Date(d);
@@ -251,15 +253,18 @@ const StudentsPage = () => {
     });
   };
 
-  const handleModalSubmit = (data: Partial<Student>) => {
+  const handleModalSubmit = (data: CreateStudentPayload) => {
     if (editStudent) {
-      updateMutation.mutate({ ...data, id: editStudent.id } as Student, {
-        onSuccess: () => {
-          toast.success(t('students.updated'));
-          closeModal();
+      updateMutation.mutate(
+        { ...data, id: editStudent.id },
+        {
+          onSuccess: () => {
+            toast.success(t('students.updated'));
+            closeModal();
+          },
+          onError: () => toast.error(t('common.error')),
         },
-        onError: () => toast.error(t('common.error')),
-      });
+      );
     } else {
       createMutation.mutate(data, {
         onSuccess: () => {
@@ -272,7 +277,7 @@ const StudentsPage = () => {
   };
 
   // ponytail: separate handler — no closeModal, so the modal stays open for next entry
-  const handleSaveAndAdd = (data: Partial<Student>) => {
+  const handleSaveAndAdd = (data: CreateStudentPayload) => {
     createMutation.mutate(data, {
       onSuccess: () => toast.success(t('students.added')),
       onError: () => toast.error(t('common.error')),

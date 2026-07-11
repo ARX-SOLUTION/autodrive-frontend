@@ -1,5 +1,3 @@
-import { Student } from './student';
-
 export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
 export type LessonType = 'theory' | 'practice';
 

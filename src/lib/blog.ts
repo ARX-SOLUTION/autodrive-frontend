@@ -10,7 +10,9 @@ export const localizedField = (
 ): string => {
   const key = `${field}_${lang}` as keyof BlogPostSummary;
   return (
-    (post[key] as string | undefined) ?? (post[`${field}_uz`] as string) ?? ''
+    (post[key] as string | undefined) ??
+    (post[`${field}_uz` as keyof BlogPostSummary] as string) ??
+    ''
   );
 };
 

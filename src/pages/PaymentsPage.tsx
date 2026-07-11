@@ -127,7 +127,7 @@ const PaymentsPage = () => {
   const debouncedSearch = useDebounce(search, 300);
   const activeCourseType =
     courseTypeFilter !== 'all' ? courseTypeFilter : undefined;
-  const activePaymentStatus =
+  const activePaymentStatus: 'paid' | 'unpaid' | undefined =
     paymentStatus === 'paid' || paymentStatus === 'unpaid'
       ? paymentStatus
       : undefined;

@@ -140,7 +140,7 @@ const TeachersPage = () => {
     if (!form.fullName.trim() || !form.phone.trim()) return;
     const payload = {
       fullName: form.fullName,
-      phone: form.phone || undefined,
+      phone: form.phone,
       branchId: form.branchId || undefined,
       specialization: form.specialization || undefined,
     };
@@ -177,7 +177,7 @@ const TeachersPage = () => {
     });
   };
 
-  const getBranchName = (branchId: string) =>
+  const getBranchName = (branchId?: string) =>
     (branches || []).find((b) => b.id === branchId)?.name ||
     branchId ||
     t('common.na');
@@ -286,8 +286,10 @@ const TeachersPage = () => {
                         {teacher.phone}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {specLabels[teacher.specialization] ||
-                          teacher.specialization}
+                        {teacher.specialization
+                          ? specLabels[teacher.specialization] ||
+                            teacher.specialization
+                          : null}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {teacher.branch_name ||

@@ -10,7 +10,7 @@ import {
   useDeleteLesson,
 } from '@/services/attendanceService';
 import { useGroups } from '@/services/groupService';
-import { Lesson, AttendanceStatus, LessonType } from '@/types/attendance';
+import { AttendanceStatus, LessonType } from '@/types/attendance';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

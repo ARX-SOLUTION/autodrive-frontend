@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
-import { User, Shield, Building2, Mail, Phone } from 'lucide-react';
+import { User, Shield, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ProfilePage = () => {

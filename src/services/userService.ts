@@ -24,7 +24,6 @@ export const useUsers = (role?: string) => {
 
 export const useCreateManager = () => {
   const qc = useQueryClient();
-  const activeCompanyId = useAuthStore((s) => s.activeCompanyId);
   return useMutation({
     mutationFn: async (m: {
       fullName: string;
@@ -39,8 +38,7 @@ export const useCreateManager = () => {
       });
       return data?.data || data;
     },
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: ['users', activeCompanyId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
   });
 };
 

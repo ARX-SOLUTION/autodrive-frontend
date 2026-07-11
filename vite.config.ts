@@ -18,6 +18,9 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        globIgnores: ['**/export-xlsx-*.js'],
+      },
       manifest: {
         name: 'Auto Maktab CRM',
         short_name: 'Auto Maktab',
@@ -54,5 +57,31 @@ export default defineConfig(({ mode }) => ({
       '@tanstack/react-query',
       '@tanstack/query-core',
     ],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('/xlsx/')) return 'export-xlsx';
+          if (
+            id.includes('/react/') ||
+            id.includes('/react-dom/') ||
+            id.includes('/react-router') ||
+            id.includes('/scheduler/')
+          ) {
+            return 'react-vendor';
+          }
+          if (id.includes('/@tanstack/')) return 'query-vendor';
+          if (id.includes('/@radix-ui/')) return 'ui-vendor';
+          if (id.includes('/recharts/') || id.includes('/d3-')) {
+            return 'charts-vendor';
+          }
+          if (id.includes('/i18next') || id.includes('/react-i18next/')) {
+            return 'i18n-vendor';
+          }
+        },
+      },
+    },
   },
 }));

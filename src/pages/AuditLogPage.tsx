@@ -268,8 +268,8 @@ const AuditLogPage = () => {
       va = a.createdAt;
       vb = b.createdAt;
     } else {
-      va = (a as Record<string, unknown>)[sortField];
-      vb = (b as Record<string, unknown>)[sortField];
+      va = (a as unknown as Record<string, unknown>)[sortField];
+      vb = (b as unknown as Record<string, unknown>)[sortField];
     }
     if (va == null && vb == null) return 0;
     if (va == null) return 1;

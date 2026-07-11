@@ -360,9 +360,6 @@ const LegacyMainDashboard = () => {
       .reverse();
   }, [analytics?.monthly_enrollment, analytics?.total_students]);
 
-  const revenueDelta = analytics
-    ? computeDelta(analytics.this_month_revenue, analytics.last_month_revenue)
-    : null;
   const studentsDelta = analytics
     ? computeDelta(analytics.new_this_month, analytics.new_last_month)
     : null;
@@ -450,7 +447,6 @@ const LegacyMainDashboard = () => {
   }
 
   const currency = t('dashboard.currency_suffix');
-  const formatSum = (n: number) => `${formatNumber(n)} ${currency}`;
 
   // KPI 1: Today revenue
   const todayRevenue = snapshot?.today_income ?? 0;

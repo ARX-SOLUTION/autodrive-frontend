@@ -174,7 +174,7 @@ const SchedulePage = () => {
       return;
     }
     try {
-      const result = await generateLessons.mutateAsync({
+      await generateLessons.mutateAsync({
         weeks,
         ...(genGroupId ? { groupId: genGroupId } : {}),
       });
