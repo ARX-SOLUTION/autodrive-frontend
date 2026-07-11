@@ -31,7 +31,8 @@
     "search": "Поиск",
     "search_placeholder": "Поиск страницы...",
     "search_empty": "Ничего не найдено",
-    "search_pages": "Страницы"
+    "search_pages": "Страницы",
+    "search_group_staff": "Сотрудники"
   },
   "roles": {
     "owner": "Владелец",

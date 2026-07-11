@@ -31,7 +31,8 @@
     "search": "Qidirish",
     "search_placeholder": "Sahifa qidirish...",
     "search_empty": "Hech narsa topilmadi",
-    "search_pages": "Sahifalar"
+    "search_pages": "Sahifalar",
+    "search_group_staff": "Xodimlar"
   },
   "roles": {
     "owner": "Biznes egasi",

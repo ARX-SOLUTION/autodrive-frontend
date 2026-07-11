@@ -48,7 +48,10 @@ const BranchDetailPage = () => {
 
       {/* Header */}
       <div className="glass-card space-y-2 p-5">
-        <h1 className="font-heading text-2xl font-bold text-balance">
+        <h1
+          className="font-heading text-2xl font-bold text-balance"
+          style={{ viewTransitionName: `branch-${branch.id}` }}
+        >
           {branch.name}
         </h1>
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">

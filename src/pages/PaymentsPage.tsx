@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import PaginationControls from '@/components/ui/PaginationControls';
 import PaymentModal, {
   CreatePaymentPayload,
@@ -107,7 +107,7 @@ const lastMonthEnd = () => {
 
 const PaymentsPage = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const goToStudent = useViewTransitionNavigate();
   const isCrossTenant = useIsCrossTenant();
   const user = useAuthStore((s) => s.user);
 
@@ -764,21 +764,23 @@ const PaymentsPage = () => {
                         <tr
                           key={p.id}
                           className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
-                          onClick={() => {
+                          onClick={(e) => {
                             if (window.getSelection()?.toString()) return;
-                            navigate(`/students/${p.student_id}?tab=payments`);
+                            goToStudent(
+                              `/students/${p.student_id}?tab=payments`,
+                              e.currentTarget,
+                              `student-${p.student_id}`,
+                            );
                           }}
                           role="button"
                           tabIndex={0}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter')
-                              navigate(
-                                `/students/${p.student_id}?tab=payments`,
-                              );
-                            if (e.key === ' ') {
+                            if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
-                              navigate(
+                              goToStudent(
                                 `/students/${p.student_id}?tab=payments`,
+                                e.currentTarget,
+                                `student-${p.student_id}`,
                               );
                             }
                           }}
@@ -845,8 +847,12 @@ const PaymentsPage = () => {
                     key={p.id}
                     title={p.student_name}
                     subtitle={p.branch_name}
-                    onClick={() =>
-                      navigate(`/students/${p.student_id}?tab=payments`)
+                    onClick={(e) =>
+                      goToStudent(
+                        `/students/${p.student_id}?tab=payments`,
+                        e.currentTarget,
+                        `student-${p.student_id}`,
+                      )
                     }
                     fields={[
                       { label: t('common.date'), value: formatDate(p.date) },

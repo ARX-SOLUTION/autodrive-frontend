@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import {
   useBranches,
   useCreateBranch,
@@ -37,7 +37,7 @@ const EMPTY_FORM: FormState = { name: '', location: '', phone: '' };
 
 const BranchesPage = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const goToBranch = useViewTransitionNavigate();
   const canManageBranches = useAuthStore((s) => s.canManageBranches);
   const { data: branches, isLoading } = useBranches();
   const createMut = useCreateBranch();
@@ -146,14 +146,23 @@ const BranchesPage = () => {
               (branches || []).map((b) => (
                 <div
                   key={b.id}
-                  onClick={() => navigate(`/branches/${b.id}`)}
+                  onClick={(e) =>
+                    goToBranch(
+                      `/branches/${b.id}`,
+                      e.currentTarget,
+                      `branch-${b.id}`,
+                    )
+                  }
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') navigate(`/branches/${b.id}`);
-                    if (e.key === ' ') {
+                    if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      navigate(`/branches/${b.id}`);
+                      goToBranch(
+                        `/branches/${b.id}`,
+                        e.currentTarget,
+                        `branch-${b.id}`,
+                      );
                     }
                   }}
                   className="glass-card p-5 animate-slide-in cursor-pointer hover:border-primary/40 transition-colors"
@@ -237,7 +246,13 @@ const BranchesPage = () => {
               key={b.id}
               title={b.name}
               subtitle={b.location}
-              onClick={() => navigate(`/branches/${b.id}`)}
+              onClick={(e) =>
+                goToBranch(
+                  `/branches/${b.id}`,
+                  e.currentTarget,
+                  `branch-${b.id}`,
+                )
+              }
               fields={[
                 { label: t('branches.students'), value: b.active_students },
                 {

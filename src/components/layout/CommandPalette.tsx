@@ -26,6 +26,11 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { useCan } from '@/hooks/useCan';
+import { useDebounce } from '@/hooks/useDebounce';
+import {
+  useGlobalSearch,
+  type SearchResultItem,
+} from '@/services/searchService';
 import type { Capability } from '@/lib/permissions';
 
 type NavEntry = {
@@ -92,14 +97,58 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
 
   const visibleNav = NAV_ENTRIES.filter((n) => !n.cap || gate[n.cap]);
 
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 300);
+  const { data: results } = useGlobalSearch(debouncedQuery);
+
   const go = (path: string) => {
     onOpenChange(false);
     navigate(path);
   };
 
+  const handleOpenChange = (o: boolean) => {
+    onOpenChange(o);
+    if (!o) setQuery('');
+  };
+
+  // autodrive-cdy: backend already groups results by entity type
+  // ({ students, groups, staff } — see searchService.ts), so render each
+  // key as its own CommandGroup instead of re-bucketing a flat list.
+  const searchGroups: {
+    key: string;
+    heading: string;
+    icon: typeof GraduationCap;
+    route: string;
+    items: SearchResultItem[];
+  }[] = [
+    {
+      key: 'students',
+      heading: t('nav.students'),
+      icon: GraduationCap,
+      route: '/students',
+      items: results?.students ?? [],
+    },
+    {
+      key: 'groups',
+      heading: t('nav.groups'),
+      icon: Layers,
+      route: '/groups',
+      items: results?.groups ?? [],
+    },
+    {
+      key: 'staff',
+      heading: t('actions.search_group_staff', 'Xodimlar') as string,
+      icon: UserCog,
+      route: '/users',
+      items: results?.staff ?? [],
+    },
+  ];
+
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog open={open} onOpenChange={handleOpenChange}>
       <CommandInput
+        value={query}
+        onValueChange={setQuery}
         placeholder={
           t('actions.search_placeholder', 'Sahifa qidirish...') as string
         }
@@ -125,6 +174,32 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
             );
           })}
         </CommandGroup>
+
+        {searchGroups.map((g) =>
+          g.items.length === 0 ? null : (
+            <CommandGroup key={g.key} heading={g.heading}>
+              {g.items.map((item) => (
+                <CommandItem
+                  key={`${g.key}-${item.id}`}
+                  // ponytail: prefix with the live query so cmdk's own
+                  // fuzzy filter never hides a result the server already
+                  // matched (e.g. phone-number search where the label is
+                  // just a name) — see autodrive-cdy.
+                  value={`${query} ${item.label} ${item.subtitle ?? ''}`}
+                  onSelect={() => go(`${g.route}/${item.id}`)}
+                >
+                  <g.icon className="mr-2 h-4 w-4" />
+                  <span>{item.label}</span>
+                  {item.subtitle && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      {item.subtitle}
+                    </span>
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ),
+        )}
       </CommandList>
     </CommandDialog>
   );
