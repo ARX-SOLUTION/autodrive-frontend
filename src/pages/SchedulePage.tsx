@@ -171,7 +171,7 @@ const SchedulePage = () => {
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     const weeks = parseInt(genWeeks);
-    if (weeks < 1 || weeks > 12) {
+    if (Number.isNaN(weeks) || weeks < 1 || weeks > 12) {
       toast.error(t('schedule.weeks_error'));
       return;
     }

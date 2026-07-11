@@ -127,16 +127,28 @@ const StudentsPage = () => {
     () => (rawDateFrom ? new Date(rawDateFrom) : undefined),
     [rawDateFrom],
   );
-  const setDateFrom = (v: Date | undefined) =>
-    setParam('date_from', v ? toLocalDateStr(v) : undefined);
 
   const rawDateTo = searchParams.get('date_to');
   const dateTo = useMemo(
     () => (rawDateTo ? new Date(rawDateTo) : undefined),
     [rawDateTo],
   );
-  const setDateTo = (v: Date | undefined) =>
-    setParam('date_to', v ? toLocalDateStr(v) : undefined);
+
+  // date_from/date_to must land in the same setSearchParams call — two
+  // sequential calls each snapshot `prev` independently and the second
+  // overwrites the first's write (autodrive-6cq.5.70).
+  const setDateRange = (from: Date | undefined, to: Date | undefined) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (!from) next.delete('date_from');
+        else next.set('date_from', toLocalDateStr(from));
+        if (!to) next.delete('date_to');
+        else next.set('date_to', toLocalDateStr(to));
+        return next;
+      },
+      { replace: true },
+    );
 
   const operatorId = searchParams.get('operator_id') ?? undefined;
   const setOperatorId = (v: string | undefined) => setParam('operator_id', v);
@@ -417,15 +429,12 @@ const StudentsPage = () => {
             <Calendar
               mode="range"
               selected={{ from: dateFrom, to: dateTo }}
-              onSelect={(range) => {
-                if (!range) {
-                  setDateFrom(undefined);
-                  setDateTo(undefined);
-                } else {
-                  setDateFrom(range.from);
-                  setDateTo(range.to ?? range.from);
-                }
-              }}
+              onSelect={(range) =>
+                setDateRange(
+                  range?.from,
+                  range ? (range.to ?? range.from) : undefined,
+                )
+              }
               numberOfMonths={2}
               initialFocus
               className={cn('p-3 pointer-events-auto')}
@@ -436,10 +445,7 @@ const StudentsPage = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              setDateFrom(undefined);
-              setDateTo(undefined);
-            }}
+            onClick={() => setDateRange(undefined, undefined)}
           >
             {t('students.clear_filters')}
           </Button>
@@ -644,6 +650,11 @@ const StudentsPage = () => {
                                     ? 'text-destructive'
                                     : 'text-success'
                                 }
+                                aria-label={
+                                  s.debt > 0
+                                    ? t('students.debt_status_owed')
+                                    : t('students.debt_status_paid')
+                                }
                               >
                                 {s.debt > 0
                                   ? formatMoney(s.debt)
@@ -675,6 +686,11 @@ const StudentsPage = () => {
                                     ? 'text-destructive'
                                     : 'text-success'
                                 }
+                                aria-label={
+                                  s.debt > 0
+                                    ? t('students.debt_status_owed')
+                                    : t('students.debt_status_paid')
+                                }
                               >
                                 {s.debt > 0
                                   ? formatMoney(s.debt)
@@ -691,7 +707,9 @@ const StudentsPage = () => {
                                   s.o83 ? 'text-success' : 'text-destructive'
                                 }
                               >
-                                {s.o83 ? '+' : '-'}
+                                {s.o83
+                                  ? t('students.o83_yes')
+                                  : t('students.o83_no')}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-muted-foreground">

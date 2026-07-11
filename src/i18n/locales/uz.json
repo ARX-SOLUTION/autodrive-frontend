@@ -326,6 +326,10 @@
     "contract_number": "Shartnoma raqami",
     "completion_date": "Tugatish",
     "o83": "O83",
+    "o83_yes": "Bor",
+    "o83_no": "Yo'q",
+    "debt_status_owed": "Qarzdor",
+    "debt_status_paid": "To'langan",
     "detail": {
       "branch": "Filial",
       "group": "Guruh",

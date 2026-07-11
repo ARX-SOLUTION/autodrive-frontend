@@ -3,12 +3,15 @@ import { MemoryRouter, useSearchParams } from 'react-router-dom';
 import { vi, describe, it, expect } from 'vitest';
 import StudentsPage from '@/pages/StudentsPage';
 
-// Picked local calendar day, exactly as react-day-picker would hand it to
-// onSelect (local midnight). Using the local Date constructor means this is
-// "July 10" regardless of which timezone the test runner itself is in --
-// the bug only reproduces for positive UTC offsets (e.g. Tashkent, UTC+5),
-// where `.toISOString().slice(0, 10)` rolls it back to July 9.
-const PICKED_DAY = new Date(2026, 6, 10);
+// Picked local calendar days, exactly as react-day-picker would hand them to
+// onSelect (local midnight). Using the local Date constructor means these are
+// "July 10"/"July 12" regardless of which timezone the test runner itself is
+// in -- a separate bug only reproduces for positive UTC offsets (e.g.
+// Tashkent, UTC+5), where `.toISOString().slice(0, 10)` rolls it back a day.
+// Distinct from/to days also catch autodrive-6cq.5.70 (two sequential
+// setSearchParams calls, second overwriting the first).
+const PICKED_FROM = new Date(2026, 6, 10);
+const PICKED_TO = new Date(2026, 6, 12);
 
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
@@ -58,7 +61,7 @@ vi.mock('@/components/ui/calendar', () => ({
   }: {
     onSelect: (range: { from: Date; to: Date }) => void;
   }) => (
-    <button onClick={() => onSelect({ from: PICKED_DAY, to: PICKED_DAY })}>
+    <button onClick={() => onSelect({ from: PICKED_FROM, to: PICKED_TO })}>
       pick-day
     </button>
   ),
@@ -70,7 +73,7 @@ const SearchParamsSpy = () => {
 };
 
 describe('StudentsPage date-range filter', () => {
-  it('writes the picked local calendar day to the URL, not a UTC-shifted day', () => {
+  it('writes both the picked local calendar days to the URL in one update', () => {
     render(
       <MemoryRouter initialEntries={['/students']}>
         <StudentsPage />
@@ -81,12 +84,11 @@ describe('StudentsPage date-range filter', () => {
     fireEvent.click(screen.getByText('students.date_range'));
     fireEvent.click(screen.getByText('pick-day'));
 
-    // NOTE: onSelect calls setDateFrom then setDateTo synchronously; a
-    // separate pre-existing bug in react-router's setSearchParams means
-    // only the LAST call's URL update survives (see autodrive-6cq.5.70,
-    // filed separately -- out of scope here). date_to is what's left, so
-    // that's what proves the timezone conversion itself is correct.
+    // date_from and date_to must both survive: onSelect batches them into
+    // one setSearchParams call (autodrive-6cq.5.70) using local calendar
+    // days, not UTC-shifted ones (autodrive-6cq.5.30).
     const params = screen.getByTestId('search-params').textContent ?? '';
-    expect(params).toContain('date_to=2026-07-10');
+    expect(params).toContain('date_from=2026-07-10');
+    expect(params).toContain('date_to=2026-07-12');
   });
 });
