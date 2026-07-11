@@ -172,37 +172,20 @@ export const usePaymentSnapshot = (branchId?: string) => {
   });
 };
 
+// Mirrors fetchPaymentsPage's filter shape/mapping so the summary always
+// reflects the same filters as the payments list (branch, search, status,
+// method, course, date range) via the backend's /payments/summary aggregate.
 export const usePaymentSummary = (
-  branchId?: string,
-  startDate?: Date,
-  endDate?: Date,
-  payment_status?: boolean | undefined,
-  payment_type?: string,
-  course_type?: string,
+  filters: PaymentListFilters,
   enabled = true,
 ) => {
   const isCrossTenant = useIsCrossTenant();
   return useQuery<PaymentSummary>({
-    queryKey: [
-      'payment-summary',
-      branchId,
-      startDate,
-      endDate,
-      payment_status,
-      payment_type,
-      course_type,
-    ],
-    enabled: enabled && (!!branchId || isCrossTenant),
+    queryKey: ['payment-summary', filters],
+    enabled: enabled && (!!filters.branchId || isCrossTenant),
     queryFn: async () => {
       const { data: res } = await axiosInstance.get('/payments/summary', {
-        params: {
-          branchId,
-          startDate: startDate ? toLocalDateStr(startDate) : undefined,
-          endDate: endDate ? toLocalDateStr(endDate) : undefined,
-          paymentStatus: payment_status,
-          payment_type,
-          course_type,
-        },
+        params: toPaymentQueryParams(filters),
       });
       return res?.data || res;
     },
