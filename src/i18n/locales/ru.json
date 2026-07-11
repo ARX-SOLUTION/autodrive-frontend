@@ -315,7 +315,6 @@
     "payment": "Оплата",
     "operator": "Оператор",
     "notes": "Заметки",
-    "document": "Документ",
     "total_students": "Всего: {{count}} студентов",
     "date_range": "Выберите дату",
     "clear_filters": "Очистить",
