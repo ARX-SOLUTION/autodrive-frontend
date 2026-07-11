@@ -45,6 +45,8 @@ import { toast } from 'sonner';
 import { useCan } from '@/hooks/useCan';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { extractErrorMessage } from '@/lib/errors';
+import { cn } from '@/lib/utils';
+import AttendanceDrawer from '@/components/AttendanceDrawer';
 
 const formatTime = (iso: string) => {
   try {
@@ -54,9 +56,55 @@ const formatTime = (iso: string) => {
   }
 };
 
-const lessonTypeColor: Record<LessonType, string> = {
-  theory: 'border-l-primary bg-primary/10',
-  practice: 'border-l-success bg-success/10',
+const typeDotClass: Record<LessonType, string> = {
+  theory: 'bg-primary',
+  practice: 'bg-success',
+};
+
+interface LessonCardProps {
+  lesson: CalendarLesson;
+  typeLabel: string;
+  onOpen: () => void;
+}
+
+// Decluttered lesson card for the week-strip (autodrive-38m.3): time, group,
+// teacher, lesson-type dot, and an attendance-status chip. A native <button>
+// gives Tab/Enter keyboard access for free.
+const LessonCard = ({ lesson, typeLabel, onOpen }: LessonCardProps) => {
+  const { t } = useTranslation();
+  const marked = lesson.total_count > 0;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="glass-card flex w-full flex-col gap-1 p-2.5 text-left text-sm transition-colors duration-200 hover:border-primary/40"
+    >
+      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+        {formatTime(lesson.date)}
+      </span>
+      <span className="font-medium">{lesson.group_name}</span>
+      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span
+          className={cn(
+            'h-1.5 w-1.5 shrink-0 rounded-full',
+            typeDotClass[lesson.lesson_type],
+          )}
+        />
+        {typeLabel}
+        {lesson.teacher_name ? ` · ${lesson.teacher_name}` : ''}
+      </span>
+      <span
+        className={cn(
+          'mt-0.5 w-fit rounded-full px-2 py-0.5 text-[11px] font-medium',
+          marked
+            ? 'bg-success/10 text-success'
+            : 'border border-dashed text-muted-foreground',
+        )}
+      >
+        {marked ? t('schedule.status_marked') : t('schedule.status_pending')}
+      </span>
+    </button>
+  );
 };
 
 const SchedulePage = () => {
@@ -93,6 +141,9 @@ const SchedulePage = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [generateOpen, setGenerateOpen] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState<CalendarLesson | null>(
+    null,
+  );
 
   // Create template form
   const [formGroupId, setFormGroupId] = useState('');
@@ -258,17 +309,17 @@ const SchedulePage = () => {
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
-                <span className="inline-block h-3 w-3 rounded bg-blue-500" />{' '}
+                <span className="inline-block h-3 w-3 rounded-full bg-primary" />{' '}
                 {t('schedule.legend_theory')}
               </span>
               <span className="flex items-center gap-1">
-                <span className="inline-block h-3 w-3 rounded bg-green-500" />{' '}
+                <span className="inline-block h-3 w-3 rounded-full bg-success" />{' '}
                 {t('schedule.legend_practice')}
               </span>
             </div>
           </div>
 
-          {/* Week calendar grid */}
+          {/* Week strip: one column per day, decluttered lesson cards */}
           {lessonsLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
@@ -276,125 +327,43 @@ const SchedulePage = () => {
               ))}
             </div>
           ) : (
-            <>
-              <div className="grid gap-3 md:hidden">
-                {weekDays.map((day) => {
-                  const key = format(day, 'yyyy-MM-dd');
-                  const dayLessons = lessonsByDay.get(key) || [];
-                  const isToday = isSameDay(day, today);
-                  return (
-                    <section
-                      key={key}
-                      className={`rounded-lg border bg-card p-3 ${
-                        isToday ? 'ring-2 ring-primary/30' : ''
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
+              {weekDays.map((day) => {
+                const key = format(day, 'yyyy-MM-dd');
+                const dayLessons = lessonsByDay.get(key) || [];
+                const isToday = isSameDay(day, today);
+                return (
+                  <div key={key} className="flex flex-col gap-2">
+                    <div
+                      className={`border-b pb-1 text-xs font-semibold uppercase tracking-wide ${
+                        isToday ? 'text-primary' : 'text-muted-foreground'
                       }`}
                     >
-                      <div className="mb-3 flex items-center justify-between gap-3">
-                        <div>
-                          <p
-                            className={`text-sm font-semibold ${
-                              isToday ? 'text-primary' : 'text-foreground'
-                            }`}
-                          >
-                            {format(day, 'EEEE')}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(day, 'dd.MM.yyyy')}
-                          </p>
-                        </div>
-                        <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
-                          {dayLessons.length}
-                        </span>
-                      </div>
-                      {dayLessons.length === 0 ? (
-                        <p className="py-2 text-sm text-muted-foreground">—</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {dayLessons.map((lesson) => (
-                            <article
-                              key={lesson.id}
-                              className={`rounded border-l-4 p-3 text-sm ${lessonTypeColor[lesson.lesson_type]}`}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <p className="font-medium">{lesson.title}</p>
-                                <span className="shrink-0 tabular-nums text-muted-foreground">
-                                  {formatTime(lesson.date)}
-                                </span>
-                              </div>
-                              {lesson.teacher_name && (
-                                <p className="mt-1 text-muted-foreground">
-                                  {lesson.teacher_name}
-                                </p>
-                              )}
-                              <p className="mt-1 text-muted-foreground">
-                                {lesson.present_count}/{lesson.total_count}
-                              </p>
-                            </article>
-                          ))}
-                        </div>
-                      )}
-                    </section>
-                  );
-                })}
-              </div>
-              <div className="hidden overflow-x-auto md:block">
-                <div className="grid min-w-[700px] grid-cols-7 gap-2">
-                  {weekDays.map((day) => {
-                    const key = format(day, 'yyyy-MM-dd');
-                    const dayLessons = lessonsByDay.get(key) || [];
-                    const isToday = isSameDay(day, today);
-                    return (
-                      <div
-                        key={key}
-                        className={`min-h-[200px] rounded-lg border bg-card p-2 ${
-                          isToday ? 'ring-2 ring-primary/30' : ''
-                        }`}
+                      {format(day, 'EEE')}{' '}
+                      <span
+                        className={isToday ? 'text-primary' : 'text-foreground'}
                       >
-                        <div
-                          className={`mb-2 text-center text-sm font-medium ${
-                            isToday ? 'text-primary' : 'text-foreground'
-                          }`}
-                        >
-                          <div>{format(day, 'EEE')}</div>
-                          <div className="text-lg font-bold">
-                            {format(day, 'd')}
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          {dayLessons.length === 0 ? (
-                            <p className="py-4 text-center text-xs text-muted-foreground/50">
-                              —
-                            </p>
-                          ) : (
-                            dayLessons.map((lesson) => (
-                              <div
-                                key={lesson.id}
-                                className={`rounded border-l-4 p-1.5 text-xs ${lessonTypeColor[lesson.lesson_type]}`}
-                              >
-                                <p className="truncate font-medium">
-                                  {lesson.title}
-                                </p>
-                                <p className="text-muted-foreground">
-                                  {formatTime(lesson.date)}
-                                </p>
-                                {lesson.teacher_name && (
-                                  <p className="truncate text-muted-foreground">
-                                    {lesson.teacher_name}
-                                  </p>
-                                )}
-                                <p className="text-muted-foreground">
-                                  {lesson.present_count}/{lesson.total_count}
-                                </p>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
+                        {format(day, 'd')}
+                      </span>
+                    </div>
+                    {dayLessons.length === 0 ? (
+                      <p className="py-4 text-center text-xs text-muted-foreground/50">
+                        —
+                      </p>
+                    ) : (
+                      dayLessons.map((lesson) => (
+                        <LessonCard
+                          key={lesson.id}
+                          lesson={lesson}
+                          typeLabel={lessonTypeLabel[lesson.lesson_type]}
+                          onOpen={() => setSelectedLesson(lesson)}
+                        />
+                      ))
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </TabsContent>
 
@@ -632,6 +601,11 @@ const SchedulePage = () => {
         title={t('schedule.delete_title')}
         description={t('schedule.delete_desc')}
         loading={deleteTemplate.isPending}
+      />
+
+      <AttendanceDrawer
+        lesson={selectedLesson}
+        onClose={() => setSelectedLesson(null)}
       />
     </div>
   );

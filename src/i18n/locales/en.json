@@ -614,7 +614,11 @@
     "create_error": "Error creating lesson",
     "delete_error": "Error deleting lesson",
     "title_placeholder": "Example: Lesson 1 theory",
-    "group_placeholder": "Select group"
+    "group_placeholder": "Select group",
+    "toggle_present": "Present",
+    "toggle_late": "Late",
+    "toggle_absent": "Absent",
+    "marked_progress": "{{marked}} of {{total}} marked"
   },
   "schedule": {
     "title": "Schedule",
@@ -661,7 +665,9 @@
     "group_label": "Group",
     "day_label": "Day of week",
     "start_time": "Start time",
-    "end_time": "End time"
+    "end_time": "End time",
+    "status_marked": "Marked",
+    "status_pending": "Pending"
   },
   "documents": {
     "title": "Documents",

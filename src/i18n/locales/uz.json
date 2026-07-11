@@ -614,7 +614,11 @@
     "create_error": "Dars yaratishda xatolik",
     "delete_error": "Darsni o'chirishda xatolik",
     "title_placeholder": "Masalan: 1-dars teoriya",
-    "group_placeholder": "Guruhni tanlang"
+    "group_placeholder": "Guruhni tanlang",
+    "toggle_present": "Keldi",
+    "toggle_late": "Kech",
+    "toggle_absent": "Yo'q",
+    "marked_progress": "{{marked}}/{{total}} belgilandi"
   },
   "schedule": {
     "title": "Dars jadvali",
@@ -661,7 +665,9 @@
     "group_label": "Guruh",
     "day_label": "Hafta kuni",
     "start_time": "Boshlanish vaqti",
-    "end_time": "Tugash vaqti"
+    "end_time": "Tugash vaqti",
+    "status_marked": "Belgilandi",
+    "status_pending": "Kutilmoqda"
   },
   "documents": {
     "title": "Hujjatlar",

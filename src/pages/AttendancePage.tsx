@@ -12,6 +12,8 @@ import {
 } from '@/services/attendanceService';
 import { useGroups } from '@/services/groupService';
 import { AttendanceStatus, LessonType } from '@/types/attendance';
+import { statusColors } from '@/lib/attendanceStatus';
+import AttendanceStatusToggle from '@/components/AttendanceStatusToggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,14 +52,6 @@ const formatDate = (d: string) => {
   } catch {
     return d;
   }
-};
-
-const statusColors: Record<AttendanceStatus, string> = {
-  present:
-    'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30',
-  absent: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30',
-  late: 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30',
-  excused: 'text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-900/30',
 };
 
 const AttendancePage = () => {
@@ -301,35 +295,14 @@ const AttendancePage = () => {
                                     {rec.student_name}
                                   </p>
                                   {canEdit ? (
-                                    <Select
+                                    <AttendanceStatusToggle
                                       value={
                                         attendanceState[rec.id] || rec.status
                                       }
-                                      onValueChange={(v) =>
-                                        handleStatusChange(
-                                          rec.id,
-                                          v as AttendanceStatus,
-                                        )
+                                      onChange={(status) =>
+                                        handleStatusChange(rec.id, status)
                                       }
-                                    >
-                                      <SelectTrigger
-                                        className={`h-11 w-full ${statusColors[attendanceState[rec.id] || rec.status]}`}
-                                      >
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {(
-                                          Object.entries(statusLabels) as [
-                                            AttendanceStatus,
-                                            string,
-                                          ][]
-                                        ).map(([key, label]) => (
-                                          <SelectItem key={key} value={key}>
-                                            {label}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
+                                    />
                                   ) : (
                                     <span
                                       className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${statusColors[rec.status]}`}
@@ -363,41 +336,15 @@ const AttendancePage = () => {
                                       </td>
                                       <td className="py-2">
                                         {canEdit ? (
-                                          <Select
+                                          <AttendanceStatusToggle
                                             value={
                                               attendanceState[rec.id] ||
                                               rec.status
                                             }
-                                            onValueChange={(v) =>
-                                              handleStatusChange(
-                                                rec.id,
-                                                v as AttendanceStatus,
-                                              )
+                                            onChange={(status) =>
+                                              handleStatusChange(rec.id, status)
                                             }
-                                          >
-                                            <SelectTrigger
-                                              className={`w-32 ${statusColors[attendanceState[rec.id] || rec.status]}`}
-                                            >
-                                              <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              {(
-                                                Object.entries(
-                                                  statusLabels,
-                                                ) as [
-                                                  AttendanceStatus,
-                                                  string,
-                                                ][]
-                                              ).map(([key, label]) => (
-                                                <SelectItem
-                                                  key={key}
-                                                  value={key}
-                                                >
-                                                  {label}
-                                                </SelectItem>
-                                              ))}
-                                            </SelectContent>
-                                          </Select>
+                                          />
                                         ) : (
                                           <span
                                             className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${statusColors[rec.status]}`}
