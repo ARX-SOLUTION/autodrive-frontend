@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { useUsers, useCreateManager } from '@/services/userService';
+import { useUsersPage, useCreateManager } from '@/services/userService';
 import { useBranches } from '@/services/branchService';
 import { RoleGate } from '@/components/RoleGate';
 import { extractErrorMessage } from '@/lib/errors';
@@ -25,7 +25,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { format } from 'date-fns';
-import { usePagination } from '@/hooks/usePagination';
 import PaginationControls from '@/components/ui/PaginationControls';
 import {
   ChevronUp,
@@ -46,10 +45,23 @@ const formatDate = (d?: string) => {
   }
 };
 
+// Backend GetUsersQueryDto caps limit at 100 -- large enough that a single
+// branch/company's manager list never needs a second server page in
+// practice, while still being real pagination (not a silent truncation)
+// if it ever does.
+const SERVER_PAGE_SIZE = 100;
+
 const UsersPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: users, isLoading } = useUsers('manager');
+  const [currentPage, setCurrentPage] = useState(1);
+  const { data: usersPage, isLoading } = useUsersPage(
+    'manager',
+    currentPage,
+    SERVER_PAGE_SIZE,
+  );
+  const users = useMemo(() => usersPage?.data ?? [], [usersPage]);
+  const totalPages = Math.max(1, usersPage?.meta.totalPages ?? 1);
   const { data: branches } = useBranches();
   const createMut = useCreateManager();
   const [sortField, setSortField] = useState('name');
@@ -104,8 +116,12 @@ const UsersPage = () => {
     }
   };
 
-  const sorted = useMemo(() => {
-    return [...(users || [])].sort((a, b) => {
+  // Sorts only the current server page -- GET /users has no sortBy param,
+  // so a global sort across pages isn't available without a backend change.
+  // Fine in practice: SERVER_PAGE_SIZE (100) covers virtually every
+  // company's manager list in one page.
+  const paginatedItems = useMemo(() => {
+    return [...users].sort((a, b) => {
       const va = a[sortField as keyof typeof a];
       const vb = b[sortField as keyof typeof b];
       if (va == null && vb == null) return 0;
@@ -128,10 +144,7 @@ const UsersPage = () => {
     });
   }, [users, sortField, sortDir]);
 
-  const { currentPage, totalPages, paginatedItems, setCurrentPage } =
-    usePagination(sorted);
-
-  const startIndex = (currentPage - 1) * 10;
+  const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
 
   return (
     <div className="space-y-6">
@@ -141,7 +154,7 @@ const UsersPage = () => {
             {t('users.title')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {t('users.count', { count: (users || []).length })}
+            {t('users.count', { count: usersPage?.meta.total ?? users.length })}
           </p>
         </div>
         <RoleGate cap="manageStaff">
@@ -285,7 +298,7 @@ const UsersPage = () => {
                   ))}
             </tbody>
           </table>
-          {(users || []).length === 0 && !isLoading && (
+          {users.length === 0 && !isLoading && (
             <EmptyState icon={UserCog} title={t('users.not_found')} />
           )}
         </div>

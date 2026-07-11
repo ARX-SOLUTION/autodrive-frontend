@@ -29,8 +29,18 @@ vi.mock('@/services/teacherService', async (importOriginal) => {
   const noopMut = () => ({ mutate: vi.fn(), isPending: false });
   return {
     ...actual,
-    useTeachers: () => ({
-      data: [],
+    useTeachersPage: () => ({
+      data: {
+        data: [],
+        meta: {
+          total: 0,
+          page: 1,
+          limit: 100,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      },
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
