@@ -3,6 +3,8 @@ import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { useIsCrossTenant } from '@/hooks/useCan';
 import { User } from '@/types/user';
+import type { ListResponse } from '@/types/list';
+import { parseListResponse } from '@/lib/listResponse';
 
 export const useOperators = () => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
@@ -17,6 +19,24 @@ export const useOperators = () => {
       if (Array.isArray(arr)) return arr;
       if (Array.isArray(res)) return res;
       return [];
+    },
+    enabled: !!branchId || isCrossTenant,
+  });
+};
+
+// Real server-side pagination for OperatorsPage (autodrive-0id) -- GET
+// /users defaults to limit=10; the page was fetching once via useOperators
+// and paginating client-side over that truncated result.
+export const useOperatorsPage = (page: number, limit: number) => {
+  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const isCrossTenant = useIsCrossTenant();
+  return useQuery<ListResponse<User>>({
+    queryKey: ['operators', 'page', branchId, page, limit],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get('/users', {
+        params: { role: 'operator', page, limit },
+      });
+      return parseListResponse<User>(data, page, limit);
     },
     enabled: !!branchId || isCrossTenant,
   });

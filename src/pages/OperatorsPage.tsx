@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { usePagination } from '@/hooks/usePagination';
 import PaginationControls from '@/components/ui/PaginationControls';
 import {
   Dialog,
@@ -34,7 +33,7 @@ import {
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  useOperators,
+  useOperatorsPage,
   useCreateOperator,
   useUpdateOperator,
   useDeleteOperator,
@@ -44,6 +43,12 @@ import { toast } from 'sonner';
 import { User } from '@/types/user';
 import { formatPhone } from '@/lib/phoneFormater';
 import { extractErrorMessage } from '@/lib/errors';
+
+// Backend GetUsersQueryDto caps limit at 100 -- large enough that a single
+// branch/company's operator list never needs a second server page in
+// practice, while still being real pagination (not a silent truncation)
+// if it ever does.
+const SERVER_PAGE_SIZE = 100;
 
 const OperatorsPage = () => {
   const { t } = useTranslation();
@@ -55,13 +60,25 @@ const OperatorsPage = () => {
   const [editItem, setEditItem] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({ fullName: '', phone: '', branchId: '' });
-  const { data: operators, isLoading, isError, refetch } = useOperators();
+  const [currentPage, setCurrentPage] = useState(1);
+  const {
+    data: operatorsPage,
+    isLoading,
+    isError,
+    refetch,
+  } = useOperatorsPage(currentPage, SERVER_PAGE_SIZE);
+  const operators = operatorsPage?.data ?? [];
+  const totalPages = Math.max(1, operatorsPage?.meta.totalPages ?? 1);
   const { data: branches } = useBranches();
   const createMut = useCreateOperator();
   const updateMut = useUpdateOperator();
   const deleteMut = useDeleteOperator();
 
-  const filtered = (operators || []).filter(
+  // Filter + sort apply to the current server page only -- GET /users has
+  // no sortBy param and its search only covers name/email (not phone), so
+  // this stays client-side. Fine in practice: SERVER_PAGE_SIZE (100) covers
+  // virtually every company's operator list in one page.
+  const filtered = operators.filter(
     (o) =>
       o.name?.toLowerCase().includes(search.toLowerCase()) ||
       o.phone?.includes(search),
@@ -75,7 +92,7 @@ const OperatorsPage = () => {
     }
   };
 
-  const sorted = useMemo(() => {
+  const paginatedItems = useMemo(() => {
     return [...filtered].sort((a, b) => {
       const va = a[sortField as keyof typeof a];
       const vb = b[sortField as keyof typeof b];
@@ -98,9 +115,6 @@ const OperatorsPage = () => {
             : 0;
     });
   }, [filtered, sortField, sortDir]);
-
-  const { currentPage, totalPages, paginatedItems, setCurrentPage } =
-    usePagination(sorted);
 
   const openCreate = () => {
     setEditItem(null);
@@ -167,7 +181,7 @@ const OperatorsPage = () => {
     branchId ||
     t('common.na');
 
-  const startIndex = (currentPage - 1) * 10;
+  const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
 
   return (
     <div className="space-y-6">
