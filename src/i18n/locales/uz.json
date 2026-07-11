@@ -488,6 +488,7 @@
     "detail_date": "Sana",
     "detail_branch": "Filial",
     "detail_details": "Detallar",
+    "detail_info": "Umumiy ma'lumot",
     "entries_list": "O'zgarishlar ro'yxati",
     "entry_count": "ta yozuv",
     "entity_id": "Obyekt ID",
@@ -557,7 +558,8 @@
       "role": "Rol",
       "branch": "Filial",
       "phone": "Telefon",
-      "created": "Yaratilgan"
+      "created": "Yaratilgan",
+      "tab_registered_students": "Ro'yxatga olingan talabalar"
     }
   },
   "profile": {
@@ -609,6 +611,8 @@
   },
   "schedule": {
     "title": "Dars jadvali",
+    "tab_calendar": "Kalendar",
+    "tab_templates": "Shablonlar",
     "template": "Template",
     "templates": "Template'lar",
     "add_template": "Yangi template",

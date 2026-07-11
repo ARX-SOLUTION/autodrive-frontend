@@ -488,6 +488,7 @@
     "detail_date": "Дата",
     "detail_branch": "Филиал",
     "detail_details": "Детали",
+    "detail_info": "Общая информация",
     "entries_list": "Список изменений",
     "entry_count": "записей",
     "entity_id": "ID объекта",
@@ -557,7 +558,8 @@
       "role": "Роль",
       "branch": "Филиал",
       "phone": "Телефон",
-      "created": "Создан"
+      "created": "Создан",
+      "tab_registered_students": "Зарегистрированные студенты"
     }
   },
   "profile": {
@@ -609,6 +611,8 @@
   },
   "schedule": {
     "title": "Расписание",
+    "tab_calendar": "Календарь",
+    "tab_templates": "Шаблоны",
     "template": "Шаблон",
     "templates": "Шаблоны",
     "add_template": "Новый шаблон",

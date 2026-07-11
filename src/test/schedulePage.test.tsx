@@ -50,6 +50,9 @@ describe('SchedulePage', () => {
         </MemoryRouter>,
       ),
     ).not.toThrow();
+    // Templates now live under the "Shablonlar" tab (autodrive-y5b).
+    // Radix Tabs switches on mousedown, not click.
+    fireEvent.mouseDown(screen.getByText('schedule.tab_templates'));
     expect(screen.getByText('Group A')).toBeInTheDocument();
   });
 

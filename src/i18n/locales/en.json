@@ -488,6 +488,7 @@
     "detail_date": "Date",
     "detail_branch": "Branch",
     "detail_details": "Details",
+    "detail_info": "Overview",
     "entries_list": "Changes list",
     "entry_count": "records",
     "entity_id": "Entity ID",
@@ -557,7 +558,8 @@
       "role": "Role",
       "branch": "Branch",
       "phone": "Phone",
-      "created": "Created"
+      "created": "Created",
+      "tab_registered_students": "Registered students"
     }
   },
   "profile": {
@@ -609,6 +611,8 @@
   },
   "schedule": {
     "title": "Schedule",
+    "tab_calendar": "Calendar",
+    "tab_templates": "Templates",
     "template": "Template",
     "templates": "Templates",
     "add_template": "New template",

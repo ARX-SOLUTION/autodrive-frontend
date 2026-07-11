@@ -1,8 +1,15 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { useAuditLogs } from '@/services/auditService';
-import { AuditLog } from '@/types/audit';
+import {
+  formatAuditDate,
+  formatAuditAction,
+  auditActionColor,
+  formatAuditEntity,
+  formatAuditRole,
+} from '@/lib/auditFormat';
 import {
   Select,
   SelectContent,
@@ -20,12 +27,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
   Search,
   CalendarIcon,
   X,
@@ -37,162 +38,6 @@ import {
 import { cn } from '@/lib/utils';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-
-const formatDate = (d: string) => {
-  try {
-    if (!d) return '—';
-    return format(new Date(d), 'dd.MM.yyyy HH:mm');
-  } catch {
-    return d;
-  }
-};
-
-const AuditChangesView = (
-  { changes, action }: { changes: Record<string, unknown>; action: string },
-  t: (key: string, opts?: Record<string, unknown>) => string,
-) => {
-  const hasBefore = 'before' in changes;
-  const hasAfter = 'after' in changes;
-
-  if (hasBefore || hasAfter) {
-    const before = (changes.before || {}) as Record<string, unknown>;
-    const after = (changes.after || {}) as Record<string, unknown>;
-    const allKeys = [
-      ...new Set([...Object.keys(before), ...Object.keys(after)]),
-    ];
-    const changedKeys = allKeys.filter(
-      (k) => JSON.stringify(before[k]) !== JSON.stringify(after[k]),
-    );
-
-    return (
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-          {t('audit.changes')}
-        </p>
-        {changedKeys.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t('audit.no_changes')}
-          </p>
-        ) : (
-          <div className="overflow-x-auto rounded-md border border-border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground">
-                  <th className="px-3 py-2 text-left font-medium">
-                    {t('audit.field_name')}
-                  </th>
-                  <th className="px-3 py-2 text-left font-medium">
-                    {t('audit.old_value')}
-                  </th>
-                  <th className="px-3 py-2 text-left font-medium">
-                    {t('audit.new_value')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {changedKeys.map((k) => (
-                  <tr
-                    key={k}
-                    className="border-b border-border/50 last:border-0"
-                  >
-                    <td className="px-3 py-2 font-medium">{k}</td>
-                    <td className="px-3 py-2 text-destructive">
-                      {String(before[k] ?? t('audit.field_no'))}
-                    </td>
-                    <td className="px-3 py-2 text-success">
-                      {String(after[k] ?? t('audit.field_no'))}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Flat changes
-  const keys = Object.keys(changes).filter((k) => changes[k] != null);
-
-  return (
-    <div>
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-        {action === 'CREATE'
-          ? t('audit.created_data')
-          : action === 'DELETE'
-            ? t('audit.deleted_data')
-            : t('audit.changes')}
-      </p>
-      <div className="overflow-x-auto rounded-md border border-border">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground">
-              <th className="px-3 py-2 text-left font-medium">
-                {t('audit.field_name')}
-              </th>
-              {action === 'UPDATE' ? (
-                <>
-                  <th className="px-3 py-2 text-left font-medium">
-                    {t('audit.old_short')}
-                  </th>
-                  <th className="px-3 py-2 text-left font-medium">
-                    {t('audit.new_short')}
-                  </th>
-                </>
-              ) : (
-                <th className="px-3 py-2 text-left font-medium">
-                  {t('audit.value_short')}
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {keys.map((k) => {
-              const val = changes[k];
-              const isFromTo =
-                val !== null &&
-                typeof val === 'object' &&
-                'from' in (val as object) &&
-                'to' in (val as object);
-              const fromTo = isFromTo
-                ? (val as { from: unknown; to: unknown })
-                : null;
-              return (
-                <tr key={k} className="border-b border-border/50 last:border-0">
-                  <td className="px-3 py-2 font-medium">{k}</td>
-                  {action === 'UPDATE' ? (
-                    fromTo ? (
-                      <>
-                        <td className="px-3 py-2 text-destructive">
-                          {String(fromTo.from ?? t('audit.field_no'))}
-                        </td>
-                        <td className="px-3 py-2 text-success">
-                          {String(fromTo.to ?? t('audit.field_no'))}
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="px-3 py-2 text-muted-foreground">
-                          {t('audit.field_no')}
-                        </td>
-                        <td className="px-3 py-2">{String(val)}</td>
-                      </>
-                    )
-                  ) : (
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {String(val)}
-                    </td>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
 
 const today = () => {
   const d = new Date();
@@ -222,13 +67,13 @@ const lastMonthEnd = () => {
 
 const AuditLogPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [entityFilter, setEntityFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(1);
-  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const LIMIT = 50;
 
   const [sortField, setSortField] = useState('createdAt');
@@ -296,53 +141,6 @@ const AuditLogPage = () => {
     entityFilter !== 'all' ||
     actionFilter !== 'all' ||
     !!search;
-
-  // Format values for display
-  const formatAction = (action: string) => {
-    const labels: Record<string, string> = {
-      CREATE: t('audit.action_create'),
-      UPDATE: t('audit.action_update'),
-      DELETE: t('audit.action_delete'),
-      LOGIN: t('audit.action_login'),
-    };
-    return labels[action] || action;
-  };
-
-  const actionColor = (action: string) => {
-    const colors: Record<string, string> = {
-      CREATE: 'text-success',
-      UPDATE: 'text-primary',
-      DELETE: 'text-destructive',
-    };
-    return colors[action] || '';
-  };
-
-  const actionBg = (action: string) => {
-    const bg: Record<string, string> = {
-      CREATE: 'bg-success/10 text-success',
-      UPDATE: 'bg-primary/10 text-primary',
-      DELETE: 'bg-destructive/10 text-destructive',
-    };
-    return bg[action] || 'bg-muted text-muted-foreground';
-  };
-
-  const formatEntity = (entity: string) => {
-    const labels: Record<string, string> = {
-      student: t('audit.entity_student'),
-      payment: t('audit.entity_payment'),
-      user: t('audit.entity_user'),
-      branch: t('audit.entity_branch'),
-      group: t('audit.entity_group'),
-      operator: t('audit.entity_operator'),
-      teacher: t('audit.entity_teacher'),
-    };
-    return labels[entity] || entity;
-  };
-
-  const formatRole = (role?: string | null) => {
-    if (!role) return t('common.na');
-    return role;
-  };
 
   const setPreset = (
     preset: 'today' | 'week' | 'month' | 'lastMonth' | 'all',
@@ -626,14 +424,18 @@ const AuditLogPage = () => {
                     <tr
                       key={log.id}
                       className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
-                      onClick={() => setSelectedLog(log)}
+                      onClick={() => {
+                        if (window.getSelection()?.toString()) return;
+                        navigate(`/audit/${log.id}`, { state: { log } });
+                      }}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') setSelectedLog(log);
+                        if (e.key === 'Enter')
+                          navigate(`/audit/${log.id}`, { state: { log } });
                         if (e.key === ' ') {
                           e.preventDefault();
-                          setSelectedLog(log);
+                          navigate(`/audit/${log.id}`, { state: { log } });
                         }
                       }}
                     >
@@ -644,26 +446,26 @@ const AuditLogPage = () => {
                         {log.user_name || t('common.na')}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">
-                        {formatRole(log.user_role)}
+                        {formatAuditRole(log.user_role, t)}
                       </td>
                       <td className="px-4 py-3">
                         <span
                           className={cn(
                             'font-medium text-xs',
-                            actionColor(log.action),
+                            auditActionColor(log.action),
                           )}
                         >
-                          {formatAction(log.action)}
+                          {formatAuditAction(log.action, t)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-xs">
-                        {formatEntity(log.entity)}
+                        {formatAuditEntity(log.entity, t)}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs max-w-[240px] truncate">
                         {log.changes ? t('audit.changes') : log.entity_id}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground whitespace-nowrap tabular-nums">
-                        {formatDate(log.created_at)}
+                        {formatAuditDate(log.created_at)}
                       </td>
                     </tr>
                   ))
@@ -689,13 +491,13 @@ const AuditLogPage = () => {
             sorted.map((log) => (
               <DataCard
                 key={log.id}
-                onClick={() => setSelectedLog(log)}
-                title={`${formatAction(log.action)} \u00b7 ${formatEntity(log.entity)}`}
+                onClick={() => navigate(`/audit/${log.id}`, { state: { log } })}
+                title={`${formatAuditAction(log.action, t)} \u00b7 ${formatAuditEntity(log.entity, t)}`}
                 subtitle={log.user_name || t('common.na')}
                 fields={[
                   {
                     label: t('audit.detail_date'),
-                    value: formatDate(log.created_at),
+                    value: formatAuditDate(log.created_at),
                   },
                   {
                     label: t('audit.detail_details'),
@@ -731,79 +533,6 @@ const AuditLogPage = () => {
           </div>
         )}
       </section>
-
-      {/* Detail Modal */}
-      <Dialog
-        open={!!selectedLog}
-        onOpenChange={(o) => !o && setSelectedLog(null)}
-      >
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-card border-border">
-          {selectedLog && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="font-heading flex items-center gap-2 flex-wrap">
-                  <span
-                    className={cn(
-                      'text-xs font-semibold px-2 py-0.5 rounded-full',
-                      actionBg(selectedLog.action),
-                    )}
-                  >
-                    {formatAction(selectedLog.action)}
-                  </span>
-                  <span>{formatEntity(selectedLog.entity)}</span>
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="space-y-5">
-                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm rounded-md bg-muted/30 px-4 py-3">
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      {t('audit.table_user')}
-                    </span>
-                    <p className="font-medium">
-                      {selectedLog.user_name || t('common.na')}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      {t('users.detail.role')}
-                    </span>
-                    <p>{formatRole(selectedLog.user_role)}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs tabular-nums">
-                      {t('audit.table_time')}
-                    </span>
-                    <p>{formatDate(selectedLog.created_at)}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground text-xs">
-                      {t('audit.entity_id')}
-                    </span>
-                    <p className="font-mono text-xs truncate">
-                      {selectedLog.entity_id}
-                    </p>
-                  </div>
-                </div>
-
-                {selectedLog.changes ? (
-                  AuditChangesView(
-                    {
-                      changes: selectedLog.changes,
-                      action: selectedLog.action,
-                    },
-                    t,
-                  )
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    {t('audit.no_details')}
-                  </p>
-                )}
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

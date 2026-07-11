@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import {
   Dialog,
@@ -216,239 +217,254 @@ const SchedulePage = () => {
         </div>
       </div>
 
-      {/* Calendar navigation */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={prevWeek}
-            aria-label={t('schedule.prev_week')}
-            title={t('schedule.prev_week')}
-            className="h-11 w-11"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={thisWeek}>
-            <CalendarDays className="mr-2 h-4 w-4" /> {t('schedule.today')}
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={nextWeek}
-            aria-label={t('schedule.next_week')}
-            title={t('schedule.next_week')}
-            className="h-11 w-11"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded bg-blue-500" />{' '}
-            {t('schedule.legend_theory')}
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded bg-green-500" />{' '}
-            {t('schedule.legend_practice')}
-          </span>
-        </div>
-      </div>
+      <Tabs defaultValue="calendar">
+        <TabsList>
+          <TabsTrigger value="calendar">
+            {t('schedule.tab_calendar')}
+          </TabsTrigger>
+          <TabsTrigger value="templates">
+            {t('schedule.tab_templates')}
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Week calendar grid */}
-      {lessonsLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-32 w-full" />
-          ))}
-        </div>
-      ) : (
-        <>
-          <div className="grid gap-3 md:hidden">
-            {weekDays.map((day) => {
-              const key = format(day, 'yyyy-MM-dd');
-              const dayLessons = lessonsByDay.get(key) || [];
-              const isToday = isSameDay(day, today);
-              return (
-                <section
-                  key={key}
-                  className={`rounded-lg border bg-card p-3 ${
-                    isToday ? 'ring-2 ring-primary/30' : ''
-                  }`}
-                >
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div>
-                      <p
-                        className={`text-sm font-semibold ${
-                          isToday ? 'text-primary' : 'text-foreground'
-                        }`}
-                      >
-                        {format(day, 'EEEE')}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(day, 'dd.MM.yyyy')}
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
-                      {dayLessons.length}
-                    </span>
-                  </div>
-                  {dayLessons.length === 0 ? (
-                    <p className="py-2 text-sm text-muted-foreground">—</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {dayLessons.map((lesson) => (
-                        <article
-                          key={lesson.id}
-                          className={`rounded border-l-4 p-3 text-sm ${lessonTypeColor[lesson.lesson_type]}`}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <p className="font-medium">{lesson.title}</p>
-                            <span className="shrink-0 tabular-nums text-muted-foreground">
-                              {formatTime(lesson.date)}
-                            </span>
-                          </div>
-                          {lesson.teacher_name && (
-                            <p className="mt-1 text-muted-foreground">
-                              {lesson.teacher_name}
-                            </p>
-                          )}
-                          <p className="mt-1 text-muted-foreground">
-                            {lesson.present_count}/{lesson.total_count}
-                          </p>
-                        </article>
-                      ))}
-                    </div>
-                  )}
-                </section>
-              );
-            })}
-          </div>
-          <div className="hidden overflow-x-auto md:block">
-            <div className="grid min-w-[700px] grid-cols-7 gap-2">
-              {weekDays.map((day) => {
-                const key = format(day, 'yyyy-MM-dd');
-                const dayLessons = lessonsByDay.get(key) || [];
-                const isToday = isSameDay(day, today);
-                return (
-                  <div
-                    key={key}
-                    className={`min-h-[200px] rounded-lg border bg-card p-2 ${
-                      isToday ? 'ring-2 ring-primary/30' : ''
-                    }`}
-                  >
-                    <div
-                      className={`mb-2 text-center text-sm font-medium ${
-                        isToday ? 'text-primary' : 'text-foreground'
-                      }`}
-                    >
-                      <div>{format(day, 'EEE')}</div>
-                      <div className="text-lg font-bold">
-                        {format(day, 'd')}
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      {dayLessons.length === 0 ? (
-                        <p className="py-4 text-center text-xs text-muted-foreground/50">
-                          —
-                        </p>
-                      ) : (
-                        dayLessons.map((lesson) => (
-                          <div
-                            key={lesson.id}
-                            className={`rounded border-l-4 p-1.5 text-xs ${lessonTypeColor[lesson.lesson_type]}`}
-                          >
-                            <p className="truncate font-medium">
-                              {lesson.title}
-                            </p>
-                            <p className="text-muted-foreground">
-                              {formatTime(lesson.date)}
-                            </p>
-                            {lesson.teacher_name && (
-                              <p className="truncate text-muted-foreground">
-                                {lesson.teacher_name}
-                              </p>
-                            )}
-                            <p className="text-muted-foreground">
-                              {lesson.present_count}/{lesson.total_count}
-                            </p>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+        <TabsContent value="calendar" className="space-y-6">
+          {/* Calendar navigation */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={prevWeek}
+                aria-label={t('schedule.prev_week')}
+                title={t('schedule.prev_week')}
+                className="h-11 w-11"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={thisWeek}>
+                <CalendarDays className="mr-2 h-4 w-4" /> {t('schedule.today')}
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={nextWeek}
+                aria-label={t('schedule.next_week')}
+                title={t('schedule.next_week')}
+                className="h-11 w-11"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-3 w-3 rounded bg-blue-500" />{' '}
+                {t('schedule.legend_theory')}
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-3 w-3 rounded bg-green-500" />{' '}
+                {t('schedule.legend_practice')}
+              </span>
             </div>
           </div>
-        </>
-      )}
 
-      {/* Templates section */}
-      <div className="rounded-lg border bg-card">
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <h2 className="font-semibold">{t('schedule.templates')}</h2>
-          <span className="text-sm text-muted-foreground">
-            {t('schedule.count_label', { count: (templates || []).length })}
-          </span>
-        </div>
-        {templatesLoading ? (
-          <div className="space-y-2 p-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-10 w-full" />
-            ))}
-          </div>
-        ) : !templates?.length ? (
-          <EmptyState
-            title={t('schedule.not_found')}
-            description={t('schedule.not_found_desc')}
-          />
-        ) : (
-          <div className="divide-y">
-            {templates.map((tpl) => (
-              <div
-                key={tpl.id}
-                className="flex flex-wrap items-center justify-between gap-2 px-4 py-2"
-              >
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="font-medium text-sm">
-                    {DAY_LABELS[tpl.day_of_week]}
-                  </span>
-                  <span className="text-sm text-foreground">
-                    {tpl.start_time}—{tpl.end_time}
-                  </span>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
-                    {lessonTypeLabel[tpl.lesson_type]}
-                  </span>
-                  <button
-                    onClick={() => navigate(`/groups/${tpl.group_id}`)}
-                    className="text-sm text-muted-foreground hover:text-primary hover:underline"
-                  >
-                    {tpl.group_name}
-                  </button>
-                  {tpl.teacher_name && (
-                    <span className="text-xs text-muted-foreground">
-                      {tpl.teacher_name}
-                    </span>
-                  )}
-                </div>
-                {canEdit && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDeleteId(tpl.id)}
-                    aria-label={t('schedule.delete_title')}
-                    title={t('schedule.delete_title')}
-                    className="h-11 w-11"
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                )}
+          {/* Week calendar grid */}
+          {lessonsLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-32 w-full" />
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-3 md:hidden">
+                {weekDays.map((day) => {
+                  const key = format(day, 'yyyy-MM-dd');
+                  const dayLessons = lessonsByDay.get(key) || [];
+                  const isToday = isSameDay(day, today);
+                  return (
+                    <section
+                      key={key}
+                      className={`rounded-lg border bg-card p-3 ${
+                        isToday ? 'ring-2 ring-primary/30' : ''
+                      }`}
+                    >
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                          <p
+                            className={`text-sm font-semibold ${
+                              isToday ? 'text-primary' : 'text-foreground'
+                            }`}
+                          >
+                            {format(day, 'EEEE')}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(day, 'dd.MM.yyyy')}
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+                          {dayLessons.length}
+                        </span>
+                      </div>
+                      {dayLessons.length === 0 ? (
+                        <p className="py-2 text-sm text-muted-foreground">—</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {dayLessons.map((lesson) => (
+                            <article
+                              key={lesson.id}
+                              className={`rounded border-l-4 p-3 text-sm ${lessonTypeColor[lesson.lesson_type]}`}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <p className="font-medium">{lesson.title}</p>
+                                <span className="shrink-0 tabular-nums text-muted-foreground">
+                                  {formatTime(lesson.date)}
+                                </span>
+                              </div>
+                              {lesson.teacher_name && (
+                                <p className="mt-1 text-muted-foreground">
+                                  {lesson.teacher_name}
+                                </p>
+                              )}
+                              <p className="mt-1 text-muted-foreground">
+                                {lesson.present_count}/{lesson.total_count}
+                              </p>
+                            </article>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+                  );
+                })}
               </div>
-            ))}
+              <div className="hidden overflow-x-auto md:block">
+                <div className="grid min-w-[700px] grid-cols-7 gap-2">
+                  {weekDays.map((day) => {
+                    const key = format(day, 'yyyy-MM-dd');
+                    const dayLessons = lessonsByDay.get(key) || [];
+                    const isToday = isSameDay(day, today);
+                    return (
+                      <div
+                        key={key}
+                        className={`min-h-[200px] rounded-lg border bg-card p-2 ${
+                          isToday ? 'ring-2 ring-primary/30' : ''
+                        }`}
+                      >
+                        <div
+                          className={`mb-2 text-center text-sm font-medium ${
+                            isToday ? 'text-primary' : 'text-foreground'
+                          }`}
+                        >
+                          <div>{format(day, 'EEE')}</div>
+                          <div className="text-lg font-bold">
+                            {format(day, 'd')}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          {dayLessons.length === 0 ? (
+                            <p className="py-4 text-center text-xs text-muted-foreground/50">
+                              —
+                            </p>
+                          ) : (
+                            dayLessons.map((lesson) => (
+                              <div
+                                key={lesson.id}
+                                className={`rounded border-l-4 p-1.5 text-xs ${lessonTypeColor[lesson.lesson_type]}`}
+                              >
+                                <p className="truncate font-medium">
+                                  {lesson.title}
+                                </p>
+                                <p className="text-muted-foreground">
+                                  {formatTime(lesson.date)}
+                                </p>
+                                {lesson.teacher_name && (
+                                  <p className="truncate text-muted-foreground">
+                                    {lesson.teacher_name}
+                                  </p>
+                                )}
+                                <p className="text-muted-foreground">
+                                  {lesson.present_count}/{lesson.total_count}
+                                </p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="templates">
+          {/* Templates section */}
+          <div className="rounded-lg border bg-card">
+            <div className="flex items-center justify-between border-b px-4 py-3">
+              <h2 className="font-semibold">{t('schedule.templates')}</h2>
+              <span className="text-sm text-muted-foreground">
+                {t('schedule.count_label', { count: (templates || []).length })}
+              </span>
+            </div>
+            {templatesLoading ? (
+              <div className="space-y-2 p-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
+              </div>
+            ) : !templates?.length ? (
+              <EmptyState
+                title={t('schedule.not_found')}
+                description={t('schedule.not_found_desc')}
+              />
+            ) : (
+              <div className="divide-y">
+                {templates.map((tpl) => (
+                  <div
+                    key={tpl.id}
+                    className="flex flex-wrap items-center justify-between gap-2 px-4 py-2"
+                  >
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="font-medium text-sm">
+                        {DAY_LABELS[tpl.day_of_week]}
+                      </span>
+                      <span className="text-sm text-foreground">
+                        {tpl.start_time}—{tpl.end_time}
+                      </span>
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                        {lessonTypeLabel[tpl.lesson_type]}
+                      </span>
+                      <button
+                        onClick={() => navigate(`/groups/${tpl.group_id}`)}
+                        className="text-sm text-muted-foreground hover:text-primary hover:underline"
+                      >
+                        {tpl.group_name}
+                      </button>
+                      {tpl.teacher_name && (
+                        <span className="text-xs text-muted-foreground">
+                          {tpl.teacher_name}
+                        </span>
+                      )}
+                    </div>
+                    {canEdit && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteId(tpl.id)}
+                        aria-label={t('schedule.delete_title')}
+                        title={t('schedule.delete_title')}
+                        className="h-11 w-11"
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Create Template Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

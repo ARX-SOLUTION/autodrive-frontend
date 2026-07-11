@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +46,7 @@ import { formatPhone } from '@/lib/phoneFormater';
 
 const OperatorsPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -270,7 +272,20 @@ const OperatorsPage = () => {
                 : paginatedItems.map((o, idx) => (
                     <tr
                       key={o.id}
-                      className="table-row-striped border-b border-border/50"
+                      className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
+                      onClick={() => {
+                        if (window.getSelection()?.toString()) return;
+                        navigate(`/users/${o.id}`);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') navigate(`/users/${o.id}`);
+                        if (e.key === ' ') {
+                          e.preventDefault();
+                          navigate(`/users/${o.id}`);
+                        }
+                      }}
                     >
                       <td className="px-4 py-3 text-center text-muted-foreground">
                         {startIndex + idx + 1}
@@ -294,13 +309,19 @@ const OperatorsPage = () => {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
                           <button
-                            onClick={() => openEdit(o)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEdit(o);
+                            }}
                             className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
                           <button
-                            onClick={() => setDeleteId(o.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(o.id);
+                            }}
                             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -322,6 +343,7 @@ const OperatorsPage = () => {
                   key={o.id}
                   title={o?.name || t('common.na')}
                   subtitle={formatPhone(o?.phone)}
+                  onClick={() => navigate(`/users/${o.id}`)}
                   fields={[
                     {
                       label: t('operators.detail.email'),
@@ -349,13 +371,19 @@ const OperatorsPage = () => {
                   actions={
                     <>
                       <button
-                        onClick={() => openEdit(o)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEdit(o);
+                        }}
                         className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        onClick={() => setDeleteId(o.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(o.id);
+                        }}
                         className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                       >
                         <Trash2 className="h-3.5 w-3.5" />

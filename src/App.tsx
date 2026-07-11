@@ -25,8 +25,10 @@ const BranchDetailPage = lazy(() => import('./pages/BranchDetailPage'));
 const GroupsPage = lazy(() => import('./pages/GroupsPage'));
 const GroupDetailPage = lazy(() => import('./pages/GroupDetailPage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
+const UserDetailPage = lazy(() => import('./pages/UserDetailPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
+const AuditDetailPage = lazy(() => import('./pages/AuditDetailPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 const queryClient = new QueryClient({
@@ -122,10 +124,26 @@ const App = () => (
                 }
               />
               <Route
+                path="users/:id"
+                element={
+                  <BranchAccessRoute>
+                    <UserDetailPage />
+                  </BranchAccessRoute>
+                }
+              />
+              <Route
                 path="audit"
                 element={
                   <OwnerRoute>
                     <AuditLogPage />
+                  </OwnerRoute>
+                }
+              />
+              <Route
+                path="audit/:id"
+                element={
+                  <OwnerRoute>
+                    <AuditDetailPage />
                   </OwnerRoute>
                 }
               />
