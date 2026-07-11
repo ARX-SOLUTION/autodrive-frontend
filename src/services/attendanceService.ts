@@ -20,8 +20,14 @@ export const useLessons = (page = 1, limit = 50) => {
       const { data: res } = await axiosInstance.get('/lessons', {
         params: { page, limit },
       });
-      const { data, meta } = parseListResponse<Lesson>(res, page, limit);
-      return { data, total: meta.total, page, limit };
+      const { data } = parseListResponse<Lesson>(res, page, limit);
+      // ponytail: backend LessonListResponse is flat ({data,total,page,limit},
+      // not nested under meta), so read total off the raw envelope directly
+      // instead of parseListResponse's fallback (which undercounts to this
+      // page's row count when meta is absent).
+      const total =
+        (res as { data?: { total?: number } })?.data?.total ?? data.length;
+      return { data, total, page, limit };
     },
     enabled: !!branchId || isCrossTenant,
   });

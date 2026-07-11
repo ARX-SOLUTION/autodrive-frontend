@@ -28,7 +28,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useIsCrossTenant } from '@/hooks/useCan';
 import { cn } from '@/lib/utils';
@@ -38,6 +37,7 @@ import {
   useCreatePayment,
   usePaymentsPage,
   usePaymentSnapshot,
+  usePaymentSummary,
 } from '@/services/paymentService';
 import { useAuthStore } from '@/store/authStore';
 import { format } from 'date-fns';
@@ -223,30 +223,20 @@ const PaymentsPage = () => {
     courseTypeFilter !== 'all' ||
     !!debouncedSearch;
 
-  const { data: summaryPayments = [] } = useQuery({
-    queryKey: ['payments-summary-list', paymentQueryFilters],
-    queryFn: () => fetchAllPayments(paymentQueryFilters),
-    enabled: canQueryPayments && hasAnyFilter,
-  });
+  const { data: summary } = usePaymentSummary(
+    paymentQueryFilters,
+    canQueryPayments && hasAnyFilter,
+  );
 
   const visiblePayments = paymentsPage?.data ?? [];
   const totalPayments = paymentsPage?.meta.total ?? visiblePayments.length;
   const totalPages = Math.max(1, paymentsPage?.meta.totalPages ?? 1);
 
-  const displayedSummary = useMemo(
-    () => ({
-      period_collected: summaryPayments.reduce(
-        (sum, p) => sum + (p.amount_paid || 0),
-        0,
-      ),
-      period_payments_count: summaryPayments.length,
-      period_debt: summaryPayments.reduce(
-        (sum, p) => sum + (p.remaining_debt || 0),
-        0,
-      ),
-    }),
-    [summaryPayments],
-  );
+  const displayedSummary = summary ?? {
+    period_collected: 0,
+    period_payments_count: 0,
+    period_debt: 0,
+  };
 
   const toggleSort = (field: string) => {
     if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
