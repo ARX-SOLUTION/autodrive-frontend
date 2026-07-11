@@ -697,12 +697,6 @@ const PaymentsPage = () => {
                           )}
                         </button>
                       </th>
-                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                        {t('payments.payment_method')}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                        {t('payments.operator')}
-                      </th>
                       <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                         <button
                           onClick={() => toggleSort('date')}
@@ -726,14 +720,14 @@ const PaymentsPage = () => {
                     {isLoading ? (
                       [...Array(4)].map((_, i) => (
                         <tr key={i} className="border-b border-border/50">
-                          <td colSpan={10} className="p-4">
+                          <td colSpan={8} className="p-4">
                             <Skeleton className="h-5" />
                           </td>
                         </tr>
                       ))
                     ) : visiblePayments.length === 0 ? (
                       <tr>
-                        <td colSpan={10} className="p-0">
+                        <td colSpan={8} className="p-0">
                           <EmptyState
                             icon={CreditCard}
                             title={t('payments.not_found')}
@@ -805,16 +799,6 @@ const PaymentsPage = () => {
                                 : t('payments.fully_paid')}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-center text-xs">
-                            {p.payment_method === 'naqd'
-                              ? t('payments.payment_cash')
-                              : p.payment_method === 'karta'
-                                ? t('payments.payment_card')
-                                : t('payments.payment_transfer')}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground text-xs">
-                            {p.recorded_by || t('common.na')}
-                          </td>
                           <td className="px-4 py-3 text-muted-foreground tabular-nums">
                             {formatDate(p.date)}
                           </td>
@@ -845,19 +829,6 @@ const PaymentsPage = () => {
                       {
                         label: t('payments.amount'),
                         value: formatMoney(p.amount_paid),
-                      },
-                      {
-                        label: t('payments.payment_method'),
-                        value:
-                          p.payment_method === 'naqd'
-                            ? t('payments.payment_cash')
-                            : p.payment_method === 'karta'
-                              ? t('payments.payment_card')
-                              : t('payments.payment_transfer'),
-                      },
-                      {
-                        label: t('payments.operator'),
-                        value: p.recorded_by || t('common.na'),
                       },
                       {
                         label: t('common.course_type'),

@@ -503,28 +503,8 @@ const StudentsPage = () => {
                   <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                     {t('students.phone')}
                   </th>
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                    <button
-                      onClick={() => toggleSort('total_price')}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors ml-auto"
-                    >
-                      {t('students.total_price')}
-                      {sortField === 'total_price' ? (
-                        sortDir === 'asc' ? (
-                          <ChevronUp className="h-3 w-3" />
-                        ) : (
-                          <ChevronDown className="h-3 w-3" />
-                        )
-                      ) : (
-                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                      )}
-                    </button>
-                  </th>
                   {courseType === 'tezkor' ? (
                     <>
-                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                        {t('students.payment')}
-                      </th>
                       <th className="px-4 py-3 text-right font-medium text-muted-foreground">
                         <button
                           onClick={() => toggleSort('debt')}
@@ -542,23 +522,11 @@ const StudentsPage = () => {
                           )}
                         </button>
                       </th>
-                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                        {t('students.payment_method')}
-                      </th>
                       <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                         {t('students.group')}
                       </th>
                       <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                        {t('students.document')}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                        {t('students.operator')}
-                      </th>
-                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
                         {t('students.result')}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                        {t('students.notes')}
                       </th>
                     </>
                   ) : (
@@ -589,9 +557,6 @@ const StudentsPage = () => {
                           )}
                         </button>
                       </th>
-                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                        {t('students.payment_method')}
-                      </th>
                       <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                         {t('students.group')}
                       </th>
@@ -605,16 +570,7 @@ const StudentsPage = () => {
                         {t('students.contract_number')}
                       </th>
                       <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                        {t('students.document')}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                        {t('students.operator')}
-                      </th>
-                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
                         {t('students.result')}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                        {t('students.notes')}
                       </th>
                     </>
                   )}
@@ -679,14 +635,8 @@ const StudentsPage = () => {
                         <td className="px-4 py-3 text-muted-foreground">
                           {formatPhone(s.phone)}
                         </td>
-                        <td className="px-4 py-3 text-right tabular-nums">
-                          {formatMoney(s.total_price)}
-                        </td>
                         {courseType === 'tezkor' ? (
                           <>
-                            <td className="px-4 py-3 text-right tabular-nums">
-                              {formatMoney(s.amount_paid || 0)}
-                            </td>
                             <td className="px-4 py-3 text-right">
                               <span
                                 className={
@@ -700,35 +650,11 @@ const StudentsPage = () => {
                                   : t('common.na')}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-center text-xs">
-                              {s.payment_method === 'naqd'
-                                ? t('students.payment_cash')
-                                : s.payment_method === 'karta'
-                                  ? t('students.payment_card')
-                                  : t('students.payment_transfer')}
-                            </td>
                             <td className="px-4 py-3 text-muted-foreground">
                               {s.group_name || t('common.na')}
                             </td>
                             <td className="px-4 py-3 text-center">
-                              <span
-                                className={
-                                  s.has_document
-                                    ? 'text-success'
-                                    : 'text-destructive'
-                                }
-                              >
-                                {s.has_document ? '+' : '-'}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground">
-                              {s.registered_by}
-                            </td>
-                            <td className="px-4 py-3 text-center">
                               {s.result}
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground max-w-[120px] truncate">
-                              {s.notes}
                             </td>
                           </>
                         ) : (
@@ -755,13 +681,6 @@ const StudentsPage = () => {
                                   : t('common.na')}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-center text-xs">
-                              {s.payment_method === 'naqd'
-                                ? t('students.payment_cash')
-                                : s.payment_method === 'karta'
-                                  ? t('students.payment_card')
-                                  : t('students.payment_transfer')}
-                            </td>
                             <td className="px-4 py-3">{s.group_name}</td>
                             <td className="px-4 py-3 text-muted-foreground tabular-nums">
                               {formatDate(s.completion_date)}
@@ -779,24 +698,7 @@ const StudentsPage = () => {
                               {s.contract_number}
                             </td>
                             <td className="px-4 py-3 text-center">
-                              <span
-                                className={
-                                  s.has_document
-                                    ? 'text-success'
-                                    : 'text-destructive'
-                                }
-                              >
-                                {s.has_document ? '+' : '-'}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground">
-                              {s.registered_by}
-                            </td>
-                            <td className="px-4 py-3 text-center">
                               {s.result}
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground max-w-[120px] truncate">
-                              {s.notes}
                             </td>
                           </>
                         )}
