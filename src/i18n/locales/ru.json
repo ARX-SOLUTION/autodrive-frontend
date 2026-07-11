@@ -209,7 +209,7 @@
       "today_revenue": "Выручка сегодня",
       "today_meta": "Часовой пояс Asia/Tashkent",
       "period_revenue": "Выручка за период",
-      "previous_period": "Предыдущий период: {{value}}",
+      "previous_period": "Предыдущий период",
       "outstanding_debt": "Общая задолженность",
       "debtors": "{{count}} студентов с долгом",
       "coverage": "Покрытие платежей",
@@ -229,7 +229,18 @@
       "quick_actions": "Быстрые действия",
       "quick_actions_subtitle": "Частые действия в одном месте.",
       "updated": "Обновлено",
-      "revenue_chart_summary": "Тренд выручки: {{total}} всего"
+      "revenue_chart_summary": "Тренд выручки: {{total}} всего",
+      "granularity": "Гранулярность",
+      "daily": "По дням",
+      "weekly": "По неделям",
+      "sort_by": "Сортировка",
+      "revenue_table_caption": "Данные тренда выручки",
+      "error_title": "Не удалось загрузить данные дашборда",
+      "error_subtitle": "Проверьте соединение и попробуйте снова.",
+      "kpi_section_label": "KPI контроля выручки",
+      "coverage_bar_label": "{{rate}}% оплачено полностью",
+      "last_payment_none": "Нет платежа",
+      "attendance_no_data": "Нет данных о посещаемости"
     }
   },
   "branches": {

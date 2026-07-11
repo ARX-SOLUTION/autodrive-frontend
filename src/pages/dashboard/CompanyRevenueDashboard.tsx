@@ -50,32 +50,33 @@ const moneyFormatter = new Intl.NumberFormat('uz-UZ', {
 
 const formatMoney = (value: number) =>
   `${moneyFormatter.format(Math.round(value || 0))} so'm`;
+// uz-UZ Intl month:'short' renders as an unresolved skeleton (e.g. "M07 1")
+// in some browsers — build the date-fns dd.MM(.yyyy)(HH:mm) convention
+// instead of Intl.DateTimeFormat's month name.
 const formatDate = (
   value: string | Date,
   options?: Intl.DateTimeFormatOptions,
-) =>
-  new Intl.DateTimeFormat('uz-UZ', {
-    timeZone: UZ_TIMEZONE,
-    day: '2-digit',
-    month: 'short',
-    ...options,
-  }).format(new Date(value));
-// uz-UZ Intl month:'short' renders as an unresolved skeleton (e.g. "M07 1")
-// in some browsers — use the codebase's dd.MM.yyyy convention instead.
+) => {
+  let pattern = 'dd.MM';
+  if (options?.year) pattern += '.yyyy';
+  if (options?.hour) pattern += ' HH:mm';
+  return format(new Date(value), pattern);
+};
 const formatShortDate = (value: string | Date) =>
   format(new Date(value), 'dd.MM.yyyy');
 
-const todayInUz = () =>
-  new Intl.DateTimeFormat('en-CA', { timeZone: UZ_TIMEZONE }).format(
-    new Date(),
-  );
+// en-CA formatter always renders YYYY-MM-DD — cache it once like
+// moneyFormatter instead of constructing it on every call.
+const uzDateFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: UZ_TIMEZONE,
+});
+
+const todayInUz = () => uzDateFormatter.format(new Date());
 
 const addDays = (dateString: string, amount: number) => {
   const date = new Date(`${dateString}T00:00:00+05:00`);
   date.setUTCDate(date.getUTCDate() + amount);
-  return new Intl.DateTimeFormat('en-CA', { timeZone: UZ_TIMEZONE }).format(
-    date,
-  );
+  return uzDateFormatter.format(date);
 };
 
 const startOfMonthInUz = () => {
@@ -402,6 +403,7 @@ const RevenueChart = ({
       aria-label={t(
         'dashboard.v2.revenue_chart_summary',
         `Revenue trend: ${formatMoney(total)} total`,
+        { total: formatMoney(total) },
       )}
     >
       {data.length ? (
@@ -482,13 +484,13 @@ const RevenueChart = ({
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground">
                   <th scope="col" className="py-2">
-                    Davr
+                    {t('dashboard.v2.period', 'Davr')}
                   </th>
                   <th scope="col" className="py-2 text-right">
-                    Tushum
+                    {t('dashboard.top_branches_revenue', 'Tushum')}
                   </th>
                   <th scope="col" className="py-2 text-right">
-                    Payment
+                    {t('payments.payment_count', "To'lovlar soni")}
                   </th>
                 </tr>
               </thead>
@@ -532,21 +534,24 @@ const AXIS_PROPS = {
 };
 
 const EmptyData = ({
-  message = 'Maʼlumot yo‘q',
+  message,
   onReset,
 }: {
   message?: string;
   onReset?: () => void;
-}) => (
-  <div className="grid min-h-48 place-items-center gap-2 rounded-lg border border-dashed border-border/80 bg-muted/10 p-4 text-center text-sm text-muted-foreground">
-    <span>{message}</span>
-    {onReset && (
-      <Button type="button" variant="ghost" size="sm" onClick={onReset}>
-        Filtrni tozalash
-      </Button>
-    )}
-  </div>
-);
+}) => {
+  const { t } = useTranslation();
+  return (
+    <div className="grid min-h-48 place-items-center gap-2 rounded-lg border border-dashed border-border/80 bg-muted/10 p-4 text-center text-sm text-muted-foreground">
+      <span>{message ?? t('common.no_data', "Ma'lumot topilmadi")}</span>
+      {onReset && (
+        <Button type="button" variant="ghost" size="sm" onClick={onReset}>
+          {t('common.clear', 'Tozalash')}
+        </Button>
+      )}
+    </div>
+  );
+};
 
 const CompanyRevenueDashboard = () => {
   const { t } = useTranslation();
@@ -611,8 +616,11 @@ const CompanyRevenueDashboard = () => {
   const dashboardContext = new URLSearchParams();
   if (query.branchId) dashboardContext.set('branch_id', query.branchId);
   if (query.courseType) dashboardContext.set('course_type', query.courseType);
-  if (query.from) dashboardContext.set('from', query.from);
-  if (query.to) dashboardContext.set('to', query.to);
+  // /payments and /students read date_from/date_to (see useUrlParams), not
+  // from/to — using the wrong keys here silently drops the date filter on
+  // drill-down navigation.
+  if (query.from) dashboardContext.set('date_from', query.from);
+  if (query.to) dashboardContext.set('date_to', query.to);
   if (query.granularity) dashboardContext.set('granularity', query.granularity);
   const withContext = (
     path: string,
@@ -671,7 +679,7 @@ const CompanyRevenueDashboard = () => {
 
       <section
         className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
-        aria-label="Revenue control KPIs"
+        aria-label={t('dashboard.v2.kpi_section_label', 'Revenue control KPIs')}
       >
         <KpiCard
           label={t('dashboard.v2.today_revenue', 'Bugungi tushum')}
@@ -776,7 +784,7 @@ const CompanyRevenueDashboard = () => {
                     <span className="block text-[11px] text-muted-foreground">
                       {student.last_payment_at
                         ? formatShortDate(student.last_payment_at)
-                        : 'Payment yo‘q'}
+                        : t('dashboard.v2.last_payment_none', 'Payment yo‘q')}
                     </span>
                   </span>
                 </button>
@@ -832,6 +840,7 @@ const CompanyRevenueDashboard = () => {
                     key={key}
                     type="button"
                     onClick={() => setBranchSort(key)}
+                    aria-pressed={branchSort === key}
                     className={cn(
                       'rounded-full border px-2.5 py-1 motion-safe:transition-[background-color,color]',
                       branchSort === key
@@ -957,7 +966,11 @@ const CompanyRevenueDashboard = () => {
             <div className="space-y-4">
               <div
                 className="flex h-3 overflow-hidden rounded-full bg-muted"
-                aria-label={`${kpis.collection.coverage_rate}% paid in full`}
+                aria-label={t(
+                  'dashboard.v2.coverage_bar_label',
+                  '{{rate}}% paid in full',
+                  { rate: kpis.collection.coverage_rate },
+                )}
               >
                 <div
                   className="bg-success"
@@ -1070,7 +1083,11 @@ const CompanyRevenueDashboard = () => {
                 </span>
               ),
             )}
-            {attendanceTotal === 0 && <span>Davomat maʼlumoti yo‘q</span>}
+            {attendanceTotal === 0 && (
+              <span>
+                {t('dashboard.v2.attendance_no_data', 'Davomat maʼlumoti yo‘q')}
+              </span>
+            )}
           </div>
         </DashboardCard>
         <DashboardCard
@@ -1192,19 +1209,28 @@ const DashboardSkeleton = () => (
   </div>
 );
 
-const ErrorState = ({ onRetry }: { onRetry: () => void }) => (
-  <Card className="border-destructive/30 bg-destructive/5 p-8 text-center">
-    <AlertTriangle className="mx-auto h-8 w-8 text-destructive" />
-    <h1 className="mt-3 text-lg font-semibold">
-      Dashboard maʼlumotlarini yuklab bo‘lmadi
-    </h1>
-    <p className="mt-1 text-sm text-muted-foreground">
-      Ulanishni tekshiring va qayta urinib ko‘ring.
-    </p>
-    <Button className="mt-4" onClick={onRetry}>
-      Qayta urinish
-    </Button>
-  </Card>
-);
+const ErrorState = ({ onRetry }: { onRetry: () => void }) => {
+  const { t } = useTranslation();
+  return (
+    <Card className="border-destructive/30 bg-destructive/5 p-8 text-center">
+      <AlertTriangle className="mx-auto h-8 w-8 text-destructive" />
+      <h1 className="mt-3 text-lg font-semibold">
+        {t(
+          'dashboard.v2.error_title',
+          "Dashboard maʼlumotlarini yuklab bo'lmadi",
+        )}
+      </h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {t(
+          'dashboard.v2.error_subtitle',
+          "Ulanishni tekshiring va qayta urinib ko'ring.",
+        )}
+      </p>
+      <Button className="mt-4" onClick={onRetry}>
+        {t('common.retry', 'Qayta urinish')}
+      </Button>
+    </Card>
+  );
+};
 
 export default CompanyRevenueDashboard;
