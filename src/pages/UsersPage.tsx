@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useUsers, useCreateManager } from '@/services/userService';
@@ -45,23 +46,9 @@ const formatDate = (d?: string) => {
   }
 };
 
-const roleLabel = (role?: string) => {
-  switch (role) {
-    case 'owner':
-      return 'Owner';
-    case 'manager':
-      return 'Manager';
-    case 'operator':
-      return 'Operator';
-    case 'teacher':
-      return 'Teacher';
-    default:
-      return role || '—';
-  }
-};
-
 const UsersPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: users, isLoading } = useUsers('manager');
   const { data: branches } = useBranches();
   const createMut = useCreateManager();
@@ -206,23 +193,6 @@ const UsersPage = () => {
                     )}
                   </button>
                 </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  <button
-                    onClick={() => toggleSort('role')}
-                    className="flex items-center gap-1 hover:text-foreground transition-colors mx-auto"
-                  >
-                    {t('users.detail.role')}
-                    {sortField === 'role' ? (
-                      sortDir === 'asc' ? (
-                        <ChevronUp className="h-3 w-3" />
-                      ) : (
-                        <ChevronDown className="h-3 w-3" />
-                      )
-                    ) : (
-                      <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                    )}
-                  </button>
-                </th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                   <button
                     onClick={() => toggleSort('branch_name')}
@@ -266,7 +236,7 @@ const UsersPage = () => {
               {isLoading
                 ? [...Array(3)].map((_, i) => (
                     <tr key={i} className="border-b border-border/50">
-                      <td colSpan={7} className="p-4">
+                      <td colSpan={6} className="p-4">
                         <Skeleton className="h-5 w-full" />
                       </td>
                     </tr>
@@ -274,7 +244,20 @@ const UsersPage = () => {
                 : paginatedItems.map((u, idx) => (
                     <tr
                       key={u.id}
-                      className="table-row-striped border-b border-border/50"
+                      className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
+                      onClick={() => {
+                        if (window.getSelection()?.toString()) return;
+                        navigate(`/users/${u.id}`);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') navigate(`/users/${u.id}`);
+                        if (e.key === ' ') {
+                          e.preventDefault();
+                          navigate(`/users/${u.id}`);
+                        }
+                      }}
                     >
                       <td className="px-4 py-3 text-center text-muted-foreground">
                         {startIndex + idx + 1}
@@ -282,13 +265,6 @@ const UsersPage = () => {
                       <td className="px-4 py-3 font-medium">{u.email}</td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {u.phone || t('common.na')}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${u.role === 'owner' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}
-                        >
-                          {roleLabel(u.role)}
-                        </span>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {u.branch_name || t('common.na')}
@@ -328,8 +304,8 @@ const UsersPage = () => {
               key={u.id}
               title={u.name || u.email}
               subtitle={u.email}
+              onClick={() => navigate(`/users/${u.id}`)}
               fields={[
-                { label: t('users.detail.role'), value: roleLabel(u.role) },
                 {
                   label: t('users.detail.branch'),
                   value: u.branch_name ?? t('common.na'),

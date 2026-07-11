@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +47,7 @@ import { RoleGate } from '@/components/RoleGate';
 
 const TeachersPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -276,7 +278,20 @@ const TeachersPage = () => {
                 : paginatedItems.map((teacher, idx) => (
                     <tr
                       key={teacher.id}
-                      className="table-row-striped border-b border-border/50"
+                      className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
+                      onClick={() => {
+                        if (window.getSelection()?.toString()) return;
+                        navigate(`/users/${teacher.id}`);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') navigate(`/users/${teacher.id}`);
+                        if (e.key === ' ') {
+                          e.preventDefault();
+                          navigate(`/users/${teacher.id}`);
+                        }
+                      }}
                     >
                       <td className="px-4 py-3 text-center text-muted-foreground">
                         {startIndex + idx + 1}
@@ -307,13 +322,19 @@ const TeachersPage = () => {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
                           <button
-                            onClick={() => openEdit(teacher)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEdit(teacher);
+                            }}
                             className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
                           <button
-                            onClick={() => setDeleteId(teacher.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(teacher.id);
+                            }}
                             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -335,6 +356,7 @@ const TeachersPage = () => {
                   key={teacher.id}
                   title={teacher.name || t('common.na')}
                   subtitle={teacher.phone}
+                  onClick={() => navigate(`/users/${teacher.id}`)}
                   fields={[
                     {
                       label: t('teachers.specialization'),
@@ -365,13 +387,19 @@ const TeachersPage = () => {
                   actions={
                     <>
                       <button
-                        onClick={() => openEdit(teacher)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEdit(teacher);
+                        }}
                         className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        onClick={() => setDeleteId(teacher.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(teacher.id);
+                        }}
                         className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                       >
                         <Trash2 className="h-3.5 w-3.5" />

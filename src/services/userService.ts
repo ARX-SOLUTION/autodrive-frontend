@@ -22,6 +22,16 @@ export const useUsers = (role?: string) => {
   });
 };
 
+export const useUser = (id?: string) =>
+  useQuery<User>({
+    queryKey: ['users', 'detail', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data: res } = await axiosInstance.get(`/users/${id}`);
+      return res?.data || res;
+    },
+  });
+
 export const useCreateManager = () => {
   const qc = useQueryClient();
   return useMutation({
