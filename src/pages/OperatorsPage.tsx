@@ -43,6 +43,7 @@ import { useBranches } from '@/services/branchService';
 import { toast } from 'sonner';
 import { User } from '@/types/user';
 import { formatPhone } from '@/lib/phoneFormater';
+import { extractErrorMessage } from '@/lib/errors';
 
 const OperatorsPage = () => {
   const { t } = useTranslation();
@@ -133,7 +134,8 @@ const OperatorsPage = () => {
             toast.success(t('operators.updated'));
             setModalOpen(false);
           },
-          onError: () => toast.error(t('common.error')),
+          onError: (err) =>
+            toast.error(extractErrorMessage(err, t('common.error'))),
         },
       );
     } else {
@@ -142,7 +144,8 @@ const OperatorsPage = () => {
           toast.success(t('operators.added'));
           setModalOpen(false);
         },
-        onError: () => toast.error(t('common.error')),
+        onError: (err) =>
+          toast.error(extractErrorMessage(err, t('common.error'))),
       });
     }
   };
@@ -154,7 +157,8 @@ const OperatorsPage = () => {
         toast.success(t('operators.deleted'));
         setDeleteId(null);
       },
-      onError: () => toast.error(t('common.error')),
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
     });
   };
 

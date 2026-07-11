@@ -42,6 +42,7 @@ import { toast } from 'sonner';
 import { useCan } from '@/hooks/useCan';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useAuthStore } from '@/store/authStore';
+import { extractErrorMessage } from '@/lib/errors';
 
 const formatDate = (d: string) => {
   try {
@@ -134,8 +135,8 @@ const AttendancePage = () => {
       });
       toast.success(t('attendance.created'));
       setCreateOpen(false);
-    } catch {
-      toast.error(t('attendance.create_error'));
+    } catch (err) {
+      toast.error(extractErrorMessage(err, t('attendance.create_error')));
     }
   };
 
@@ -153,8 +154,8 @@ const AttendancePage = () => {
       }));
       await batchAttendance.mutateAsync({ lessonId, records });
       toast.success(t('attendance.saved'));
-    } catch {
-      toast.error(t('attendance.save_error'));
+    } catch (err) {
+      toast.error(extractErrorMessage(err, t('attendance.save_error')));
     }
   };
 
@@ -164,8 +165,8 @@ const AttendancePage = () => {
       await deleteLesson.mutateAsync(deleteId);
       toast.success(t('attendance.deleted'));
       setDeleteId(null);
-    } catch {
-      toast.error(t('attendance.delete_error'));
+    } catch (err) {
+      toast.error(extractErrorMessage(err, t('attendance.delete_error')));
     }
   };
 
@@ -524,6 +525,7 @@ const AttendancePage = () => {
         onConfirm={handleDelete}
         title={t('attendance.delete_title')}
         description={t('attendance.delete_desc')}
+        loading={deleteLesson.isPending}
       />
     </div>
   );

@@ -44,6 +44,7 @@ import {
 import { toast } from 'sonner';
 import { useCan } from '@/hooks/useCan';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { extractErrorMessage } from '@/lib/errors';
 
 const formatTime = (iso: string) => {
   try {
@@ -153,8 +154,8 @@ const SchedulePage = () => {
       });
       toast.success(t('schedule.template_created'));
       setCreateOpen(false);
-    } catch {
-      toast.error(t('common.error'));
+    } catch (err) {
+      toast.error(extractErrorMessage(err, t('common.error')));
     }
   };
 
@@ -164,8 +165,8 @@ const SchedulePage = () => {
       await deleteTemplate.mutateAsync(deleteId);
       toast.success(t('schedule.template_deleted'));
       setDeleteId(null);
-    } catch {
-      toast.error(t('common.error'));
+    } catch (err) {
+      toast.error(extractErrorMessage(err, t('common.error')));
     }
   };
 
@@ -630,6 +631,7 @@ const SchedulePage = () => {
         onConfirm={handleDelete}
         title={t('schedule.delete_title')}
         description={t('schedule.delete_desc')}
+        loading={deleteTemplate.isPending}
       />
     </div>
   );

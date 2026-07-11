@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { today } from './PaymentsPage';
+import { tashkentToday } from '@/lib/tashkentDate';
 
 describe('today() (L2 regression)', () => {
   afterEach(() => {
@@ -12,7 +12,7 @@ describe('today() (L2 regression)', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-07-10T23:30:00.000Z'));
 
-    const d = today();
+    const d = tashkentToday();
 
     expect(d.getFullYear()).toBe(2026);
     expect(d.getMonth()).toBe(6); // July

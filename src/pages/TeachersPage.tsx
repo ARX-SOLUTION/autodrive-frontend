@@ -44,6 +44,7 @@ import { useBranches } from '@/services/branchService';
 import { toast } from 'sonner';
 import { User } from '@/types/user';
 import { RoleGate } from '@/components/RoleGate';
+import { extractErrorMessage } from '@/lib/errors';
 
 const TeachersPage = () => {
   const { t } = useTranslation();
@@ -154,7 +155,8 @@ const TeachersPage = () => {
             toast.success(t('teachers.updated'));
             setModalOpen(false);
           },
-          onError: () => toast.error(t('common.error')),
+          onError: (err) =>
+            toast.error(extractErrorMessage(err, t('common.error'))),
         },
       );
     } else {
@@ -163,7 +165,8 @@ const TeachersPage = () => {
           toast.success(t('teachers.added'));
           setModalOpen(false);
         },
-        onError: () => toast.error(t('common.error')),
+        onError: (err) =>
+          toast.error(extractErrorMessage(err, t('common.error'))),
       });
     }
   };
@@ -175,7 +178,8 @@ const TeachersPage = () => {
         toast.success(t('teachers.deleted'));
         setDeleteId(null);
       },
-      onError: () => toast.error(t('common.error')),
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
     });
   };
 

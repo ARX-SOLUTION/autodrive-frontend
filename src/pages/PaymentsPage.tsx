@@ -30,7 +30,10 @@ import {
 } from '@/components/ui/tooltip';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useIsCrossTenant } from '@/hooks/useCan';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import { cn } from '@/lib/utils';
+import { extractErrorMessage } from '@/lib/errors';
+import { tashkentToday } from '@/lib/tashkentDate';
 import { useBranches } from '@/services/branchService';
 import {
   fetchAllPayments,
@@ -39,6 +42,7 @@ import {
   usePaymentSnapshot,
   usePaymentSummary,
 } from '@/services/paymentService';
+import { toLocalDateStr } from '@/services/studentService';
 import { useAuthStore } from '@/store/authStore';
 import { format } from 'date-fns';
 import {
@@ -59,7 +63,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 const formatDate = (d: string) => {
@@ -75,37 +79,28 @@ const formatMoney = (n: number) =>
   new Intl.NumberFormat('uz-UZ').format(n || 0) + " so'm";
 
 // Date preset helpers
-const UZ_OFFSET_MS = 5 * 60 * 60 * 1000;
 // ponytail (L2): "today" means Tashkent's calendar day, not the device
 // OS's — matches the backend's hardcoded UZ+5 day-bucket math (uzDayStart/
 // uzDayEnd) so a device in another timezone can't pick a day that's off by
 // one right around midnight UZ time. Returns a local-midnight Date for that
 // Tashkent day, so downstream setDate()/toLocalDateStr() keep working as-is.
-export const today = () => {
-  const tashkentNow = new Date(Date.now() + UZ_OFFSET_MS);
-  return new Date(
-    tashkentNow.getUTCFullYear(),
-    tashkentNow.getUTCMonth(),
-    tashkentNow.getUTCDate(),
-  );
-};
 const weekAgo = () => {
-  const d = today();
+  const d = tashkentToday();
   d.setDate(d.getDate() - 6);
   return d;
 };
 const monthStart = () => {
-  const d = today();
+  const d = tashkentToday();
   d.setDate(1);
   return d;
 };
 const lastMonthStart = () => {
-  const d = today();
+  const d = tashkentToday();
   d.setMonth(d.getMonth() - 1, 1);
   return d;
 };
 const lastMonthEnd = () => {
-  const d = today();
+  const d = tashkentToday();
   d.setDate(0);
   return d;
 };
@@ -115,19 +110,64 @@ const PaymentsPage = () => {
   const navigate = useNavigate();
   const isCrossTenant = useIsCrossTenant();
   const user = useAuthStore((s) => s.user);
-  const [branchId, setBranchId] = useState<string | undefined>(
-    isCrossTenant ? undefined : user?.branch_id || undefined,
-  );
-  const [search, setSearch] = useState('');
+
+  // Filters/sort/page live in the URL so reload / back / share preserves
+  // them (autodrive-6cq.5.8) — same setParam/setParams pattern as
+  // StudentsPage (src/hooks/useUrlParams.ts).
+  const { searchParams, setParam, setParams } = useUrlParams();
+
+  const defaultBranchId = isCrossTenant
+    ? undefined
+    : user?.branch_id || undefined;
+  const branchId = searchParams.get('branch_id') ?? defaultBranchId;
+  const setBranchId = (v: string | undefined) => setParam('branch_id', v);
+
+  const search = searchParams.get('q') ?? '';
+  const setSearch = (v: string) => setParam('q', v || undefined);
+
   const [modalOpen, setModalOpen] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState<string>('all');
-  const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('all');
-  const [courseTypeFilter, setCourseTypeFilter] = useState<string>('all');
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [sortField, setSortField] = useState('date');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-  const [currentPage, setCurrentPage] = useState(1);
+
+  const paymentStatus = searchParams.get('status') ?? 'all';
+  const setPaymentStatus = (v: string) =>
+    setParam('status', v === 'all' ? undefined : v);
+
+  const paymentMethodFilter = searchParams.get('method') ?? 'all';
+  const setPaymentMethodFilter = (v: string) =>
+    setParam('method', v === 'all' ? undefined : v);
+
+  const courseTypeFilter = searchParams.get('course_type') ?? 'all';
+  const setCourseTypeFilter = (v: string) =>
+    setParam('course_type', v === 'all' ? undefined : v);
+
+  const rawDateFrom = searchParams.get('date_from');
+  const dateFrom = useMemo(
+    () => (rawDateFrom ? new Date(rawDateFrom) : undefined),
+    [rawDateFrom],
+  );
+  const rawDateTo = searchParams.get('date_to');
+  const dateTo = useMemo(
+    () => (rawDateTo ? new Date(rawDateTo) : undefined),
+    [rawDateTo],
+  );
+  // Both keys must land in the same setSearchParams call (autodrive-6cq.5.70).
+  const setDateRange = (from: Date | undefined, to: Date | undefined) =>
+    setParams({
+      date_from: from ? toLocalDateStr(from) : undefined,
+      date_to: to ? toLocalDateStr(to) : undefined,
+    });
+
+  const sortField = searchParams.get('sort_by') ?? 'date';
+  const sortDir = (searchParams.get('sort_dir') as 'asc' | 'desc') ?? 'desc';
+  const setSort = (field: string, dir: 'asc' | 'desc') =>
+    setParams({
+      sort_by: field === 'date' ? undefined : field,
+      sort_dir: dir === 'desc' ? undefined : dir,
+    });
+
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const setCurrentPage = (p: number) =>
+    setParam('page', p > 1 ? String(p) : undefined);
+
   const [isExporting, setIsExporting] = useState(false);
 
   const SERVER_PAGE_SIZE = 50;
@@ -140,30 +180,34 @@ const PaymentsPage = () => {
       : undefined;
   const activePaymentMethod =
     paymentMethodFilter !== 'all' ? paymentMethodFilter : undefined;
+  const dateFromTime = dateFrom?.getTime();
+  const dateToTime = dateTo?.getTime();
 
-  // ponytail (L3): reset the page synchronously during render (React's
-  // "adjust state while rendering" pattern) instead of a separate reactive
-  // effect — otherwise the stale page number fires one wasted request for
-  // the new filters before the effect corrects it on the next render.
-  const filterSignature = JSON.stringify([
+  // Reset to page 1 when a filter/sort actually changes — skip the first
+  // render so a deep link with ?page=N isn't stomped on load (StudentsPage's
+  // analogous effect doesn't need this guard because its page number isn't
+  // URL-persisted; this one is).
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
     branchId,
     activeCourseType,
-    dateFrom?.getTime(),
-    dateTo?.getTime(),
+    dateFromTime,
+    dateToTime,
     debouncedSearch,
     activePaymentStatus,
     activePaymentMethod,
     sortField,
     sortDir,
   ]);
-  const [prevFilterSignature, setPrevFilterSignature] =
-    useState(filterSignature);
-  const effectivePage =
-    filterSignature === prevFilterSignature ? currentPage : 1;
-  if (filterSignature !== prevFilterSignature) {
-    setPrevFilterSignature(filterSignature);
-    setCurrentPage(1);
-  }
+
+  const effectivePage = currentPage;
 
   const {
     data: paymentsPage,
@@ -239,11 +283,8 @@ const PaymentsPage = () => {
   };
 
   const toggleSort = (field: string) => {
-    if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else {
-      setSortField(field);
-      setSortDir('asc');
-    }
+    if (sortField === field) setSort(field, sortDir === 'asc' ? 'desc' : 'asc');
+    else setSort(field, 'asc');
   };
 
   const handlePaymentSubmit = (data: CreatePaymentPayload) => {
@@ -252,7 +293,8 @@ const PaymentsPage = () => {
         toast.success(t('payments.added'));
         setModalOpen(false);
       },
-      onError: () => toast.error(t('common.error')),
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
     });
   };
 
@@ -301,35 +343,32 @@ const PaymentsPage = () => {
     now.setHours(23, 59, 59, 999);
     switch (preset) {
       case 'today':
-        setDateFrom(today());
-        setDateTo(now);
+        setDateRange(tashkentToday(), now);
         break;
       case 'week':
-        setDateFrom(weekAgo());
-        setDateTo(now);
+        setDateRange(weekAgo(), now);
         break;
       case 'month':
-        setDateFrom(monthStart());
-        setDateTo(now);
+        setDateRange(monthStart(), now);
         break;
       case 'lastMonth':
-        setDateFrom(lastMonthStart());
-        setDateTo(lastMonthEnd());
+        setDateRange(lastMonthStart(), lastMonthEnd());
         break;
       case 'all':
-        setDateFrom(undefined);
-        setDateTo(undefined);
+        setDateRange(undefined, undefined);
         break;
     }
   };
 
   const clearAllFilters = () => {
-    setDateFrom(undefined);
-    setDateTo(undefined);
-    setPaymentStatus('all');
-    setPaymentMethodFilter('all');
-    setCourseTypeFilter('all');
-    setSearch('');
+    setParams({
+      date_from: undefined,
+      date_to: undefined,
+      status: undefined,
+      method: undefined,
+      course_type: undefined,
+      q: undefined,
+    });
   };
 
   const presetLabels: Record<string, string> = {
@@ -539,13 +578,8 @@ const PaymentsPage = () => {
                 mode="range"
                 selected={{ from: dateFrom, to: dateTo }}
                 onSelect={(range) => {
-                  if (!range) {
-                    setDateFrom(undefined);
-                    setDateTo(undefined);
-                  } else {
-                    setDateFrom(range.from);
-                    setDateTo(range.to ?? range.from);
-                  }
+                  if (!range) setDateRange(undefined, undefined);
+                  else setDateRange(range.from, range.to ?? range.from);
                 }}
                 numberOfMonths={2}
                 initialFocus
