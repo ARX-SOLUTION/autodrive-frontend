@@ -31,7 +31,8 @@
     "search": "Search",
     "search_placeholder": "Search pages...",
     "search_empty": "Nothing found",
-    "search_pages": "Pages"
+    "search_pages": "Pages",
+    "search_group_staff": "Staff"
   },
   "roles": {
     "owner": "Owner",

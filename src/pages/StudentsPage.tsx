@@ -2,11 +2,12 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import {
   fetchAllStudents,
   useStudentsPage,
@@ -95,7 +96,7 @@ const StudentsPage = () => {
   // keeps the browser-history short — every keystroke in the search box
   // would otherwise push a history entry.
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const goToStudent = useViewTransitionNavigate();
   const setParam = (key: string, value: string | undefined) => {
     setSearchParams(
       (prev) => {
@@ -626,17 +627,24 @@ const StudentsPage = () => {
                       <tr
                         key={s.id}
                         className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
-                        onClick={() => {
+                        onClick={(e) => {
                           if (window.getSelection()?.toString()) return;
-                          navigate(`/students/${s.id}`);
+                          goToStudent(
+                            `/students/${s.id}`,
+                            e.currentTarget,
+                            `student-${s.id}`,
+                          );
                         }}
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') navigate(`/students/${s.id}`);
-                          if (e.key === ' ') {
+                          if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            navigate(`/students/${s.id}`);
+                            goToStudent(
+                              `/students/${s.id}`,
+                              e.currentTarget,
+                              `student-${s.id}`,
+                            );
                           }
                         }}
                       >
@@ -830,7 +838,13 @@ const StudentsPage = () => {
                   title={`${capitalize(s.first_name)} ${capitalize(s.last_name)}`}
                   subtitle={formatPhone(s.phone)}
                   fields={fields}
-                  onClick={() => navigate(`/students/${s.id}`)}
+                  onClick={(e) =>
+                    goToStudent(
+                      `/students/${s.id}`,
+                      e.currentTarget,
+                      `student-${s.id}`,
+                    )
+                  }
                   actions={
                     <>
                       <button

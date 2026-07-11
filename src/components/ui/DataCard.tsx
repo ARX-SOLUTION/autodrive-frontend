@@ -11,7 +11,7 @@ interface DataCardProps {
   subtitle?: ReactNode;
   fields?: DataCardField[];
   actions?: ReactNode;
-  onClick?: () => void;
+  onClick?: (e: React.SyntheticEvent<HTMLDivElement>) => void;
   className?: string;
   accent?: string;
 }
@@ -38,9 +38,12 @@ export const DataCard = ({
         ? {
             role: 'button',
             tabIndex: 0,
-            onKeyDown: (e: React.KeyboardEvent) => {
-              if (e.key === 'Enter') onClick?.();
-              if (e.key === ' ') { e.preventDefault(); onClick?.(); }
+            onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+              if (e.key === 'Enter') onClick?.(e);
+              if (e.key === ' ') {
+                e.preventDefault();
+                onClick?.(e);
+              }
             },
           }
         : {})}

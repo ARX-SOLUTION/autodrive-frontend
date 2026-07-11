@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useUrlParams } from '@/hooks/useUrlParams';
+import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import {
   useGroups,
   useGroupsOverview,
@@ -58,7 +58,7 @@ const formatDate = (d: string) => {
 
 const GroupsPage = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const goToGroup = useViewTransitionNavigate();
   const {
     data: groups,
     isLoading,
@@ -422,17 +422,24 @@ const GroupsPage = () => {
                     <tr
                       key={g.id}
                       className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/10"
-                      onClick={() => {
+                      onClick={(e) => {
                         if (window.getSelection()?.toString()) return;
-                        navigate(`/groups/${g.id}`);
+                        goToGroup(
+                          `/groups/${g.id}`,
+                          e.currentTarget,
+                          `group-${g.id}`,
+                        );
                       }}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') navigate(`/groups/${g.id}`);
-                        if (e.key === ' ') {
+                        if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          navigate(`/groups/${g.id}`);
+                          goToGroup(
+                            `/groups/${g.id}`,
+                            e.currentTarget,
+                            `group-${g.id}`,
+                          );
                         }
                       }}
                     >
@@ -508,7 +515,13 @@ const GroupsPage = () => {
                   key={g.id}
                   title={g.name}
                   subtitle={g.branch_name || getBranchName(g.branch_id)}
-                  onClick={() => navigate(`/groups/${g.id}`)}
+                  onClick={(e) =>
+                    goToGroup(
+                      `/groups/${g.id}`,
+                      e.currentTarget,
+                      `group-${g.id}`,
+                    )
+                  }
                   fields={[
                     {
                       label: t('groups.course_type'),
