@@ -560,12 +560,17 @@ const SchedulePage = () => {
             </div>
             <div>
               <Label>{t('schedule.group_optional')}</Label>
-              <Select value={genGroupId} onValueChange={setGenGroupId}>
+              <Select
+                value={genGroupId || 'all'}
+                onValueChange={(v) => setGenGroupId(v === 'all' ? '' : v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder={t('schedule.all_groups')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t('schedule.all_groups')}</SelectItem>
+                  <SelectItem value="all">
+                    {t('schedule.all_groups')}
+                  </SelectItem>
                   {(groups || []).map((g) => (
                     <SelectItem key={g.id} value={g.id}>
                       {g.name}
