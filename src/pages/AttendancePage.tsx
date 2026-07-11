@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import PaginationControls from '@/components/ui/PaginationControls';
@@ -59,6 +60,7 @@ const statusColors: Record<AttendanceStatus, string> = {
 
 const AttendancePage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 50;
   const { data: lessonsData, isLoading } = useLessons(currentPage, pageSize);
@@ -195,7 +197,15 @@ const AttendancePage = () => {
                     <p className="font-medium">{lesson.title}</p>
                     <p className="text-sm text-muted-foreground">
                       {formatDate(lesson.date)} —{' '}
-                      {lesson.group_name || t('attendance.unknown_group')}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/groups/${lesson.group_id}`);
+                        }}
+                        className="hover:text-primary hover:underline"
+                      >
+                        {lesson.group_name || t('attendance.unknown_group')}
+                      </button>
                       <span className="ml-2 text-xs uppercase text-muted-foreground">
                         {lesson.lesson_type === 'theory' ? 'Teoriya' : 'Amaliy'}
                       </span>

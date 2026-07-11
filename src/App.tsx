@@ -23,6 +23,7 @@ const SchedulePage = lazy(() => import('./pages/SchedulePage'));
 const BranchesPage = lazy(() => import('./pages/BranchesPage'));
 const BranchDetailPage = lazy(() => import('./pages/BranchDetailPage'));
 const GroupsPage = lazy(() => import('./pages/GroupsPage'));
+const GroupDetailPage = lazy(() => import('./pages/GroupDetailPage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
@@ -92,6 +93,7 @@ const App = () => (
                 }
               />
               <Route path="groups" element={<GroupsPage />} />
+              <Route path="groups/:id" element={<GroupDetailPage />} />
               <Route path="students" element={<StudentsPage />} />
               <Route path="students/:id" element={<StudentDetailPage />} />
               <Route path="payments" element={<PaymentsPage />} />

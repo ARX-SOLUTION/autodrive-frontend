@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import PaginationControls from '@/components/ui/PaginationControls';
 import PaymentModal, {
   CreatePaymentPayload,
@@ -106,6 +107,7 @@ const lastMonthEnd = () => {
 
 const PaymentsPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const isCrossTenant = useIsCrossTenant();
   const user = useAuthStore((s) => s.user);
   const [branchId, setBranchId] = useState<string | undefined>(
@@ -738,7 +740,25 @@ const PaymentsPage = () => {
                       visiblePayments.map((p, idx) => (
                         <tr
                           key={p.id}
-                          className="table-row-striped border-b border-border/50"
+                          className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
+                          onClick={() => {
+                            if (window.getSelection()?.toString()) return;
+                            navigate(`/students/${p.student_id}?tab=payments`);
+                          }}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter')
+                              navigate(
+                                `/students/${p.student_id}?tab=payments`,
+                              );
+                            if (e.key === ' ') {
+                              e.preventDefault();
+                              navigate(
+                                `/students/${p.student_id}?tab=payments`,
+                              );
+                            }
+                          }}
                         >
                           <td className="px-4 py-3 text-center text-muted-foreground">
                             {startIndex + idx + 1}
@@ -812,6 +832,9 @@ const PaymentsPage = () => {
                     key={p.id}
                     title={p.student_name}
                     subtitle={p.branch_name}
+                    onClick={() =>
+                      navigate(`/students/${p.student_id}?tab=payments`)
+                    }
                     fields={[
                       { label: t('common.date'), value: formatDate(p.date) },
                       {

@@ -277,7 +277,9 @@
       "student": "Студент",
       "payment": "Платёж",
       "amount": "Сумма",
-      "method": "Способ оплаты"
+      "method": "Способ оплаты",
+      "tab_schedule": "Расписание",
+      "no_schedule": "Расписания нет"
     }
   },
   "students": {

@@ -277,7 +277,9 @@
       "student": "Student",
       "payment": "Payment",
       "amount": "Amount",
-      "method": "Payment method"
+      "method": "Payment method",
+      "tab_schedule": "Schedule",
+      "no_schedule": "No schedule yet"
     }
   },
   "students": {
