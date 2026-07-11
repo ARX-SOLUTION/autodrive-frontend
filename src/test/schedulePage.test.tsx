@@ -1,9 +1,11 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect } from 'vitest';
 import SchedulePage from '@/pages/SchedulePage';
 import { useGenerateLessons } from '@/services/scheduleService';
-import { ScheduleTemplate } from '@/types/schedule';
+import { useBatchAttendance } from '@/services/attendanceService';
+import { ScheduleTemplate, CalendarLesson } from '@/types/schedule';
+import { Group } from '@/types/group';
 
 const mockTemplates: ScheduleTemplate[] = [
   {
@@ -19,6 +21,24 @@ const mockTemplates: ScheduleTemplate[] = [
   },
 ];
 
+const mockLesson: CalendarLesson = {
+  id: 'lesson-1',
+  title: 'Lesson 1',
+  date: new Date().toISOString(),
+  lesson_type: 'theory',
+  group_id: 'group-1',
+  group_name: 'Group A',
+  branch_id: 'b1',
+  teacher_name: 'Teacher A',
+  present_count: 0,
+  total_count: 0,
+};
+
+const mockGroup = {
+  id: 'group-1',
+  students: [{ id: 'student-1', first_name: 'Ali', last_name: 'Valiyev' }],
+} as unknown as Group;
+
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
     selector({ user: { role: 'owner' } }),
@@ -26,7 +46,7 @@ vi.mock('@/store/authStore', () => ({
 
 vi.mock('@/services/scheduleService', () => ({
   useScheduleTemplates: () => ({ data: mockTemplates, isLoading: false }),
-  useCalendarLessons: () => ({ data: [], isLoading: false }),
+  useCalendarLessons: () => ({ data: [mockLesson], isLoading: false }),
   useCreateTemplate: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeleteTemplate: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useGenerateLessons: vi.fn(),
@@ -34,6 +54,12 @@ vi.mock('@/services/scheduleService', () => ({
 
 vi.mock('@/services/groupService', () => ({
   useGroups: () => ({ data: [], isLoading: false }),
+  useGroup: () => ({ data: mockGroup }),
+}));
+
+vi.mock('@/services/attendanceService', () => ({
+  useLessonById: () => ({ data: undefined, isLoading: false }),
+  useBatchAttendance: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
 }));
 
 describe('SchedulePage', () => {
@@ -80,5 +106,38 @@ describe('SchedulePage', () => {
     fireEvent.click(screen.getByText('common.create'));
 
     expect(mutateAsync).not.toHaveBeenCalled();
+  });
+
+  // autodrive-38m.3: clicking a week-strip lesson card opens the
+  // AttendanceDrawer for that lesson; marking a student via the toggle and
+  // saving calls the shared batch-attendance mutation.
+  it('opens the drawer from a lesson card, marks a student, and saves', async () => {
+    const mutateAsync = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useBatchAttendance).mockReturnValue({
+      mutateAsync,
+      isPending: false,
+    } as unknown as ReturnType<typeof useBatchAttendance>);
+
+    render(
+      <MemoryRouter>
+        <SchedulePage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByText('Group A'));
+
+    expect(await screen.findByText('Valiyev Ali')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('attendance.toggle_present'));
+    fireEvent.click(screen.getByText('attendance.save'));
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith({
+        lessonId: 'lesson-1',
+        records: [
+          { lessonId: 'lesson-1', studentId: 'student-1', status: 'present' },
+        ],
+      }),
+    );
   });
 });

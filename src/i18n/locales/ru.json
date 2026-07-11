@@ -614,7 +614,11 @@
     "create_error": "Ошибка при создании занятия",
     "delete_error": "Ошибка при удалении занятия",
     "title_placeholder": "Например: 1-занятие теория",
-    "group_placeholder": "Выберите группу"
+    "group_placeholder": "Выберите группу",
+    "toggle_present": "Пришёл",
+    "toggle_late": "Опоздал",
+    "toggle_absent": "Нет",
+    "marked_progress": "Отмечено {{marked}} из {{total}}"
   },
   "schedule": {
     "title": "Расписание",
@@ -661,7 +665,9 @@
     "group_label": "Группа",
     "day_label": "День недели",
     "start_time": "Время начала",
-    "end_time": "Время окончания"
+    "end_time": "Время окончания",
+    "status_marked": "Отмечено",
+    "status_pending": "Ожидает"
   },
   "documents": {
     "title": "Документы",
