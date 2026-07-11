@@ -589,6 +589,7 @@
     "email_label": "Email",
     "password_label": "Parol",
     "added": "Menejer qo'shildi",
+    "search_placeholder": "Ism, email yoki telefon bo'yicha qidirish...",
     "no_branches": "Filial yo'q — avval filial yarating",
     "add_desc": "Yangi menejer ma'lumotlarini kiriting",
     "detail": {
