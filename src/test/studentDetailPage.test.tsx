@@ -1,4 +1,4 @@
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import StudentDetailPage from '@/pages/StudentDetailPage';
@@ -53,6 +53,16 @@ vi.mock('@/services/operatorService', () => ({
   useOperators: () => ({ data: [] }),
 }));
 
+vi.mock('@/services/attendanceService', () => ({
+  useAttendanceHistory: () => ({
+    data: [
+      { id: 'a1', date: '2026-07-09', group_name: 'B-1', status: 'present' },
+      { id: 'a2', date: '2026-07-02', group_name: 'B-1', status: 'absent' },
+    ],
+    isLoading: false,
+  }),
+}));
+
 // Keep the heavy modals / exam tab out of the render.
 vi.mock('@/components/ui/StudentModal', () => ({ default: () => null }));
 vi.mock('@/components/ui/PaymentModal', () => ({ default: () => null }));
@@ -84,5 +94,27 @@ describe('StudentDetailPage payments-tab gating', () => {
     renderPage();
     expect(screen.getByText('Karimov Aziz')).toBeTruthy();
     expect(screen.queryByText('students.detail.tab_payments')).toBeNull();
+  });
+});
+
+// autodrive-6ef.26: read-only attendance history tab, visible to every role
+// (unlike payments, which is gated on the recordPayment capability).
+describe('StudentDetailPage attendance history tab', () => {
+  it('shows the attendance tab for a teacher too', () => {
+    auth.role = 'teacher';
+    renderPage();
+    expect(screen.getByText('students.detail.tab_attendance')).toBeTruthy();
+  });
+
+  it('lists attendance records with date, group and status', () => {
+    auth.role = 'manager';
+    renderPage();
+    // Radix Tabs switches on mousedown (see TabsTrigger), not click — a bare
+    // fireEvent.click never fires the mousedown that triggers onValueChange.
+    fireEvent.mouseDown(screen.getByText('students.detail.tab_attendance'));
+    expect(screen.getByText('2026-07-09')).toBeTruthy();
+    expect(screen.getByText('attendance.status_present')).toBeTruthy();
+    expect(screen.getByText('attendance.status_absent')).toBeTruthy();
+    expect(screen.getAllByText('B-1').length).toBeGreaterThan(0);
   });
 });

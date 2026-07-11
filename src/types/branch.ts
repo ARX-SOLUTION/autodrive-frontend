@@ -10,4 +10,6 @@ export interface Branch {
   revenue?: number;
   debt?: number;
   today_payment?: number;
+  monthly_revenue?: { month: string; amount: number }[];
+  top_debtors?: { id: string; name: string; debt: number }[];
 }

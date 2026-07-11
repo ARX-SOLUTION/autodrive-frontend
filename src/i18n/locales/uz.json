@@ -266,7 +266,10 @@
     "detail": {
       "revenue": "Tushum",
       "debt": "Qarzdorlik",
-      "today_payment": "Bugungi to'lov"
+      "today_payment": "Bugungi to'lov",
+      "revenue_trend": "6 oylik tushum",
+      "top_debtors": "Eng katta qarzdorlar",
+      "view_all_debtors": "Hammasini ko'rish"
     }
   },
   "groups": {
@@ -361,7 +364,8 @@
       "total_price": "Umumiy narx",
       "tab_info": "Ma'lumot",
       "tab_payments": "To'lovlar",
-      "tab_exams": "Imtihonlar"
+      "tab_exams": "Imtihonlar",
+      "tab_attendance": "Davomat"
     },
     "tab_info": "Ma'lumotlar",
     "tab_exams": "Imtihonlar",
