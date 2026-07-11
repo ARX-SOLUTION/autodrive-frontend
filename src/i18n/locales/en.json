@@ -209,7 +209,7 @@
       "today_revenue": "Today's revenue",
       "today_meta": "Asia/Tashkent timezone",
       "period_revenue": "Selected-period revenue",
-      "previous_period": "Previous period: {{value}}",
+      "previous_period": "Previous period",
       "outstanding_debt": "Outstanding debt",
       "debtors": "{{count}} students with debt",
       "coverage": "Payment coverage",
@@ -229,7 +229,18 @@
       "quick_actions": "Quick actions",
       "quick_actions_subtitle": "Common actions in one place.",
       "updated": "Updated",
-      "revenue_chart_summary": "Revenue trend: {{total}} total"
+      "revenue_chart_summary": "Revenue trend: {{total}} total",
+      "granularity": "Granularity",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "sort_by": "Sort by",
+      "revenue_table_caption": "Revenue trend data",
+      "error_title": "Couldn't load dashboard data",
+      "error_subtitle": "Check your connection and try again.",
+      "kpi_section_label": "Revenue control KPIs",
+      "coverage_bar_label": "{{rate}}% paid in full",
+      "last_payment_none": "No payment",
+      "attendance_no_data": "No attendance data"
     }
   },
   "branches": {
