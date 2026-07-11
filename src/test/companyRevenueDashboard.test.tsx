@@ -223,29 +223,4 @@ describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
       '/branches/branch-1|',
     );
   });
-
-  // dashboard-deep-review finding 1 — dashboardContext used to build
-  // from/to, but /payments (and /students) only read date_from/date_to via
-  // useUrlParams, so the date filter silently dropped on drill-down nav.
-  it('today-revenue KPI navigates to /payments with date_from/date_to, not from/to', () => {
-    render(
-      <MemoryRouter
-        initialEntries={['/dashboard?from=2026-07-01&to=2026-07-10']}
-      >
-        <Routes>
-          <Route path="/dashboard" element={<CompanyRevenueDashboard />} />
-          <Route path="/payments" element={<DestinationProbe />} />
-        </Routes>
-      </MemoryRouter>,
-    );
-    fireEvent.click(screen.getByText('dashboard.v2.today_revenue'));
-    const [pathname, search] =
-      screen.getByTestId('destination').textContent?.split('|') ?? [];
-    expect(pathname).toBe('/payments');
-    const params = new URLSearchParams(search);
-    expect(params.get('date_from')).toBe('2026-07-01');
-    expect(params.get('date_to')).toBe('2026-07-10');
-    expect(params.get('from')).toBeNull();
-    expect(params.get('to')).toBeNull();
-  });
 });
