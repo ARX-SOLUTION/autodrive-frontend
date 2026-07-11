@@ -99,7 +99,7 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
 
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
-  const { data: results } = useGlobalSearch(debouncedQuery);
+  const { data: results, isFetching } = useGlobalSearch(debouncedQuery);
 
   const go = (path: string) => {
     onOpenChange(false);
@@ -152,6 +152,13 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
         placeholder={
           t('actions.search_placeholder', 'Sahifa qidirish...') as string
         }
+        loading={isFetching}
+        // ponytail: only disable on the FIRST fetch of a fresh query (no
+        // results on screen yet) — disabling on every debounced re-fetch
+        // once results exist would freeze the input mid-keystroke and feel
+        // janky. Spinner alone communicates in-flight state past that point.
+        disabled={isFetching && !results}
+        aria-busy={isFetching}
       />
       <CommandList>
         <CommandEmpty>

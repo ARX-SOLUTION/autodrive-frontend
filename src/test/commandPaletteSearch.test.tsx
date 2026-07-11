@@ -24,10 +24,22 @@ const RESULTS = {
 };
 const EMPTY_RESULTS = { students: [], groups: [], staff: [] };
 
+// autodrive-d88: lets tests drive isFetching independently of data, to
+// cover the in-flight loading/disabled states. hasData=false simulates
+// TanStack Query's `data: undefined` before the first fetch resolves.
+const mockQueryState: { isFetching: boolean; hasData: boolean } = {
+  isFetching: false,
+  hasData: true,
+};
+
 vi.mock('@/services/searchService', () => ({
   useGlobalSearch: (q: string) => {
     searchSpy(q);
-    return { data: q.trim().length >= 2 ? RESULTS : EMPTY_RESULTS };
+    const computed = q.trim().length >= 2 ? RESULTS : EMPTY_RESULTS;
+    return {
+      data: mockQueryState.hasData ? computed : undefined,
+      isFetching: mockQueryState.isFetching,
+    };
   },
 }));
 
@@ -59,6 +71,8 @@ describe('CommandPalette global search', () => {
     cleanup();
     vi.useRealTimers();
     searchSpy.mockClear();
+    mockQueryState.isFetching = false;
+    mockQueryState.hasData = true;
   });
 
   it('debounces the query by 300ms before it reaches useGlobalSearch', () => {
@@ -108,5 +122,35 @@ describe('CommandPalette global search', () => {
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(screen.getByText('student-detail')).toBeTruthy();
+  });
+
+  it('disables input and sets aria-busy while the first fetch of a fresh query is pending', () => {
+    mockQueryState.isFetching = true;
+    mockQueryState.hasData = false;
+    renderPalette();
+    const input = screen.getByPlaceholderText('actions.search_placeholder');
+
+    fireEvent.change(input, { target: { value: 'aziz' } });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(input).toBeDisabled();
+    expect(input).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('keeps input enabled but still aria-busy on incremental re-fetches once results exist', () => {
+    mockQueryState.isFetching = true;
+    mockQueryState.hasData = true;
+    renderPalette();
+    const input = screen.getByPlaceholderText('actions.search_placeholder');
+
+    fireEvent.change(input, { target: { value: 'aziz' } });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(input).not.toBeDisabled();
+    expect(input).toHaveAttribute('aria-busy', 'true');
   });
 });
