@@ -65,7 +65,7 @@ export default defineConfig(({ mode }) => ({
           if (!id.includes('node_modules')) return;
           if (id.includes('/xlsx/')) return 'export-xlsx';
           if (
-            id.includes('/react/') ||
+            id.includes('/node_modules/react/') ||
             id.includes('/react-dom/') ||
             id.includes('/react-router') ||
             id.includes('/scheduler/')
