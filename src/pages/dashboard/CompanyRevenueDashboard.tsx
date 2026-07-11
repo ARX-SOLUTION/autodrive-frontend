@@ -679,7 +679,7 @@ const CompanyRevenueDashboard = () => {
           meta={t('dashboard.v2.today_meta', 'Asia/Tashkent bo‘yicha')}
           icon={WalletCards}
           tone="primary"
-          onClick={() => navigate(withContext('/tolovlar'))}
+          onClick={() => navigate(withContext('/payments'))}
         />
         <KpiCard
           label={t('dashboard.v2.period_revenue', 'Tanlangan davr tushumi')}
@@ -688,7 +688,7 @@ const CompanyRevenueDashboard = () => {
           icon={CircleDollarSign}
           tone="info"
           delta={kpis.revenue.delta_percent}
-          onClick={() => navigate(withContext('/tolovlar'))}
+          onClick={() => navigate(withContext('/payments'))}
         />
         <KpiCard
           label={t('dashboard.v2.outstanding_debt', 'Jami qarzdorlik')}
@@ -700,7 +700,7 @@ const CompanyRevenueDashboard = () => {
           tone="warning"
           onClick={() =>
             navigate(
-              withContext('/talabalar', { status: 'active', has_debt: 'true' }),
+              withContext('/students', { status: 'active', has_debt: 'true' }),
             )
           }
         />
@@ -715,7 +715,7 @@ const CompanyRevenueDashboard = () => {
           icon={CheckCircle2}
           tone="success"
           onClick={() =>
-            navigate(withContext('/talabalar', { status: 'active' }))
+            navigate(withContext('/students', { status: 'active' }))
           }
         />
       </section>
@@ -735,7 +735,7 @@ const CompanyRevenueDashboard = () => {
           )}
           action={
             <Link
-              to={withContext('/tolovlar')}
+              to={withContext('/payments')}
               className="text-xs font-semibold text-primary hover:underline"
             >
               {t('dashboard.v2.open_payments', 'To‘lovlar')}{' '}
@@ -754,8 +754,8 @@ const CompanyRevenueDashboard = () => {
                   type="button"
                   onClick={() =>
                     navigate(
-                      withContext('/talabalar', {
-                        search: student.student_name,
+                      withContext('/students', {
+                        q: student.student_name,
                       }),
                     )
                   }
@@ -797,7 +797,7 @@ const CompanyRevenueDashboard = () => {
           )}
           action={
             <Link
-              to={withContext('/filiallar')}
+              to={withContext('/branches')}
               className="text-xs font-semibold text-primary hover:underline"
             >
               {t('dashboard.v2.manage_branches', 'Filiallar')}{' '}
@@ -848,11 +848,7 @@ const CompanyRevenueDashboard = () => {
                   <button
                     key={branch.id}
                     type="button"
-                    onClick={() =>
-                      navigate(
-                        withContext('/filiallar', { branch_id: branch.id }),
-                      )
-                    }
+                    onClick={() => navigate(`/branches/${branch.id}`)}
                     className="w-full rounded-lg border border-border/60 bg-background/30 p-3 text-left motion-safe:transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -918,19 +914,11 @@ const CompanyRevenueDashboard = () => {
                         key={branch.id}
                         tabIndex={0}
                         role="button"
-                        onClick={() =>
-                          navigate(
-                            withContext('/filiallar', { branch_id: branch.id }),
-                          )
-                        }
+                        onClick={() => navigate(`/branches/${branch.id}`)}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') {
                             event.preventDefault();
-                            navigate(
-                              withContext('/filiallar', {
-                                branch_id: branch.id,
-                              }),
-                            );
+                            navigate(`/branches/${branch.id}`);
                           }
                         }}
                         className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -1024,7 +1012,7 @@ const CompanyRevenueDashboard = () => {
         >
           <div className="grid gap-2 sm:grid-cols-2">
             <Link
-              to="/jadval"
+              to="/schedule"
               className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-[background-color,transform] duration-150 hover:-translate-y-0.5 hover:bg-muted/60"
             >
               <span className="flex items-center gap-3">
@@ -1047,7 +1035,7 @@ const CompanyRevenueDashboard = () => {
               />
             </Link>
             <Link
-              to="/davomat"
+              to="/attendance"
               className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-[background-color,transform] duration-150 hover:-translate-y-0.5 hover:bg-muted/60"
             >
               <span className="flex items-center gap-3">
@@ -1094,22 +1082,22 @@ const CompanyRevenueDashboard = () => {
         >
           <div className="grid grid-cols-2 gap-2">
             <QuickAction
-              to="/tolovlar?action=create"
+              to="/payments?action=create"
               icon={WalletCards}
               label={t('payments.add_payment', 'Payment qo‘shish')}
             />
             <QuickAction
-              to="/talabalar?action=create"
+              to="/students?action=create"
               icon={UserPlus}
               label={t('students.add', 'Student qo‘shish')}
             />
             <QuickAction
-              to="/jadval?action=create"
+              to="/schedule?action=create"
               icon={CalendarClock}
               label={t('attendance.add_lesson', 'Dars yaratish')}
             />
             <QuickAction
-              to="/davomat"
+              to="/attendance"
               icon={Users}
               label={t('nav.attendance', 'Davomat ochish')}
             />

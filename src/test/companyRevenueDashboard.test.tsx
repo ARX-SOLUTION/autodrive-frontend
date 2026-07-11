@@ -1,5 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, useSearchParams } from 'react-router-dom';
+import {
+  MemoryRouter,
+  Route,
+  Routes,
+  useLocation,
+  useSearchParams,
+} from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import CompanyRevenueDashboard from '@/pages/dashboard/CompanyRevenueDashboard';
 
@@ -136,6 +142,85 @@ describe('CompanyRevenueDashboard', () => {
     });
     expect(screen.getByTestId('location-search')).toHaveTextContent(
       'course_type=tezkor',
+    );
+  });
+});
+
+// autodrive-ls5 — every dashboard click used to build uz-named paths
+// (/talabalar, /tolovlar, /filiallar) that don't match App.tsx's real
+// routes (students/payments/branches) and 404'd via the catch-all route.
+// These assert navigation actually lands on the real routes with filters
+// the destination page can consume.
+const DestinationProbe = () => {
+  const location = useLocation();
+  return (
+    <output data-testid="destination">
+      {location.pathname}|{location.search}
+    </output>
+  );
+};
+
+const renderDashboardWithRoutes = () =>
+  render(
+    <MemoryRouter initialEntries={['/dashboard']}>
+      <Routes>
+        <Route path="/dashboard" element={<CompanyRevenueDashboard />} />
+        <Route path="/payments" element={<DestinationProbe />} />
+        <Route path="/students" element={<DestinationProbe />} />
+        <Route path="/branches" element={<DestinationProbe />} />
+        <Route path="/branches/:id" element={<DestinationProbe />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
+  it('today-revenue KPI navigates to /payments, not /tolovlar', () => {
+    renderDashboardWithRoutes();
+    fireEvent.click(screen.getByText('dashboard.v2.today_revenue'));
+    expect(screen.getByTestId('destination').textContent).toMatch(
+      /^\/payments\|/,
+    );
+  });
+
+  it('debt KPI navigates to /students with status+has_debt, not /talabalar', () => {
+    renderDashboardWithRoutes();
+    fireEvent.click(screen.getByText('dashboard.v2.outstanding_debt'));
+    const [pathname, search] =
+      screen.getByTestId('destination').textContent?.split('|') ?? [];
+    expect(pathname).toBe('/students');
+    const params = new URLSearchParams(search);
+    expect(params.get('status')).toBe('active');
+    expect(params.get('has_debt')).toBe('true');
+  });
+
+  it('recovery-queue row navigates to /students with q=<name>, not search=', () => {
+    renderDashboardWithRoutes();
+    fireEvent.click(screen.getByText('Ali Valiyev'));
+    const [pathname, search] =
+      screen.getByTestId('destination').textContent?.split('|') ?? [];
+    expect(pathname).toBe('/students');
+    const params = new URLSearchParams(search);
+    expect(params.get('q')).toBe('Ali Valiyev');
+    expect(params.get('search')).toBeNull();
+  });
+
+  it('"manage branches" link navigates to the /branches list, not /filiallar', () => {
+    renderDashboardWithRoutes();
+    fireEvent.click(screen.getByText('dashboard.v2.manage_branches'));
+    expect(screen.getByTestId('destination').textContent).toMatch(
+      /^\/branches\|/,
+    );
+  });
+
+  it('a branch row navigates straight to /branches/:id, not a filtered list', () => {
+    renderDashboardWithRoutes();
+    const branchTargets = screen
+      .getAllByText('Chorsu')
+      .filter((el) => el.closest('[role="button"]'));
+    expect(branchTargets.length).toBeGreaterThan(0);
+    fireEvent.click(branchTargets[0]);
+    expect(screen.getByTestId('destination').textContent).toBe(
+      '/branches/branch-1|',
     );
   });
 });
