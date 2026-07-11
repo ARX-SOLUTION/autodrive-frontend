@@ -25,7 +25,9 @@ import {
 } from '@/components/ui/command';
 import { ChevronsUpDown, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import { useStudentsPage } from '@/services/studentService';
 import {
   Select,
@@ -159,218 +161,235 @@ const PaymentModal = ({
     onSubmit({ ...values, idempotency_key: idempotencyKeyRef.current });
   });
 
+  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
+    useConfirmedClose(form.formState.isDirty, onClose);
+
   const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && !loading && onClose()}>
-      <DialogContent className="max-w-md bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="font-heading">
-            {t('payments.add_payment')}
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => !o && !loading && attemptClose()}
+      >
+        <DialogContent className="max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-heading">
+              {t('payments.add_payment')}
+            </DialogTitle>
+          </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="student_id"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel>{t('payments.student_name')} *</FormLabel>
-                  {lockedStudentId ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled
-                      className="w-full justify-start bg-secondary border-border font-normal opacity-100"
-                    >
-                      {lockedStudentName ??
-                        t('students.select_student', {
-                          defaultValue: 'Student',
-                        })}
-                    </Button>
-                  ) : (
-                    <Popover
-                      open={studentPopoverOpen}
-                      onOpenChange={setStudentPopoverOpen}
-                    >
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            role="combobox"
-                            className="w-full justify-between bg-secondary border-border font-normal"
-                          >
-                            {selectedStudent
-                              ? `${selectedStudent.last_name} ${selectedStudent.first_name}`
-                              : t('students.select_student', {
-                                  defaultValue: 'Select a student',
-                                })}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        onWheel={(e) => e.stopPropagation()}
-                        style={{ width: 'var(--radix-popover-trigger-width)' }}
-                        className="w-full p-0"
-                        align="start"
+          <Form {...form}>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="student_id"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>{t('payments.student_name')} *</FormLabel>
+                    {lockedStudentId ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled
+                        className="w-full justify-start bg-secondary border-border font-normal opacity-100"
                       >
-                        <Command shouldFilter={false}>
-                          <CommandInput
-                            placeholder={t('payments.search_placeholder')}
-                            value={studentSearch}
-                            onValueChange={setStudentSearch}
-                          />
-                          <CommandList>
-                            {isStudentsFetching ? (
-                              <div className="flex items-center justify-center gap-2 px-3 py-6 text-sm text-muted-foreground">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                {t('common.loading')}
-                              </div>
-                            ) : isStudentsError ? (
-                              <div className="px-3 py-6 text-center text-sm text-destructive">
-                                {t('common.error')}
-                              </div>
-                            ) : studentOptions.length === 0 ? (
-                              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
-                                {t('payments.not_found')}
-                              </div>
-                            ) : (
-                              <CommandGroup>
-                                {studentOptions.map((s) => (
-                                  <CommandItem
-                                    key={s.id}
-                                    value={s.id}
-                                    onSelect={() => {
-                                      field.onChange(s.id);
-                                      setSelectedStudentCache(s);
-                                      setStudentPopoverOpen(false);
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        'mr-2 h-4 w-4',
-                                        field.value === s.id
-                                          ? 'opacity-100'
-                                          : 'opacity-0',
-                                      )}
-                                    />
-                                    {s.last_name} {s.first_name}
-                                    {s.debt !== undefined && s.debt > 0 && (
-                                      <span className="ml-auto text-xs text-destructive tabular-nums">
-                                        {formatMoney(s.debt)} so'm
-                                      </span>
-                                    )}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            )}
-                            {!isStudentsFetching &&
-                              (studentPage?.meta.total ?? 0) >
-                                studentOptions.length && (
-                                <div className="border-t px-3 py-2 text-center text-xs text-muted-foreground">
-                                  {studentOptions.length} /{' '}
-                                  {studentPage?.meta.total}
+                        {lockedStudentName ??
+                          t('students.select_student', {
+                            defaultValue: 'Student',
+                          })}
+                      </Button>
+                    ) : (
+                      <Popover
+                        open={studentPopoverOpen}
+                        onOpenChange={setStudentPopoverOpen}
+                      >
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              role="combobox"
+                              className="w-full justify-between bg-secondary border-border font-normal"
+                            >
+                              {selectedStudent
+                                ? `${selectedStudent.last_name} ${selectedStudent.first_name}`
+                                : t('students.select_student', {
+                                    defaultValue: 'Select a student',
+                                  })}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          onWheel={(e) => e.stopPropagation()}
+                          style={{
+                            width: 'var(--radix-popover-trigger-width)',
+                          }}
+                          className="w-full p-0"
+                          align="start"
+                        >
+                          <Command shouldFilter={false}>
+                            <CommandInput
+                              placeholder={t('payments.search_placeholder')}
+                              value={studentSearch}
+                              onValueChange={setStudentSearch}
+                            />
+                            <CommandList>
+                              {isStudentsFetching ? (
+                                <div className="flex items-center justify-center gap-2 px-3 py-6 text-sm text-muted-foreground">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  {t('common.loading')}
                                 </div>
+                              ) : isStudentsError ? (
+                                <div className="px-3 py-6 text-center text-sm text-destructive">
+                                  {t('common.error')}
+                                </div>
+                              ) : studentOptions.length === 0 ? (
+                                <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                                  {t('payments.not_found')}
+                                </div>
+                              ) : (
+                                <CommandGroup>
+                                  {studentOptions.map((s) => (
+                                    <CommandItem
+                                      key={s.id}
+                                      value={s.id}
+                                      onSelect={() => {
+                                        field.onChange(s.id);
+                                        setSelectedStudentCache(s);
+                                        setStudentPopoverOpen(false);
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          'mr-2 h-4 w-4',
+                                          field.value === s.id
+                                            ? 'opacity-100'
+                                            : 'opacity-0',
+                                        )}
+                                      />
+                                      {s.last_name} {s.first_name}
+                                      {s.debt !== undefined && s.debt > 0 && (
+                                        <span className="ml-auto text-xs text-destructive tabular-nums">
+                                          {formatMoney(s.debt)} so'm
+                                        </span>
+                                      )}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
                               )}
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                  <FormMessage />
-                </FormItem>
+                              {!isStudentsFetching &&
+                                (studentPage?.meta.total ?? 0) >
+                                  studentOptions.length && (
+                                  <div className="border-t px-3 py-2 text-center text-xs text-muted-foreground">
+                                    {studentOptions.length} /{' '}
+                                    {studentPage?.meta.total}
+                                  </div>
+                                )}
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {selectedStudent && selectedStudent.debt !== undefined && (
+                <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm tabular-nums">
+                  <span className="text-muted-foreground">
+                    {t('payments.remaining_debt')}:{' '}
+                  </span>
+                  <span className="font-medium text-destructive">
+                    {formatMoney(selectedStudent.debt)} so'm
+                  </span>
+                </div>
               )}
-            />
 
-            {selectedStudent && selectedStudent.debt !== undefined && (
-              <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm tabular-nums">
-                <span className="text-muted-foreground">
-                  {t('payments.remaining_debt')}:{' '}
-                </span>
-                <span className="font-medium text-destructive">
-                  {formatMoney(selectedStudent.debt)} so'm
-                </span>
-              </div>
-            )}
-
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel>{t('payments.amount')} *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={1}
-                      placeholder="0"
-                      className="bg-secondary border-border"
-                      {...field}
-                      value={field.value || ''}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value === '' ? 0 : Number(e.target.value),
-                        )
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="payment_method"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel>{t('payments.payment_method')} *</FormLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={(v) => field.onChange(v as PaymentMethod)}
-                  >
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>{t('payments.amount')} *</FormLabel>
                     <FormControl>
-                      <SelectTrigger className="bg-secondary border-border">
-                        <SelectValue />
-                      </SelectTrigger>
+                      <Input
+                        type="number"
+                        min={1}
+                        placeholder="0"
+                        className="bg-secondary border-border"
+                        {...field}
+                        value={field.value || ''}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === '' ? 0 : Number(e.target.value),
+                          )
+                        }
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {Object.entries(paymentMethodLabels).map(([k, v]) => (
-                        <SelectItem key={k} value={k}>
-                          {v}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={loading}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                type="submit"
-                disabled={loading || form.formState.isSubmitting}
-              >
-                {loading ? t('common.saving') : t('common.add')}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+              <FormField
+                control={form.control}
+                name="payment_method"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>{t('payments.payment_method')} *</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={(v) => field.onChange(v as PaymentMethod)}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-secondary border-border">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.entries(paymentMethodLabels).map(([k, v]) => (
+                          <SelectItem key={k} value={k}>
+                            {v}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={attemptClose}
+                  disabled={loading}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading || form.formState.isSubmitting}
+                >
+                  {loading ? t('common.saving') : t('common.add')}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={cancelDiscard}
+        onConfirm={confirmDiscard}
+        title={t('common.discard_changes_title')}
+        description={t('common.discard_changes_desc')}
+      />
+    </>
   );
 };
 

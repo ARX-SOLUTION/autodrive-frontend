@@ -38,8 +38,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
+import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import { useBranches } from '@/services/branchService';
 import { useGroups } from '@/services/groupService';
 import { User } from '@/types/user';
@@ -327,6 +329,9 @@ const StudentModal = ({
 
   const handleSubmit = form.handleSubmit(onFormValid);
 
+  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
+    useConfirmedClose(form.formState.isDirty || !!loading, onClose);
+
   const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
   const currentBranchName =
     branchList.find((b) => b.id === watchedBranchId)?.name ||
@@ -334,91 +339,433 @@ const StudentModal = ({
     '';
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="font-heading">
-            {student ? t('students.edit') : t('students.add')}
-            <span className="ml-2 text-sm font-normal text-muted-foreground">
-              (
-              {courseType === 'tezkor'
-                ? t('students.course_fast')
-                : t('students.course_school')}
-              )
-            </span>
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={(o) => !o && attemptClose()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-heading">
+              {student ? t('students.edit') : t('students.add')}
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                (
+                {courseType === 'tezkor'
+                  ? t('students.course_fast')
+                  : t('students.course_school')}
+                )
+              </span>
+            </DialogTitle>
+          </DialogHeader>
 
-        <Tabs defaultValue="info" className="w-full mt-2">
-          {student && (
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="info">{t('students.tab_info')}</TabsTrigger>
-              <TabsTrigger value="exams">{t('students.tab_exams')}</TabsTrigger>
-            </TabsList>
-          )}
-          <TabsContent value="info" className="m-0">
-            <Form {...form}>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                  <FormField
-                    control={form.control}
-                    name="last_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('students.last_name')} *</FormLabel>
-                        <FormControl>
+          <Tabs defaultValue="info" className="w-full mt-2">
+            {student && (
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="info">{t('students.tab_info')}</TabsTrigger>
+                <TabsTrigger value="exams">
+                  {t('students.tab_exams')}
+                </TabsTrigger>
+              </TabsList>
+            )}
+            <TabsContent value="info" className="m-0">
+              <Form {...form}>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                    <FormField
+                      control={form.control}
+                      name="last_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('students.last_name')} *</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              className="bg-secondary border-border"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="first_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('students.first_name')} *</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              className="bg-secondary border-border"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('students.phone')} *</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="+998901234567"
+                              className="bg-secondary border-border"
+                              onFocus={() => {
+                                if (!field.value) field.onChange('+998');
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="branch_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('students.detail.branch')}</FormLabel>
+                          {canAssignBranch ? (
+                            <Select
+                              value={field.value || ''}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="bg-secondary border-border">
+                                  <SelectValue
+                                    placeholder={t('common.select_placeholder')}
+                                  />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {branchList.map((b) => (
+                                  <SelectItem key={b.id} value={b.id}>
+                                    {b.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <FormControl>
+                              <Input
+                                value={currentBranchName}
+                                disabled
+                                className="bg-muted border-border"
+                              />
+                            </FormControl>
+                          )}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                    <FormField
+                      control={form.control}
+                      name="total_price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('students.total_price')} *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              min={0}
+                              disabled={disabledFields.includes('total_price')}
+                              className={`${disabledFields.includes('total_price') ? 'bg-muted' : 'bg-secondary'} border-border`}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="payment_method"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('students.payment_method')}</FormLabel>
+                          <Select
+                            value={field.value || 'naqd'}
+                            onValueChange={(v) =>
+                              field.onChange(v as PaymentMethod)
+                            }
+                            disabled={disabledFields.includes('payment_method')}
+                          >
+                            <FormControl>
+                              <SelectTrigger
+                                className={`${disabledFields.includes('payment_method') ? 'bg-muted' : 'bg-secondary'} border-border`}
+                              >
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.entries(localizedPaymentMethods).map(
+                                ([k, v]) => (
+                                  <SelectItem key={k} value={k}>
+                                    {v}
+                                  </SelectItem>
+                                ),
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {courseType === 'tezkor' ? (
+                    <>
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                        <FormField
+                          control={form.control}
+                          name="amount_paid"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {student
+                                  ? t('students.extra_payment')
+                                  : t('students.payment_amount')}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  {...field}
+                                  value={field.value || ''}
+                                  min={0}
+                                  placeholder={
+                                    student
+                                      ? t('students.extra_payment_placeholder')
+                                      : '0'
+                                  }
+                                  className="bg-secondary border-border"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="space-y-2">
+                          <Label>
+                            {student
+                              ? t('students.current_debt')
+                              : t('students.debt')}
+                          </Label>
                           <Input
-                            {...field}
-                            className="bg-secondary border-border"
+                            value={formatMoney(debt)}
+                            disabled
+                            className="bg-muted border-border text-destructive font-medium"
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="first_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('students.first_name')} *</FormLabel>
-                        <FormControl>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                        <FormField
+                          control={form.control}
+                          name="group_id"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('students.group')}</FormLabel>
+                              <Select
+                                value={field.value || ''}
+                                onValueChange={field.onChange}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="bg-secondary border-border">
+                                    <SelectValue
+                                      placeholder={t(
+                                        'common.select_placeholder',
+                                      )}
+                                    />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {groupList.map((g) => (
+                                    <SelectItem key={g.id} value={g.id}>
+                                      {g.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                        <FormField
+                          control={form.control}
+                          name="initial_payment"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('students.initial_payment')}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  {...field}
+                                  value={field.value || ''}
+                                  min={0}
+                                  disabled={
+                                    !!student ||
+                                    disabledFields.includes('initial_payment')
+                                  }
+                                  className={`${!!student || disabledFields.includes('initial_payment') ? 'bg-muted' : 'bg-secondary'} border-border`}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="space-y-2">
+                          <Label>
+                            {student
+                              ? t('students.current_debt')
+                              : t('students.debt')}
+                          </Label>
                           <Input
-                            {...field}
-                            className="bg-secondary border-border"
+                            value={formatMoney(debt)}
+                            disabled
+                            className="bg-muted border-border text-destructive font-medium"
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('students.phone')} *</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="+998901234567"
-                            className="bg-secondary border-border"
-                            onFocus={() => {
-                              if (!field.value) field.onChange('+998');
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="branch_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('students.detail.branch')}</FormLabel>
-                        {canAssignBranch ? (
+                        </div>
+                      </div>
+                      {student && (
+                        <FormField
+                          control={form.control}
+                          name="amount_paid"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('students.extra_payment')}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  {...field}
+                                  value={field.value || ''}
+                                  min={0}
+                                  placeholder={t(
+                                    'students.extra_payment_placeholder',
+                                  )}
+                                  className="bg-secondary border-border"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+                        <FormField
+                          control={form.control}
+                          name="group_id"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('students.group_required')}{' '}
+                                <span className="text-destructive">*</span>
+                              </FormLabel>
+                              <Select
+                                value={field.value || ''}
+                                onValueChange={field.onChange}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="bg-secondary border-border">
+                                    <SelectValue
+                                      placeholder={t(
+                                        'common.select_placeholder',
+                                      )}
+                                    />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {groupList.map((g) => (
+                                    <SelectItem key={g.id} value={g.id}>
+                                      {g.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="completion_date"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('students.completion_date')}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="date"
+                                  {...field}
+                                  value={field.value || ''}
+                                  className="bg-secondary border-border"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="contract_number"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('students.contract_number')}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value || ''}
+                                  placeholder="C-201"
+                                  className="bg-secondary border-border"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <FormField
+                        control={form.control}
+                        name="o83"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center gap-2 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value || false}
+                                onCheckedChange={(v) => field.onChange(!!v)}
+                                id="o83"
+                              />
+                            </FormControl>
+                            <FormLabel htmlFor="o83" className="!mt-0">
+                              O83
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
+
+                  {operators.length > 0 && (
+                    <FormField
+                      control={form.control}
+                      name="registered_by"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('students.operator')}</FormLabel>
                           <Select
                             value={field.value || ''}
                             onValueChange={field.onChange}
@@ -426,472 +773,151 @@ const StudentModal = ({
                             <FormControl>
                               <SelectTrigger className="bg-secondary border-border">
                                 <SelectValue
-                                  placeholder={t('common.select_placeholder')}
+                                  placeholder={t('students.operator_optional')}
                                 />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {branchList.map((b) => (
-                                <SelectItem key={b.id} value={b.id}>
-                                  {b.name}
+                              {operatorList.map((op) => (
+                                <SelectItem key={op.id} value={op.id}>
+                                  {op.name || op.email}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                        ) : (
-                          <FormControl>
-                            <Input
-                              value={currentBranchName}
-                              disabled
-                              className="bg-muted border-border"
-                            />
-                          </FormControl>
-                        )}
-                        <FormMessage />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                    <FormField
+                      control={form.control}
+                      name="result"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('students.result')}</FormLabel>
+                          <Select
+                            value={field.value || 'oqimoqda'}
+                            onValueChange={(v) =>
+                              field.onChange(v as ResultStatus)
+                            }
+                          >
+                            <FormControl>
+                              <SelectTrigger className="bg-secondary border-border">
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.entries(localizedResultLabels).map(
+                                ([k, v]) => (
+                                  <SelectItem key={k} value={k}>
+                                    {v}
+                                  </SelectItem>
+                                ),
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="has_document"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value || false}
+                            onCheckedChange={(v) => field.onChange(!!v)}
+                            id="doc"
+                          />
+                        </FormControl>
+                        <FormLabel htmlFor="doc" className="!mt-0">
+                          {t('students.has_document')}
+                        </FormLabel>
                       </FormItem>
                     )}
                   />
-                </div>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
                   <FormField
                     control={form.control}
-                    name="total_price"
+                    name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('students.total_price')} *</FormLabel>
+                        <FormLabel>{t('students.notes')}</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
+                          <Textarea
                             {...field}
-                            min={0}
-                            disabled={disabledFields.includes('total_price')}
-                            className={`${disabledFields.includes('total_price') ? 'bg-muted' : 'bg-secondary'} border-border`}
+                            value={field.value || ''}
+                            placeholder={t('students.notes_placeholder')}
+                            rows={3}
+                            className="bg-secondary border-border"
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="payment_method"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('students.payment_method')}</FormLabel>
-                        <Select
-                          value={field.value || 'naqd'}
-                          onValueChange={(v) =>
-                            field.onChange(v as PaymentMethod)
-                          }
-                          disabled={disabledFields.includes('payment_method')}
-                        >
-                          <FormControl>
-                            <SelectTrigger
-                              className={`${disabledFields.includes('payment_method') ? 'bg-muted' : 'bg-secondary'} border-border`}
-                            >
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {Object.entries(localizedPaymentMethods).map(
-                              ([k, v]) => (
-                                <SelectItem key={k} value={k}>
-                                  {v}
-                                </SelectItem>
-                              ),
-                            )}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
 
-                {courseType === 'tezkor' ? (
-                  <>
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                      <FormField
-                        control={form.control}
-                        name="amount_paid"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              {student
-                                ? t('students.extra_payment')
-                                : t('students.payment_amount')}
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                value={field.value || ''}
-                                min={0}
-                                placeholder={
-                                  student
-                                    ? t('students.extra_payment_placeholder')
-                                    : '0'
-                                }
-                                className="bg-secondary border-border"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="space-y-2">
-                        <Label>
-                          {student
-                            ? t('students.current_debt')
-                            : t('students.debt')}
-                        </Label>
-                        <Input
-                          value={formatMoney(debt)}
-                          disabled
-                          className="bg-muted border-border text-destructive font-medium"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                      <FormField
-                        control={form.control}
-                        name="group_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('students.group')}</FormLabel>
-                            <Select
-                              value={field.value || ''}
-                              onValueChange={field.onChange}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="bg-secondary border-border">
-                                  <SelectValue
-                                    placeholder={t('common.select_placeholder')}
-                                  />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {groupList.map((g) => (
-                                  <SelectItem key={g.id} value={g.id}>
-                                    {g.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                      <FormField
-                        control={form.control}
-                        name="initial_payment"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              {t('students.initial_payment')}
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                value={field.value || ''}
-                                min={0}
-                                disabled={
-                                  !!student ||
-                                  disabledFields.includes('initial_payment')
-                                }
-                                className={`${!!student || disabledFields.includes('initial_payment') ? 'bg-muted' : 'bg-secondary'} border-border`}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="space-y-2">
-                        <Label>
-                          {student
-                            ? t('students.current_debt')
-                            : t('students.debt')}
-                        </Label>
-                        <Input
-                          value={formatMoney(debt)}
-                          disabled
-                          className="bg-muted border-border text-destructive font-medium"
-                        />
-                      </div>
-                    </div>
-                    {student && (
-                      <FormField
-                        control={form.control}
-                        name="amount_paid"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('students.extra_payment')}</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                value={field.value || ''}
-                                min={0}
-                                placeholder={t(
-                                  'students.extra_payment_placeholder',
-                                )}
-                                className="bg-secondary border-border"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                      <FormField
-                        control={form.control}
-                        name="group_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              {t('students.group_required')}{' '}
-                              <span className="text-destructive">*</span>
-                            </FormLabel>
-                            <Select
-                              value={field.value || ''}
-                              onValueChange={field.onChange}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="bg-secondary border-border">
-                                  <SelectValue
-                                    placeholder={t('common.select_placeholder')}
-                                  />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {groupList.map((g) => (
-                                  <SelectItem key={g.id} value={g.id}>
-                                    {g.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="completion_date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              {t('students.completion_date')}
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type="date"
-                                {...field}
-                                value={field.value || ''}
-                                className="bg-secondary border-border"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="contract_number"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              {t('students.contract_number')}
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                value={field.value || ''}
-                                placeholder="C-201"
-                                className="bg-secondary border-border"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <FormField
-                      control={form.control}
-                      name="o83"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center gap-2 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value || false}
-                              onCheckedChange={(v) => field.onChange(!!v)}
-                              id="o83"
-                            />
-                          </FormControl>
-                          <FormLabel htmlFor="o83" className="!mt-0">
-                            O83
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  </>
-                )}
-
-                {operators.length > 0 && (
-                  <FormField
-                    control={form.control}
-                    name="registered_by"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('students.operator')}</FormLabel>
-                        <Select
-                          value={field.value || ''}
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="bg-secondary border-border">
-                              <SelectValue
-                                placeholder={t('students.operator_optional')}
-                              />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {operatorList.map((op) => (
-                              <SelectItem key={op.id} value={op.id}>
-                                {op.name || op.email}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                  <FormField
-                    control={form.control}
-                    name="result"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('students.result')}</FormLabel>
-                        <Select
-                          value={field.value || 'oqimoqda'}
-                          onValueChange={(v) =>
-                            field.onChange(v as ResultStatus)
-                          }
-                        >
-                          <FormControl>
-                            <SelectTrigger className="bg-secondary border-border">
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {Object.entries(localizedResultLabels).map(
-                              ([k, v]) => (
-                                <SelectItem key={k} value={k}>
-                                  {v}
-                                </SelectItem>
-                              ),
-                            )}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="has_document"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value || false}
-                          onCheckedChange={(v) => field.onChange(!!v)}
-                          id="doc"
-                        />
-                      </FormControl>
-                      <FormLabel htmlFor="doc" className="!mt-0">
-                        {t('students.has_document')}
-                      </FormLabel>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('students.notes')}</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          value={field.value || ''}
-                          placeholder={t('students.notes_placeholder')}
-                          rows={3}
-                          className="bg-secondary border-border"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-end gap-3 pt-2">
-                  <Button type="button" variant="outline" onClick={onClose}>
-                    {t('common.cancel')}
-                  </Button>
-                  {!student && onSaveAndAdd && (
+                  <div className="flex justify-end gap-3 pt-2">
                     <Button
                       type="button"
                       variant="outline"
+                      onClick={attemptClose}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                    {!student && onSaveAndAdd && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={loading || form.formState.isSubmitting}
+                        onClick={() => {
+                          submitModeRef.current = 'add';
+                          form.handleSubmit(onFormValid)();
+                        }}
+                      >
+                        {t('students.save_and_add')}
+                      </Button>
+                    )}
+                    <Button
+                      type="submit"
                       disabled={loading || form.formState.isSubmitting}
                       onClick={() => {
-                        submitModeRef.current = 'add';
-                        form.handleSubmit(onFormValid)();
+                        submitModeRef.current = 'close';
                       }}
                     >
-                      {t('students.save_and_add')}
+                      {loading || form.formState.isSubmitting
+                        ? t('common.saving')
+                        : student
+                          ? t('common.save')
+                          : t('common.add')}
                     </Button>
-                  )}
-                  <Button
-                    type="submit"
-                    disabled={loading || form.formState.isSubmitting}
-                    onClick={() => {
-                      submitModeRef.current = 'close';
-                    }}
-                  >
-                    {loading || form.formState.isSubmitting
-                      ? t('common.saving')
-                      : student
-                        ? t('common.save')
-                        : t('common.add')}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </TabsContent>
-          {student && (
-            <TabsContent value="exams" className="m-0">
-              <StudentExamsTab student={student} />
+                  </div>
+                </form>
+              </Form>
             </TabsContent>
-          )}
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+            {student && (
+              <TabsContent value="exams" className="m-0">
+                <StudentExamsTab student={student} />
+              </TabsContent>
+            )}
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={cancelDiscard}
+        onConfirm={confirmDiscard}
+        title={t('common.discard_changes_title')}
+        description={t('common.discard_changes_desc')}
+      />
+    </>
   );
 };
 

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import {
   useGroups,
   useGroupsOverview,
@@ -41,7 +42,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { usePagination } from '@/hooks/usePagination';
+import { extractErrorMessage } from '@/lib/errors';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { useCan } from '@/hooks/useCan';
 import { DataCard } from '@/components/ui/DataCard';
@@ -71,10 +72,30 @@ const GroupsPage = () => {
   const deleteMutation = useDeleteGroup();
   const canManageGroups = useCan('manageGroups');
 
-  const [search, setSearch] = useState('');
-  const [courseTypeFilter, setCourseTypeFilter] = useState('all');
-  const [sortField, setSortField] = useState('name');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  // Filters/sort/page live in the URL so reload / back / share preserves
+  // them (autodrive-6cq.5.8) — same setParam/setParams pattern as
+  // StudentsPage (src/hooks/useUrlParams.ts).
+  const { searchParams, setParam, setParams } = useUrlParams();
+
+  const search = searchParams.get('q') ?? '';
+  const setSearch = (v: string) => setParam('q', v || undefined);
+
+  const courseTypeFilter = searchParams.get('course_type') ?? 'all';
+  const setCourseTypeFilter = (v: string) =>
+    setParam('course_type', v === 'all' ? undefined : v);
+
+  const sortField = searchParams.get('sort_by') ?? 'name';
+  const sortDir = (searchParams.get('sort_dir') as 'asc' | 'desc') ?? 'asc';
+  const setSort = (field: string, dir: 'asc' | 'desc') =>
+    setParams({
+      sort_by: field === 'name' ? undefined : field,
+      sort_dir: dir === 'asc' ? undefined : dir,
+    });
+
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const setCurrentPage = (p: number) =>
+    setParam('page', p > 1 ? String(p) : undefined);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editGroup, setEditGroup] = useState<Group | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -96,11 +117,8 @@ const GroupsPage = () => {
   });
 
   const toggleSort = (field: string) => {
-    if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else {
-      setSortField(field);
-      setSortDir('asc');
-    }
+    if (sortField === field) setSort(field, sortDir === 'asc' ? 'desc' : 'asc');
+    else setSort(field, 'asc');
   };
 
   const sortedGroups = [...filteredGroups].sort((a, b) => {
@@ -125,12 +143,37 @@ const GroupsPage = () => {
           : 0;
   });
 
-  const {
-    currentPage,
-    totalPages,
-    paginatedItems: filtered,
-    setCurrentPage,
-  } = usePagination(sortedGroups);
+  const GROUPS_PER_PAGE = 10;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedGroups.length / GROUPS_PER_PAGE),
+  );
+
+  // Reset to page 1 when a filter/sort actually changes — skip the first
+  // render so a deep link with ?page=N isn't stomped on load.
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, courseTypeFilter, sortField, sortDir]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalPages]);
+
+  const filtered = useMemo(
+    () =>
+      sortedGroups.slice(
+        (currentPage - 1) * GROUPS_PER_PAGE,
+        currentPage * GROUPS_PER_PAGE,
+      ),
+    [sortedGroups, currentPage],
+  );
 
   const openCreate = () => {
     setEditGroup(null);
@@ -166,7 +209,8 @@ const GroupsPage = () => {
             toast.success(t('groups.updated'));
             setModalOpen(false);
           },
-          onError: () => toast.error(t('common.error')),
+          onError: (err) =>
+            toast.error(extractErrorMessage(err, t('common.error'))),
         },
       );
     } else {
@@ -175,7 +219,8 @@ const GroupsPage = () => {
           toast.success(t('groups.added'));
           setModalOpen(false);
         },
-        onError: () => toast.error(t('common.error')),
+        onError: (err) =>
+          toast.error(extractErrorMessage(err, t('common.error'))),
       });
     }
   };
@@ -187,7 +232,8 @@ const GroupsPage = () => {
         toast.success(t('groups.deleted'));
         setDeleteId(null);
       },
-      onError: () => toast.error(t('common.error')),
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
     });
   };
 
