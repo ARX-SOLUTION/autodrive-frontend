@@ -171,7 +171,11 @@ const OperatorsPage = () => {
             {t('operators.title')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {t('operators.count', { count: filtered.length })}
+            {isLoading ? (
+              <Skeleton className="h-4 w-24" />
+            ) : (
+              t('operators.count', { count: filtered.length })
+            )}
           </p>
         </div>
         <Button className="gap-2" onClick={openCreate}>
