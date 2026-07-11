@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { vi, describe, it, expect } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import AttendancePage from '@/pages/AttendancePage';
 import { useAuthStore } from '@/store/authStore';
+import { useCreateLesson } from '@/services/attendanceService';
 import { Lesson } from '@/types/attendance';
 
 vi.mock('@/store/authStore', () => ({ useAuthStore: vi.fn() }));
@@ -26,13 +27,17 @@ vi.mock('@/services/attendanceService', () => ({
     isLoading: false,
   }),
   useLessonById: () => ({ data: undefined, isError: false, refetch: vi.fn() }),
-  useCreateLesson: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useCreateLesson: vi.fn(),
   useBatchAttendance: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeleteLesson: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/services/groupService', () => ({
   useGroups: () => ({ data: [], isLoading: false }),
+  // AttendanceDrawer (autodrive-38m.3) is now reused by this page and calls
+  // the real useGroup for its roster fallback -- without a mock it'd hit
+  // useQuery with no QueryClientProvider in this test tree.
+  useGroup: () => ({ data: undefined }),
 }));
 
 function renderAsRole(role: string) {
@@ -46,6 +51,13 @@ function renderAsRole(role: string) {
     </MemoryRouter>,
   );
 }
+
+beforeEach(() => {
+  vi.mocked(useCreateLesson).mockReturnValue({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  } as unknown as ReturnType<typeof useCreateLesson>);
+});
 
 // Regression for autodrive-6cq.5.50: canCreate (manageSchedule) includes
 // operator, but the backend's DELETE /lessons/:id is
@@ -63,5 +75,36 @@ describe('AttendancePage delete-lesson gate', () => {
     expect(
       screen.getByLabelText('attendance.delete_title'),
     ).toBeInTheDocument();
+  });
+});
+
+// autodrive-6ef.27: the dense row list + inline expand-to-table was replaced
+// with cards that open the same AttendanceDrawer SchedulePage uses.
+describe('AttendancePage card -> drawer', () => {
+  it('opens the AttendanceDrawer when a lesson card is clicked', async () => {
+    renderAsRole('manager');
+    fireEvent.click(screen.getByText('Theory 101'));
+    expect(
+      await screen.findByText('attendance.no_students'),
+    ).toBeInTheDocument();
+  });
+});
+
+// autodrive-6ef.27: Create Lesson dialog moved from manual useState fields to
+// react-hook-form + zod. Confirms required-field validation still blocks an
+// empty submit instead of silently sending a half-filled payload.
+describe('AttendancePage create-lesson form validation', () => {
+  it('blocks submit when required fields are empty', async () => {
+    const mutateAsync = vi.fn();
+    vi.mocked(useCreateLesson).mockReturnValue({
+      mutateAsync,
+      isPending: false,
+    } as unknown as ReturnType<typeof useCreateLesson>);
+    renderAsRole('manager');
+
+    fireEvent.click(screen.getByText('attendance.add_lesson'));
+    fireEvent.click(screen.getByText('attendance.create'));
+
+    await waitFor(() => expect(mutateAsync).not.toHaveBeenCalled());
   });
 });
