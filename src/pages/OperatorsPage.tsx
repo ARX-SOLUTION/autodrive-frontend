@@ -120,7 +120,7 @@ const OperatorsPage = () => {
     if (!form.fullName.trim() || !form.phone.trim()) return;
     const payload = {
       fullName: form.fullName,
-      phone: form.phone || undefined,
+      phone: form.phone,
       branchId: form.branchId || undefined,
     };
     if (editItem) {
@@ -156,7 +156,7 @@ const OperatorsPage = () => {
     });
   };
 
-  const getBranchName = (branchId: string) =>
+  const getBranchName = (branchId?: string) =>
     (branches || []).find((b) => b.id === branchId)?.name ||
     branchId ||
     t('common.na');

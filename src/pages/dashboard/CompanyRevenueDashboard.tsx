@@ -691,8 +691,8 @@ const CompanyRevenueDashboard = () => {
         <KpiCard
           label={t('dashboard.v2.outstanding_debt', 'Jami qarzdorlik')}
           value={formatMoney(kpis.debt.current_outstanding)}
-          meta={t('dashboard.v2.debtors', '{{count}} ta qarzdor student', {
-            count: formatNumber(kpis.debt.students_with_debt),
+          meta={t('dashboard.v2.debtors', '{{value}} ta qarzdor student', {
+            value: formatNumber(kpis.debt.students_with_debt),
           })}
           icon={AlertTriangle}
           tone="warning"

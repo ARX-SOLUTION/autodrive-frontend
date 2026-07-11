@@ -28,7 +28,8 @@ export const useCreateOperator = () => {
     mutationFn: async (op: {
       fullName: string;
       phone: string;
-      branchId: string;
+      // matches backend CreateUserDto: branchId is @IsOptional()
+      branchId?: string;
     }) => {
       const { data } = await axiosInstance.post('/users', {
         ...op,

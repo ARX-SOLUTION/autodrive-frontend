@@ -29,19 +29,19 @@ import { track } from '@/lib/umami';
 
 // ── Canonical Uzbekistan regions (display & value) ────────────────────────
 const UZ_REGIONS = [
-  "Toshkent shahri",
-  "Toshkent viloyati",
-  "Andijon",
+  'Toshkent shahri',
+  'Toshkent viloyati',
+  'Andijon',
   "Farg'ona",
-  "Namangan",
-  "Samarqand",
-  "Buxoro",
-  "Xorazm",
-  "Qashqadaryo",
-  "Surxondaryo",
-  "Jizzax",
-  "Sirdaryo",
-  "Navoiy",
+  'Namangan',
+  'Samarqand',
+  'Buxoro',
+  'Xorazm',
+  'Qashqadaryo',
+  'Surxondaryo',
+  'Jizzax',
+  'Sirdaryo',
+  'Navoiy',
   "Qoraqalpog'iston",
 ] as const;
 
@@ -53,7 +53,10 @@ const demoSchema = z.object({
   phone: z
     .string()
     .min(1, 'demo_form.validation.phone_required')
-    .regex(/^\+998[\s-]?\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}$/, 'demo_form.validation.phone_invalid'),
+    .regex(
+      /^\+998[\s-]?\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}$/,
+      'demo_form.validation.phone_invalid',
+    ),
   region: z.string().min(1, 'demo_form.validation.region_required'),
   center_name: z.string().optional(),
   student_count: z.string().optional(),
@@ -63,7 +66,11 @@ const demoSchema = z.object({
 type DemoFormValues = z.infer<typeof demoSchema>;
 
 // ── Success SVG checkmark (GSAP-drawn) ────────────────────────────────────
-const CheckmarkSvg = ({ drawRef }: { drawRef: React.RefObject<SVGCircleElement | null> }) => (
+const CheckmarkSvg = ({
+  drawRef,
+}: {
+  drawRef: React.RefObject<SVGCircleElement>;
+}) => (
   <svg
     width="64"
     height="64"
@@ -136,14 +143,32 @@ export const DemoForm = () => {
       mm.add('(prefers-reduced-motion: no-preference)', () => {
         const tl = gsap.timeline();
         // fade out form content
-        tl.to(contentRef.current, { opacity: 0, y: -16, duration: 0.3, ease: 'power2.in' })
+        tl.to(contentRef.current, {
+          opacity: 0,
+          y: -16,
+          duration: 0.3,
+          ease: 'power2.in',
+        })
           // fade in success panel
           .set(successRef.current, { display: 'flex' })
-          .from(successRef.current, { opacity: 0, y: 20, duration: 0.4, ease: 'power3.out' })
+          .from(successRef.current, {
+            opacity: 0,
+            y: 20,
+            duration: 0.4,
+            ease: 'power3.out',
+          })
           // draw ring
-          .to(ringRef.current, { strokeDashoffset: 0, duration: 0.6, ease: 'power2.out' }, '-=0.1')
+          .to(
+            ringRef.current,
+            { strokeDashoffset: 0, duration: 0.6, ease: 'power2.out' },
+            '-=0.1',
+          )
           // draw tick
-          .to(tick, { strokeDashoffset: 0, duration: 0.35, ease: 'power2.out' }, '-=0.2');
+          .to(
+            tick ?? null,
+            { strokeDashoffset: 0, duration: 0.35, ease: 'power2.out' },
+            '-=0.2',
+          );
         return () => mm.revert();
       });
       mm.add('(prefers-reduced-motion: reduce)', () => {
@@ -215,7 +240,9 @@ export const DemoForm = () => {
                   <FormItem className="sm:col-span-2">
                     <FormLabel className="text-sm font-medium text-slate-700 dark:text-white/70">
                       {t('demo_form.full_name_label')}{' '}
-                      <span className="text-rose-500" aria-hidden="true">*</span>
+                      <span className="text-rose-500" aria-hidden="true">
+                        *
+                      </span>
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -223,17 +250,25 @@ export const DemoForm = () => {
                         placeholder={t('demo_form.full_name_placeholder')}
                         autoComplete="name"
                         onFocus={onFocus}
-                        onBlur={() => { field.onBlur(); onBlur(); }}
+                        onBlur={() => {
+                          field.onBlur();
+                          onBlur();
+                        }}
                         aria-invalid={!!fieldState.error}
                         className={[
                           'h-11 border-slate-200 bg-slate-50 transition-all duration-200',
                           'focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/25 focus:scale-[1.005]',
                           'dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-white/30',
-                          fieldState.error ? 'border-rose-400/60 focus:ring-rose-400/25' : '',
+                          fieldState.error
+                            ? 'border-rose-400/60 focus:ring-rose-400/25'
+                            : '',
                         ].join(' ')}
                       />
                     </FormControl>
-                    <FormMessage>{fieldState.error && t(fieldState.error.message as string)}</FormMessage>
+                    <FormMessage>
+                      {fieldState.error &&
+                        t(fieldState.error.message as string)}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -246,7 +281,9 @@ export const DemoForm = () => {
                   <FormItem className="sm:col-span-2">
                     <FormLabel className="text-sm font-medium text-slate-700 dark:text-white/70">
                       {t('demo_form.phone_label')}{' '}
-                      <span className="text-rose-500" aria-hidden="true">*</span>
+                      <span className="text-rose-500" aria-hidden="true">
+                        *
+                      </span>
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -255,17 +292,25 @@ export const DemoForm = () => {
                         placeholder={t('demo_form.phone_placeholder')}
                         autoComplete="tel"
                         onFocus={onFocus}
-                        onBlur={() => { field.onBlur(); onBlur(); }}
+                        onBlur={() => {
+                          field.onBlur();
+                          onBlur();
+                        }}
                         aria-invalid={!!fieldState.error}
                         className={[
                           'h-11 border-slate-200 bg-slate-50 font-mono transition-all duration-200',
                           'focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/25 focus:scale-[1.005]',
                           'dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-white/30',
-                          fieldState.error ? 'border-rose-400/60 focus:ring-rose-400/25' : '',
+                          fieldState.error
+                            ? 'border-rose-400/60 focus:ring-rose-400/25'
+                            : '',
                         ].join(' ')}
                       />
                     </FormControl>
-                    <FormMessage>{fieldState.error && t(fieldState.error.message as string)}</FormMessage>
+                    <FormMessage>
+                      {fieldState.error &&
+                        t(fieldState.error.message as string)}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -278,12 +323,14 @@ export const DemoForm = () => {
                   <FormItem>
                     <FormLabel className="text-sm font-medium text-slate-700 dark:text-white/70">
                       {t('demo_form.region_label')}{' '}
-                      <span className="text-rose-500" aria-hidden="true">*</span>
+                      <span className="text-rose-500" aria-hidden="true">
+                        *
+                      </span>
                     </FormLabel>
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
-                      onOpenChange={(open) => open ? onFocus() : onBlur()}
+                      onOpenChange={(open) => (open ? onFocus() : onBlur())}
                     >
                       <FormControl>
                         <SelectTrigger
@@ -294,16 +341,23 @@ export const DemoForm = () => {
                             fieldState.error ? 'border-rose-400/60' : '',
                           ].join(' ')}
                         >
-                          <SelectValue placeholder={t('demo_form.region_placeholder')} />
+                          <SelectValue
+                            placeholder={t('demo_form.region_placeholder')}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {UZ_REGIONS.map((r) => (
-                          <SelectItem key={r} value={r}>{r}</SelectItem>
+                          <SelectItem key={r} value={r}>
+                            {r}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage>{fieldState.error && t(fieldState.error.message as string)}</FormMessage>
+                    <FormMessage>
+                      {fieldState.error &&
+                        t(fieldState.error.message as string)}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -320,16 +374,22 @@ export const DemoForm = () => {
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
-                      onOpenChange={(open) => open ? onFocus() : onBlur()}
+                      onOpenChange={(open) => (open ? onFocus() : onBlur())}
                     >
                       <FormControl>
                         <SelectTrigger className="h-11 border-slate-200 bg-slate-50 transition-all duration-200 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/25 dark:border-white/10 dark:bg-white/[0.04] dark:text-white">
-                          <SelectValue placeholder={t('demo_form.student_count_placeholder')} />
+                          <SelectValue
+                            placeholder={t(
+                              'demo_form.student_count_placeholder',
+                            )}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {STUDENT_BUCKETS.map((b) => (
-                          <SelectItem key={b} value={b}>{b}</SelectItem>
+                          <SelectItem key={b} value={b}>
+                            {b}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -351,7 +411,10 @@ export const DemoForm = () => {
                         {...field}
                         placeholder={t('demo_form.center_name_placeholder')}
                         onFocus={onFocus}
-                        onBlur={() => { field.onBlur(); onBlur(); }}
+                        onBlur={() => {
+                          field.onBlur();
+                          onBlur();
+                        }}
                         className="h-11 border-slate-200 bg-slate-50 transition-all duration-200 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/25 focus:scale-[1.005] dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-white/30"
                       />
                     </FormControl>
@@ -374,7 +437,10 @@ export const DemoForm = () => {
                         rows={3}
                         placeholder={t('demo_form.note_placeholder')}
                         onFocus={onFocus}
-                        onBlur={() => { field.onBlur(); onBlur(); }}
+                        onBlur={() => {
+                          field.onBlur();
+                          onBlur();
+                        }}
                         className="resize-none border-slate-200 bg-slate-50 transition-all duration-200 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/25 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-white/30"
                       />
                     </FormControl>
@@ -390,7 +456,9 @@ export const DemoForm = () => {
               disabled={mutation.isPending}
               className="active:scale-[0.96] mt-6 h-12 w-full gap-2 bg-cyan-400 text-sm font-semibold text-slate-950 transition-all hover:bg-cyan-300 hover:shadow-[0_0_32px_rgba(34,211,238,0.30)] disabled:opacity-60"
             >
-              {mutation.isPending ? t('demo_form.submitting') : t('demo_form.submit')}
+              {mutation.isPending
+                ? t('demo_form.submitting')
+                : t('demo_form.submit')}
             </Button>
 
             <p className="mt-3 text-center text-xs text-slate-400 dark:text-white/30">
