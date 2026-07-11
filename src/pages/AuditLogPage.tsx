@@ -251,22 +251,22 @@ const AuditLogPage = () => {
   });
 
   const logs = data?.data || [];
-  const total = data?.total || 0;
+  const total = data?.meta?.total || 0;
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
   const filtered = logs.filter((l) => {
-    const name = l.user?.name?.toLowerCase() || '';
+    const name = l.user_name?.toLowerCase() || '';
     return !search || name.includes(search.toLowerCase());
   });
 
   const sorted = [...filtered].sort((a, b) => {
     let va: unknown, vb: unknown;
     if (sortField === 'userName') {
-      va = a.user?.name || '';
-      vb = b.user?.name || '';
+      va = a.user_name || '';
+      vb = b.user_name || '';
     } else if (sortField === 'createdAt') {
-      va = a.createdAt;
-      vb = b.createdAt;
+      va = a.created_at;
+      vb = b.created_at;
     } else {
       va = (a as unknown as Record<string, unknown>)[sortField];
       vb = (b as unknown as Record<string, unknown>)[sortField];
@@ -339,7 +339,7 @@ const AuditLogPage = () => {
     return labels[entity] || entity;
   };
 
-  const formatRole = (role?: string) => {
+  const formatRole = (role?: string | null) => {
     if (!role) return t('common.na');
     return role;
   };
@@ -641,10 +641,10 @@ const AuditLogPage = () => {
                         {(page - 1) * LIMIT + idx + 1}
                       </td>
                       <td className="px-4 py-3 font-medium">
-                        {log.user?.name || t('common.na')}
+                        {log.user_name || t('common.na')}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">
-                        {formatRole(log.user?.role)}
+                        {formatRole(log.user_role)}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -660,10 +660,10 @@ const AuditLogPage = () => {
                         {formatEntity(log.entity)}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs max-w-[240px] truncate">
-                        {log.changes ? t('audit.changes') : log.entityId}
+                        {log.changes ? t('audit.changes') : log.entity_id}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground whitespace-nowrap tabular-nums">
-                        {formatDate(log.createdAt)}
+                        {formatDate(log.created_at)}
                       </td>
                     </tr>
                   ))
@@ -691,11 +691,11 @@ const AuditLogPage = () => {
                 key={log.id}
                 onClick={() => setSelectedLog(log)}
                 title={`${formatAction(log.action)} \u00b7 ${formatEntity(log.entity)}`}
-                subtitle={log.user?.name || t('common.na')}
+                subtitle={log.user_name || t('common.na')}
                 fields={[
                   {
                     label: t('audit.detail_date'),
-                    value: formatDate(log.createdAt),
+                    value: formatDate(log.created_at),
                   },
                   {
                     label: t('audit.detail_details'),
@@ -761,27 +761,27 @@ const AuditLogPage = () => {
                       {t('audit.table_user')}
                     </span>
                     <p className="font-medium">
-                      {selectedLog.user?.name || t('common.na')}
+                      {selectedLog.user_name || t('common.na')}
                     </p>
                   </div>
                   <div>
                     <span className="text-muted-foreground text-xs">
                       {t('users.detail.role')}
                     </span>
-                    <p>{formatRole(selectedLog.user?.role)}</p>
+                    <p>{formatRole(selectedLog.user_role)}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground text-xs tabular-nums">
                       {t('audit.table_time')}
                     </span>
-                    <p>{formatDate(selectedLog.createdAt)}</p>
+                    <p>{formatDate(selectedLog.created_at)}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground text-xs">
                       {t('audit.entity_id')}
                     </span>
                     <p className="font-mono text-xs truncate">
-                      {selectedLog.entityId}
+                      {selectedLog.entity_id}
                     </p>
                   </div>
                 </div>
