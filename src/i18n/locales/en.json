@@ -94,7 +94,10 @@
     "all_operators": "All operators",
     "count_unit": "",
     "show_password": "Show password",
-    "hide_password": "Hide password"
+    "hide_password": "Hide password",
+    "update_available": "A new version is available",
+    "update_reload": "Reload",
+    "offline_banner": "No internet connection"
   },
   "login": {
     "title": "Sign in",
@@ -109,7 +112,8 @@
     "rate_limit": "Too many attempts. Please wait 1 minute.",
     "network_error": "Unable to connect to the server.",
     "demo": "Sign in as demo",
-    "demo_hint": "Explore with sample data"
+    "demo_hint": "Explore with sample data",
+    "session_expired": "Session expired, please sign in again"
   },
   "dashboard": {
     "title": "Dashboard",

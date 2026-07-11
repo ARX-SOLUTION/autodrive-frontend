@@ -2,14 +2,16 @@ import { lazy, Suspense } from 'react';
 import { initUmami } from '@/lib/umami';
 
 initUmami(); // ponytail: module-load — runs once, no-op if env vars absent
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageLoader } from '@/components/layout/PageLoader';
+import { OfflineBanner } from '@/components/layout/OfflineBanner';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
+import { queryClient } from '@/lib/queryClient';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -30,16 +32,6 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
 const AuditDetailPage = lazy(() => import('./pages/AuditDetailPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const BlogPage = lazy(() => import('./pages/BlogPage'));
@@ -63,6 +55,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Sonner />
+      <OfflineBanner />
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
