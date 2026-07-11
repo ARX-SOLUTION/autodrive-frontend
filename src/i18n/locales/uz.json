@@ -258,6 +258,7 @@
     "deleted": "Filial o'chirildi",
     "subtitle": "Barcha filiallarni boshqarish",
     "subtitle_readonly": "Filial ma'lumotlari (faqat ko'rish)",
+    "form_desc": "Filial ma'lumotlarini kiriting",
     "manager": "Menejer",
     "students": "Talabalar",
     "created": "Yaratilgan",
@@ -291,6 +292,7 @@
     "view": "Ko'rish",
     "created": "Yaratilgan",
     "total_students": "Jami: {{count}} ta talaba",
+    "form_desc": "Guruh ma'lumotlarini kiriting",
     "detail": {
       "title": "Guruh ma'lumotlari",
       "student": "Talaba",
@@ -392,7 +394,8 @@
     "course": {
       "tezkor": "Tezkor",
       "avto_maktab": "Avtomaktab"
-    }
+    },
+    "form_desc": "Talaba ma'lumotlarini kiriting"
   },
   "exams": {
     "add_title": "Yangi natija qo'shish",
@@ -402,7 +405,8 @@
     "score_optional": "Ball (ixtiyoriy)",
     "passed": "O'tdi (Passed)",
     "added": "Natija qo'shildi",
-    "date_required": "Sana talab qilinadi"
+    "date_required": "Sana talab qilinadi",
+    "add_desc": "Imtihon natijasi ma'lumotlarini kiriting"
   },
   "payments": {
     "title": "To'lovlar",
@@ -473,7 +477,14 @@
       "amount": "Summa",
       "method": "Usul",
       "operator": "Operator"
-    }
+    },
+    "validation": {
+      "select_student": "Talabani tanlang",
+      "enter_amount": "To'lov summasini kiriting",
+      "amount_positive": "To'lov summasi 0 dan katta bo'lishi kerak",
+      "select_method": "To'lov turini tanlang"
+    },
+    "add_desc": "Talaba va to'lov ma'lumotlarini kiriting"
   },
   "audit": {
     "title": "Audit log",
@@ -535,6 +546,7 @@
     "updated": "Operator yangilandi",
     "deleted": "Operator o'chirildi",
     "count": "{{count}} ta operator",
+    "form_desc": "Operator ma'lumotlarini kiriting",
     "detail": {
       "email": "Email",
       "branch": "Filial",
@@ -560,7 +572,8 @@
     "updated": "O'qituvchi yangilandi",
     "deleted": "O'qituvchi o'chirildi",
     "count": "{{count}} ta o'qituvchi",
-    "search_placeholder": "Qidirish..."
+    "search_placeholder": "Qidirish...",
+    "form_desc": "O'qituvchi ma'lumotlarini kiriting"
   },
   "users": {
     "title": "Foydalanuvchilar",
@@ -573,6 +586,7 @@
     "password_label": "Parol",
     "added": "Menejer qo'shildi",
     "no_branches": "Filial yo'q — avval filial yarating",
+    "add_desc": "Yangi menejer ma'lumotlarini kiriting",
     "detail": {
       "role": "Rol",
       "branch": "Filial",
@@ -630,7 +644,8 @@
     "toggle_present": "Keldi",
     "toggle_late": "Kech",
     "toggle_absent": "Yo'q",
-    "marked_progress": "{{marked}}/{{total}} belgilandi"
+    "marked_progress": "{{marked}}/{{total}} belgilandi",
+    "add_lesson_desc": "Yangi dars ma'lumotlarini kiriting"
   },
   "schedule": {
     "title": "Dars jadvali",
@@ -679,7 +694,8 @@
     "start_time": "Boshlanish vaqti",
     "end_time": "Tugash vaqti",
     "status_marked": "Belgilandi",
-    "status_pending": "Kutilmoqda"
+    "status_pending": "Kutilmoqda",
+    "template_desc": "Dars jadvali shabloni ma'lumotlarini kiriting"
   },
   "documents": {
     "title": "Hujjatlar",

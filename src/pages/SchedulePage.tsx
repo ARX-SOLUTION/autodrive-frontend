@@ -441,6 +441,9 @@ const SchedulePage = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('schedule.template_title')}</DialogTitle>
+            <DialogDescription className="sr-only">
+              {t('schedule.template_desc')}
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateTemplate} className="space-y-4">
             <div>

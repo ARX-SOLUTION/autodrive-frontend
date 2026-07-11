@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StudentExamsTab } from './StudentExamsTab';
@@ -353,6 +354,9 @@ const StudentModal = ({
                 )
               </span>
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              {t('students.form_desc')}
+            </DialogDescription>
           </DialogHeader>
 
           <Tabs defaultValue="info" className="w-full mt-2">

@@ -24,6 +24,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -393,6 +394,9 @@ const AttendancePage = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('attendance.add_lesson')}</DialogTitle>
+            <DialogDescription className="sr-only">
+              {t('attendance.add_lesson_desc')}
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>

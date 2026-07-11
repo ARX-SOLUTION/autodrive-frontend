@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, MapPin, Building2, Phone } from 'lucide-react';
@@ -316,6 +317,9 @@ const BranchesPage = () => {
             <DialogTitle className="font-heading">
               {editItem ? t('branches.edit') : t('branches.add')}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              {t('branches.form_desc')}
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
