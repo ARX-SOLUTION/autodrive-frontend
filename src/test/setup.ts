@@ -15,6 +15,15 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 });
 
+// jsdom has no ResizeObserver; several Radix primitives (Checkbox, Popover
+// size measurement, etc.) call it on mount.
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+window.ResizeObserver = ResizeObserverStub;
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (str: string) => str,

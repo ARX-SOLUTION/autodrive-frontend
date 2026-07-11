@@ -41,6 +41,7 @@ import {
 import { toast } from 'sonner';
 import { useCan } from '@/hooks/useCan';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { useAuthStore } from '@/store/authStore';
 
 const formatDate = (d: string) => {
   try {
@@ -83,6 +84,10 @@ const AttendancePage = () => {
   const canEdit = useCan('takeAttendance');
   // teacher can mark attendance but cannot create/delete lessons
   const canCreate = useCan('manageSchedule');
+  // DELETE /lessons/:id is @Roles(owner, manager) only -- manageSchedule
+  // also grants operator, so gate delete separately to match the backend.
+  const role = useAuthStore((s) => s.user?.role);
+  const canDelete = role === 'owner' || role === 'manager';
   const groupOptions = groups || [];
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -248,7 +253,7 @@ const AttendancePage = () => {
                       <ChevronDown className="ml-1 h-4 w-4" />
                     )}
                   </Button>
-                  {canCreate && (
+                  {canDelete && (
                     <Button
                       variant="ghost"
                       size="sm"

@@ -62,7 +62,11 @@ export const RecordExamModal = ({
       score: '',
       passed: false,
       notes: '',
-      date: new Date().toISOString().split('T')[0],
+      // ponytail: shift by UZ+5 before reading the UTC date so 00:00-04:59
+      // Tashkent time doesn't read as yesterday (mirrors PaymentsPage's today()).
+      date: new Date(Date.now() + 5 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0],
     },
   });
 
