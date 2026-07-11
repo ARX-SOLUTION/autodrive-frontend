@@ -974,19 +974,19 @@ const LegacyMainDashboard = () => {
                       </span>
                       <div className="min-w-0 text-sm leading-snug">
                         <span className="font-semibold">
-                          {a.user?.name ?? 'System'}
+                          {a.user_name ?? 'System'}
                         </span>
-                        {a.user?.role && (
+                        {a.user_role && (
                           <span className="text-muted-foreground">
                             {' '}
-                            ({t(`roles.${a.user.role}`, a.user.role)})
+                            ({t(`roles.${a.user_role}`, a.user_role)})
                           </span>
                         )}{' '}
                         <span className="text-muted-foreground">{verb}</span>{' '}
                         <span className="font-medium">{a.entity}</span>
                       </div>
                       <span className="text-xs font-medium text-muted-foreground tabular-nums whitespace-nowrap">
-                        {formatRelative(a.createdAt)}
+                        {formatRelative(a.created_at)}
                       </span>
                     </li>
                   );
