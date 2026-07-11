@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useIsCrossTenant } from '@/hooks/useCan';
-import { Student, CourseType } from '@/types/student';
+import { Student, CourseType, StudentStatus } from '@/types/student';
 import type { CreateStudentPayload } from '@/components/ui/StudentModal';
 import { track } from '@/lib/umami';
 import type { ListResponse } from '@/types/list';
@@ -18,6 +18,7 @@ interface StudentListOptions {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   hasDebt?: boolean;
+  status?: StudentStatus;
 }
 
 interface StudentListParams extends StudentListOptions {
@@ -40,6 +41,7 @@ const toStudentQueryParams = ({
   sortBy,
   sortOrder,
   hasDebt,
+  status,
 }: StudentListParams) => ({
   course_type: courseType,
   branch_id: branchId,
@@ -52,6 +54,7 @@ const toStudentQueryParams = ({
   sort_by: sortBy,
   sort_order: sortOrder,
   has_debt: hasDebt,
+  status,
 });
 
 export const fetchStudentsPage = async (
@@ -104,6 +107,7 @@ export const useStudentsPage = (
       options?.sortBy,
       options?.sortOrder,
       options?.hasDebt,
+      options?.status,
     ],
     enabled: (options?.enabled ?? true) && baseEnabled,
     queryFn: () =>

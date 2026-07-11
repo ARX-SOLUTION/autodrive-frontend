@@ -17,7 +17,7 @@ import {
 } from '@/services/studentService';
 import { useBranches } from '@/services/branchService';
 import { useOperators } from '@/services/operatorService';
-import { CourseType, Student } from '@/types/student';
+import { CourseType, Student, StudentStatus } from '@/types/student';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -153,6 +153,13 @@ const StudentsPage = () => {
   const operatorId = searchParams.get('operator_id') ?? undefined;
   const setOperatorId = (v: string | undefined) => setParam('operator_id', v);
 
+  // Dashboard drill-through filters (autodrive-ls5) — no UI control, just
+  // consumed from the URL when navigated to with a status/debt context.
+  const status = (searchParams.get('status') as StudentStatus) || undefined;
+  const hasDebt = searchParams.get('has_debt')
+    ? searchParams.get('has_debt') === 'true'
+    : undefined;
+
   // Local-only state (modal + sort UX — not worth persisting).
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -182,6 +189,8 @@ const StudentsPage = () => {
       dateTo,
       sortBy: sortField,
       sortOrder: sortDir,
+      status,
+      hasDebt,
     },
   );
 
@@ -196,6 +205,8 @@ const StudentsPage = () => {
     dateTo,
     sortField,
     sortDir,
+    status,
+    hasDebt,
   ]);
 
   const isLoading = isStudentsLoading;
