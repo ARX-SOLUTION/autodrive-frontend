@@ -1,10 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useUsersPage, useCreateManager } from '@/services/userService';
 import { useBranches } from '@/services/branchService';
 import { RoleGate } from '@/components/RoleGate';
+import { useIsCrossTenant } from '@/hooks/useCan';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import { extractErrorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +36,7 @@ import {
   ChevronsUpDown,
   UserCog,
   Plus,
+  Search,
 } from 'lucide-react';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -55,11 +59,37 @@ const SERVER_PAGE_SIZE = 100;
 const UsersPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const isCrossTenant = useIsCrossTenant();
+
+  // Filter state lives in the URL (autodrive-b85.2), same pattern as
+  // StudentsPage's searchParams/setParam.
+  const { searchParams, setParam } = useUrlParams();
+  const search = searchParams.get('q') ?? '';
+  const setSearch = (v: string) => setParam('q', v || undefined);
+  const branchId = searchParams.get('branch_id') ?? undefined;
+  const setBranchId = (v: string | undefined) => setParam('branch_id', v);
+  const isActiveParam = searchParams.get('is_active') ?? undefined;
+  const isActive =
+    isActiveParam === 'true'
+      ? true
+      : isActiveParam === 'false'
+        ? false
+        : undefined;
+  const setIsActive = (v: string) =>
+    setParam('is_active', v === 'all' ? undefined : v);
+
+  const debouncedSearch = useDebounce(search, 300);
+
   const [currentPage, setCurrentPage] = useState(1);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, branchId, isActive]);
+
   const { data: usersPage, isLoading } = useUsersPage(
     'manager',
     currentPage,
     SERVER_PAGE_SIZE,
+    { search: debouncedSearch, branchId, isActive },
   );
   const users = useMemo(() => usersPage?.data ?? [], [usersPage]);
   const totalPages = Math.max(1, usersPage?.meta.totalPages ?? 1);
@@ -163,6 +193,48 @@ const UsersPage = () => {
             <Plus className="h-4 w-4" /> {t('users.add')}
           </Button>
         </RoleGate>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        {isCrossTenant && (
+          <Select
+            value={branchId || 'all'}
+            onValueChange={(v) => setBranchId(v === 'all' ? undefined : v)}
+          >
+            <SelectTrigger className="w-40 bg-secondary border-border">
+              <SelectValue placeholder={t('common.branch')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              {(branches || []).map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        <Select value={isActiveParam ?? 'all'} onValueChange={setIsActive}>
+          <SelectTrigger className="w-36 bg-secondary border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('common.all')}</SelectItem>
+            <SelectItem value="true">{t('common.active')}</SelectItem>
+            <SelectItem value="false">{t('common.inactive')}</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder={t('users.search_placeholder')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 bg-secondary border-border"
+          />
+        </div>
       </div>
 
       <div className="hidden md:block glass-card overflow-hidden">

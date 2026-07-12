@@ -589,6 +589,7 @@
     "email_label": "Email",
     "password_label": "Password",
     "added": "Manager added",
+    "search_placeholder": "Search by name, email or phone...",
     "no_branches": "No branches — create one first",
     "add_desc": "Enter the new manager's details",
     "detail": {

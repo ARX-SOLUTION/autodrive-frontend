@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { useAuditLogs } from '@/services/auditService';
 import { useUsers } from '@/services/userService';
+import { toLocalDateStr } from '@/services/studentService';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import {
   formatAuditDate,
   formatAuditAction,
@@ -70,11 +72,43 @@ const lastMonthEnd = () => {
 const AuditLogPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
-  const [entityFilter, setEntityFilter] = useState('all');
-  const [actionFilter, setActionFilter] = useState('all');
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
+
+  // Filter state lives in the URL so reload / back / share preserves it
+  // (autodrive-6cq.5.8) — same setParam/setParams pattern as StudentsPage
+  // (src/hooks/useUrlParams.ts). Page and sort stay local, matching
+  // StudentsPage's split (only filters are URL-backed there).
+  const { searchParams, setParam, setParams } = useUrlParams();
+
+  const search = searchParams.get('q') ?? '';
+  const setSearch = (v: string) => setParam('q', v || undefined);
+
+  const entityFilter = searchParams.get('entity') ?? 'all';
+  const setEntityFilter = (v: string) =>
+    setParam('entity', v === 'all' ? undefined : v);
+
+  const actionFilter = searchParams.get('action') ?? 'all';
+  const setActionFilter = (v: string) =>
+    setParam('action', v === 'all' ? undefined : v);
+
+  const rawDateFrom = searchParams.get('date_from');
+  const dateFrom = useMemo(
+    () => (rawDateFrom ? new Date(rawDateFrom) : undefined),
+    [rawDateFrom],
+  );
+  const rawDateTo = searchParams.get('date_to');
+  const dateTo = useMemo(
+    () => (rawDateTo ? new Date(rawDateTo) : undefined),
+    [rawDateTo],
+  );
+  // Both keys must land in the same setSearchParams call — two sequential
+  // setParam calls would each snapshot `prev` independently and the second
+  // overwrites the first's write (autodrive-6cq.5.70).
+  const setDateRange = (from: Date | undefined, to: Date | undefined) =>
+    setParams({
+      date_from: from ? toLocalDateStr(from) : undefined,
+      date_to: to ? toLocalDateStr(to) : undefined,
+    });
+
   const [page, setPage] = useState(1);
   const LIMIT = 50;
 
@@ -163,35 +197,32 @@ const AuditLogPage = () => {
     now.setHours(23, 59, 59, 999);
     switch (preset) {
       case 'today':
-        setDateFrom(today());
-        setDateTo(now);
+        setDateRange(today(), now);
         break;
       case 'week':
-        setDateFrom(weekAgo());
-        setDateTo(now);
+        setDateRange(weekAgo(), now);
         break;
       case 'month':
-        setDateFrom(monthStart());
-        setDateTo(now);
+        setDateRange(monthStart(), now);
         break;
       case 'lastMonth':
-        setDateFrom(lastMonthStart());
-        setDateTo(lastMonthEnd());
+        setDateRange(lastMonthStart(), lastMonthEnd());
         break;
       case 'all':
-        setDateFrom(undefined);
-        setDateTo(undefined);
+        setDateRange(undefined, undefined);
         break;
     }
     setPage(1);
   };
 
   const clearAll = () => {
-    setDateFrom(undefined);
-    setDateTo(undefined);
-    setEntityFilter('all');
-    setActionFilter('all');
-    setSearch('');
+    setParams({
+      date_from: undefined,
+      date_to: undefined,
+      entity: undefined,
+      action: undefined,
+      q: undefined,
+    });
     setPage(1);
   };
 
@@ -343,11 +374,9 @@ const AuditLogPage = () => {
                 selected={{ from: dateFrom, to: dateTo }}
                 onSelect={(range) => {
                   if (!range) {
-                    setDateFrom(undefined);
-                    setDateTo(undefined);
+                    setDateRange(undefined, undefined);
                   } else {
-                    setDateFrom(range.from);
-                    setDateTo(range.to ?? range.from);
+                    setDateRange(range.from, range.to ?? range.from);
                   }
                   setPage(1);
                 }}

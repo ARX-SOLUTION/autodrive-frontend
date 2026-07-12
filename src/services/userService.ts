@@ -27,18 +27,30 @@ export const useUsers = (role?: string) => {
 // Real server-side pagination for list pages (autodrive-0id) -- GET /users
 // defaults to limit=10; UsersPage was fetching once via useUsers and
 // paginating client-side over that truncated result.
-export const useUsersPage = (role: string, page: number, limit: number) => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
+export const useUsersPage = (
+  role: string,
+  page: number,
+  limit: number,
+  filters?: { search?: string; branchId?: string; isActive?: boolean },
+) => {
+  const userBranchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<ListResponse<User>>({
-    queryKey: ['users', 'page', branchId, role, page, limit],
+    queryKey: ['users', 'page', userBranchId, role, page, limit, filters],
     queryFn: async () => {
       const { data } = await axiosInstance.get('/users', {
-        params: { role, page, limit },
+        params: {
+          role,
+          page,
+          limit,
+          search: filters?.search || undefined,
+          branchId: filters?.branchId,
+          isActive: filters?.isActive,
+        },
       });
       return parseListResponse<User>(data, page, limit);
     },
-    enabled: !!branchId || isCrossTenant,
+    enabled: !!userBranchId || isCrossTenant,
   });
 };
 

@@ -589,6 +589,7 @@
     "email_label": "Email",
     "password_label": "Пароль",
     "added": "Менеджер добавлен",
+    "search_placeholder": "Поиск по имени, email или телефону...",
     "no_branches": "Нет филиалов — сначала создайте филиал",
     "add_desc": "Введите данные нового менеджера",
     "detail": {
