@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useAuthStore } from '@/store/authStore';
 import {
   useGroups,
   useGroupsOverview,
@@ -45,7 +47,7 @@ import {
 import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/errors';
 import PaginationControls from '@/components/ui/PaginationControls';
-import { useCan } from '@/hooks/useCan';
+import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -60,18 +62,8 @@ const formatDate = (d: string) => {
 const GroupsPage = () => {
   const { t } = useTranslation();
   const goToGroup = useViewTransitionNavigate();
-  const {
-    data: groups,
-    isLoading,
-    isError: isGroupsError,
-    refetch: refetchGroups,
-  } = useGroups();
-  const { data: overview } = useGroupsOverview();
-  const { data: branches } = useBranches();
-  const createMutation = useCreateGroup();
-  const updateMutation = useUpdateGroup();
-  const deleteMutation = useDeleteGroup();
-  const canManageGroups = useCan('manageGroups');
+  const isCrossTenant = useIsCrossTenant();
+  const user = useAuthStore((s) => s.user);
 
   // Filters/sort/page live in the URL so reload / back / share preserves
   // them (autodrive-6cq.5.8) — same setParam/setParams pattern as
@@ -80,10 +72,20 @@ const GroupsPage = () => {
 
   const search = searchParams.get('q') ?? '';
   const setSearch = (v: string) => setParam('q', v || undefined);
+  const debouncedSearch = useDebounce(search, 300);
 
   const courseTypeFilter = searchParams.get('course_type') ?? 'all';
   const setCourseTypeFilter = (v: string) =>
     setParam('course_type', v === 'all' ? undefined : v);
+
+  // Branch filter — owner/dev only (mirrors StudentsPage's cross-tenant
+  // branch picker); manager/operator/teacher stay pinned to their own
+  // branch, same as before this change (autodrive-b85.5).
+  const defaultBranchId = isCrossTenant
+    ? undefined
+    : user?.branch_id || undefined;
+  const branchId = searchParams.get('branch_id') ?? defaultBranchId;
+  const setBranchId = (v: string | undefined) => setParam('branch_id', v);
 
   const sortField = searchParams.get('sort_by') ?? 'name';
   const sortDir = (searchParams.get('sort_dir') as 'asc' | 'desc') ?? 'asc';
@@ -96,6 +98,25 @@ const GroupsPage = () => {
   const currentPage = Number(searchParams.get('page')) || 1;
   const setCurrentPage = (p: number) =>
     setParam('page', p > 1 ? String(p) : undefined);
+
+  // search/course_type/branch now filtered server-side (autodrive-b85.5) --
+  // GET /groups gained these params, so we stop refetching-then-filtering.
+  const {
+    data: groups,
+    isLoading,
+    isError: isGroupsError,
+    refetch: refetchGroups,
+  } = useGroups({
+    search: debouncedSearch,
+    branchId,
+    courseType: courseTypeFilter === 'all' ? undefined : courseTypeFilter,
+  });
+  const { data: overview } = useGroupsOverview();
+  const { data: branches } = useBranches();
+  const createMutation = useCreateGroup();
+  const updateMutation = useUpdateGroup();
+  const deleteMutation = useDeleteGroup();
+  const canManageGroups = useCan('manageGroups');
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editGroup, setEditGroup] = useState<Group | null>(null);
@@ -110,12 +131,8 @@ const GroupsPage = () => {
 
   const branchList = branches || [];
 
-  const filteredGroups = (groups || []).filter((g) => {
-    const matchesSearch = g.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCourseType =
-      courseTypeFilter === 'all' || g.course_type === courseTypeFilter;
-    return matchesSearch && matchesCourseType;
-  });
+  // Server already applied search/course_type/branch filters above.
+  const filteredGroups = groups || [];
 
   const toggleSort = (field: string) => {
     if (sortField === field) setSort(field, sortDir === 'asc' ? 'desc' : 'asc');
@@ -160,7 +177,7 @@ const GroupsPage = () => {
     }
     setCurrentPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, courseTypeFilter, sortField, sortDir]);
+  }, [search, courseTypeFilter, branchId, sortField, sortDir]);
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(1);
@@ -348,6 +365,24 @@ const GroupsPage = () => {
             </SelectItem>
           </SelectContent>
         </Select>
+        {isCrossTenant && (
+          <Select
+            value={branchId || 'all'}
+            onValueChange={(v) => setBranchId(v === 'all' ? undefined : v)}
+          >
+            <SelectTrigger className="w-40 bg-secondary border-border">
+              <SelectValue placeholder={t('common.branch')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              {branchList.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {/* Table */}

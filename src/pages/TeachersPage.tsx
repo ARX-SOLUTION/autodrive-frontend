@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useSearchSortFilters } from '@/hooks/useSearchSortFilters';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,9 +57,18 @@ const SERVER_PAGE_SIZE = 100;
 const TeachersPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
-  const [sortField, setSortField] = useState('name');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  // Search/sort/page live in the URL so reload/back/share preserve them
+  // (autodrive-b85.3 -- mirrors admin-panel's useSearchSortFilters).
+  const {
+    search,
+    setSearch,
+    sortField,
+    sortDir,
+    toggleSort,
+    page: currentPage,
+    setPage: setCurrentPage,
+  } = useSearchSortFilters('name');
+  const debouncedSearch = useDebounce(search, 300);
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -67,15 +78,15 @@ const TeachersPage = () => {
     branchId: '',
     specialization: 'THEORY' as Specialization,
   });
-  const [currentPage, setCurrentPage] = useState(1);
 
   const {
     data: teachersPage,
     isLoading,
     isError,
     refetch,
-  } = useTeachersPage(currentPage, SERVER_PAGE_SIZE);
-  const teachers = teachersPage?.data ?? [];
+  } = useTeachersPage(currentPage, SERVER_PAGE_SIZE, debouncedSearch);
+  const teachers = useMemo(() => teachersPage?.data ?? [], [teachersPage]);
+  const total = teachersPage?.meta.total ?? 0;
   const totalPages = Math.max(1, teachersPage?.meta.totalPages ?? 1);
   const { data: branches } = useBranches();
   const createMut = useCreateTeacher();
@@ -90,26 +101,12 @@ const TeachersPage = () => {
   // NOTE: never name a callback param `t` here — it shadows the i18n `t`
   // and crashes the row render (the original TeachersPage production bug).
   //
-  // Filter + sort apply to the current server page only -- GET /users has
-  // no sortBy param and its search only covers name/email (not phone), so
-  // this stays client-side. Fine in practice: SERVER_PAGE_SIZE (100) covers
-  // virtually every company's teacher list in one page.
-  const filtered = teachers.filter(
-    (teacher) =>
-      teacher.name?.toLowerCase().includes(search.toLowerCase()) ||
-      teacher.phone?.includes(search),
-  );
-
-  const toggleSort = (field: string) => {
-    if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else {
-      setSortField(field);
-      setSortDir('asc');
-    }
-  };
-
+  // Search is server-side now (autodrive-b85.3) -- GET /users matches
+  // name/email/phone across the whole company (autodrive-3kl), not just the
+  // current page. Sort still applies client-side to the current server page
+  // only -- GET /users has no sortBy param.
   const paginatedItems = useMemo(() => {
-    return [...filtered].sort((a, b) => {
+    return [...teachers].sort((a, b) => {
       const va = a[sortField as keyof typeof a];
       const vb = b[sortField as keyof typeof b];
       if (va == null && vb == null) return 0;
@@ -130,7 +127,13 @@ const TeachersPage = () => {
             ? 1
             : 0;
     });
-  }, [filtered, sortField, sortDir]);
+  }, [teachers, sortField, sortDir]);
+
+  // Out-of-range page (e.g. search narrowed results) -> reset.
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, totalPages]);
 
   const openCreate = () => {
     setEditItem(null);
@@ -214,7 +217,7 @@ const TeachersPage = () => {
             {t('teachers.title')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {t('teachers.count', { count: filtered.length })}
+            {t('teachers.count', { count: total })}
           </p>
         </div>
         <Button className="gap-2" onClick={openCreate}>
@@ -435,7 +438,7 @@ const TeachersPage = () => {
             action={{ label: t('common.retry'), onClick: () => refetch() }}
           />
         ) : (
-          filtered.length === 0 &&
+          total === 0 &&
           !isLoading && (
             <EmptyState icon={Users} title={t('teachers.not_found')} />
           )
