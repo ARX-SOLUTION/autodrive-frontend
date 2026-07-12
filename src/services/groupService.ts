@@ -5,19 +5,36 @@ import { useIsCrossTenant } from '@/hooks/useCan';
 import { Group, GroupOverview } from '@/types/group';
 import { track } from '@/lib/umami';
 
-export const useGroups = () => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
+export interface GroupListParams {
+  search?: string;
+  branchId?: string;
+  courseType?: string;
+}
+
+// Callers that don't pass params (StudentModal, SchedulePage, AttendancePage)
+// keep getting the full tenant-scoped list, unchanged. GroupsPage passes
+// search/branchId/courseType so GET /groups filters server-side instead of
+// the page re-filtering the full list client-side (autodrive-b85.5).
+export const useGroups = (params: GroupListParams = {}) => {
+  const { search, branchId, courseType } = params;
+  const authBranchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<Group[]>({
-    queryKey: ['groups', branchId],
+    queryKey: ['groups', authBranchId, branchId, search, courseType],
     queryFn: async () => {
-      const { data: res } = await axiosInstance.get('/groups');
+      const { data: res } = await axiosInstance.get('/groups', {
+        params: {
+          search: search || undefined,
+          branch_id: branchId || undefined,
+          course_type: courseType || undefined,
+        },
+      });
       const arr = res?.data?.data || res?.data;
       if (Array.isArray(arr)) return arr;
       if (Array.isArray(res)) return res;
       return [];
     },
-    enabled: !!branchId || isCrossTenant,
+    enabled: !!authBranchId || isCrossTenant,
   });
 };
 
