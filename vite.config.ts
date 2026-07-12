@@ -80,6 +80,24 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('/i18next') || id.includes('/react-i18next/')) {
             return 'i18n-vendor';
           }
+          if (
+            id.includes('/react-markdown/') ||
+            id.includes('/remark') ||
+            id.includes('/rehype') ||
+            id.includes('/mdast') ||
+            id.includes('/micromark') ||
+            id.includes('/unist-util') ||
+            id.includes('/hast-util') ||
+            id.includes('/vfile') ||
+            id.includes('/unified/') ||
+            id.includes('/highlight.js/') ||
+            id.includes('/lowlight/') ||
+            id.includes('/property-information/') ||
+            id.includes('/space-separated-tokens/') ||
+            id.includes('/comma-separated-tokens/')
+          ) {
+            return 'blog-vendor';
+          }
         },
       },
     },
