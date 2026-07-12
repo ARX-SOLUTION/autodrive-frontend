@@ -26,17 +26,22 @@ export const useTeachers = () => {
   });
 };
 
-// Real server-side pagination for TeachersPage (autodrive-0id) -- GET
-// /users defaults to limit=10; the page was fetching once via useTeachers
-// and paginating client-side over that truncated result.
-export const useTeachersPage = (page: number, limit: number) => {
+// Real server-side pagination for TeachersPage (autodrive-0id). `search` is
+// forwarded to GET /users too (autodrive-b85.3) -- it now matches
+// name/email/phone (autodrive-3kl), so the page no longer needs to
+// re-filter the current page client-side.
+export const useTeachersPage = (
+  page: number,
+  limit: number,
+  search?: string,
+) => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<ListResponse<User>>({
-    queryKey: ['teachers', 'page', branchId, page, limit],
+    queryKey: ['teachers', 'page', branchId, page, limit, search],
     queryFn: async () => {
       const { data } = await axiosInstance.get('/users', {
-        params: { role: 'teacher', page, limit },
+        params: { role: 'teacher', page, limit, search: search || undefined },
       });
       return parseListResponse<User>(data, page, limit);
     },

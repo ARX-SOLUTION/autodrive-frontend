@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useSearchSortFilters } from '@/hooks/useSearchSortFilters';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -54,47 +56,42 @@ const SERVER_PAGE_SIZE = 100;
 const OperatorsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
-  const [sortField, setSortField] = useState('name');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  // Search/sort/page live in the URL so reload/back/share preserve them
+  // (autodrive-b85.3 -- mirrors admin-panel's useSearchSortFilters).
+  const {
+    search,
+    setSearch,
+    sortField,
+    sortDir,
+    toggleSort,
+    page: currentPage,
+    setPage: setCurrentPage,
+  } = useSearchSortFilters('name');
+  const debouncedSearch = useDebounce(search, 300);
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({ fullName: '', phone: '', branchId: '' });
-  const [currentPage, setCurrentPage] = useState(1);
   const {
     data: operatorsPage,
     isLoading,
     isError,
     refetch,
-  } = useOperatorsPage(currentPage, SERVER_PAGE_SIZE);
-  const operators = operatorsPage?.data ?? [];
+  } = useOperatorsPage(currentPage, SERVER_PAGE_SIZE, debouncedSearch);
+  const operators = useMemo(() => operatorsPage?.data ?? [], [operatorsPage]);
+  const total = operatorsPage?.meta.total ?? 0;
   const totalPages = Math.max(1, operatorsPage?.meta.totalPages ?? 1);
   const { data: branches } = useBranches();
   const createMut = useCreateOperator();
   const updateMut = useUpdateOperator();
   const deleteMut = useDeleteOperator();
 
-  // Filter + sort apply to the current server page only -- GET /users has
-  // no sortBy param and its search only covers name/email (not phone), so
-  // this stays client-side. Fine in practice: SERVER_PAGE_SIZE (100) covers
-  // virtually every company's operator list in one page.
-  const filtered = operators.filter(
-    (o) =>
-      o.name?.toLowerCase().includes(search.toLowerCase()) ||
-      o.phone?.includes(search),
-  );
-
-  const toggleSort = (field: string) => {
-    if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else {
-      setSortField(field);
-      setSortDir('asc');
-    }
-  };
-
+  // Search is server-side now (autodrive-b85.3) -- GET /users matches
+  // name/email/phone across the whole company (autodrive-3kl), not just the
+  // current page. Sort still applies client-side to the current server page
+  // only -- GET /users has no sortBy param.
   const paginatedItems = useMemo(() => {
-    return [...filtered].sort((a, b) => {
+    return [...operators].sort((a, b) => {
       const va = a[sortField as keyof typeof a];
       const vb = b[sortField as keyof typeof b];
       if (va == null && vb == null) return 0;
@@ -115,7 +112,13 @@ const OperatorsPage = () => {
             ? 1
             : 0;
     });
-  }, [filtered, sortField, sortDir]);
+  }, [operators, sortField, sortDir]);
+
+  // Out-of-range page (e.g. search narrowed results) -> reset.
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, totalPages]);
 
   const openCreate = () => {
     setEditItem(null);
@@ -195,7 +198,7 @@ const OperatorsPage = () => {
             {isLoading ? (
               <Skeleton className="h-4 w-24" />
             ) : (
-              t('operators.count', { count: filtered.length })
+              t('operators.count', { count: total })
             )}
           </p>
         </div>
@@ -418,7 +421,7 @@ const OperatorsPage = () => {
             action={{ label: t('common.retry'), onClick: () => refetch() }}
           />
         ) : (
-          filtered.length === 0 &&
+          total === 0 &&
           !isLoading && (
             <EmptyState icon={Headphones} title={t('operators.not_found')} />
           )
