@@ -15,6 +15,7 @@ import {
 import { UploadCloud } from 'lucide-react';
 import { track } from '@/lib/umami';
 import { useIsCrossTenant } from '@/hooks/useCan';
+import { extractErrorMessage } from '@/lib/errors';
 
 interface ImportStudentsModalProps {
   open: boolean;
@@ -63,8 +64,8 @@ export default function ImportStudentsModal({
       qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
       handleClose();
     },
-    onError: () => {
-      toast.error(t('common.error'));
+    onError: (err) => {
+      toast.error(extractErrorMessage(err, t('common.error')));
     },
   });
 
