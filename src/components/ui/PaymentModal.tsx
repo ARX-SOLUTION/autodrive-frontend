@@ -324,6 +324,7 @@ const PaymentModal = ({
                     <FormControl>
                       <Input
                         type="number"
+                        inputMode="decimal"
                         min={1}
                         placeholder="0"
                         className="bg-secondary border-border"

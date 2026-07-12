@@ -456,6 +456,7 @@ const OperatorsPage = () => {
                   setForm((f) => ({ ...f, fullName: e.target.value }))
                 }
                 required
+                autoComplete="name"
                 className="bg-secondary border-border"
               />
             </div>
@@ -463,6 +464,9 @@ const OperatorsPage = () => {
               <Label htmlFor="operator-phone">{t('operators.phone')} *</Label>
               <Input
                 id="operator-phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 value={form.phone}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, phone: e.target.value }))

@@ -289,6 +289,7 @@ export const DemoForm = () => {
                       <Input
                         {...field}
                         type="tel"
+                        inputMode="tel"
                         placeholder={t('demo_form.phone_placeholder')}
                         autoComplete="tel"
                         onFocus={onFocus}

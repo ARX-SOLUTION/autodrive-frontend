@@ -83,6 +83,7 @@ const LoginPage = () => {
             <Input
               id="email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t('login.email_placeholder')}
