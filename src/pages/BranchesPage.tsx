@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import {
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import {
@@ -49,18 +50,35 @@ const BranchesPage = () => {
   const [editItem, setEditItem] = useState<Branch | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  // Snapshot taken whenever the dialog opens, compared against current form
+  // state to drive the unsaved-changes guard below (autodrive-6cq.5.15) --
+  // this form is plain useState, not react-hook-form, so there's no
+  // formState.isDirty to read.
+  const initialFormRef = useRef(form);
 
   const openCreate = () => {
     setEditItem(null);
     setForm(EMPTY_FORM);
+    initialFormRef.current = EMPTY_FORM;
     setModalOpen(true);
   };
 
   const openEdit = (b: Branch) => {
     setEditItem(b);
-    setForm({ name: b.name, location: b.location, phone: b.phone || '' });
+    const initial = {
+      name: b.name,
+      location: b.location,
+      phone: b.phone || '',
+    };
+    setForm(initial);
+    initialFormRef.current = initial;
     setModalOpen(true);
   };
+
+  const isFormDirty =
+    JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
+  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
+    useConfirmedClose(isFormDirty, () => setModalOpen(false));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -311,7 +329,7 @@ const BranchesPage = () => {
         )}
       </div>
 
-      <Dialog open={modalOpen} onOpenChange={(o) => !o && setModalOpen(false)}>
+      <Dialog open={modalOpen} onOpenChange={(o) => !o && attemptClose()}>
         <DialogContent className="max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle className="font-heading">
@@ -361,11 +379,7 @@ const BranchesPage = () => {
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setModalOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={attemptClose}>
                 {t('common.cancel')}
               </Button>
               <Button
@@ -386,6 +400,15 @@ const BranchesPage = () => {
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
         loading={deleteMut.isPending}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={cancelDiscard}
+        onConfirm={confirmDiscard}
+        title={t('common.discard_changes_title')}
+        description={t('common.discard_changes_desc')}
+        confirmLabel={t('common.discard')}
       />
     </div>
   );

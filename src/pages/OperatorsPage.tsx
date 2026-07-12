@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSearchSortFilters } from '@/hooks/useSearchSortFilters';
@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import {
   useOperatorsPage,
   useCreateOperator,
@@ -72,6 +73,11 @@ const OperatorsPage = () => {
   const [editItem, setEditItem] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({ fullName: '', phone: '', branchId: '' });
+  // Snapshot taken whenever the dialog opens, compared against current form
+  // state to drive the unsaved-changes guard below (autodrive-6cq.5.15) --
+  // this form is plain useState, not react-hook-form, so there's no
+  // formState.isDirty to read.
+  const initialFormRef = useRef(form);
   const {
     data: operatorsPage,
     isLoading,
@@ -122,19 +128,28 @@ const OperatorsPage = () => {
 
   const openCreate = () => {
     setEditItem(null);
-    setForm({ fullName: '', phone: '', branchId: '' });
+    const empty = { fullName: '', phone: '', branchId: '' };
+    setForm(empty);
+    initialFormRef.current = empty;
     setModalOpen(true);
   };
 
   const openEdit = (o: User) => {
     setEditItem(o);
-    setForm({
+    const initial = {
       fullName: o.name || '',
       phone: o.phone || '',
       branchId: o.branch_id || '',
-    });
+    };
+    setForm(initial);
+    initialFormRef.current = initial;
     setModalOpen(true);
   };
+
+  const isFormDirty =
+    JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
+  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
+    useConfirmedClose(isFormDirty, () => setModalOpen(false));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -434,7 +449,7 @@ const OperatorsPage = () => {
         onPageChange={setCurrentPage}
       />
 
-      <Dialog open={modalOpen} onOpenChange={(o) => !o && setModalOpen(false)}>
+      <Dialog open={modalOpen} onOpenChange={(o) => !o && attemptClose()}>
         <DialogContent className="max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle className="font-heading">
@@ -498,11 +513,7 @@ const OperatorsPage = () => {
               </Select>
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setModalOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={attemptClose}>
                 {t('common.cancel')}
               </Button>
               <Button
@@ -525,6 +536,15 @@ const OperatorsPage = () => {
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
         loading={deleteMut.isPending}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={cancelDiscard}
+        onConfirm={confirmDiscard}
+        title={t('common.discard_changes_title')}
+        description={t('common.discard_changes_desc')}
+        confirmLabel={t('common.discard')}
       />
     </div>
   );
