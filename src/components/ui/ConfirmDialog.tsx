@@ -16,6 +16,11 @@ interface ConfirmDialogProps {
   title?: string;
   description?: string;
   loading?: boolean;
+  // Overrides the confirm button's label (default "Delete"/"Deleting...").
+  // Non-destructive reuses (e.g. the discard-unsaved-changes guard) should
+  // pass their own label -- t('common.discard') -- instead of a "Delete"
+  // button on a dialog that isn't deleting anything.
+  confirmLabel?: string;
 }
 
 export const ConfirmDialog = ({
@@ -25,6 +30,7 @@ export const ConfirmDialog = ({
   title,
   description,
   loading,
+  confirmLabel,
 }: ConfirmDialogProps) => {
   const { t } = useTranslation();
 
@@ -44,7 +50,8 @@ export const ConfirmDialog = ({
             {t('common.cancel')}
           </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={loading}>
-            {loading ? t('common.deleting') : t('common.delete')}
+            {confirmLabel ??
+              (loading ? t('common.deleting') : t('common.delete'))}
           </Button>
         </DialogFooter>
       </DialogContent>
