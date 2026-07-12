@@ -611,7 +611,22 @@
     "name": "Name",
     "phone": "Phone",
     "must_change_password_notice": "You must change your password before continuing.",
-    "update_password_success": "Password updated successfully."
+    "update_password_success": "Password updated successfully.",
+    "telegram": {
+      "title": "Telegram",
+      "description": "Connect your account to the bot to receive CRM notifications in Telegram.",
+      "link_button": "Connect Telegram",
+      "check_button": "Check",
+      "link_opened": "Finish connecting in the bot, then click \"Check\".",
+      "linked_status": "Connected",
+      "unlink_button": "Disconnect",
+      "unlink_title": "Disconnect Telegram?",
+      "unlink_desc": "Bot messages and the daily report will stop.",
+      "unlink_success": "Telegram disconnected.",
+      "daily_report_label": "Daily report",
+      "daily_report_enabled": "Daily report enabled.",
+      "daily_report_disabled": "Daily report disabled."
+    }
   },
   "attendance": {
     "title": "Attendance",

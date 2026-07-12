@@ -611,7 +611,22 @@
     "name": "Ism",
     "phone": "Telefon",
     "must_change_password_notice": "Davom etishdan oldin parolingizni o'zgartiring.",
-    "update_password_success": "Parol muvaffaqiyatli yangilandi."
+    "update_password_success": "Parol muvaffaqiyatli yangilandi.",
+    "telegram": {
+      "title": "Telegram",
+      "description": "CRM bildirishnomalarini Telegram orqali olish uchun hisobingizni botga ulang.",
+      "link_button": "Telegramga ulash",
+      "check_button": "Tekshirish",
+      "link_opened": "Botda ulanishni yakunlang, so'ng \"Tekshirish\" tugmasini bosing.",
+      "linked_status": "Ulangan",
+      "unlink_button": "Uzish",
+      "unlink_title": "Telegramni uzasizmi?",
+      "unlink_desc": "Bot orqali xabarlar va kunlik hisobot yuborilishi to'xtaydi.",
+      "unlink_success": "Telegram uzildi.",
+      "daily_report_label": "Kunlik hisobot",
+      "daily_report_enabled": "Kunlik hisobot yoqildi.",
+      "daily_report_disabled": "Kunlik hisobot o'chirildi."
+    }
   },
   "attendance": {
     "title": "Davomat",
