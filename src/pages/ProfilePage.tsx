@@ -3,10 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useChangePassword } from '@/services/authService';
+import {
+  useTelegramLinkStatus,
+  useTelegramLinkToken,
+  useTelegramUnlink,
+  useTelegramDailyReport,
+} from '@/services/telegramService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { User, Shield, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -19,6 +27,53 @@ const ProfilePage = () => {
     currentPassword: '',
     newPassword: '',
   });
+
+  const { data: linkStatus, refetch: refetchLinkStatus } =
+    useTelegramLinkStatus();
+  const linkTokenMut = useTelegramLinkToken();
+  const unlinkMut = useTelegramUnlink();
+  const dailyReportMut = useTelegramDailyReport();
+  const [unlinkConfirmOpen, setUnlinkConfirmOpen] = useState(false);
+  // Same owner/manager role set the backend's PATCH /telegram/daily-report
+  // guard enforces (403 for anyone else) -- mirrors authStore's
+  // canViewBranches direct role check rather than the CAPABILITIES matrix,
+  // since this gate is used in exactly one place.
+  const canManageDailyReport =
+    user?.role === 'owner' || user?.role === 'manager';
+
+  const handleLinkTelegram = () => {
+    linkTokenMut.mutate(undefined, {
+      onSuccess: ({ deep_link }) => {
+        window.open(deep_link, '_blank');
+        toast.success(t('profile.telegram.link_opened'));
+      },
+      onError: () => toast.error(t('common.error')),
+    });
+  };
+
+  const handleUnlink = () => {
+    unlinkMut.mutate(undefined, {
+      onSuccess: () => {
+        toast.success(t('profile.telegram.unlink_success'));
+        setUnlinkConfirmOpen(false);
+      },
+      onError: () => toast.error(t('common.error')),
+    });
+  };
+
+  const handleDailyReportToggle = (enabled: boolean) => {
+    dailyReportMut.mutate(enabled, {
+      onSuccess: () =>
+        toast.success(
+          t(
+            enabled
+              ? 'profile.telegram.daily_report_enabled'
+              : 'profile.telegram.daily_report_disabled',
+          ),
+        ),
+      onError: () => toast.error(t('common.error')),
+    });
+  };
 
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,6 +159,68 @@ const ProfilePage = () => {
 
         <Button>{t('profile.save')}</Button>
       </div>
+
+      {/* Telegram */}
+      <div className="glass-card p-6 space-y-4">
+        <h3 className="font-heading font-semibold text-balance">
+          {t('profile.telegram.title')}
+        </h3>
+        {linkStatus?.linked ? (
+          <>
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+              {t('profile.telegram.linked_status')}
+            </span>
+            {canManageDailyReport && (
+              <div className="flex items-center justify-between">
+                <Label htmlFor="daily-report-toggle">
+                  {t('profile.telegram.daily_report_label')}
+                </Label>
+                <Switch
+                  id="daily-report-toggle"
+                  checked={!!linkStatus.daily_report_enabled}
+                  disabled={dailyReportMut.isPending}
+                  onCheckedChange={handleDailyReportToggle}
+                />
+              </div>
+            )}
+            <div>
+              <Button
+                variant="outline"
+                onClick={() => setUnlinkConfirmOpen(true)}
+                disabled={unlinkMut.isPending}
+              >
+                {t('profile.telegram.unlink_button')}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">
+              {t('profile.telegram.description')}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleLinkTelegram}
+                disabled={linkTokenMut.isPending}
+              >
+                {t('profile.telegram.link_button')}
+              </Button>
+              <Button variant="outline" onClick={() => refetchLinkStatus()}>
+                {t('profile.telegram.check_button')}
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={unlinkConfirmOpen}
+        onClose={() => setUnlinkConfirmOpen(false)}
+        onConfirm={handleUnlink}
+        title={t('profile.telegram.unlink_title')}
+        description={t('profile.telegram.unlink_desc')}
+        loading={unlinkMut.isPending}
+      />
 
       {/* Change password */}
       <form onSubmit={handleChangePassword}>

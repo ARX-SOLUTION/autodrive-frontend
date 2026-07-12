@@ -611,7 +611,22 @@
     "name": "Имя",
     "phone": "Телефон",
     "must_change_password_notice": "Необходимо сменить пароль перед продолжением.",
-    "update_password_success": "Пароль успешно обновлён."
+    "update_password_success": "Пароль успешно обновлён.",
+    "telegram": {
+      "title": "Telegram",
+      "description": "Подключите аккаунт к боту, чтобы получать уведомления CRM в Telegram.",
+      "link_button": "Подключить Telegram",
+      "check_button": "Проверить",
+      "link_opened": "Завершите подключение в боте, затем нажмите «Проверить».",
+      "linked_status": "Подключено",
+      "unlink_button": "Отключить",
+      "unlink_title": "Отключить Telegram?",
+      "unlink_desc": "Сообщения и ежедневный отчёт через бота перестанут приходить.",
+      "unlink_success": "Telegram отключён.",
+      "daily_report_label": "Ежедневный отчёт",
+      "daily_report_enabled": "Ежедневный отчёт включён.",
+      "daily_report_disabled": "Ежедневный отчёт отключён."
+    }
   },
   "attendance": {
     "title": "Посещаемость",
