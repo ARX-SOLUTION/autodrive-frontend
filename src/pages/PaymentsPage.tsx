@@ -328,8 +328,8 @@ const PaymentsPage = () => {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, t('payments.title'));
       XLSX.writeFile(wb, `tolovlar_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
-    } catch {
-      toast.error(t('common.error'));
+    } catch (err) {
+      toast.error(extractErrorMessage(err, t('common.error')));
     } finally {
       setIsExporting(false);
     }

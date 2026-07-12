@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSearchSortFilters } from '@/hooks/useSearchSortFilters';
@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import {
   useTeachersPage,
   useCreateTeacher,
@@ -78,6 +79,11 @@ const TeachersPage = () => {
     branchId: '',
     specialization: 'THEORY' as Specialization,
   });
+  // Snapshot taken whenever the dialog opens, compared against current form
+  // state to drive the unsaved-changes guard below (autodrive-6cq.5.15) --
+  // this form is plain useState, not react-hook-form, so there's no
+  // formState.isDirty to read.
+  const initialFormRef = useRef(form);
 
   const {
     data: teachersPage,
@@ -137,25 +143,34 @@ const TeachersPage = () => {
 
   const openCreate = () => {
     setEditItem(null);
-    setForm({
+    const empty = {
       fullName: '',
       phone: '',
       branchId: '',
-      specialization: 'THEORY',
-    });
+      specialization: 'THEORY' as Specialization,
+    };
+    setForm(empty);
+    initialFormRef.current = empty;
     setModalOpen(true);
   };
 
   const openEdit = (teacher: User) => {
     setEditItem(teacher);
-    setForm({
+    const initial = {
       fullName: teacher.name || '',
       phone: teacher.phone || '',
       branchId: teacher.branch_id || '',
-      specialization: teacher.specialization || 'THEORY',
-    });
+      specialization: teacher.specialization || ('THEORY' as Specialization),
+    };
+    setForm(initial);
+    initialFormRef.current = initial;
     setModalOpen(true);
   };
+
+  const isFormDirty =
+    JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
+  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
+    useConfirmedClose(isFormDirty, () => setModalOpen(false));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -451,7 +466,7 @@ const TeachersPage = () => {
         onPageChange={setCurrentPage}
       />
 
-      <Dialog open={modalOpen} onOpenChange={(o) => !o && setModalOpen(false)}>
+      <Dialog open={modalOpen} onOpenChange={(o) => !o && attemptClose()}>
         <DialogContent className="max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle className="font-heading">
@@ -549,11 +564,7 @@ const TeachersPage = () => {
               </div>
             </RoleGate>
             <div className="flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setModalOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={attemptClose}>
                 {t('common.cancel')}
               </Button>
               <Button
@@ -576,6 +587,15 @@ const TeachersPage = () => {
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
         loading={deleteMut.isPending}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={cancelDiscard}
+        onConfirm={confirmDiscard}
+        title={t('common.discard_changes_title')}
+        description={t('common.discard_changes_desc')}
+        confirmLabel={t('common.discard')}
       />
     </div>
   );

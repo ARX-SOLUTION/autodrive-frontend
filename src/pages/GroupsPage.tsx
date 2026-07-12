@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import {
   Dialog,
   DialogContent,
@@ -128,6 +129,15 @@ const GroupsPage = () => {
   const [formName, setFormName] = useState('');
   const [formBranchId, setFormBranchId] = useState('');
   const [formCourseType, setFormCourseType] = useState<string>('avto_maktab');
+  // Snapshot taken whenever the dialog opens, compared against current form
+  // fields to drive the unsaved-changes guard below (autodrive-6cq.5.15) --
+  // this form is plain useState, not react-hook-form, so there's no
+  // formState.isDirty to read.
+  const initialFormRef = useRef({
+    name: formName,
+    branchId: formBranchId,
+    courseType: formCourseType,
+  });
 
   const branchList = branches || [];
 
@@ -198,6 +208,11 @@ const GroupsPage = () => {
     setFormName('');
     setFormBranchId('');
     setFormCourseType('avto_maktab');
+    initialFormRef.current = {
+      name: '',
+      branchId: '',
+      courseType: 'avto_maktab',
+    };
     setModalOpen(true);
   };
 
@@ -206,8 +221,20 @@ const GroupsPage = () => {
     setFormName(g.name);
     setFormBranchId(g.branch_id);
     setFormCourseType(g.course_type);
+    initialFormRef.current = {
+      name: g.name,
+      branchId: g.branch_id,
+      courseType: g.course_type,
+    };
     setModalOpen(true);
   };
+
+  const isFormDirty =
+    formName !== initialFormRef.current.name ||
+    formBranchId !== initialFormRef.current.branchId ||
+    formCourseType !== initialFormRef.current.courseType;
+  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
+    useConfirmedClose(isFormDirty, () => setModalOpen(false));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -633,7 +660,7 @@ const GroupsPage = () => {
       />
 
       {/* Create/Edit Modal */}
-      <Dialog open={modalOpen} onOpenChange={(o) => !o && setModalOpen(false)}>
+      <Dialog open={modalOpen} onOpenChange={(o) => !o && attemptClose()}>
         <DialogContent className="max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle className="font-heading">
@@ -695,11 +722,7 @@ const GroupsPage = () => {
               </Select>
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setModalOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={attemptClose}>
                 {t('common.cancel')}
               </Button>
               <Button
@@ -722,6 +745,15 @@ const GroupsPage = () => {
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
         loading={deleteMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={cancelDiscard}
+        onConfirm={confirmDiscard}
+        title={t('common.discard_changes_title')}
+        description={t('common.discard_changes_desc')}
+        confirmLabel={t('common.discard')}
       />
     </div>
   );

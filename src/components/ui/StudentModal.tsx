@@ -929,6 +929,7 @@ const StudentModal = ({
         onConfirm={confirmDiscard}
         title={t('common.discard_changes_title')}
         description={t('common.discard_changes_desc')}
+        confirmLabel={t('common.discard')}
       />
     </>
   );

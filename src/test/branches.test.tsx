@@ -130,4 +130,30 @@ describe('BranchesPage Component', () => {
     fireEvent.click(screen.getAllByText('Test Branch 1')[0]);
     expect(screen.getByText('branch-detail-page')).toBeTruthy();
   });
+
+  // autodrive-6cq.5.15: overlay/Escape used to call onOpenChange -> close
+  // directly, silently discarding whatever the user had just typed.
+  it('confirms before closing the edit dialog via Escape when the form is dirty', () => {
+    renderComponent();
+
+    fireEvent.click(screen.getAllByLabelText('common.edit')[0]);
+    expect(screen.getByText('branches.edit')).toBeInTheDocument();
+
+    const nameInput = screen.getByDisplayValue(
+      'Test Branch 1',
+    ) as HTMLInputElement;
+    fireEvent.change(nameInput, { target: { value: 'Changed Name' } });
+
+    fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+
+    // Still open, with a discard-changes confirm step surfaced instead of
+    // a silent close.
+    expect(screen.getByText('branches.edit')).toBeInTheDocument();
+    expect(
+      screen.getByText('common.discard_changes_title'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('common.discard'));
+    expect(screen.queryByText('branches.edit')).toBeNull();
+  });
 });

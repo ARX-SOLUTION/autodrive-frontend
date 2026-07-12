@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addDays, startOfWeek, format, parseISO, isSameDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import {
   Dialog,
   DialogContent,
@@ -151,6 +152,17 @@ const SchedulePage = () => {
   const [formStartTime, setFormStartTime] = useState('09:00');
   const [formEndTime, setFormEndTime] = useState('11:00');
   const [formLessonType, setFormLessonType] = useState<LessonType>('theory');
+  // Snapshot taken whenever the create-template dialog opens, compared
+  // against current fields to drive the unsaved-changes guard below
+  // (autodrive-6cq.5.15) -- this form is plain useState, not
+  // react-hook-form, so there's no formState.isDirty to read.
+  const initialTemplateFormRef = useRef({
+    groupId: formGroupId,
+    dayOfWeek: formDayOfWeek,
+    startTime: formStartTime,
+    endTime: formEndTime,
+    lessonType: formLessonType,
+  });
 
   // Generate form
   const [genWeeks, setGenWeeks] = useState('4');
@@ -186,8 +198,28 @@ const SchedulePage = () => {
     setFormStartTime('09:00');
     setFormEndTime('11:00');
     setFormLessonType('theory');
+    initialTemplateFormRef.current = {
+      groupId: '',
+      dayOfWeek: '1',
+      startTime: '09:00',
+      endTime: '11:00',
+      lessonType: 'theory',
+    };
     setCreateOpen(true);
   };
+
+  const isTemplateFormDirty =
+    formGroupId !== initialTemplateFormRef.current.groupId ||
+    formDayOfWeek !== initialTemplateFormRef.current.dayOfWeek ||
+    formStartTime !== initialTemplateFormRef.current.startTime ||
+    formEndTime !== initialTemplateFormRef.current.endTime ||
+    formLessonType !== initialTemplateFormRef.current.lessonType;
+  const {
+    attemptClose: attemptCloseCreate,
+    confirmOpen: createConfirmOpen,
+    confirmDiscard: confirmDiscardCreate,
+    cancelDiscard: cancelDiscardCreate,
+  } = useConfirmedClose(isTemplateFormDirty, () => setCreateOpen(false));
 
   const handleCreateTemplate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -235,8 +267,8 @@ const SchedulePage = () => {
       });
       toast.success(t('schedule.lessons_generated'));
       setGenerateOpen(false);
-    } catch {
-      toast.error(t('schedule.generate_error'));
+    } catch (err) {
+      toast.error(extractErrorMessage(err, t('schedule.generate_error')));
     }
   };
 
@@ -437,7 +469,10 @@ const SchedulePage = () => {
       </Tabs>
 
       {/* Create Template Dialog */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog
+        open={createOpen}
+        onOpenChange={(o) => !o && attemptCloseCreate()}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('schedule.template_title')}</DialogTitle>
@@ -517,7 +552,7 @@ const SchedulePage = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setCreateOpen(false)}
+                onClick={attemptCloseCreate}
               >
                 {t('common.cancel')}
               </Button>
@@ -530,6 +565,15 @@ const SchedulePage = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={createConfirmOpen}
+        onClose={cancelDiscardCreate}
+        onConfirm={confirmDiscardCreate}
+        title={t('common.discard_changes_title')}
+        description={t('common.discard_changes_desc')}
+        confirmLabel={t('common.discard')}
+      />
 
       {/* Generate Lessons Dialog */}
       <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -40,6 +40,8 @@ import {
 } from 'lucide-react';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 
 const formatDate = (d?: string) => {
   if (!d) return '—';
@@ -106,11 +108,22 @@ const UsersPage = () => {
     branchId: '',
   };
   const [form, setForm] = useState(EMPTY_FORM);
+  // Snapshot taken whenever the dialog opens, compared against current form
+  // state to drive the unsaved-changes guard below (autodrive-6cq.5.15) --
+  // this form is plain useState, not react-hook-form, so there's no
+  // formState.isDirty to read.
+  const initialFormRef = useRef(form);
 
   const openCreate = () => {
     setForm(EMPTY_FORM);
+    initialFormRef.current = EMPTY_FORM;
     setModalOpen(true);
   };
+
+  const isFormDirty =
+    JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
+  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
+    useConfirmedClose(isFormDirty, () => setModalOpen(false));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -416,7 +429,7 @@ const UsersPage = () => {
         onPageChange={setCurrentPage}
       />
 
-      <Dialog open={modalOpen} onOpenChange={(o) => !o && setModalOpen(false)}>
+      <Dialog open={modalOpen} onOpenChange={(o) => !o && attemptClose()}>
         <DialogContent className="max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle className="font-heading">
@@ -512,11 +525,7 @@ const UsersPage = () => {
               </Select>
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setModalOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={attemptClose}>
                 {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={createMut.isPending}>
@@ -526,6 +535,15 @@ const UsersPage = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={cancelDiscard}
+        onConfirm={confirmDiscard}
+        title={t('common.discard_changes_title')}
+        description={t('common.discard_changes_desc')}
+        confirmLabel={t('common.discard')}
+      />
     </div>
   );
 };

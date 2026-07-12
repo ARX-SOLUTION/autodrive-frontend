@@ -61,6 +61,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { formatPhone } from '@/lib/phoneFormater';
+import { extractErrorMessage } from '@/lib/errors';
 
 const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
 const capitalize = (str?: string) =>
@@ -260,8 +261,8 @@ const StudentsPage = () => {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, t('students.title'));
       XLSX.writeFile(wb, `talabalar_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
-    } catch {
-      toast.error(t('common.error'));
+    } catch (err) {
+      toast.error(extractErrorMessage(err, t('common.error')));
     } finally {
       setIsExporting(false);
     }
@@ -274,7 +275,8 @@ const StudentsPage = () => {
         toast.success(t('students.deleted'));
         setDeleteId(null);
       },
-      onError: () => toast.error(t('common.error')),
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
     });
   };
 
@@ -287,7 +289,8 @@ const StudentsPage = () => {
             toast.success(t('students.updated'));
             closeModal();
           },
-          onError: () => toast.error(t('common.error')),
+          onError: (err) =>
+            toast.error(extractErrorMessage(err, t('common.error'))),
         },
       );
     } else {
@@ -296,7 +299,8 @@ const StudentsPage = () => {
           toast.success(t('students.added'));
           closeModal();
         },
-        onError: () => toast.error(t('common.error')),
+        onError: (err) =>
+          toast.error(extractErrorMessage(err, t('common.error'))),
       });
     }
   };
@@ -305,7 +309,8 @@ const StudentsPage = () => {
   const handleSaveAndAdd = (data: CreateStudentPayload) => {
     createMutation.mutate(data, {
       onSuccess: () => toast.success(t('students.added')),
-      onError: () => toast.error(t('common.error')),
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
     });
   };
 

@@ -31,6 +31,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useCreateExam } from '@/services/examService';
 import { CreateExamPayload, ExamType } from '@/types/exam';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/errors';
 
 const schema = z.object({
   exam_type: z.enum(['THEORY', 'PRACTICE']),
@@ -87,8 +88,8 @@ export const RecordExamModal = ({
         form.reset();
         onClose();
       },
-      onError: () => {
-        toast.error(t('common.error'));
+      onError: (err) => {
+        toast.error(extractErrorMessage(err, t('common.error')));
       },
     });
   });
