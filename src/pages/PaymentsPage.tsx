@@ -402,7 +402,12 @@ const PaymentsPage = () => {
                   onClick={exportToExcel}
                   disabled={totalPayments === 0 || isExporting}
                 >
-                  <Download className="h-4 w-4" /> {t('payments.export_excel')}
+                  {isExporting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}{' '}
+                  {t('payments.export_excel')}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>

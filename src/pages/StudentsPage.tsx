@@ -55,6 +55,7 @@ import {
   GraduationCap,
   Download,
   UploadCloud,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -342,7 +343,12 @@ const StudentsPage = () => {
             onClick={exportToExcel}
             disabled={totalStudents === 0 || isExporting}
           >
-            <Download className="h-4 w-4" /> {t('students.export_excel')}
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}{' '}
+            {t('students.export_excel')}
           </Button>
           <Button
             variant="outline"
