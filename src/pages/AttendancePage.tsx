@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import {
   Dialog,
   DialogContent,
@@ -216,6 +217,9 @@ const AttendancePage = () => {
     setCreateOpen(true);
   };
 
+  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
+    useConfirmedClose(form.formState.isDirty, () => setCreateOpen(false));
+
   // Adapts this page's Lesson (attendanceService) into the CalendarLesson
   // shape AttendanceDrawer expects (built for SchedulePage's calendar
   // query) -- no backend/type change needed, the fields line up.
@@ -308,7 +312,7 @@ const AttendancePage = () => {
       )}
 
       {/* Create Lesson Dialog */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog open={createOpen} onOpenChange={(o) => !o && attemptClose()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('attendance.add_lesson')}</DialogTitle>
@@ -399,11 +403,7 @@ const AttendancePage = () => {
                 )}
               />
               <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCreateOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={attemptClose}>
                   {t('attendance.cancel')}
                 </Button>
                 <Button type="submit" disabled={createLesson.isPending}>
@@ -425,6 +425,15 @@ const AttendancePage = () => {
         title={t('attendance.delete_title')}
         description={t('attendance.delete_desc')}
         loading={deleteLesson.isPending}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={cancelDiscard}
+        onConfirm={confirmDiscard}
+        title={t('common.discard_changes_title')}
+        description={t('common.discard_changes_desc')}
+        confirmLabel={t('common.discard')}
       />
 
       <AttendanceDrawer
