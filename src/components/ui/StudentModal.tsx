@@ -381,6 +381,7 @@ const StudentModal = ({
                           <FormControl>
                             <Input
                               {...field}
+                              autoComplete="family-name"
                               className="bg-secondary border-border"
                             />
                           </FormControl>
@@ -397,6 +398,7 @@ const StudentModal = ({
                           <FormControl>
                             <Input
                               {...field}
+                              autoComplete="given-name"
                               className="bg-secondary border-border"
                             />
                           </FormControl>
@@ -413,6 +415,9 @@ const StudentModal = ({
                           <FormControl>
                             <Input
                               {...field}
+                              type="tel"
+                              inputMode="tel"
+                              autoComplete="tel"
                               placeholder="+998901234567"
                               className="bg-secondary border-border"
                               onFocus={() => {
@@ -475,6 +480,7 @@ const StudentModal = ({
                           <FormControl>
                             <Input
                               type="number"
+                              inputMode="decimal"
                               {...field}
                               min={0}
                               disabled={disabledFields.includes('total_price')}
@@ -537,6 +543,7 @@ const StudentModal = ({
                               <FormControl>
                                 <Input
                                   type="number"
+                                  inputMode="decimal"
                                   {...field}
                                   value={field.value || ''}
                                   min={0}
@@ -613,6 +620,7 @@ const StudentModal = ({
                               <FormControl>
                                 <Input
                                   type="number"
+                                  inputMode="decimal"
                                   {...field}
                                   value={field.value || ''}
                                   min={0}
@@ -652,6 +660,7 @@ const StudentModal = ({
                               <FormControl>
                                 <Input
                                   type="number"
+                                  inputMode="decimal"
                                   {...field}
                                   value={field.value || ''}
                                   min={0}

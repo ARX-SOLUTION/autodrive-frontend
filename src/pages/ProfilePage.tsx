@@ -136,6 +136,7 @@ const ProfilePage = () => {
             <Input
               id="profile-name"
               defaultValue={user?.name}
+              autoComplete="name"
               className="mt-1.5 bg-secondary border-border"
             />
           </div>
@@ -143,6 +144,8 @@ const ProfilePage = () => {
             <Label htmlFor="profile-email">Email</Label>
             <Input
               id="profile-email"
+              type="email"
+              autoComplete="email"
               defaultValue={user?.email}
               className="mt-1.5 bg-secondary border-border"
             />
@@ -151,6 +154,9 @@ const ProfilePage = () => {
             <Label htmlFor="profile-phone">{t('profile.phone')}</Label>
             <Input
               id="profile-phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
               defaultValue={user?.phone || ''}
               className="mt-1.5 bg-secondary border-border"
             />

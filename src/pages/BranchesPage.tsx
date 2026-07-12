@@ -330,6 +330,7 @@ const BranchesPage = () => {
                   setForm((f) => ({ ...f, name: e.target.value }))
                 }
                 required
+                autoComplete="organization"
                 className="bg-secondary border-border"
               />
             </div>
@@ -348,6 +349,9 @@ const BranchesPage = () => {
             <div className="space-y-2">
               <Label>{t('common.phone')}</Label>
               <Input
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 value={form.phone}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, phone: e.target.value }))
