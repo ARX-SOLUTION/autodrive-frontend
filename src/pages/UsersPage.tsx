@@ -9,6 +9,7 @@ import { useIsCrossTenant } from '@/hooks/useCan';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { extractErrorMessage } from '@/lib/errors';
+import { isValidName, isValidPhone } from '@/lib/validation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -123,7 +124,9 @@ const UsersPage = () => {
   const isFormDirty =
     JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
-    useConfirmedClose(isFormDirty, () => setModalOpen(false));
+    useConfirmedClose(isFormDirty || createMut.isPending, () =>
+      setModalOpen(false),
+    );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,6 +137,14 @@ const UsersPage = () => {
       !form.branchId
     )
       return;
+    if (!isValidName(form.fullName)) {
+      toast.error(t('common.invalid_name'));
+      return;
+    }
+    if (form.phone.trim() && !isValidPhone(form.phone)) {
+      toast.error(t('common.invalid_phone'));
+      return;
+    }
     createMut.mutate(
       {
         fullName: form.fullName.trim(),
