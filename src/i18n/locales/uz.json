@@ -115,6 +115,7 @@
     "error": "Email yoki parol noto'g'ri",
     "rate_limit": "Ko'p urinishlar. Iltimos 1 daqiqa kuting.",
     "network_error": "Server bilan ulanish yo'q.",
+    "company_inactive": "Kompaniyangiz hali faollashtirilmagan. Administrator bilan bog'laning.",
     "demo": "Demo sifatida kirish",
     "demo_hint": "Namuna ma'lumotlar bilan tanishing",
     "session_expired": "Sessiya muddati tugadi, qaytadan kiring"

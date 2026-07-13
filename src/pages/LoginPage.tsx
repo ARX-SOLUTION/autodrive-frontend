@@ -36,6 +36,8 @@ const LoginPage = () => {
   const handleError = (error: any) => {
     if (error.response?.status === 429) {
       toast.error(t('login.rate_limit'));
+    } else if (error.response?.status === 403) {
+      toast.error(t('login.company_inactive'));
     } else if (!error.response) {
       toast.error(t('login.network_error'));
     } else {
@@ -52,7 +54,10 @@ const LoginPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login.mutate({ email, password }, { onSuccess, onError: handleError });
+    login.mutate(
+      { email, password: password.trim() },
+      { onSuccess, onError: handleError },
+    );
   };
 
   const handleDemoLogin = () => {
@@ -95,6 +100,7 @@ const LoginPage = () => {
             <Label htmlFor="password">{t('login.password_label')}</Label>
             <PasswordInput
               id="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={t('login.password_placeholder')}

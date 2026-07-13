@@ -17,6 +17,7 @@ import { Switch } from '@/components/ui/switch';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { User, Shield, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/errors';
 
 const ProfilePage = () => {
   const { t } = useTranslation();
@@ -80,14 +81,21 @@ const ProfilePage = () => {
     // Captured before the mutation: onSuccess replaces the user in the store
     // (must_change_password becomes false), so read the flag now.
     const wasForced = !!user?.must_change_password;
-    changePasswordMut.mutate(pwForm, {
-      onSuccess: () => {
-        toast.success(t('profile.update_password_success'));
-        setPwForm({ currentPassword: '', newPassword: '' });
-        if (wasForced) navigate('/dashboard');
+    changePasswordMut.mutate(
+      {
+        currentPassword: pwForm.currentPassword.trim(),
+        newPassword: pwForm.newPassword.trim(),
       },
-      onError: () => toast.error(t('common.error')),
-    });
+      {
+        onSuccess: () => {
+          toast.success(t('profile.update_password_success'));
+          setPwForm({ currentPassword: '', newPassword: '' });
+          if (wasForced) navigate('/dashboard');
+        },
+        onError: (error) =>
+          toast.error(extractErrorMessage(error, t('common.error'))),
+      },
+    );
   };
 
   return (
@@ -241,6 +249,7 @@ const ProfilePage = () => {
               </Label>
               <PasswordInput
                 id="profile-current-password"
+                autoComplete="current-password"
                 className="mt-1.5 bg-secondary border-border"
                 value={pwForm.currentPassword}
                 onChange={(e) =>
@@ -254,6 +263,7 @@ const ProfilePage = () => {
               </Label>
               <PasswordInput
                 id="profile-new-password"
+                autoComplete="new-password"
                 className="mt-1.5 bg-secondary border-border"
                 value={pwForm.newPassword}
                 onChange={(e) =>
