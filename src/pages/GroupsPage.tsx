@@ -234,7 +234,10 @@ const GroupsPage = () => {
     formBranchId !== initialFormRef.current.branchId ||
     formCourseType !== initialFormRef.current.courseType;
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
-    useConfirmedClose(isFormDirty, () => setModalOpen(false));
+    useConfirmedClose(
+      isFormDirty || createMutation.isPending || updateMutation.isPending,
+      () => setModalOpen(false),
+    );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

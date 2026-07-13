@@ -48,7 +48,8 @@ const ProfilePage = () => {
         window.open(deep_link, '_blank');
         toast.success(t('profile.telegram.link_opened'));
       },
-      onError: () => toast.error(t('common.error')),
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
     });
   };
 
@@ -58,7 +59,8 @@ const ProfilePage = () => {
         toast.success(t('profile.telegram.unlink_success'));
         setUnlinkConfirmOpen(false);
       },
-      onError: () => toast.error(t('common.error')),
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
     });
   };
 
@@ -72,7 +74,8 @@ const ProfilePage = () => {
               : 'profile.telegram.daily_report_disabled',
           ),
         ),
-      onError: () => toast.error(t('common.error')),
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
     });
   };
 

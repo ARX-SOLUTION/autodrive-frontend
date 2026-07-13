@@ -78,7 +78,10 @@ const BranchesPage = () => {
   const isFormDirty =
     JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
-    useConfirmedClose(isFormDirty, () => setModalOpen(false));
+    useConfirmedClose(
+      isFormDirty || createMut.isPending || updateMut.isPending,
+      () => setModalOpen(false),
+    );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -48,6 +48,7 @@ import { toast } from 'sonner';
 import { User } from '@/types/user';
 import { RoleGate } from '@/components/RoleGate';
 import { extractErrorMessage } from '@/lib/errors';
+import { isValidName, isValidPhone } from '@/lib/validation';
 
 // Backend GetUsersQueryDto caps limit at 100 -- large enough that a single
 // branch/company's teacher list never needs a second server page in
@@ -170,11 +171,22 @@ const TeachersPage = () => {
   const isFormDirty =
     JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
-    useConfirmedClose(isFormDirty, () => setModalOpen(false));
+    useConfirmedClose(
+      isFormDirty || createMut.isPending || updateMut.isPending,
+      () => setModalOpen(false),
+    );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.fullName.trim() || !form.phone.trim()) return;
+    if (!isValidName(form.fullName)) {
+      toast.error(t('common.invalid_name'));
+      return;
+    }
+    if (!isValidPhone(form.phone)) {
+      toast.error(t('common.invalid_phone'));
+      return;
+    }
     const payload = {
       fullName: form.fullName,
       phone: form.phone,
