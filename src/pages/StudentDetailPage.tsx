@@ -24,6 +24,7 @@ import { useOperators } from '@/services/operatorService';
 import { useAttendanceHistory } from '@/services/attendanceService';
 import { useCan } from '@/hooks/useCan';
 import { statusColors } from '@/lib/attendanceStatus';
+import { extractErrorMessage } from '@/lib/errors';
 import type { PaymentMethod } from '@/types/student';
 
 const money = (n?: number) =>
@@ -61,7 +62,8 @@ const StudentDetailPage = () => {
           toast.success(t('students.updated'));
           setEditOpen(false);
         },
-        onError: () => toast.error(t('common.error')),
+        onError: (err) =>
+          toast.error(extractErrorMessage(err, t('common.error'))),
       },
     );
   };
@@ -72,7 +74,8 @@ const StudentDetailPage = () => {
         toast.success(t('payments.added'));
         setPayOpen(false);
       },
-      onError: () => toast.error(t('common.error')),
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
     });
   };
 
