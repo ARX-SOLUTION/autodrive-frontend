@@ -135,7 +135,7 @@ const StudentModal = ({
   const canAssignBranch = useCan('assignBranch');
   const user = useAuthStore((s) => s.user);
   const { data: branches } = useBranches();
-  const { data: groups } = useGroups();
+  const { data: groups, refetch: refetchGroups } = useGroups();
 
   const branchList = branches || [];
 
@@ -217,6 +217,10 @@ const StudentModal = ({
 
   useEffect(() => {
     if (open) {
+      // A group created elsewhere (e.g. GroupsPage) otherwise wouldn't show
+      // up here until reload — staleTime/refetchOnWindowFocus are off
+      // (queryClient.ts), so force a fresh fetch whenever the modal opens.
+      refetchGroups();
       if (student) {
         form.reset({
           first_name: student.first_name,
@@ -334,6 +338,9 @@ const StudentModal = ({
     useConfirmedClose(form.formState.isDirty || !!loading, onClose);
 
   const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
+  // ponytail: plain digit-stripping parse, no masking lib — caret can jump
+  // to end when editing mid-number, acceptable for a whole-soum amount field.
+  const parseMoneyInput = (v: string) => Number(v.replace(/\D/g, '')) || 0;
   const currentBranchName =
     branchList.find((b) => b.id === watchedBranchId)?.name ||
     watchedBranchId ||
@@ -479,10 +486,17 @@ const StudentModal = ({
                           <FormLabel>{t('students.total_price')} *</FormLabel>
                           <FormControl>
                             <Input
-                              type="number"
+                              type="text"
                               inputMode="decimal"
                               {...field}
-                              min={0}
+                              value={
+                                field.value
+                                  ? formatMoney(Number(field.value))
+                                  : ''
+                              }
+                              onChange={(e) =>
+                                field.onChange(parseMoneyInput(e.target.value))
+                              }
                               disabled={disabledFields.includes('total_price')}
                               className={`${disabledFields.includes('total_price') ? 'bg-muted' : 'bg-secondary'} border-border`}
                             />
@@ -542,11 +556,19 @@ const StudentModal = ({
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  type="number"
+                                  type="text"
                                   inputMode="decimal"
                                   {...field}
-                                  value={field.value || ''}
-                                  min={0}
+                                  value={
+                                    field.value
+                                      ? formatMoney(Number(field.value))
+                                      : ''
+                                  }
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseMoneyInput(e.target.value),
+                                    )
+                                  }
                                   placeholder={
                                     student
                                       ? t('students.extra_payment_placeholder')
@@ -619,11 +641,19 @@ const StudentModal = ({
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  type="number"
+                                  type="text"
                                   inputMode="decimal"
                                   {...field}
-                                  value={field.value || ''}
-                                  min={0}
+                                  value={
+                                    field.value
+                                      ? formatMoney(Number(field.value))
+                                      : ''
+                                  }
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseMoneyInput(e.target.value),
+                                    )
+                                  }
                                   disabled={
                                     !!student ||
                                     disabledFields.includes('initial_payment')
@@ -659,11 +689,19 @@ const StudentModal = ({
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  type="number"
+                                  type="text"
                                   inputMode="decimal"
                                   {...field}
-                                  value={field.value || ''}
-                                  min={0}
+                                  value={
+                                    field.value
+                                      ? formatMoney(Number(field.value))
+                                      : ''
+                                  }
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseMoneyInput(e.target.value),
+                                    )
+                                  }
                                   placeholder={t(
                                     'students.extra_payment_placeholder',
                                   )}

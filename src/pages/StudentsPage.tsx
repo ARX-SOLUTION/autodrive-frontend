@@ -18,7 +18,12 @@ import {
 } from '@/services/studentService';
 import { useBranches } from '@/services/branchService';
 import { useOperators } from '@/services/operatorService';
-import { CourseType, Student, StudentStatus } from '@/types/student';
+import {
+  CourseType,
+  ResultStatus,
+  Student,
+  StudentStatus,
+} from '@/types/student';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -91,6 +96,15 @@ const StudentsPage = () => {
   const isCrossTenant = useIsCrossTenant();
   const canManageStaff = useCan('manageStaff');
   const user = useAuthStore((s) => s.user);
+
+  // Same labels StudentModal shows in its result <Select> (autodrive-6cq.11.4)
+  // — kept local here rather than exported/imported so tests that mock
+  // '@/components/ui/StudentModal' don't need to also stub this map.
+  const localizedResultLabels: Record<ResultStatus, string> = {
+    oqimoqda: t('students.status_studying'),
+    topshirdi: t('students.status_passed'),
+    yiqildi: t('students.status_failed'),
+  };
 
   // Filter state lives in the URL so reload / share / bookmark preserves
   // it (ROADMAP §2.2). `searchParams` is the source of truth; each
@@ -460,6 +474,7 @@ const StudentsPage = () => {
               }
               numberOfMonths={2}
               initialFocus
+              disabled={{ after: new Date() }}
               className={cn('p-3 pointer-events-auto')}
             />
           </PopoverContent>
@@ -695,7 +710,7 @@ const StudentsPage = () => {
                               {s.group_name || t('common.na')}
                             </td>
                             <td className="px-4 py-3 text-center">
-                              {s.result}
+                              {localizedResultLabels[s.result]}
                             </td>
                           </>
                         ) : (
@@ -746,7 +761,7 @@ const StudentsPage = () => {
                               {s.contract_number}
                             </td>
                             <td className="px-4 py-3 text-center">
-                              {s.result}
+                              {localizedResultLabels[s.result]}
                             </td>
                           </>
                         )}
@@ -836,7 +851,9 @@ const StudentsPage = () => {
                 },
                 {
                   label: t('students.detail.status'),
-                  value: s.result || t('common.na'),
+                  value: s.result
+                    ? localizedResultLabels[s.result]
+                    : t('common.na'),
                 },
                 {
                   label: t('students.detail.date'),
