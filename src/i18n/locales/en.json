@@ -115,6 +115,7 @@
     "error": "Invalid email or password",
     "rate_limit": "Too many attempts. Please wait 1 minute.",
     "network_error": "Unable to connect to the server.",
+    "company_inactive": "Your company is not activated yet. Contact your administrator.",
     "demo": "Sign in as demo",
     "demo_hint": "Explore with sample data",
     "session_expired": "Session expired, please sign in again"
