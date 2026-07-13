@@ -323,18 +323,16 @@ const PaymentModal = ({
                     <FormLabel>{t('payments.amount')} *</FormLabel>
                     <FormControl>
                       <Input
-                        type="number"
-                        inputMode="decimal"
-                        min={1}
+                        type="text"
+                        inputMode="numeric"
                         placeholder="0"
                         className="bg-secondary border-border"
                         {...field}
-                        value={field.value || ''}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value === '' ? 0 : Number(e.target.value),
-                          )
-                        }
+                        value={field.value ? formatMoney(field.value) : ''}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, '');
+                          field.onChange(digits === '' ? 0 : Number(digits));
+                        }}
                       />
                     </FormControl>
                     <FormMessage>

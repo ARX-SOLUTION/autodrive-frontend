@@ -593,6 +593,7 @@ const PaymentsPage = () => {
                 }}
                 numberOfMonths={2}
                 initialFocus
+                disabled={{ after: new Date() }}
                 className={cn('p-3 pointer-events-auto')}
               />
             </PopoverContent>
