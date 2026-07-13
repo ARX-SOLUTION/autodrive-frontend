@@ -22,8 +22,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { ThemeToggle } from './ThemeToggle';
-import { LanguageSwitcher } from './LanguageSwitcher';
 
 type NavItem = {
   path: string;
@@ -147,14 +145,7 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
             <p className="text-xs text-muted-foreground">{roleLabel}</p>
           </div>
         )}
-        <div
-          className={cn(
-            'flex items-center',
-            collapsed
-              ? 'flex-col gap-2 justify-center'
-              : 'flex-wrap justify-between gap-1 px-1',
-          )}
-        >
+        <div className={cn('flex items-center', collapsed && 'justify-center')}>
           <button
             onClick={() => {
               onNavigate?.();
@@ -169,15 +160,6 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
             <LogOut className="h-4 w-4" />
             {!collapsed && <span>{t('actions.logout')}</span>}
           </button>
-          <div
-            className={cn(
-              'flex items-center',
-              collapsed ? 'flex-col gap-1' : 'gap-1',
-            )}
-          >
-            <ThemeToggle collapsed={collapsed} />
-            <LanguageSwitcher collapsed={collapsed} />
-          </div>
         </div>
       </div>
     </>
