@@ -98,7 +98,7 @@ const getSearchQuery = (
   granularity: params.get('granularity') === 'week' ? 'week' : 'day',
 });
 
-const DashboardCard = ({
+export const DashboardCard = ({
   title,
   description,
   action,
@@ -135,7 +135,7 @@ const DashboardCard = ({
   </Card>
 );
 
-const KpiCard = ({
+export const KpiCard = ({
   label,
   value,
   meta,
