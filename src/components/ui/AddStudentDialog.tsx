@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useForm } from 'react-hook-form';
+import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -19,9 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import {
   Form,
   FormControl,
@@ -38,8 +35,6 @@ import { useCan } from '@/hooks/useCan';
 import { useBranches } from '@/services/branchService';
 import { useGroups } from '@/services/groupService';
 import { useCourses } from '@/services/courseService';
-import { User } from '@/types/user';
-import { Course } from '@/types/course';
 
 export interface AddStudentPayload {
   // Step 1: Personal info
@@ -57,6 +52,8 @@ export interface AddStudentPayload {
   // Step 2: Course & Branch
   branch_id: string;
   course_id: string;
+  course_type: 'tezkor' | 'avto_maktab';
+  course_price: number;
   group_id?: string;
   start_date: string;
 
@@ -102,16 +99,24 @@ const step3Schema = z.object({
   amount: z.number().min(1, "Summa 0 dan katta bo'lishi kerak"),
   payment_method: z.enum(['CASH', 'CARD', 'TRANSFER']),
   first_payment_date: z.string().min(1, "To'lov sanasi majburiy"),
-  contract_signed: z.literal(true, {
-    errorMap: () => ({ message: 'Shartnoma tasdiqlanishi shart' }),
-  }),
+  contract_signed: z
+    .boolean()
+    .refine((value) => value, 'Shartnoma tasdiqlanishi shart'),
 });
+
+const allFormSchema = step1Schema.merge(step2Schema).merge(step3Schema);
 
 export type Step1FormData = z.infer<typeof step1Schema>;
 export type Step2FormData = z.infer<typeof step2Schema>;
 export type Step3FormData = z.infer<typeof step3Schema>;
 
-export type AddStudentFormData = Step1FormData & Step2FormData & Step3FormData;
+export type AddStudentFormData = z.infer<typeof allFormSchema>;
+
+const STEP_FIELDS: Record<number, FieldPath<AddStudentFormData>[]> = {
+  1: Object.keys(step1Schema.shape) as FieldPath<AddStudentFormData>[],
+  2: Object.keys(step2Schema.shape) as FieldPath<AddStudentFormData>[],
+  3: Object.keys(step3Schema.shape) as FieldPath<AddStudentFormData>[],
+};
 
 interface AddStudentDialogProps {
   open: boolean;
@@ -148,7 +153,6 @@ const AddStudentDialog = ({
   defaultBranchId,
   defaultCourseId,
 }: AddStudentDialogProps) => {
-  const { t } = useTranslation();
   const canAssignBranch = useCan('assignBranch');
   const user = useAuthStore((s) => s.user);
   const { data: branches } = useBranches();
@@ -164,8 +168,6 @@ const AddStudentDialog = ({
   );
   const [showConfirm, setShowConfirm] = useState(false);
   const submitModeRef = useRef<'close' | 'add'>('close');
-
-  const allFormSchema = step1Schema.merge(step2Schema).merge(step3Schema);
 
   const form = useForm<AddStudentFormData>({
     resolver: zodResolver(allFormSchema),
@@ -219,19 +221,20 @@ const AddStudentDialog = ({
 
   const watchedBranchId = form.watch('branch_id');
   const watchedCourseId = form.watch('course_id');
-  const watchedPaymentType = form.watch('payment_type');
+  const watchedCourse = courseList.find(
+    (course) => course.id === watchedCourseId,
+  );
 
   const filteredGroups = (groups || []).filter(
     (g) =>
-      g.course_id === watchedCourseId &&
+      g.course_type === watchedCourse?.course_type &&
       (!watchedBranchId || g.branch_id === watchedBranchId) &&
       g.is_active,
   );
 
   const goToStep = (step: number) => {
     if (step > activeStep) {
-      const stepSchema = [step1Schema, step2Schema, step3Schema][step - 1];
-      form.trigger(stepSchema.shape).then((isValid) => {
+      form.trigger(STEP_FIELDS[activeStep]).then((isValid) => {
         if (isValid) {
           setStepValidated((prev) => ({ ...prev, [step]: true }));
           setActiveStep(step);
@@ -251,24 +254,22 @@ const AddStudentDialog = ({
   };
 
   const handleSubmit = (values: AddStudentFormData) => {
+    const course = courseList.find((item) => item.id === values.course_id);
+    if (!course) {
+      form.setError('course_id', { message: 'Kurs tanlanmagan' });
+      return;
+    }
     submitModeRef.current = 'close';
     const payload: AddStudentPayload = {
       ...values,
+      course_type: course.course_type,
+      course_price: course.price,
       amount: Number(values.amount),
     };
     onSubmit(payload);
   };
 
-  const handleSaveAndAdd = (values: AddStudentFormData) => {
-    submitModeRef.current = 'add';
-    const payload: AddStudentPayload = {
-      ...values,
-      amount: Number(values.amount),
-    };
-    onSubmit(payload);
-  };
-
-  const onFormValid = (values: AddStudentFormData) => {
+  const onFormValid = () => {
     if (activeStep === 3) {
       setShowConfirm(true);
     } else {
@@ -306,9 +307,6 @@ const AddStudentDialog = ({
     refetchGroups,
     form,
   ]);
-
-  const isLastStep = activeStep === 3;
-  const isFirstStep = activeStep === 1;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -438,7 +436,7 @@ const AddStudentDialog = ({
                                   formatted += '-' + val.slice(10, 12);
                                 field.onChange(formatted);
                               }}
-                              onBlur={(e) => field.onBlur(e)}
+                              onBlur={field.onBlur}
                             />
                           </FormControl>
                           <FormMessage />

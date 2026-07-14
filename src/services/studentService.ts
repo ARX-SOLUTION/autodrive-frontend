@@ -246,24 +246,23 @@ export const useCreateStudentWithPayment = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: AddStudentPayload) => {
-      // 1. Create student
+      const paymentMethod = {
+        CASH: 'naqd',
+        CARD: 'karta',
+        TRANSFER: 'perechisleniya',
+      }[payload.payment_method] as CreateStudentPayload['payment_method'];
+
+      // Student creation records the initial payment atomically in backend.
       const { data: studentData } = await axiosInstance.post('/students', {
         first_name: payload.first_name,
         last_name: payload.last_name,
-        middle_name: payload.middle_name,
         phone: payload.phone,
-        email: payload.email,
-        passport_series: payload.passport_series,
-        passport_number: payload.passport_number,
-        birth_date: payload.birth_date,
-        gender: payload.gender,
-        address: payload.address,
-        course_type: payload.course_id, // We'll need to map this
-        total_price: payload.amount,
-        payment_method: payload.payment_method.toLowerCase(),
+        course_type: payload.course_type,
+        total_price: payload.course_price,
+        initial_payment: payload.amount,
+        payment_method: paymentMethod,
         branch_id: payload.branch_id,
         group_id: payload.group_id,
-        completion_date: payload.start_date,
         has_document: false,
         o83: false,
         result: 'oqimoqda',
@@ -271,21 +270,6 @@ export const useCreateStudentWithPayment = () => {
         status: 'active',
       });
       const student = studentData?.data || studentData;
-
-      // 2. Create payment
-      await axiosInstance.post('/payments', {
-        student_id: student.id,
-        amount: payload.amount,
-        payment_method: payload.payment_method.toLowerCase(),
-        idempotency_key: `student-${student.id}-${Date.now()}`,
-      });
-
-      // 3. Assign to group (if provided)
-      if (payload.group_id) {
-        await axiosInstance.post(`/groups/${payload.group_id}/students`, {
-          student_id: student.id,
-        });
-      }
 
       return student;
     },
