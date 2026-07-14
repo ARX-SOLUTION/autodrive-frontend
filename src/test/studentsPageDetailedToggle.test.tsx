@@ -1,0 +1,83 @@
+import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { vi, describe, it, expect } from 'vitest';
+import StudentsPage from '@/pages/StudentsPage';
+
+// One "Yangi talaba qo'shish" button opens the add flow in QUICK mode; the
+// in-dialog "Batafsil" checkbox switches to the DETAILED dialog.
+
+vi.mock('@/store/authStore', () => ({
+  useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
+    selector({ user: { role: 'owner', branch_id: null }, isOwner: () => true }),
+}));
+
+vi.mock('@/services/studentService', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/services/studentService')>();
+  return {
+    ...actual,
+    fetchAllStudents: vi.fn(),
+    useStudentsPage: () => ({
+      data: { data: [], meta: { total: 0, totalPages: 1 } },
+      isLoading: false,
+    }),
+    useCreateStudent: () => ({ mutate: vi.fn(), isPending: false }),
+    useCreateStudentWithPayment: () => ({ mutate: vi.fn(), isPending: false }),
+    useUpdateStudent: () => ({ mutate: vi.fn(), isPending: false }),
+    useDeleteStudent: () => ({ mutate: vi.fn(), isPending: false }),
+  };
+});
+
+vi.mock('@/services/branchService', () => ({
+  useBranches: () => ({ data: [], isLoading: false }),
+}));
+vi.mock('@/services/operatorService', () => ({
+  useOperators: () => ({ data: [], isLoading: false }),
+}));
+vi.mock('@/components/ui/ImportStudentsModal', () => ({ default: () => null }));
+
+// Stub the two dialogs so we only assert which one is open, and render the
+// shared toggle they receive so the checkbox is reachable.
+vi.mock('@/components/ui/StudentModal', () => ({
+  default: ({
+    open,
+    detailedToggle,
+  }: {
+    open: boolean;
+    detailedToggle?: ReactNode;
+  }) => (open ? <div data-testid="quick-dialog">{detailedToggle}</div> : null),
+}));
+vi.mock('@/components/ui/AddStudentDialog', () => ({
+  default: ({
+    open,
+    detailedToggle,
+  }: {
+    open: boolean;
+    detailedToggle?: ReactNode;
+  }) =>
+    open ? <div data-testid="detailed-dialog">{detailedToggle}</div> : null,
+}));
+
+const renderPage = () =>
+  render(
+    <MemoryRouter initialEntries={['/students']}>
+      <StudentsPage />
+    </MemoryRouter>,
+  );
+
+describe('StudentsPage add flow toggle', () => {
+  it('opens quick mode, then switches to detailed via the checkbox', () => {
+    renderPage();
+    expect(screen.queryByTestId('quick-dialog')).toBeNull();
+    expect(screen.queryByTestId('detailed-dialog')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'students.add' }));
+    expect(screen.getByTestId('quick-dialog')).toBeInTheDocument();
+    expect(screen.queryByTestId('detailed-dialog')).toBeNull();
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(screen.queryByTestId('quick-dialog')).toBeNull();
+    expect(screen.getByTestId('detailed-dialog')).toBeInTheDocument();
+  });
+});

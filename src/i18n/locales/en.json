@@ -359,6 +359,29 @@
   "students": {
     "title": "Students",
     "add": "Add student",
+    "detailed_toggle": "Detailed",
+    "phone_invalid": "Invalid phone number (+998 XX XXX XX XX)",
+    "lead_source": {
+      "referral": "Referral",
+      "instagram": "Instagram",
+      "directory_map": "Directory / map",
+      "telegram": "Telegram",
+      "walk_in": "Walk-in",
+      "olx": "OLX",
+      "other": "Other"
+    },
+    "referral": {
+      "lead_source_label": "How they heard about us",
+      "lead_source_placeholder": "Select a source",
+      "lead_source_other_placeholder": "Specify the source",
+      "referrer_label": "Who referred them",
+      "referrer_none": "None",
+      "referrer_student": "Student",
+      "referrer_staff": "Staff",
+      "referrer_student_placeholder": "Select a student",
+      "referrer_staff_placeholder": "Select a staff member",
+      "referrer_search": "Search students..."
+    },
     "edit": "Edit student",
     "first_name": "First name",
     "last_name": "Last name",

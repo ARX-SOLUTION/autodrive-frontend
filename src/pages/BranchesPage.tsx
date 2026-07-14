@@ -26,6 +26,12 @@ import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, MapPin, Building2, Phone } from 'lucide-react';
 import { formatDate } from '@/pages/StudentsPage';
 import { extractErrorMessage } from '@/lib/errors';
+import {
+  formatUzPhoneInput,
+  isValidUzPhone,
+  uzLocalDigits,
+  uzPhoneE164,
+} from '@/lib/phoneFormater';
 import { Branch } from '@/types/branch';
 import { useAuthStore } from '@/store/authStore';
 
@@ -35,7 +41,11 @@ interface FormState {
   phone: string;
 }
 
-const EMPTY_FORM: FormState = { name: '', location: '', phone: '' };
+const EMPTY_FORM: FormState = {
+  name: '',
+  location: '',
+  phone: formatUzPhoneInput(''),
+};
 
 const BranchesPage = () => {
   const { t } = useTranslation();
@@ -68,7 +78,7 @@ const BranchesPage = () => {
     const initial = {
       name: b.name,
       location: b.location,
-      phone: b.phone || '',
+      phone: formatUzPhoneInput(b.phone),
     };
     setForm(initial);
     initialFormRef.current = initial;
@@ -86,10 +96,15 @@ const BranchesPage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.location.trim()) return;
+    const phoneHasDigits = uzLocalDigits(form.phone).length > 0;
+    if (phoneHasDigits && !isValidUzPhone(form.phone)) {
+      toast.error(t('common.invalid_phone'));
+      return;
+    }
     const payload = {
       name: form.name.trim(),
       location: form.location.trim(),
-      phone: form.phone.trim() || undefined,
+      phone: phoneHasDigits ? uzPhoneE164(form.phone) : undefined,
     };
     if (editItem) {
       updateMut.mutate(
@@ -375,11 +390,20 @@ const BranchesPage = () => {
                 autoComplete="tel"
                 value={form.phone}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, phone: e.target.value }))
+                  setForm((f) => ({
+                    ...f,
+                    phone: formatUzPhoneInput(e.target.value),
+                  }))
                 }
-                placeholder="+998..."
+                placeholder="+998 90 123 45 67"
                 className="bg-secondary border-border"
               />
+              {uzLocalDigits(form.phone).length > 0 &&
+                !isValidUzPhone(form.phone) && (
+                  <p className="text-xs text-destructive">
+                    {t('common.invalid_phone')}
+                  </p>
+                )}
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <Button type="button" variant="outline" onClick={attemptClose}>

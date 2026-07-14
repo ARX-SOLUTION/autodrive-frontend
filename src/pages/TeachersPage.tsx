@@ -48,7 +48,13 @@ import { toast } from 'sonner';
 import { User } from '@/types/user';
 import { RoleGate } from '@/components/RoleGate';
 import { extractErrorMessage } from '@/lib/errors';
-import { isValidName, isValidPhone } from '@/lib/validation';
+import { isValidName } from '@/lib/validation';
+import {
+  formatUzPhoneInput,
+  isValidUzPhone,
+  uzLocalDigits,
+  uzPhoneE164,
+} from '@/lib/phoneFormater';
 
 // Backend GetUsersQueryDto caps limit at 100 -- large enough that a single
 // branch/company's teacher list never needs a second server page in
@@ -146,7 +152,7 @@ const TeachersPage = () => {
     setEditItem(null);
     const empty = {
       fullName: '',
-      phone: '',
+      phone: formatUzPhoneInput(''),
       branchId: '',
       specialization: 'THEORY' as Specialization,
     };
@@ -159,7 +165,7 @@ const TeachersPage = () => {
     setEditItem(teacher);
     const initial = {
       fullName: teacher.name || '',
-      phone: teacher.phone || '',
+      phone: formatUzPhoneInput(teacher.phone),
       branchId: teacher.branch_id || '',
       specialization: teacher.specialization || ('THEORY' as Specialization),
     };
@@ -178,18 +184,18 @@ const TeachersPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.fullName.trim() || !form.phone.trim()) return;
+    if (!form.fullName.trim()) return;
     if (!isValidName(form.fullName)) {
       toast.error(t('common.invalid_name'));
       return;
     }
-    if (!isValidPhone(form.phone)) {
+    if (!isValidUzPhone(form.phone)) {
       toast.error(t('common.invalid_phone'));
       return;
     }
     const payload = {
       fullName: form.fullName,
-      phone: form.phone,
+      phone: uzPhoneE164(form.phone),
       branchId: form.branchId || undefined,
       specialization: form.specialization || undefined,
     };
@@ -532,12 +538,21 @@ const TeachersPage = () => {
                 autoComplete="tel"
                 value={form.phone}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, phone: e.target.value }))
+                  setForm((f) => ({
+                    ...f,
+                    phone: formatUzPhoneInput(e.target.value),
+                  }))
                 }
                 required
-                placeholder="+998901234567"
+                placeholder="+998 90 123 45 67"
                 className="bg-secondary border-border"
               />
+              {uzLocalDigits(form.phone).length > 0 &&
+                !isValidUzPhone(form.phone) && (
+                  <p className="text-xs text-destructive">
+                    {t('common.invalid_phone')}
+                  </p>
+                )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="teacher-spec">

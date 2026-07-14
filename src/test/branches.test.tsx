@@ -99,12 +99,13 @@ describe('BranchesPage Component', () => {
       'branches.address',
     ) as HTMLInputElement;
     const phoneInput = screen.getByPlaceholderText(
-      '+998...',
+      '+998 90 123 45 67',
     ) as HTMLInputElement;
 
     expect(nameInput.value).toBe('Test Branch 1');
     expect(addressInput.value).toBe('Test Location 1');
-    expect(phoneInput.value).toBe('+998901234567');
+    // Phone is now shown via the UZ input mask (formatUzPhoneInput).
+    expect(phoneInput.value).toBe('+998 90 123 45 67');
   });
 
   // autodrive-6ef.19: card navigates to branch detail; edit/delete buttons

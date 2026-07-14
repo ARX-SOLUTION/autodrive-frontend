@@ -359,6 +359,29 @@
   "students": {
     "title": "Студенты",
     "add": "Добавить студента",
+    "detailed_toggle": "Подробнее",
+    "phone_invalid": "Неверный номер телефона (+998 XX XXX XX XX)",
+    "lead_source": {
+      "referral": "Рекомендация",
+      "instagram": "Instagram",
+      "directory_map": "Карта / каталог",
+      "telegram": "Telegram",
+      "walk_in": "Пришёл сам",
+      "olx": "OLX",
+      "other": "Другое"
+    },
+    "referral": {
+      "lead_source_label": "Откуда узнал(а)",
+      "lead_source_placeholder": "Выберите источник",
+      "lead_source_other_placeholder": "Укажите источник",
+      "referrer_label": "Кто пригласил",
+      "referrer_none": "Нет",
+      "referrer_student": "Ученик",
+      "referrer_staff": "Сотрудник",
+      "referrer_student_placeholder": "Выберите ученика",
+      "referrer_staff_placeholder": "Выберите сотрудника",
+      "referrer_search": "Поиск ученика..."
+    },
     "edit": "Редактировать студента",
     "first_name": "Имя",
     "last_name": "Фамилия",

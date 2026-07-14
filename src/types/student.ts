@@ -3,6 +3,16 @@ export type PaymentMethod = 'naqd' | 'karta' | 'perechisleniya';
 export type ResultStatus = 'oqimoqda' | 'topshirdi' | 'yiqildi';
 export type StudentStatus = 'active' | 'completed' | 'dropped' | 'suspended';
 
+// Where the student first heard about the school (detailed registration).
+export type LeadSource =
+  | 'referral'
+  | 'instagram'
+  | 'directory_map'
+  | 'telegram'
+  | 'walk_in'
+  | 'olx'
+  | 'other';
+
 export interface Student {
   id: string;
   last_name: string;
@@ -47,6 +57,12 @@ export interface Student {
   // New fields from detailed registration
   start_date?: string;
   payment_type?: 'FULL' | 'PARTIAL' | 'INSTALLMENT';
+
+  // Referral / acquisition (detailed registration) — optional.
+  lead_source?: LeadSource;
+  lead_source_other?: string;
+  referred_by_student_id?: string;
+  referred_by_user_id?: string;
 
   // GET /students/:id (detail only) — other students this student referred.
   referrals_count?: number;

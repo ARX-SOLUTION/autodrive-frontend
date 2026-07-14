@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/command';
 import { ChevronsUpDown, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatMoney, groupDigits } from '@/lib/money';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
@@ -165,8 +166,6 @@ const PaymentModal = ({
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
     useConfirmedClose(form.formState.isDirty, onClose);
 
-  const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
-
   return (
     <>
       <Dialog
@@ -276,7 +275,7 @@ const PaymentModal = ({
                                       {s.last_name} {s.first_name}
                                       {s.debt !== undefined && s.debt > 0 && (
                                         <span className="ml-auto text-xs text-destructive tabular-nums">
-                                          {formatMoney(s.debt)} so'm
+                                          {formatMoney(s.debt)}
                                         </span>
                                       )}
                                     </CommandItem>
@@ -310,7 +309,7 @@ const PaymentModal = ({
                     {t('payments.remaining_debt')}:{' '}
                   </span>
                   <span className="font-medium text-destructive">
-                    {formatMoney(selectedStudent.debt)} so'm
+                    {formatMoney(selectedStudent.debt)}
                   </span>
                 </div>
               )}
@@ -328,7 +327,9 @@ const PaymentModal = ({
                         placeholder="0"
                         className="bg-secondary border-border"
                         {...field}
-                        value={field.value ? formatMoney(field.value) : ''}
+                        value={
+                          field.value ? groupDigits(String(field.value)) : ''
+                        }
                         onChange={(e) => {
                           const digits = e.target.value.replace(/\D/g, '');
                           field.onChange(digits === '' ? 0 : Number(digits));

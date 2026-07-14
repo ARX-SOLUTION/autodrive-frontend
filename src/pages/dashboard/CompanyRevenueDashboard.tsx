@@ -48,15 +48,10 @@ import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
+import { formatMoney } from '@/lib/money';
 
 const UZ_TIMEZONE = 'Asia/Tashkent';
 
-const moneyFormatter = new Intl.NumberFormat('uz-UZ', {
-  maximumFractionDigits: 0,
-});
-
-const formatMoney = (value: number) =>
-  `${moneyFormatter.format(Math.round(value || 0))} so'm`;
 // uz-UZ Intl month:'short' renders as an unresolved skeleton (e.g. "M07 1")
 // in some browsers — build the date-fns dd.MM(.yyyy)(HH:mm) convention
 // instead of Intl.DateTimeFormat's month name.
@@ -1252,7 +1247,7 @@ const CompanyRevenueDashboard = () => {
                       ? t(
                           'dashboard.v2.financial_block.per_lesson',
                           '{{value}} / dars',
-                          { value: formatMoney(entry.per_lesson) },
+                          { value: formatMoney(Math.round(entry.per_lesson)) },
                         )
                       : t(
                           'dashboard.v2.financial_block.no_lessons',
