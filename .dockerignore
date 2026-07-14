@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+.git
+.env*
+.claude
+.codex
+.github
+.husky
+.storybook
+.vercel
+.vscode
+.idea
+*.log
