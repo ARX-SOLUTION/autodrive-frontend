@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Popover,
@@ -180,8 +181,7 @@ const StudentsPage = () => {
   const hasDebt = searchParams.get('has_debt')
     ? searchParams.get('has_debt') === 'true'
     : undefined;
-  const referredByUserId =
-    searchParams.get('referred_by_user_id') ?? undefined;
+  const referredByUserId = searchParams.get('referred_by_user_id') ?? undefined;
   const referredByStudentId =
     searchParams.get('referred_by_student_id') ?? undefined;
 
@@ -189,7 +189,8 @@ const StudentsPage = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
-  const [addStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
+  // One add flow, two modes: quick (StudentModal) vs detailed (AddStudentDialog).
+  const [detailed, setDetailed] = useState(false);
   const [sortField, setSortField] = useState('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -347,11 +348,16 @@ const StudentsPage = () => {
     setEditStudent(null);
   };
 
+  const closeAddFlow = () => {
+    setModalOpen(false);
+    setDetailed(false);
+  };
+
   const handleAddStudentDialogSubmit = (data: AddStudentPayload) => {
     createWithPaymentMutation.mutate(data, {
       onSuccess: () => {
         toast.success(t('students.added'));
-        setAddStudentDialogOpen(false);
+        closeAddFlow();
       },
       onError: (err) =>
         toast.error(extractErrorMessage(err, t('common.error'))),
@@ -360,15 +366,26 @@ const StudentsPage = () => {
 
   const openEdit = (s: Student) => {
     setEditStudent(s);
+    setDetailed(false);
     setModalOpen(true);
   };
   const openCreate = () => {
     setEditStudent(null);
+    setDetailed(false);
     setModalOpen(true);
   };
-  const openAddStudentDialog = () => {
-    setAddStudentDialogOpen(true);
-  };
+
+  // Quick/detailed toggle shown inside the add dialog (create mode only).
+  const detailedToggle = (
+    <label className="flex cursor-pointer select-none items-center gap-2 text-sm font-medium">
+      <Checkbox
+        checked={detailed}
+        onCheckedChange={(v) => setDetailed(!!v)}
+        id="detailed-toggle"
+      />
+      {t('students.detailed_toggle')}
+    </label>
+  );
 
   const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
 
@@ -407,14 +424,6 @@ const StudentsPage = () => {
           </Button>
           <Button className="gap-2" onClick={openCreate}>
             <Plus className="h-4 w-4" /> {t('students.add')}
-          </Button>
-          <Button
-            className="gap-2"
-            onClick={openAddStudentDialog}
-            variant="default"
-          >
-            <Plus className="h-4 w-4" />{' '}
-            {t('students.add_detailed') || 'Batafsil qoɻshish'}
           </Button>
         </div>
       </div>
@@ -957,7 +966,7 @@ const StudentsPage = () => {
       />
 
       <StudentModal
-        open={modalOpen}
+        open={modalOpen && !detailed}
         onClose={closeModal}
         onSubmit={handleModalSubmit}
         onSaveAndAdd={!editStudent ? handleSaveAndAdd : undefined}
@@ -966,6 +975,7 @@ const StudentsPage = () => {
         courseType={courseType}
         operators={operators || []}
         defaultBranchId={branchId}
+        detailedToggle={editStudent ? undefined : detailedToggle}
       />
 
       <ImportStudentsModal
@@ -975,11 +985,12 @@ const StudentsPage = () => {
       />
 
       <AddStudentDialog
-        open={addStudentDialogOpen}
-        onClose={() => setAddStudentDialogOpen(false)}
+        open={modalOpen && detailed}
+        onClose={closeAddFlow}
         onSubmit={handleAddStudentDialogSubmit}
         loading={createWithPaymentMutation.isPending}
         defaultBranchId={branchId}
+        detailedToggle={detailedToggle}
       />
 
       <ConfirmDialog

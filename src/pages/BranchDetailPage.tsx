@@ -14,12 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useBranch } from '@/services/branchService';
 import { tashkentToday } from '@/lib/tashkentDate';
+import { formatMoney } from '@/lib/money';
 import { toLocalDateStr } from '@/services/studentService';
-
-const money = (n?: number) =>
-  `${Number(n ?? 0)
-    .toLocaleString('ru-RU')
-    .replace(/,/g, ' ')} so'm`;
 
 // Same gradient AreaChart used by DashboardPage's monthly revenue chart —
 // mirrored here (not extracted) since the two consume slightly different
@@ -102,12 +98,15 @@ const BranchDetailPage = () => {
         />
         <Field
           label={t('branches.detail.revenue')}
-          value={money(branch.revenue)}
+          value={formatMoney(branch.revenue)}
         />
-        <Field label={t('branches.detail.debt')} value={money(branch.debt)} />
+        <Field
+          label={t('branches.detail.debt')}
+          value={formatMoney(branch.debt)}
+        />
         <Field
           label={t('branches.detail.today_payment')}
-          value={money(branch.today_payment)}
+          value={formatMoney(branch.today_payment)}
           to={`/payments?branch_id=${branch.id}&date_from=${today}&date_to=${today}`}
         />
       </dl>
@@ -187,7 +186,7 @@ const RevenueTrendChart = ({
               border: '1px solid hsl(var(--border))',
               borderRadius: 10,
             }}
-            formatter={(value: number) => [money(value), '']}
+            formatter={(value: number) => [formatMoney(value), '']}
           />
           <Area
             type="monotone"
@@ -224,7 +223,7 @@ const TopDebtorsList = ({
         >
           <span className="truncate">{debtor.name}</span>
           <span className="shrink-0 font-semibold text-destructive">
-            {money(debtor.debt)}
+            {formatMoney(debtor.debt)}
           </span>
         </Link>
       ))}

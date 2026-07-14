@@ -30,12 +30,8 @@ import { useAttendanceHistory } from '@/services/attendanceService';
 import { useCan } from '@/hooks/useCan';
 import { statusColors } from '@/lib/attendanceStatus';
 import { extractErrorMessage } from '@/lib/errors';
+import { formatMoney } from '@/lib/money';
 import type { PaymentMethod } from '@/types/student';
-
-const money = (n?: number) =>
-  `${Number(n ?? 0)
-    .toLocaleString('ru-RU')
-    .replace(/,/g, ' ')} so'm`;
 
 const StudentDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -142,7 +138,7 @@ const StudentDetailPage = () => {
           <div className="flex flex-wrap gap-2 pt-1">
             {student.debt > 0 ? (
               <Badge variant="destructive">
-                {t('students.detail.debt')}: {money(student.debt)}
+                {t('students.detail.debt')}: {formatMoney(student.debt)}
               </Badge>
             ) : (
               <Badge variant="secondary">{t('students.no_debt')}</Badge>
@@ -197,11 +193,11 @@ const StudentDetailPage = () => {
             />
             <Field
               label={t('students.detail.total_price')}
-              value={money(student.total_price)}
+              value={formatMoney(student.total_price)}
             />
             <Field
               label={t('students.detail.debt')}
-              value={money(student.debt)}
+              value={formatMoney(student.debt)}
             />
             <Field
               label={t('students.payment_method')}
@@ -221,7 +217,7 @@ const StudentDetailPage = () => {
             />
             <Field
               label={t('students.amount_paid')}
-              value={money(student.amount_paid)}
+              value={formatMoney(student.amount_paid)}
             />
             <Field
               label={t('students.operator')}
@@ -382,7 +378,7 @@ const PaymentsTab = ({
                 <tr key={p.id} className="border-b border-border last:border-0">
                   <td className="px-4 py-2">{p.date?.slice(0, 10)}</td>
                   <td className="px-4 py-2 text-right font-mono tabular-nums">
-                    {money(p.amount_paid)}
+                    {formatMoney(p.amount_paid)}
                   </td>
                   <td className="px-4 py-2">
                     {methodLabels[p.payment_method]}

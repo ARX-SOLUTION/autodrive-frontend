@@ -1,8 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import {
+  isValidUzPhone,
+  uzPhoneE164,
+  formatUzPhoneInput,
+} from '@/lib/phoneFormater';
+import { groupDigits } from '@/lib/money';
 import {
   Student,
   CourseType,
@@ -68,43 +74,45 @@ export interface CreateStudentPayload {
   registered_by?: string;
 }
 
-const studentFormSchema = z
-  .object({
-    first_name: z.string().min(1, 'Required'),
-    last_name: z.string().min(1, 'Required'),
-    phone: z
-      .string()
-      .min(1, 'Required')
-      .regex(/^\+?\d{9,15}$/, 'Invalid phone number'),
-    course_type: z.enum(['tezkor', 'avto_maktab']),
-    branch_id: z
-      .string()
-      .min(1, 'Branch not selected. Please select a branch.'),
-    payment_method: z.enum(['naqd', 'karta', 'perechisleniya']).optional(),
-    result: z.enum(['oqimoqda', 'topshirdi', 'yiqildi']).optional(),
-    has_document: z.boolean().optional(),
-    o83: z.boolean().optional(),
-    total_price: z.coerce.number().nonnegative('Required'),
-    amount_paid: z.coerce.number().nonnegative().optional(),
-    initial_payment: z.coerce.number().nonnegative().optional(),
-    group_id: z.string().optional(),
-    completion_date: z.string().optional(),
-    contract_number: z.string().optional(),
-    notes: z.string().optional(),
-    status: z.enum(['active', 'completed', 'dropped', 'suspended']).optional(),
-    registered_by: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.course_type === 'avto_maktab' && !data.group_id?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['group_id'],
-        message: 'Group is required for driving school course',
-      });
-    }
-  });
+// Factory so the phone error can be localized via t(); other messages stay as
+// their existing literals (out of scope to translate here).
+const makeStudentFormSchema = (t: (key: string) => string) =>
+  z
+    .object({
+      first_name: z.string().min(1, 'Required'),
+      last_name: z.string().min(1, 'Required'),
+      phone: z.string().refine(isValidUzPhone, t('students.phone_invalid')),
+      course_type: z.enum(['tezkor', 'avto_maktab']),
+      branch_id: z
+        .string()
+        .min(1, 'Branch not selected. Please select a branch.'),
+      payment_method: z.enum(['naqd', 'karta', 'perechisleniya']).optional(),
+      result: z.enum(['oqimoqda', 'topshirdi', 'yiqildi']).optional(),
+      has_document: z.boolean().optional(),
+      o83: z.boolean().optional(),
+      total_price: z.coerce.number().nonnegative('Required'),
+      amount_paid: z.coerce.number().nonnegative().optional(),
+      initial_payment: z.coerce.number().nonnegative().optional(),
+      group_id: z.string().optional(),
+      completion_date: z.string().optional(),
+      contract_number: z.string().optional(),
+      notes: z.string().optional(),
+      status: z
+        .enum(['active', 'completed', 'dropped', 'suspended'])
+        .optional(),
+      registered_by: z.string().optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (data.course_type === 'avto_maktab' && !data.group_id?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['group_id'],
+          message: 'Group is required for driving school course',
+        });
+      }
+    });
 
-type StudentFormValues = z.infer<typeof studentFormSchema>;
+type StudentFormValues = z.infer<ReturnType<typeof makeStudentFormSchema>>;
 
 interface StudentModalProps {
   open: boolean;
@@ -117,6 +125,8 @@ interface StudentModalProps {
   operators?: User[];
   disabledFields?: string[];
   defaultBranchId?: string;
+  // Rendered at the top of the dialog — the quick/detailed mode toggle.
+  detailedToggle?: ReactNode;
 }
 
 const StudentModal = ({
@@ -130,6 +140,7 @@ const StudentModal = ({
   operators = [],
   disabledFields = [],
   defaultBranchId,
+  detailedToggle,
 }: StudentModalProps) => {
   const { t } = useTranslation();
   const canAssignBranch = useCan('assignBranch');
@@ -137,12 +148,14 @@ const StudentModal = ({
   const { data: branches } = useBranches();
   const { data: groups, refetch: refetchGroups } = useGroups();
 
+  const studentFormSchema = useMemo(() => makeStudentFormSchema(t), [t]);
+
   const branchList = branches || [];
 
   const defaultFormValues = (): StudentFormValues => ({
     first_name: '',
     last_name: '',
-    phone: '',
+    phone: '+998',
     course_type: courseType,
     branch_id: canAssignBranch ? defaultBranchId || '' : user?.branch_id || '',
     payment_method: 'naqd',
@@ -174,7 +187,7 @@ const StudentModal = ({
       ...current,
       first_name: '',
       last_name: '',
-      phone: '',
+      phone: '+998',
       amount_paid: 0,
       initial_payment: 0,
       notes: '',
@@ -294,7 +307,7 @@ const StudentModal = ({
     const payload: CreateStudentPayload = {
       first_name: values.first_name,
       last_name: values.last_name,
-      phone: values.phone,
+      phone: uzPhoneE164(values.phone),
       course_type: courseType,
       total_price: Number(values.total_price),
       payment_method: values.payment_method || undefined,
@@ -366,6 +379,10 @@ const StudentModal = ({
             </DialogDescription>
           </DialogHeader>
 
+          {detailedToggle && (
+            <div className="mt-2 flex items-center">{detailedToggle}</div>
+          )}
+
           <Tabs defaultValue="info" className="w-full mt-2">
             {student && (
               <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -425,11 +442,14 @@ const StudentModal = ({
                               type="tel"
                               inputMode="tel"
                               autoComplete="tel"
-                              placeholder="+998901234567"
+                              placeholder="+998 90 123 45 67"
                               className="bg-secondary border-border"
-                              onFocus={() => {
-                                if (!field.value) field.onChange('+998');
-                              }}
+                              value={formatUzPhoneInput(field.value)}
+                              onChange={(e) =>
+                                field.onChange(
+                                  formatUzPhoneInput(e.target.value),
+                                )
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -491,7 +511,7 @@ const StudentModal = ({
                               {...field}
                               value={
                                 field.value
-                                  ? formatMoney(Number(field.value))
+                                  ? groupDigits(String(field.value))
                                   : ''
                               }
                               onChange={(e) =>
@@ -561,7 +581,7 @@ const StudentModal = ({
                                   {...field}
                                   value={
                                     field.value
-                                      ? formatMoney(Number(field.value))
+                                      ? groupDigits(String(field.value))
                                       : ''
                                   }
                                   onChange={(e) =>
@@ -646,7 +666,7 @@ const StudentModal = ({
                                   {...field}
                                   value={
                                     field.value
-                                      ? formatMoney(Number(field.value))
+                                      ? groupDigits(String(field.value))
                                       : ''
                                   }
                                   onChange={(e) =>
@@ -694,7 +714,7 @@ const StudentModal = ({
                                   {...field}
                                   value={
                                     field.value
-                                      ? formatMoney(Number(field.value))
+                                      ? groupDigits(String(field.value))
                                       : ''
                                   }
                                   onChange={(e) =>

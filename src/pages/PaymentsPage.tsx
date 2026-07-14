@@ -33,6 +33,7 @@ import { useIsCrossTenant } from '@/hooks/useCan';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { cn } from '@/lib/utils';
 import { extractErrorMessage } from '@/lib/errors';
+import { formatMoney } from '@/lib/money';
 import { tashkentToday } from '@/lib/tashkentDate';
 import { useBranches } from '@/services/branchService';
 import {
@@ -74,9 +75,6 @@ const formatDate = (d: string) => {
     return d;
   }
 };
-
-const formatMoney = (n: number) =>
-  new Intl.NumberFormat('uz-UZ').format(n || 0) + " so'm";
 
 // Date preset helpers
 // ponytail (L2): "today" means Tashkent's calendar day, not the device

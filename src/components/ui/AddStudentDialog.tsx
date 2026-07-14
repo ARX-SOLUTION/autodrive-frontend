@@ -1,7 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import {
+  isValidUzPhone,
+  uzPhoneE164,
+  formatUzPhoneInput,
+} from '@/lib/phoneFormater';
+import { groupDigits } from '@/lib/money';
+import type { LeadSource } from '@/types/student';
+import ReferralFields from '@/components/ui/ReferralFields';
 import {
   Dialog,
   DialogContent,
@@ -63,59 +72,83 @@ export interface AddStudentPayload {
   payment_method: 'CASH' | 'CARD' | 'TRANSFER';
   first_payment_date: string;
   contract_signed: boolean;
+
+  // Referral / acquisition — all optional.
+  lead_source?: LeadSource;
+  lead_source_other?: string;
+  referred_by_student_id?: string;
+  referred_by_user_id?: string;
 }
 
-const step1Schema = z.object({
-  first_name: z.string().min(1, 'Ism majburiy'),
-  last_name: z.string().min(1, 'Familiya majburiy'),
-  middle_name: z.string().optional(),
-  phone: z
-    .string()
-    .min(1, 'Telefon raqami majburiy')
-    .regex(/^\+998\d{9}$/, 'Format: +998 (__) ___-__-__'),
-  email: z.string().email("Email noto'g'ri").optional().or(z.literal('')),
-  passport_series: z
-    .string()
-    .min(1, 'Pasport seriyasi majburiy')
-    .regex(/^[A-Z]{2}$/, 'Pasport seriyasi: 2 harf (masalan: AA)'),
-  passport_number: z
-    .string()
-    .min(1, 'Pasport raqami majburiy')
-    .regex(/^\d{7}$/, 'Pasport raqami: 7 raqam'),
-  birth_date: z.string().min(1, "Tug'ilgan sana majburiy"),
-  gender: z.enum(['MALE', 'FEMALE']),
-  address: z.string().min(5, 'Manzil juda qisqa'),
-});
+const LEAD_SOURCE_VALUES = [
+  'referral',
+  'instagram',
+  'directory_map',
+  'telegram',
+  'walk_in',
+  'olx',
+  'other',
+] as const;
 
-const step2Schema = z.object({
-  branch_id: z.string().uuid('Filial tanlanmagan'),
-  course_id: z.string().uuid('Kurs tanlanmagan'),
-  group_id: z.string().uuid().optional(),
-  start_date: z.string().min(1, 'Boshlanish sana majburiy'),
-});
+// Built via a factory so the phone error can be localized with t(). A static
+// instance (keys → identity) drives the inferred types and STEP_FIELDS —
+// zod messages don't affect either.
+const buildSchemas = (t: (key: string) => string) => {
+  const step1 = z.object({
+    first_name: z.string().min(1, 'Ism majburiy'),
+    last_name: z.string().min(1, 'Familiya majburiy'),
+    middle_name: z.string().optional(),
+    phone: z.string().refine(isValidUzPhone, t('students.phone_invalid')),
+    email: z.string().email("Email noto'g'ri").optional().or(z.literal('')),
+    passport_series: z
+      .string()
+      .min(1, 'Pasport seriyasi majburiy')
+      .regex(/^[A-Z]{2}$/, 'Pasport seriyasi: 2 harf (masalan: AA)'),
+    passport_number: z
+      .string()
+      .min(1, 'Pasport raqami majburiy')
+      .regex(/^\d{7}$/, 'Pasport raqami: 7 raqam'),
+    birth_date: z.string().min(1, "Tug'ilgan sana majburiy"),
+    gender: z.enum(['MALE', 'FEMALE']),
+    address: z.string().min(5, 'Manzil juda qisqa'),
+  });
 
-const step3Schema = z.object({
-  payment_type: z.enum(['FULL', 'PARTIAL', 'INSTALLMENT']),
-  amount: z.number().min(1, "Summa 0 dan katta bo'lishi kerak"),
-  payment_method: z.enum(['CASH', 'CARD', 'TRANSFER']),
-  first_payment_date: z.string().min(1, "To'lov sanasi majburiy"),
-  contract_signed: z
-    .boolean()
-    .refine((value) => value, 'Shartnoma tasdiqlanishi shart'),
-});
+  const step2 = z.object({
+    branch_id: z.string().uuid('Filial tanlanmagan'),
+    course_id: z.string().uuid('Kurs tanlanmagan'),
+    group_id: z.string().uuid().optional(),
+    start_date: z.string().min(1, 'Boshlanish sana majburiy'),
+    lead_source: z.enum(LEAD_SOURCE_VALUES).optional(),
+    lead_source_other: z.string().optional(),
+    referred_by_student_id: z.string().uuid().optional().or(z.literal('')),
+    referred_by_user_id: z.string().uuid().optional().or(z.literal('')),
+  });
 
-const allFormSchema = step1Schema.merge(step2Schema).merge(step3Schema);
+  const step3 = z.object({
+    payment_type: z.enum(['FULL', 'PARTIAL', 'INSTALLMENT']),
+    amount: z.number().min(1, "Summa 0 dan katta bo'lishi kerak"),
+    payment_method: z.enum(['CASH', 'CARD', 'TRANSFER']),
+    first_payment_date: z.string().min(1, "To'lov sanasi majburiy"),
+    contract_signed: z
+      .boolean()
+      .refine((value) => value, 'Shartnoma tasdiqlanishi shart'),
+  });
 
-export type Step1FormData = z.infer<typeof step1Schema>;
-export type Step2FormData = z.infer<typeof step2Schema>;
-export type Step3FormData = z.infer<typeof step3Schema>;
+  return { step1, step2, step3, all: step1.merge(step2).merge(step3) };
+};
 
-export type AddStudentFormData = z.infer<typeof allFormSchema>;
+const typeSchemas = buildSchemas((key) => key);
+
+export type Step1FormData = z.infer<typeof typeSchemas.step1>;
+export type Step2FormData = z.infer<typeof typeSchemas.step2>;
+export type Step3FormData = z.infer<typeof typeSchemas.step3>;
+
+export type AddStudentFormData = z.infer<typeof typeSchemas.all>;
 
 const STEP_FIELDS: Record<number, FieldPath<AddStudentFormData>[]> = {
-  1: Object.keys(step1Schema.shape) as FieldPath<AddStudentFormData>[],
-  2: Object.keys(step2Schema.shape) as FieldPath<AddStudentFormData>[],
-  3: Object.keys(step3Schema.shape) as FieldPath<AddStudentFormData>[],
+  1: Object.keys(typeSchemas.step1.shape) as FieldPath<AddStudentFormData>[],
+  2: Object.keys(typeSchemas.step2.shape) as FieldPath<AddStudentFormData>[],
+  3: Object.keys(typeSchemas.step3.shape) as FieldPath<AddStudentFormData>[],
 };
 
 interface AddStudentDialogProps {
@@ -125,6 +158,8 @@ interface AddStudentDialogProps {
   loading?: boolean;
   defaultBranchId?: string;
   defaultCourseId?: string;
+  // Rendered at the top of the dialog — the quick/detailed mode toggle.
+  detailedToggle?: ReactNode;
 }
 
 const STEPS = [
@@ -152,12 +187,16 @@ const AddStudentDialog = ({
   loading,
   defaultBranchId,
   defaultCourseId,
+  detailedToggle,
 }: AddStudentDialogProps) => {
+  const { t } = useTranslation();
   const canAssignBranch = useCan('assignBranch');
   const user = useAuthStore((s) => s.user);
   const { data: branches } = useBranches();
   const { data: groups, refetch: refetchGroups } = useGroups();
   const { data: courses } = useCourses();
+
+  const allFormSchema = useMemo(() => buildSchemas(t).all, [t]);
 
   const branchList = branches || [];
   const courseList = courses || [];
@@ -193,6 +232,10 @@ const AddStudentDialog = ({
       payment_method: 'CASH',
       first_payment_date: new Date().toISOString().split('T')[0],
       contract_signed: false,
+      lead_source: undefined,
+      lead_source_other: '',
+      referred_by_student_id: '',
+      referred_by_user_id: '',
     },
     mode: 'onBlur',
   });
@@ -215,6 +258,10 @@ const AddStudentDialog = ({
       amount: 0,
       first_payment_date: new Date().toISOString().split('T')[0],
       contract_signed: false,
+      lead_source: undefined,
+      lead_source_other: '',
+      referred_by_student_id: '',
+      referred_by_user_id: '',
     });
     form.setFocus('last_name');
   };
@@ -262,9 +309,17 @@ const AddStudentDialog = ({
     submitModeRef.current = 'close';
     const payload: AddStudentPayload = {
       ...values,
+      phone: uzPhoneE164(values.phone),
       course_type: course.course_type,
       course_price: course.price,
       amount: Number(values.amount),
+      lead_source: values.lead_source || undefined,
+      lead_source_other:
+        values.lead_source === 'other'
+          ? values.lead_source_other || undefined
+          : undefined,
+      referred_by_student_id: values.referred_by_student_id || undefined,
+      referred_by_user_id: values.referred_by_user_id || undefined,
     };
     onSubmit(payload);
   };
@@ -317,6 +372,10 @@ const AddStudentDialog = ({
             Talaba ma'lumotlarini 3 bosqichda to'ldiring
           </DialogDescription>
         </DialogHeader>
+
+        {detailedToggle && (
+          <div className="flex items-center pb-2">{detailedToggle}</div>
+        )}
 
         {/* Stepper Indicator */}
         <div className="flex items-center justify-center gap-2 mb-4 px-4">
@@ -417,26 +476,17 @@ const AddStudentDialog = ({
                           <FormLabel>Telefon *</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="+998 (__) ___-__-__"
                               {...field}
-                              onChange={(e) => {
-                                let val = e.target.value.replace(/\D/g, '');
-                                if (!val.startsWith('998')) val = '998' + val;
-                                if (val.length > 12) val = val.slice(0, 12);
-                                let formatted = '+';
-                                if (val.length > 0)
-                                  formatted += val.slice(0, 3);
-                                if (val.length > 3)
-                                  formatted += ' (' + val.slice(3, 5);
-                                if (val.length > 5)
-                                  formatted += ') ' + val.slice(5, 8);
-                                if (val.length > 8)
-                                  formatted += '-' + val.slice(8, 10);
-                                if (val.length > 10)
-                                  formatted += '-' + val.slice(10, 12);
-                                field.onChange(formatted);
-                              }}
-                              onBlur={field.onBlur}
+                              type="tel"
+                              inputMode="tel"
+                              autoComplete="tel"
+                              placeholder="+998 90 123 45 67"
+                              value={formatUzPhoneInput(field.value)}
+                              onChange={(e) =>
+                                field.onChange(
+                                  formatUzPhoneInput(e.target.value),
+                                )
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -680,6 +730,22 @@ const AddStudentDialog = ({
                       )}
                     />
                   </div>
+
+                  <ReferralFields
+                    branchId={watchedBranchId}
+                    leadSource={form.watch('lead_source')}
+                    onLeadSourceChange={(v) => form.setValue('lead_source', v)}
+                    leadSourceOther={form.watch('lead_source_other')}
+                    onLeadSourceOtherChange={(v) =>
+                      form.setValue('lead_source_other', v)
+                    }
+                    referredByStudentId={form.watch('referred_by_student_id')}
+                    referredByUserId={form.watch('referred_by_user_id')}
+                    onReferrerChange={({ studentId, userId }) => {
+                      form.setValue('referred_by_student_id', studentId ?? '');
+                      form.setValue('referred_by_user_id', userId ?? '');
+                    }}
+                  />
                 </div>
               )}
 
@@ -761,13 +827,19 @@ const AddStudentDialog = ({
                           <FormLabel>Summa (so'm) *</FormLabel>
                           <FormControl>
                             <Input
-                              type="number"
-                              step="1000"
-                              min="1"
-                              placeholder="Masalan: 5000000"
-                              value={field.value}
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="Masalan: 5 000 000"
+                              value={
+                                field.value
+                                  ? groupDigits(String(field.value))
+                                  : ''
+                              }
                               onChange={(e) =>
-                                field.onChange(Number(e.target.value) || 0)
+                                field.onChange(
+                                  Number(e.target.value.replace(/\D/g, '')) ||
+                                    0,
+                                )
                               }
                               onBlur={field.onBlur}
                             />

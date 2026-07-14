@@ -261,6 +261,7 @@ export const useCreateStudentWithPayment = () => {
       }[payload.payment_method] as CreateStudentPayload['payment_method'];
 
       // Student creation records the initial payment atomically in backend.
+      // Referral fields are optional — undefined keys are dropped by JSON.
       const { data: studentData } = await axiosInstance.post('/students', {
         first_name: payload.first_name,
         last_name: payload.last_name,
@@ -276,6 +277,10 @@ export const useCreateStudentWithPayment = () => {
         result: 'oqimoqda',
         notes: '',
         status: 'active',
+        lead_source: payload.lead_source,
+        lead_source_other: payload.lead_source_other,
+        referred_by_student_id: payload.referred_by_student_id,
+        referred_by_user_id: payload.referred_by_user_id,
       });
       const student = studentData?.data || studentData;
 

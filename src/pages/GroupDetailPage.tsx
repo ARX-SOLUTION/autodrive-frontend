@@ -8,11 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { DataCard } from '@/components/ui/DataCard';
 import { useGroup } from '@/services/groupService';
 import { DAY_LABELS } from '@/types/schedule';
-
-const money = (n?: number) =>
-  `${Number(n ?? 0)
-    .toLocaleString('ru-RU')
-    .replace(/,/g, ' ')} so'm`;
+import { formatMoney } from '@/lib/money';
 
 const GroupDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -130,7 +126,7 @@ const GroupDetailPage = () => {
                             s.debt > 0 ? 'text-destructive' : 'text-success'
                           }
                         >
-                          {s.debt > 0 ? money(s.debt) : t('common.na')}
+                          {s.debt > 0 ? formatMoney(s.debt) : t('common.na')}
                         </span>
                       ),
                     },

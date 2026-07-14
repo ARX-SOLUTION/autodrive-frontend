@@ -9,7 +9,13 @@ import { useIsCrossTenant } from '@/hooks/useCan';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { extractErrorMessage } from '@/lib/errors';
-import { isValidName, isValidPhone } from '@/lib/validation';
+import { isValidName } from '@/lib/validation';
+import {
+  formatUzPhoneInput,
+  isValidUzPhone,
+  uzLocalDigits,
+  uzPhoneE164,
+} from '@/lib/phoneFormater';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -105,7 +111,7 @@ const UsersPage = () => {
     fullName: '',
     email: '',
     password: '',
-    phone: '',
+    phone: formatUzPhoneInput(''),
     branchId: '',
   };
   const [form, setForm] = useState(EMPTY_FORM);
@@ -141,7 +147,8 @@ const UsersPage = () => {
       toast.error(t('common.invalid_name'));
       return;
     }
-    if (form.phone.trim() && !isValidPhone(form.phone)) {
+    const phoneHasDigits = uzLocalDigits(form.phone).length > 0;
+    if (phoneHasDigits && !isValidUzPhone(form.phone)) {
       toast.error(t('common.invalid_phone'));
       return;
     }
@@ -150,7 +157,7 @@ const UsersPage = () => {
         fullName: form.fullName.trim(),
         email: form.email.trim(),
         password: form.password,
-        phone: form.phone.trim() || undefined,
+        phone: phoneHasDigits ? uzPhoneE164(form.phone) : undefined,
         branchId: form.branchId,
       },
       {
@@ -501,11 +508,20 @@ const UsersPage = () => {
                 autoComplete="tel"
                 value={form.phone}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, phone: e.target.value }))
+                  setForm((f) => ({
+                    ...f,
+                    phone: formatUzPhoneInput(e.target.value),
+                  }))
                 }
-                placeholder="+998..."
+                placeholder="+998 90 123 45 67"
                 className="bg-secondary border-border"
               />
+              {uzLocalDigits(form.phone).length > 0 &&
+                !isValidUzPhone(form.phone) && (
+                  <p className="text-xs text-destructive">
+                    {t('common.invalid_phone')}
+                  </p>
+                )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="user-branch">{t('common.branch')} *</Label>

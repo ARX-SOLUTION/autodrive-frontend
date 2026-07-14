@@ -18,6 +18,11 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { User, Shield, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/errors';
+import {
+  formatUzPhoneInput,
+  isValidUzPhone,
+  uzLocalDigits,
+} from '@/lib/phoneFormater';
 
 const ProfilePage = () => {
   const { t } = useTranslation();
@@ -28,6 +33,11 @@ const ProfilePage = () => {
     currentPassword: '',
     newPassword: '',
   });
+  // Masked, controlled phone (defaults to +998). The surrounding info card's
+  // Save button is not yet wired to a profile-update mutation, so there's no
+  // payload to submit uzPhoneE164 into -- the mask + inline validation still
+  // give correct typing feedback for when that flow is added.
+  const [phone, setPhone] = useState(formatUzPhoneInput(user?.phone));
 
   const { data: linkStatus, refetch: refetchLinkStatus } =
     useTelegramLinkStatus();
@@ -168,9 +178,15 @@ const ProfilePage = () => {
               type="tel"
               inputMode="tel"
               autoComplete="tel"
-              defaultValue={user?.phone || ''}
+              value={phone}
+              onChange={(e) => setPhone(formatUzPhoneInput(e.target.value))}
               className="mt-1.5 bg-secondary border-border"
             />
+            {uzLocalDigits(phone).length > 0 && !isValidUzPhone(phone) && (
+              <p className="mt-1.5 text-xs text-destructive">
+                {t('common.invalid_phone')}
+              </p>
+            )}
           </div>
         </div>
 
