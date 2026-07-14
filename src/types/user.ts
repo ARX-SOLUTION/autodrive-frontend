@@ -36,6 +36,8 @@ export interface User {
   // autodrive-sgf.4 — GET /users?role=operator list columns.
   registered_students_count?: number;
   payment_follow_through_rate?: number | null;
+  // GET /users/:id (detail only, not the list) — students this user referred.
+  referred_students_count?: number;
 }
 
 export interface LoginCredentials {

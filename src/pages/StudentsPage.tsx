@@ -180,6 +180,10 @@ const StudentsPage = () => {
   const hasDebt = searchParams.get('has_debt')
     ? searchParams.get('has_debt') === 'true'
     : undefined;
+  const referredByUserId =
+    searchParams.get('referred_by_user_id') ?? undefined;
+  const referredByStudentId =
+    searchParams.get('referred_by_student_id') ?? undefined;
 
   // Local-only state (modal + sort UX — not worth persisting).
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -213,6 +217,8 @@ const StudentsPage = () => {
       sortOrder: sortDir,
       status,
       hasDebt,
+      referredByUserId,
+      referredByStudentId,
     },
   );
 
@@ -229,6 +235,8 @@ const StudentsPage = () => {
     sortDir,
     status,
     hasDebt,
+    referredByUserId,
+    referredByStudentId,
   ]);
 
   const isLoading = isStudentsLoading;

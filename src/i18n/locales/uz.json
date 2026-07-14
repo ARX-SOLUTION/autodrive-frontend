@@ -415,7 +415,8 @@
       "tab_info": "Ma'lumot",
       "tab_payments": "To'lovlar",
       "tab_exams": "Imtihonlar",
-      "tab_attendance": "Davomat"
+      "tab_attendance": "Davomat",
+      "referrals_count": "Referal qilganlar soni"
     },
     "tab_info": "Ma'lumotlar",
     "tab_exams": "Imtihonlar",
@@ -651,7 +652,8 @@
       "branch": "Filial",
       "phone": "Telefon",
       "created": "Yaratilgan",
-      "tab_registered_students": "Ro'yxatga olingan talabalar"
+      "tab_registered_students": "Ro'yxatga olingan talabalar",
+      "referred_students_count": "Referal qilingan o'quvchilar"
     }
   },
   "profile": {

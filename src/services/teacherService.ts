@@ -13,9 +13,10 @@ export const useTeachers = () => {
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
     queryKey: ['teachers', branchId],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/users', {
         params: { role: 'teacher' },
+        signal,
       });
       const arr = res?.data?.data || res?.data;
       if (Array.isArray(arr)) return arr;
@@ -39,9 +40,10 @@ export const useTeachersPage = (
   const isCrossTenant = useIsCrossTenant();
   return useQuery<ListResponse<User>>({
     queryKey: ['teachers', 'page', branchId, page, limit, search],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data } = await axiosInstance.get('/users', {
         params: { role: 'teacher', page, limit, search: search || undefined },
+        signal,
       });
       return parseListResponse<User>(data, page, limit);
     },

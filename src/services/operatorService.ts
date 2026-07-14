@@ -11,9 +11,10 @@ export const useOperators = () => {
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
     queryKey: ['operators', branchId],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/users', {
         params: { role: 'operator' },
+        signal,
       });
       const arr = res?.data?.data || res?.data;
       if (Array.isArray(arr)) return arr;
@@ -37,7 +38,7 @@ export const useOperatorsPage = (
   const isCrossTenant = useIsCrossTenant();
   return useQuery<ListResponse<User>>({
     queryKey: ['operators', 'page', branchId, page, limit, search],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data } = await axiosInstance.get('/users', {
         params: {
           role: 'operator',
@@ -45,6 +46,7 @@ export const useOperatorsPage = (
           limit,
           search: search || undefined,
         },
+        signal,
       });
       return parseListResponse<User>(data, page, limit);
     },

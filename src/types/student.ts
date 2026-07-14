@@ -47,4 +47,7 @@ export interface Student {
   // New fields from detailed registration
   start_date?: string;
   payment_type?: 'FULL' | 'PARTIAL' | 'INSTALLMENT';
+
+  // GET /students/:id (detail only) — other students this student referred.
+  referrals_count?: number;
 }

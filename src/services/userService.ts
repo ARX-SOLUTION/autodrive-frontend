@@ -11,9 +11,10 @@ export const useUsers = (role?: string) => {
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
     queryKey: ['users', branchId, role],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/users', {
         params: role ? { role } : {},
+        signal,
       });
       const arr = res?.data?.data || res?.data;
       if (Array.isArray(arr)) return arr;
@@ -37,7 +38,7 @@ export const useUsersPage = (
   const isCrossTenant = useIsCrossTenant();
   return useQuery<ListResponse<User>>({
     queryKey: ['users', 'page', userBranchId, role, page, limit, filters],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data } = await axiosInstance.get('/users', {
         params: {
           role,
@@ -47,6 +48,7 @@ export const useUsersPage = (
           branchId: filters?.branchId,
           isActive: filters?.isActive,
         },
+        signal,
       });
       return parseListResponse<User>(data, page, limit);
     },
