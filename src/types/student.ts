@@ -7,9 +7,18 @@ export interface Student {
   id: string;
   last_name: string;
   first_name: string;
+  middle_name?: string;
   phone: string;
+  email?: string;
+  passport_series?: string;
+  passport_number?: string;
+  birth_date?: string;
+  gender?: 'MALE' | 'FEMALE';
+  address?: string;
   total_price: number;
   course_type: CourseType;
+  course_id?: string;
+  course_name?: string;
   branch_id: string;
   branch_name?: string;
   payment_method: PaymentMethod;
@@ -34,4 +43,8 @@ export interface Student {
   completion_date?: string;
   o83?: boolean;
   contract_number?: string;
+
+  // New fields from detailed registration
+  start_date?: string;
+  payment_type?: 'FULL' | 'PARTIAL' | 'INSTALLMENT';
 }

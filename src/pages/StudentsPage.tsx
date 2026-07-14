@@ -45,6 +45,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import StudentModal, {
   type CreateStudentPayload,
 } from '@/components/ui/StudentModal';
+import AddStudentDialog, {
+  type AddStudentPayload,
+} from '@/components/ui/AddStudentDialog';
 import ImportStudentsModal from '@/components/ui/ImportStudentsModal';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -181,6 +184,7 @@ const StudentsPage = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
+  const [addStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [sortField, setSortField] = useState('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -333,6 +337,17 @@ const StudentsPage = () => {
     setEditStudent(null);
   };
 
+  const handleAddStudentDialogSubmit = (data: AddStudentPayload) => {
+    createMutation.mutate(data, {
+      onSuccess: () => {
+        toast.success(t('students.added'));
+        setAddStudentDialogOpen(false);
+      },
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
+    });
+  };
+
   const openEdit = (s: Student) => {
     setEditStudent(s);
     setModalOpen(true);
@@ -340,6 +355,9 @@ const StudentsPage = () => {
   const openCreate = () => {
     setEditStudent(null);
     setModalOpen(true);
+  };
+  const openAddStudentDialog = () => {
+    setAddStudentDialogOpen(true);
   };
 
   const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
@@ -379,6 +397,14 @@ const StudentsPage = () => {
           </Button>
           <Button className="gap-2" onClick={openCreate}>
             <Plus className="h-4 w-4" /> {t('students.add')}
+          </Button>
+          <Button
+            className="gap-2"
+            onClick={openAddStudentDialog}
+            variant="default"
+          >
+            <Plus className="h-4 w-4" />{' '}
+            {t('students.add_detailed') || 'Batafsil qoɻshish'}
           </Button>
         </div>
       </div>
@@ -936,6 +962,14 @@ const StudentsPage = () => {
         open={importModalOpen}
         onClose={() => setImportModalOpen(false)}
         branchId={branchId}
+      />
+
+      <AddStudentDialog
+        open={addStudentDialogOpen}
+        onClose={() => setAddStudentDialogOpen(false)}
+        onSubmit={handleAddStudentDialogSubmit}
+        loading={createMutation.isPending}
+        defaultBranchId={branchId}
       />
 
       <ConfirmDialog

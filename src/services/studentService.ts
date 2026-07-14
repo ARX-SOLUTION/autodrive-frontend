@@ -6,6 +6,7 @@ import type { CreateStudentPayload } from '@/components/ui/StudentModal';
 import { track } from '@/lib/umami';
 import type { ListResponse } from '@/types/list';
 import { parseListResponse } from '@/lib/listResponse';
+import type { AddStudentPayload } from '@/components/ui/AddStudentDialog';
 
 export const toLocalDateStr = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -239,4 +240,62 @@ export const bulkCreateStudents = async (file: File, branchId?: string) => {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data;
+};
+
+export const useCreateStudentWithPayment = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: AddStudentPayload) => {
+      // 1. Create student
+      const { data: studentData } = await axiosInstance.post('/students', {
+        first_name: payload.first_name,
+        last_name: payload.last_name,
+        middle_name: payload.middle_name,
+        phone: payload.phone,
+        email: payload.email,
+        passport_series: payload.passport_series,
+        passport_number: payload.passport_number,
+        birth_date: payload.birth_date,
+        gender: payload.gender,
+        address: payload.address,
+        course_type: payload.course_id, // We'll need to map this
+        total_price: payload.amount,
+        payment_method: payload.payment_method.toLowerCase(),
+        branch_id: payload.branch_id,
+        group_id: payload.group_id,
+        completion_date: payload.start_date,
+        has_document: false,
+        o83: false,
+        result: 'oqimoqda',
+        notes: '',
+        status: 'active',
+      });
+      const student = studentData?.data || studentData;
+
+      // 2. Create payment
+      await axiosInstance.post('/payments', {
+        student_id: student.id,
+        amount: payload.amount,
+        payment_method: payload.payment_method.toLowerCase(),
+        idempotency_key: `student-${student.id}-${Date.now()}`,
+      });
+
+      // 3. Assign to group (if provided)
+      if (payload.group_id) {
+        await axiosInstance.post(`/groups/${payload.group_id}/students`, {
+          student_id: student.id,
+        });
+      }
+
+      return student;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['students'] });
+      qc.invalidateQueries({ queryKey: ['payments'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
+      qc.invalidateQueries({ queryKey: ['groups'] });
+      track('student_create_with_payment');
+    },
+  });
 };

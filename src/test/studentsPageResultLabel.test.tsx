@@ -60,6 +60,17 @@ vi.mock('@/components/ui/ImportStudentsModal', () => ({
   default: () => null,
 }));
 
+vi.mock('@/components/ui/AddStudentDialog', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/services/courseService', () => ({
+  useCourses: () => ({ data: [], isLoading: false }),
+}));
+
+vi.mock('@/services/groupService', () => ({
+  useGroups: () => ({ data: [], isLoading: false, refetch: vi.fn() }),
+}));
 describe('StudentsPage result status label', () => {
   it('renders the localized label, not the raw enum value', () => {
     render(
