@@ -10,10 +10,17 @@ import {
   CheckCircle2,
   ChevronRight,
   CircleDollarSign,
+  ClipboardCheck,
   Clock3,
   ExternalLink,
+  GraduationCap,
+  Hourglass,
   LayoutDashboard,
+  PiggyBank,
   RefreshCw,
+  TrendingUp,
+  UserCheck,
+  UserMinus,
   UserPlus,
   Users,
   WalletCards,
@@ -280,6 +287,7 @@ const FilterBar = ({
           id="dashboard-from"
           type="date"
           value={from}
+          max={today}
           onChange={(event) => onChange('from', event.target.value)}
           className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
@@ -295,6 +303,7 @@ const FilterBar = ({
           id="dashboard-to"
           type="date"
           value={to}
+          max={today}
           onChange={(event) => onChange('to', event.target.value)}
           className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
@@ -1121,6 +1130,374 @@ const CompanyRevenueDashboard = () => {
           </div>
         </DashboardCard>
       </section>
+
+      <section
+        className="grid grid-cols-1 gap-4"
+        aria-label={t(
+          'dashboard.v2.financial_block.title',
+          'Moliyaviy ko‘rsatkichlar',
+        )}
+      >
+        <DashboardCard
+          title={t(
+            'dashboard.v2.financial_block.title',
+            'Moliyaviy ko‘rsatkichlar',
+          )}
+          description={t(
+            'dashboard.v2.financial_block.subtitle',
+            'Oy-oyga o‘sish, qarzdorlik yoshi va kurs turi bo‘yicha daromad.',
+          )}
+        >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <KpiCard
+              label={t(
+                'dashboard.v2.financial_block.mom_growth',
+                'Oy-oyga o‘sish',
+              )}
+              value={formatMoney(kpis.revenue.period)}
+              meta={comparisonRange}
+              icon={TrendingUp}
+              tone="primary"
+              delta={kpis.revenue.delta_percent}
+            />
+            <KpiCard
+              label={t('dashboard.v2.financial_block.bucket_0_30', '0–30 kun')}
+              value={formatMoney(kpis.debt_aging.bucket_0_30)}
+              meta={t(
+                'dashboard.v2.financial_block.debt_aging_meta',
+                'Qarzdorlik yoshi',
+              )}
+              icon={Clock3}
+              tone="info"
+            />
+            <KpiCard
+              label={t(
+                'dashboard.v2.financial_block.bucket_31_60',
+                '31–60 kun',
+              )}
+              value={formatMoney(kpis.debt_aging.bucket_31_60)}
+              meta={t(
+                'dashboard.v2.financial_block.debt_aging_meta',
+                'Qarzdorlik yoshi',
+              )}
+              icon={Clock3}
+              tone="info"
+            />
+            <KpiCard
+              label={t(
+                'dashboard.v2.financial_block.bucket_61_90',
+                '61–90 kun',
+              )}
+              value={formatMoney(kpis.debt_aging.bucket_61_90)}
+              meta={t(
+                'dashboard.v2.financial_block.debt_aging_meta',
+                'Qarzdorlik yoshi',
+              )}
+              icon={Clock3}
+              tone="info"
+            />
+            <KpiCard
+              label={t(
+                'dashboard.v2.financial_block.bucket_90_plus',
+                '90+ kun',
+              )}
+              value={formatMoney(kpis.debt_aging.bucket_90_plus)}
+              meta={t(
+                'dashboard.v2.financial_block.debt_aging_meta_urgent',
+                'Diqqat talab qiladi',
+              )}
+              icon={AlertTriangle}
+              tone="warning"
+            />
+            <KpiCard
+              label={t('dashboard.v2.financial_block.arpu', 'ARPU')}
+              value={formatMoney(kpis.arpu)}
+              meta={t(
+                'dashboard.v2.financial_block.arpu_meta',
+                'Faol talabaga o‘rtacha',
+              )}
+              icon={Users}
+              tone="primary"
+            />
+            <KpiCard
+              label={t(
+                'dashboard.v2.financial_block.cash_collection',
+                'Naqd yig‘ish darajasi',
+              )}
+              value={`${kpis.cash_collection_rate}%`}
+              meta={t(
+                'dashboard.v2.financial_block.cash_collection_meta',
+                'Faol talabalar bo‘yicha',
+              )}
+              icon={PiggyBank}
+              tone={kpis.cash_collection_rate >= 80 ? 'success' : 'warning'}
+            />
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {(['tezkor', 'avto_maktab'] as const).map((courseType) => {
+              const entry = kpis.revenue_by_course_type[courseType];
+              return (
+                <div
+                  key={courseType}
+                  className="rounded-lg border border-border/60 bg-background/30 p-3"
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t(`students.course.${courseType}`, courseType)}
+                  </p>
+                  <p className="mt-2 text-lg font-bold tabular-nums">
+                    {formatMoney(entry.revenue)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {entry.per_lesson !== null
+                      ? t(
+                          'dashboard.v2.financial_block.per_lesson',
+                          '{{value}} / dars',
+                          { value: formatMoney(entry.per_lesson) },
+                        )
+                      : t(
+                          'dashboard.v2.financial_block.no_lessons',
+                          'Dars yo‘q',
+                        )}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </DashboardCard>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4">
+        <DashboardCard
+          title={t('dashboard.v2.academic_block.title', "O'quv jarayoni")}
+          description={t(
+            'dashboard.v2.academic_block.subtitle',
+            'Davomat, sinov natijalari va bitirish statistikasi.',
+          )}
+        >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <KpiCard
+              label={t(
+                'dashboard.v2.academic_block.attendance_rate',
+                'Davomat',
+              )}
+              value={
+                kpis.attendance_rate != null ? `${kpis.attendance_rate}%` : '—'
+              }
+              meta={t(
+                'dashboard.v2.academic_block.attendance_meta',
+                'Tanlangan davr bo‘yicha',
+              )}
+              icon={CheckCircle2}
+              tone={
+                kpis.attendance_rate == null
+                  ? 'info'
+                  : kpis.attendance_rate >= 90
+                    ? 'success'
+                    : kpis.attendance_rate >= 75
+                      ? 'warning'
+                      : 'info'
+              }
+            />
+            <KpiCard
+              label={t(
+                'dashboard.v2.academic_block.dropout_rate',
+                'Tashlab ketish darajasi',
+              )}
+              value={`${kpis.dropout_rate ?? 0}%`}
+              meta={t(
+                'dashboard.v2.academic_block.suspended_meta',
+                '+{{count}} e’tibor talab qiladi',
+                { count: kpis.students.suspended ?? 0 },
+              )}
+              icon={UserMinus}
+              tone={(kpis.dropout_rate ?? 0) > 15 ? 'warning' : 'info'}
+            />
+            <KpiCard
+              label={t(
+                'dashboard.v2.academic_block.exam_pass_rate',
+                'Birinchi urinishda topshirish',
+              )}
+              value={
+                kpis.exam_first_attempt_pass_rate != null
+                  ? `${kpis.exam_first_attempt_pass_rate}%`
+                  : '—'
+              }
+              meta={t(
+                'dashboard.v2.academic_block.exam_pass_meta',
+                'Birinchi imtihon urinishi',
+              )}
+              icon={ClipboardCheck}
+              tone="info"
+            />
+            <KpiCard
+              label={t(
+                'dashboard.v2.academic_block.completion_time',
+                "O'rtacha bitirish muddati",
+              )}
+              value={
+                kpis.completion_time_median_days != null
+                  ? t(
+                      'dashboard.v2.academic_block.days_value',
+                      '{{count}} kun',
+                      {
+                        count: kpis.completion_time_median_days,
+                      },
+                    )
+                  : '—'
+              }
+              meta={t(
+                'dashboard.v2.academic_block.completion_meta',
+                'Bitirgan talabalar mediana',
+              )}
+              icon={Hourglass}
+              tone="primary"
+            />
+          </div>
+          {kpis.enrollment_funnel && (
+            <div className="mt-5 space-y-3 rounded-lg border border-border/60 bg-background/30 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t(
+                  'dashboard.v2.academic_block.funnel_title',
+                  'Ro‘yxatdan bitirishgacha',
+                )}
+              </p>
+              {(
+                [
+                  [
+                    'contract',
+                    t(
+                      'dashboard.v2.academic_block.funnel_contract',
+                      'Shartnoma',
+                    ),
+                    kpis.enrollment_funnel.contract,
+                    'bg-primary',
+                  ],
+                  [
+                    'active',
+                    t('dashboard.v2.academic_block.funnel_active', 'Faol'),
+                    kpis.enrollment_funnel.active,
+                    'bg-info',
+                  ],
+                  [
+                    'graduated',
+                    t(
+                      'dashboard.v2.academic_block.funnel_graduated',
+                      'Bitirgan',
+                    ),
+                    kpis.enrollment_funnel.graduated,
+                    'bg-success',
+                  ],
+                ] as const
+              ).map(([key, label, value, barClassName]) => (
+                <div key={key} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">{label}</span>
+                    <span className="font-semibold tabular-nums">{value}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={cn('h-full', barClassName)}
+                      style={{
+                        width: `${
+                          kpis.enrollment_funnel!.contract
+                            ? (value / kpis.enrollment_funnel!.contract) * 100
+                            : 0
+                        }%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+              <p className="pt-1 text-xs text-muted-foreground">
+                {t(
+                  'dashboard.v2.academic_block.funnel_dropped',
+                  'Tashlab ketgan / to‘xtatilgan',
+                )}
+                :{' '}
+                <span className="font-semibold text-foreground tabular-nums">
+                  {kpis.enrollment_funnel.dropped_or_suspended}
+                </span>
+              </p>
+            </div>
+          )}
+        </DashboardCard>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4">
+        <DashboardCard
+          title={t('dashboard.v2.staff_block.title', 'Xodim samaradorligi')}
+          description={t(
+            'dashboard.v2.staff_block.subtitle',
+            'O‘qituvchi yuklamasi, davomat va operator samaradorligi.',
+          )}
+        >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <KpiCard
+              label={t(
+                'dashboard.v2.staff_block.teacher_load_label',
+                'O‘qituvchi yuklamasi',
+              )}
+              value={
+                kpis.teacher_load?.avg_lessons_per_active_teacher != null
+                  ? `${kpis.teacher_load.avg_lessons_per_active_teacher} ${t('dashboard.v2.staff_block.teacher_load_unit', 'dars/o‘qituvchi')}`
+                  : t('dashboard.v2.staff_block.no_data', 'Maʼlumot yo‘q')
+              }
+              meta={t(
+                'dashboard.v2.staff_block.teacher_load_meta',
+                '{{teachers}} faol o‘qituvchi · {{students}} student/o‘qituvchi',
+                {
+                  teachers: kpis.teacher_load?.active_teacher_count ?? 0,
+                  students: kpis.teacher_load?.avg_students_per_teacher ?? 0,
+                },
+              )}
+              icon={GraduationCap}
+              tone="primary"
+              onClick={() => navigate(withContext('/teachers'))}
+            />
+            <KpiCard
+              label={t(
+                'dashboard.v2.staff_block.on_time_attendance_label',
+                'Vaqtida davomat belgilash',
+              )}
+              value={
+                kpis.on_time_attendance_marking_rate != null
+                  ? `${kpis.on_time_attendance_marking_rate}%`
+                  : t('dashboard.v2.staff_block.no_data', 'Maʼlumot yo‘q')
+              }
+              meta={t(
+                'dashboard.v2.staff_block.on_time_attendance_meta',
+                'Dars kuni ichida belgilangan davomatlar ulushi',
+              )}
+              icon={Clock3}
+              tone={
+                (kpis.on_time_attendance_marking_rate ?? 0) >= 80
+                  ? 'success'
+                  : 'warning'
+              }
+              onClick={() => navigate(withContext('/attendance'))}
+            />
+            <KpiCard
+              label={t(
+                'dashboard.v2.staff_block.operator_follow_through_label',
+                'Operator to‘lov davomiyligi',
+              )}
+              value={
+                kpis.avg_operator_payment_follow_through_rate != null
+                  ? `${kpis.avg_operator_payment_follow_through_rate}%`
+                  : t('dashboard.v2.staff_block.no_data', 'Maʼlumot yo‘q')
+              }
+              meta={t(
+                'dashboard.v2.staff_block.operator_follow_through_meta',
+                'Ro‘yxatdan o‘tgan studentlardan to‘lov qilganlar ulushi',
+              )}
+              icon={UserCheck}
+              tone="info"
+              onClick={() => navigate(withContext('/operators'))}
+            />
+          </div>
+        </DashboardCard>
+      </section>
+
       <p className="text-right text-xs text-muted-foreground">
         {t('dashboard.v2.updated', 'Yangilandi')} ·{' '}
         {formatDate(data.freshness.generated_at, {

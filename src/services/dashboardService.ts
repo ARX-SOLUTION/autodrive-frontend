@@ -105,6 +105,7 @@ export interface CompanyOverview {
       new_previous_period?: number;
       completed: number;
       dropped: number;
+      suspended?: number;
     };
     result_stats?: { oqimoqda: number; topshirdi: number; yiqildi: number };
     course_mix: { tezkor: number; avto_maktab: number };
@@ -114,6 +115,38 @@ export interface CompanyOverview {
       debt: number;
       coverage_rate: number;
     };
+    debt_aging: {
+      bucket_0_30: number;
+      bucket_31_60: number;
+      bucket_61_90: number;
+      bucket_90_plus: number;
+    };
+    arpu: number;
+    cash_collection_rate: number;
+    revenue_by_course_type: {
+      tezkor: { revenue: number; per_lesson: number | null };
+      avto_maktab: { revenue: number; per_lesson: number | null };
+    };
+    // O'quv jarayoni (academic) block — autodrive-sgf.3
+    attendance_rate?: number | null;
+    dropout_rate?: number;
+    exam_first_attempt_pass_rate?: number | null;
+    completion_time_median_days?: number | null;
+    enrollment_funnel?: {
+      contract: number;
+      active: number;
+      graduated: number;
+      dropped_or_suspended: number;
+    };
+    // Xodim (staff) block (autodrive-sgf.4)
+    teacher_load?: {
+      avg_lessons_per_active_teacher: number | null;
+      avg_students_per_teacher: number | null;
+      active_teacher_count: number;
+      top_teachers: Array<{ id: string; name: string; lesson_count: number }>;
+    };
+    on_time_attendance_marking_rate?: number | null;
+    avg_operator_payment_follow_through_rate?: number | null;
   };
   revenue_trend: Array<{
     period_start: string;

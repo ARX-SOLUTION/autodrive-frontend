@@ -243,7 +243,54 @@
       "kpi_section_label": "KPI контроля выручки",
       "coverage_bar_label": "{{rate}}% оплачено полностью",
       "last_payment_none": "Нет платежа",
-      "attendance_no_data": "Нет данных о посещаемости"
+      "attendance_no_data": "Нет данных о посещаемости",
+      "financial_block": {
+        "title": "Финансовые показатели",
+        "subtitle": "Рост месяц к месяцу, возраст задолженности и доход по типу курса.",
+        "mom_growth": "Рост месяц к месяцу",
+        "bucket_0_30": "0–30 дней",
+        "bucket_31_60": "31–60 дней",
+        "bucket_61_90": "61–90 дней",
+        "bucket_90_plus": "90+ дней",
+        "debt_aging_meta": "Возраст задолженности",
+        "debt_aging_meta_urgent": "Требует внимания",
+        "arpu": "ARPU",
+        "arpu_meta": "В среднем на активного студента",
+        "cash_collection": "Уровень сбора наличных",
+        "cash_collection_meta": "По активным студентам",
+        "per_lesson": "{{value}} / урок",
+        "no_lessons": "Нет уроков"
+      },
+      "academic_block": {
+        "title": "Учебный процесс",
+        "subtitle": "Посещаемость, результаты экзаменов и статистика выпуска.",
+        "attendance_rate": "Посещаемость",
+        "attendance_meta": "За выбранный период",
+        "dropout_rate": "Уровень отсева",
+        "suspended_meta": "+{{count}} требует внимания",
+        "exam_pass_rate": "Сдача с первой попытки",
+        "exam_pass_meta": "Первая попытка экзамена",
+        "completion_time": "Среднее время завершения",
+        "completion_meta": "Медиана среди выпустившихся",
+        "days_value": "{{count}} дн.",
+        "funnel_title": "От регистрации до выпуска",
+        "funnel_contract": "Договор",
+        "funnel_active": "Активные",
+        "funnel_graduated": "Выпустившиеся",
+        "funnel_dropped": "Отчислены / приостановлены"
+      },
+      "staff_block": {
+        "title": "Эффективность персонала",
+        "subtitle": "Нагрузка преподавателей, посещаемость и работа операторов.",
+        "no_data": "Нет данных",
+        "teacher_load_label": "Нагрузка преподавателя",
+        "teacher_load_unit": "занятий/преподаватель",
+        "teacher_load_meta": "{{teachers}} активных преподавателей · {{students}} студентов/преподаватель",
+        "on_time_attendance_label": "Своевременная отметка посещаемости",
+        "on_time_attendance_meta": "Доля отметок посещаемости, сделанных в день занятия",
+        "operator_follow_through_label": "Доведение до оплаты (оператор)",
+        "operator_follow_through_meta": "Доля зарегистрированных студентов, совершивших оплату"
+      }
     }
   },
   "branches": {
@@ -554,6 +601,8 @@
     "deleted": "Оператор удалён",
     "count": "{{count}} операторов",
     "form_desc": "Введите данные оператора",
+    "registered_count": "Зарегистрировано",
+    "follow_through_rate": "Доведение до оплаты",
     "detail": {
       "email": "Email",
       "branch": "Филиал",
@@ -580,7 +629,9 @@
     "deleted": "Преподаватель удалён",
     "count": "{{count}} преподавателей",
     "search_placeholder": "Поиск...",
-    "form_desc": "Введите данные преподавателя"
+    "form_desc": "Введите данные преподавателя",
+    "lesson_count": "Кол-во занятий",
+    "student_count": "Кол-во студентов"
   },
   "users": {
     "title": "Пользователи",

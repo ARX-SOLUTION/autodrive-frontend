@@ -308,6 +308,13 @@ const TeachersPage = () => {
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                   {t('teachers.branch')}
                 </th>
+                {/* autodrive-sgf.4 -- lifetime counts, no date filter on this page */}
+                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                  {t('teachers.lesson_count')}
+                </th>
+                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                  {t('teachers.student_count')}
+                </th>
                 <th className="px-4 py-3 text-center font-medium text-muted-foreground">
                   {t('common.status')}
                 </th>
@@ -320,7 +327,7 @@ const TeachersPage = () => {
               {isLoading
                 ? [...Array(3)].map((_, i) => (
                     <tr key={i} className="border-b border-border/50">
-                      <td colSpan={7} className="p-4">
+                      <td colSpan={9} className="p-4">
                         <Skeleton className="h-5 w-full" />
                       </td>
                     </tr>
@@ -359,6 +366,12 @@ const TeachersPage = () => {
                       <td className="px-4 py-3 text-muted-foreground">
                         {teacher.branch_name ||
                           getBranchName(teacher.branch_id)}
+                      </td>
+                      <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
+                        {teacher.lesson_count ?? t('common.na')}
+                      </td>
+                      <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
+                        {teacher.student_count ?? t('common.na')}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span
@@ -424,6 +437,14 @@ const TeachersPage = () => {
                       value:
                         teacher.branch_name ||
                         getBranchName(teacher.branch_id || ''),
+                    },
+                    {
+                      label: t('teachers.lesson_count'),
+                      value: teacher.lesson_count ?? t('common.na'),
+                    },
+                    {
+                      label: t('teachers.student_count'),
+                      value: teacher.student_count ?? t('common.na'),
                     },
                     {
                       label: t('operators.detail.created'),
