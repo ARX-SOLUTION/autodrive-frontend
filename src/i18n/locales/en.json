@@ -415,7 +415,8 @@
       "tab_info": "Info",
       "tab_payments": "Payments",
       "tab_exams": "Exams",
-      "tab_attendance": "Attendance"
+      "tab_attendance": "Attendance",
+      "referrals_count": "Referral count"
     },
     "tab_info": "Details",
     "tab_exams": "Exams",
@@ -651,7 +652,8 @@
       "branch": "Branch",
       "phone": "Phone",
       "created": "Created",
-      "tab_registered_students": "Registered students"
+      "tab_registered_students": "Registered students",
+      "referred_students_count": "Referred students"
     }
   },
   "profile": {

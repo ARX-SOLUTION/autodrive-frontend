@@ -24,6 +24,7 @@ const STUDENT = {
   course_type: 'tezkor',
   total_price: 3000000,
   debt: 1200000,
+  referrals_count: 2,
 };
 
 vi.mock('@/services/studentService', () => ({
@@ -116,5 +117,16 @@ describe('StudentDetailPage attendance history tab', () => {
     expect(screen.getByText('attendance.status_present')).toBeTruthy();
     expect(screen.getByText('attendance.status_absent')).toBeTruthy();
     expect(screen.getAllByText('B-1').length).toBeGreaterThan(0);
+  });
+});
+
+describe('StudentDetailPage referrals_count Field', () => {
+  it('links the referral count to the filtered students list', () => {
+    auth.role = 'manager';
+    renderPage();
+    const link = screen.getByText('2').closest('a');
+    expect(link?.getAttribute('href')).toBe(
+      '/students?referred_by_student_id=s1',
+    );
   });
 });

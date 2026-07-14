@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Link,
+  useParams,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Pencil, Plus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -223,6 +228,11 @@ const StudentDetailPage = () => {
               value={student.registered_by ?? t('common.na')}
             />
             <Field label={t('students.notes')} value={student.notes || '—'} />
+            <Field
+              label={t('students.detail.referrals_count')}
+              value={String(student.referrals_count ?? 0)}
+              to={`/students?referred_by_student_id=${student.id}`}
+            />
           </dl>
         </TabsContent>
 
@@ -292,12 +302,31 @@ const BackButton = ({
   </button>
 );
 
-const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
+const Field = ({
+  label,
+  value,
+  to,
+}: {
+  label: string;
+  value: React.ReactNode;
+  to?: string;
+}) => (
   <div className="flex flex-col gap-0.5">
     <dt className="text-xs uppercase tracking-wide text-muted-foreground">
       {label}
     </dt>
-    <dd>{value}</dd>
+    <dd>
+      {to ? (
+        <Link
+          to={to}
+          className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {value}
+        </Link>
+      ) : (
+        value
+      )}
+    </dd>
   </div>
 );
 

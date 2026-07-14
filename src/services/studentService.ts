@@ -20,6 +20,8 @@ interface StudentListOptions {
   sortOrder?: 'asc' | 'desc';
   hasDebt?: boolean;
   status?: StudentStatus;
+  referredByUserId?: string;
+  referredByStudentId?: string;
 }
 
 interface StudentListParams extends StudentListOptions {
@@ -43,6 +45,8 @@ const toStudentQueryParams = ({
   sortOrder,
   hasDebt,
   status,
+  referredByUserId,
+  referredByStudentId,
 }: StudentListParams) => ({
   course_type: courseType,
   branch_id: branchId,
@@ -56,6 +60,8 @@ const toStudentQueryParams = ({
   sort_order: sortOrder,
   has_debt: hasDebt,
   status,
+  referred_by_user_id: referredByUserId,
+  referred_by_student_id: referredByStudentId,
 });
 
 export const fetchStudentsPage = async (
@@ -109,6 +115,8 @@ export const useStudentsPage = (
       options?.sortOrder,
       options?.hasDebt,
       options?.status,
+      options?.referredByUserId,
+      options?.referredByStudentId,
     ],
     enabled: (options?.enabled ?? true) && baseEnabled,
     queryFn: () =>

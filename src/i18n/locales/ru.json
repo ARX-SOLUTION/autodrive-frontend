@@ -415,7 +415,8 @@
       "tab_info": "Информация",
       "tab_payments": "Платежи",
       "tab_exams": "Экзамены",
-      "tab_attendance": "Посещаемость"
+      "tab_attendance": "Посещаемость",
+      "referrals_count": "Количество приведённых"
     },
     "tab_info": "Данные",
     "tab_exams": "Экзамены",
@@ -651,7 +652,8 @@
       "branch": "Филиал",
       "phone": "Телефон",
       "created": "Создан",
-      "tab_registered_students": "Зарегистрированные студенты"
+      "tab_registered_students": "Зарегистрированные студенты",
+      "referred_students_count": "Приведённые ученики"
     }
   },
   "profile": {
