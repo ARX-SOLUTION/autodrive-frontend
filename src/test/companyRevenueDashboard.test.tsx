@@ -49,6 +49,18 @@ const overview = vi.hoisted(() => ({
       },
       students: { active: 60, new: 12, completed: 14, dropped: 8 },
       collection: { paid: 40, partial: 10, debt: 10, coverage_rate: 66.7 },
+      debt_aging: {
+        bucket_0_30: 4000000,
+        bucket_31_60: 3000000,
+        bucket_61_90: 2000000,
+        bucket_90_plus: 1000000,
+      },
+      arpu: 1155000,
+      cash_collection_rate: 87.5,
+      revenue_by_course_type: {
+        tezkor: { revenue: 40000000, per_lesson: 200000 },
+        avto_maktab: { revenue: 29300000, per_lesson: null },
+      },
     },
     revenue_trend: [
       {
@@ -123,6 +135,21 @@ describe('CompanyRevenueDashboard', () => {
     expect(screen.getByText('Ali Valiyev')).toBeInTheDocument();
     expect(
       screen.getByText((content) => content.replace(/\D/g, '') === '5000000'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows per-lesson revenue when lessons exist, and a no-lessons label when the count is 0', () => {
+    render(
+      <MemoryRouter>
+        <CompanyRevenueDashboard />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByText('dashboard.v2.financial_block.per_lesson'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('dashboard.v2.financial_block.no_lessons'),
     ).toBeInTheDocument();
   });
 
@@ -247,5 +274,78 @@ describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
     expect(params.get('date_to')).toBe('2026-07-10');
     expect(params.get('from')).toBeNull();
     expect(params.get('to')).toBeNull();
+  });
+});
+
+// autodrive-sgf.3 — academic block: null metrics must render a '—'
+// placeholder (not "null%"/"NaN%"), and the enrollment-funnel bar width
+// must not divide by a zero `contract` denominator (NaN%/Infinity% in the
+// inline style would silently break the bar).
+describe('CompanyRevenueDashboard academic block (autodrive-sgf.3)', () => {
+  it('shows — for null academic metrics and guards funnel divide-by-zero', () => {
+    const original = overview.data.kpis;
+    overview.data.kpis = {
+      ...original,
+      attendance_rate: null,
+      dropout_rate: 5,
+      exam_first_attempt_pass_rate: null,
+      completion_time_median_days: null,
+      enrollment_funnel: {
+        contract: 0,
+        active: 0,
+        graduated: 0,
+        dropped_or_suspended: 0,
+      },
+    } as typeof original;
+    try {
+      const { container } = render(
+        <MemoryRouter>
+          <CompanyRevenueDashboard />
+        </MemoryRouter>,
+      );
+      expect(screen.getAllByText('—')).toHaveLength(3);
+      expect(container.innerHTML).not.toContain('NaN%');
+      expect(container.innerHTML).not.toContain('Infinity%');
+    } finally {
+      overview.data.kpis = original;
+    }
+  });
+});
+
+// autodrive-sgf.4 — the on-time attendance KPI is the one card in the staff
+// block with real conditional rendering (tone flips on a threshold), so it's
+// the seam worth locking down; the other two staff-block KPIs are plain
+// pass-through display like every other KpiCard already covered above.
+describe('CompanyRevenueDashboard staff block (autodrive-sgf.4)', () => {
+  afterEach(() => {
+    Object.assign(overview.data.kpis, {
+      on_time_attendance_marking_rate: undefined,
+    });
+  });
+
+  it('tones the on-time attendance KPI as success when the rate is >= 80', () => {
+    Object.assign(overview.data.kpis, { on_time_attendance_marking_rate: 92 });
+    render(
+      <MemoryRouter>
+        <CompanyRevenueDashboard />
+      </MemoryRouter>,
+    );
+    const card = screen
+      .getByText('dashboard.v2.staff_block.on_time_attendance_label')
+      .closest('[role="button"]');
+    expect(card?.innerHTML).toContain('bg-success');
+  });
+
+  it('tones the on-time attendance KPI as warning when the rate is < 80', () => {
+    Object.assign(overview.data.kpis, { on_time_attendance_marking_rate: 40 });
+    render(
+      <MemoryRouter>
+        <CompanyRevenueDashboard />
+      </MemoryRouter>,
+    );
+    const card = screen
+      .getByText('dashboard.v2.staff_block.on_time_attendance_label')
+      .closest('[role="button"]');
+    expect(card?.innerHTML).toContain('bg-warning');
   });
 });

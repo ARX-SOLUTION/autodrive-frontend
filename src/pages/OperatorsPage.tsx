@@ -301,6 +301,15 @@ const OperatorsPage = () => {
                     )}
                   </button>
                 </th>
+                {/* autodrive-sgf.4 -- lifetime counts, no date filter on this page.
+                    Never labeled "conversion" -- there is no true lead-conversion
+                    data, only registered-student -> has-a-payment follow-through. */}
+                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                  {t('operators.registered_count')}
+                </th>
+                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                  {t('operators.follow_through_rate')}
+                </th>
                 <th className="px-4 py-3 text-center font-medium text-muted-foreground">
                   {t('common.status')}
                 </th>
@@ -313,7 +322,7 @@ const OperatorsPage = () => {
               {isLoading
                 ? [...Array(3)].map((_, i) => (
                     <tr key={i} className="border-b border-border/50">
-                      <td colSpan={6} className="p-4">
+                      <td colSpan={8} className="p-4">
                         <Skeleton className="h-5 w-full" />
                       </td>
                     </tr>
@@ -345,6 +354,14 @@ const OperatorsPage = () => {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {o?.branch_name || getBranchName(o?.branch_id)}
+                      </td>
+                      <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
+                        {o.registered_students_count ?? t('common.na')}
+                      </td>
+                      <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
+                        {o.payment_follow_through_rate != null
+                          ? `${o.payment_follow_through_rate}%`
+                          : t('common.na')}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span
@@ -402,6 +419,17 @@ const OperatorsPage = () => {
                       label: t('operators.detail.branch'),
                       value:
                         o?.branch_name || getBranchName(o?.branch_id || ''),
+                    },
+                    {
+                      label: t('operators.registered_count'),
+                      value: o.registered_students_count ?? t('common.na'),
+                    },
+                    {
+                      label: t('operators.follow_through_rate'),
+                      value:
+                        o.payment_follow_through_rate != null
+                          ? `${o.payment_follow_through_rate}%`
+                          : t('common.na'),
                     },
                     {
                       label: t('operators.detail.created'),

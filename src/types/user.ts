@@ -29,6 +29,13 @@ export interface User {
   groups?: UserRelationSummary[];
   // Role-relevant relations from GET /users/:id — operator only.
   registered_students?: UserRelationSummary[];
+  // autodrive-sgf.4 — GET /users?role=teacher list columns (lifetime, not
+  // period-scoped — this page has no date filter).
+  lesson_count?: number;
+  student_count?: number;
+  // autodrive-sgf.4 — GET /users?role=operator list columns.
+  registered_students_count?: number;
+  payment_follow_through_rate?: number | null;
 }
 
 export interface LoginCredentials {

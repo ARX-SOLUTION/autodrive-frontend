@@ -243,7 +243,54 @@
       "kpi_section_label": "Revenue control KPIs",
       "coverage_bar_label": "{{rate}}% paid in full",
       "last_payment_none": "No payment",
-      "attendance_no_data": "No attendance data"
+      "attendance_no_data": "No attendance data",
+      "financial_block": {
+        "title": "Financial KPIs",
+        "subtitle": "Month-over-month growth, debt aging, and revenue by course type.",
+        "mom_growth": "Month-over-month growth",
+        "bucket_0_30": "0–30 days",
+        "bucket_31_60": "31–60 days",
+        "bucket_61_90": "61–90 days",
+        "bucket_90_plus": "90+ days",
+        "debt_aging_meta": "Debt aging",
+        "debt_aging_meta_urgent": "Needs attention",
+        "arpu": "ARPU",
+        "arpu_meta": "Average per active student",
+        "cash_collection": "Cash collection rate",
+        "cash_collection_meta": "Across active students",
+        "per_lesson": "{{value}} / lesson",
+        "no_lessons": "No lessons"
+      },
+      "academic_block": {
+        "title": "Academic progress",
+        "subtitle": "Attendance, exam results, and graduation stats.",
+        "attendance_rate": "Attendance",
+        "attendance_meta": "For the selected period",
+        "dropout_rate": "Dropout rate",
+        "suspended_meta": "+{{count}} need attention",
+        "exam_pass_rate": "First-attempt pass rate",
+        "exam_pass_meta": "First exam attempt",
+        "completion_time": "Median completion time",
+        "completion_meta": "Median across graduates",
+        "days_value": "{{count}} days",
+        "funnel_title": "Enrollment to graduation",
+        "funnel_contract": "Contract",
+        "funnel_active": "Active",
+        "funnel_graduated": "Graduated",
+        "funnel_dropped": "Dropped / suspended"
+      },
+      "staff_block": {
+        "title": "Staff performance",
+        "subtitle": "Teacher load, attendance timeliness, and operator follow-through.",
+        "no_data": "No data",
+        "teacher_load_label": "Teacher load",
+        "teacher_load_unit": "lessons/teacher",
+        "teacher_load_meta": "{{teachers}} active teachers · {{students}} students/teacher",
+        "on_time_attendance_label": "On-time attendance marking",
+        "on_time_attendance_meta": "Share of attendance marked on the lesson day",
+        "operator_follow_through_label": "Operator payment follow-through",
+        "operator_follow_through_meta": "Share of registered students who made a payment"
+      }
     }
   },
   "branches": {
@@ -554,6 +601,8 @@
     "deleted": "Operator deleted",
     "count": "{{count}} operators",
     "form_desc": "Enter the operator's details",
+    "registered_count": "Registered",
+    "follow_through_rate": "Payment follow-through",
     "detail": {
       "email": "Email",
       "branch": "Branch",
@@ -580,7 +629,9 @@
     "deleted": "Teacher deleted",
     "count": "{{count}} teachers",
     "search_placeholder": "Search...",
-    "form_desc": "Enter the teacher's details"
+    "form_desc": "Enter the teacher's details",
+    "lesson_count": "Lesson count",
+    "student_count": "Student count"
   },
   "users": {
     "title": "Users",

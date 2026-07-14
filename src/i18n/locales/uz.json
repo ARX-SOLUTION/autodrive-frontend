@@ -243,7 +243,54 @@
       "kpi_section_label": "Tushum boshqaruvi KPI'lari",
       "coverage_bar_label": "{{rate}}% to'liq to'langan",
       "last_payment_none": "Payment yo‘q",
-      "attendance_no_data": "Davomat maʼlumoti yo‘q"
+      "attendance_no_data": "Davomat maʼlumoti yo‘q",
+      "financial_block": {
+        "title": "Moliyaviy ko‘rsatkichlar",
+        "subtitle": "Oy-oyga o‘sish, qarzdorlik yoshi va kurs turi bo‘yicha daromad.",
+        "mom_growth": "Oy-oyga o‘sish",
+        "bucket_0_30": "0–30 kun",
+        "bucket_31_60": "31–60 kun",
+        "bucket_61_90": "61–90 kun",
+        "bucket_90_plus": "90+ kun",
+        "debt_aging_meta": "Qarzdorlik yoshi",
+        "debt_aging_meta_urgent": "Diqqat talab qiladi",
+        "arpu": "ARPU",
+        "arpu_meta": "Faol talabaga o‘rtacha",
+        "cash_collection": "Naqd yig‘ish darajasi",
+        "cash_collection_meta": "Faol talabalar bo‘yicha",
+        "per_lesson": "{{value}} / dars",
+        "no_lessons": "Dars yo‘q"
+      },
+      "academic_block": {
+        "title": "O'quv jarayoni",
+        "subtitle": "Davomat, sinov natijalari va bitirish statistikasi.",
+        "attendance_rate": "Davomat",
+        "attendance_meta": "Tanlangan davr bo‘yicha",
+        "dropout_rate": "Tashlab ketish darajasi",
+        "suspended_meta": "+{{count}} e’tibor talab qiladi",
+        "exam_pass_rate": "Birinchi urinishda topshirish",
+        "exam_pass_meta": "Birinchi imtihon urinishi",
+        "completion_time": "O'rtacha bitirish muddati",
+        "completion_meta": "Bitirgan talabalar mediana",
+        "days_value": "{{count}} kun",
+        "funnel_title": "Ro‘yxatdan bitirishgacha",
+        "funnel_contract": "Shartnoma",
+        "funnel_active": "Faol",
+        "funnel_graduated": "Bitirgan",
+        "funnel_dropped": "Tashlab ketgan / to‘xtatilgan"
+      },
+      "staff_block": {
+        "title": "Xodim samaradorligi",
+        "subtitle": "O‘qituvchi yuklamasi, davomat va operator samaradorligi.",
+        "no_data": "Maʼlumot yo‘q",
+        "teacher_load_label": "O‘qituvchi yuklamasi",
+        "teacher_load_unit": "dars/o‘qituvchi",
+        "teacher_load_meta": "{{teachers}} faol o‘qituvchi · {{students}} student/o‘qituvchi",
+        "on_time_attendance_label": "Vaqtida davomat belgilash",
+        "on_time_attendance_meta": "Dars kuni ichida belgilangan davomatlar ulushi",
+        "operator_follow_through_label": "Operator to‘lov davomiyligi",
+        "operator_follow_through_meta": "Ro‘yxatdan o‘tgan studentlardan to‘lov qilganlar ulushi"
+      }
     }
   },
   "branches": {
@@ -554,6 +601,8 @@
     "deleted": "Operator o'chirildi",
     "count": "{{count}} ta operator",
     "form_desc": "Operator ma'lumotlarini kiriting",
+    "registered_count": "Ro'yxatdan o'tkazgan",
+    "follow_through_rate": "To'lov davomiyligi",
     "detail": {
       "email": "Email",
       "branch": "Filial",
@@ -580,7 +629,9 @@
     "deleted": "O'qituvchi o'chirildi",
     "count": "{{count}} ta o'qituvchi",
     "search_placeholder": "Qidirish...",
-    "form_desc": "O'qituvchi ma'lumotlarini kiriting"
+    "form_desc": "O'qituvchi ma'lumotlarini kiriting",
+    "lesson_count": "Darslar soni",
+    "student_count": "Studentlar soni"
   },
   "users": {
     "title": "Foydalanuvchilar",
