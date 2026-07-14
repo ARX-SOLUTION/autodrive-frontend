@@ -12,6 +12,7 @@ import {
   fetchAllStudents,
   useStudentsPage,
   useCreateStudent,
+  useCreateStudentWithPayment,
   useUpdateStudent,
   useDeleteStudent,
   toLocalDateStr,
@@ -236,6 +237,7 @@ const StudentsPage = () => {
   const serverTotalPages = Math.max(1, studentsPage?.meta.totalPages ?? 1);
 
   const createMutation = useCreateStudent();
+  const createWithPaymentMutation = useCreateStudentWithPayment();
   const updateMutation = useUpdateStudent();
   const deleteMutation = useDeleteStudent();
 
@@ -338,7 +340,7 @@ const StudentsPage = () => {
   };
 
   const handleAddStudentDialogSubmit = (data: AddStudentPayload) => {
-    createMutation.mutate(data, {
+    createWithPaymentMutation.mutate(data, {
       onSuccess: () => {
         toast.success(t('students.added'));
         setAddStudentDialogOpen(false);
@@ -968,7 +970,7 @@ const StudentsPage = () => {
         open={addStudentDialogOpen}
         onClose={() => setAddStudentDialogOpen(false)}
         onSubmit={handleAddStudentDialogSubmit}
-        loading={createMutation.isPending}
+        loading={createWithPaymentMutation.isPending}
         defaultBranchId={branchId}
       />
 

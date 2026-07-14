@@ -42,6 +42,10 @@ vi.mock('@/services/studentService', async (importOriginal) => {
       isLoading: false,
     }),
     useCreateStudent: () => ({ mutate: vi.fn(), isPending: false }),
+    useCreateStudentWithPayment: () => ({
+      mutate: vi.fn(),
+      isPending: false,
+    }),
     useUpdateStudent: () => ({ mutate: vi.fn(), isPending: false }),
     useDeleteStudent: () => ({ mutate: vi.fn(), isPending: false }),
   };
