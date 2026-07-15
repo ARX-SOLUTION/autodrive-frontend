@@ -15,11 +15,18 @@ const auth = vi.hoisted(() => ({ role: 'owner' as string }));
 
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
-    selector({ user: { role: auth.role, name: 'Test User' } }),
+    selector({
+      user: { id: 'u1', role: auth.role, name: 'Test User' },
+      setUser: vi.fn(),
+    }),
 }));
 
 vi.mock('@/services/authService', () => ({
   useChangePassword: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
+vi.mock('@/services/userService', () => ({
+  useUpdateUser: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 const linkStatus = vi.hoisted(() => ({
@@ -60,8 +67,12 @@ describe('ProfilePage Telegram section — not linked', () => {
     linkStatus.linked = false;
     linkStatus.daily_report_enabled = false;
     renderProfile();
-    expect(screen.getByText('profile.telegram.link_button')).toBeInTheDocument();
-    expect(screen.getByText('profile.telegram.check_button')).toBeInTheDocument();
+    expect(
+      screen.getByText('profile.telegram.link_button'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('profile.telegram.check_button'),
+    ).toBeInTheDocument();
     expect(
       screen.queryByText('profile.telegram.unlink_button'),
     ).not.toBeInTheDocument();
@@ -79,7 +90,9 @@ describe('ProfilePage Telegram section — linked, daily-report gate', () => {
     expect(
       screen.getByText('profile.telegram.daily_report_label'),
     ).toBeInTheDocument();
-    expect(screen.getByText('profile.telegram.unlink_button')).toBeInTheDocument();
+    expect(
+      screen.getByText('profile.telegram.unlink_button'),
+    ).toBeInTheDocument();
   });
 
   it('shows the toggle for manager', () => {
@@ -98,7 +111,9 @@ describe('ProfilePage Telegram section — linked, daily-report gate', () => {
     expect(
       screen.queryByText('profile.telegram.daily_report_label'),
     ).not.toBeInTheDocument();
-    expect(screen.getByText('profile.telegram.unlink_button')).toBeInTheDocument();
+    expect(
+      screen.getByText('profile.telegram.unlink_button'),
+    ).toBeInTheDocument();
   });
 });
 
@@ -114,7 +129,9 @@ describe('ProfilePage Telegram section — unlink confirm', () => {
     renderProfile();
 
     fireEvent.click(screen.getByText('profile.telegram.unlink_button'));
-    expect(screen.getByText('profile.telegram.unlink_title')).toBeInTheDocument();
+    expect(
+      screen.getByText('profile.telegram.unlink_title'),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('common.delete'));
     expect(mutate).toHaveBeenCalled();

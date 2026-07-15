@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useChangePassword } from '@/services/authService';
+import { useUpdateUser } from '@/services/userService';
 import {
   useTelegramLinkStatus,
   useTelegramLinkToken,
@@ -22,22 +23,48 @@ import {
   formatUzPhoneInput,
   isValidUzPhone,
   uzLocalDigits,
+  uzPhoneE164,
 } from '@/lib/phoneFormater';
 
 const ProfilePage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
   const changePasswordMut = useChangePassword();
+  const updateProfileMut = useUpdateUser();
   const [pwForm, setPwForm] = useState({
     currentPassword: '',
     newPassword: '',
   });
-  // Masked, controlled phone (defaults to +998). The surrounding info card's
-  // Save button is not yet wired to a profile-update mutation, so there's no
-  // payload to submit uzPhoneE164 into -- the mask + inline validation still
-  // give correct typing feedback for when that flow is added.
+  const [name, setName] = useState(user?.name ?? '');
+  // Masked, controlled phone (defaults to +998).
   const [phone, setPhone] = useState(formatUzPhoneInput(user?.phone));
+  // Matches PATCH /users/:id's class-level @Roles(owner, manager, dev) guard
+  // -- operator/teacher would 403, so their fields stay read-only rather
+  // than showing a Save button that silently fails.
+  const canEditProfile =
+    user?.role === 'owner' || user?.role === 'manager' || user?.role === 'dev';
+  const phoneValid = uzLocalDigits(phone).length === 0 || isValidUzPhone(phone);
+
+  const handleSaveProfile = () => {
+    if (!user || !canEditProfile || !phoneValid) return;
+    updateProfileMut.mutate(
+      {
+        id: user.id,
+        fullName: name.trim(),
+        phone: uzLocalDigits(phone).length > 0 ? uzPhoneE164(phone) : undefined,
+      },
+      {
+        onSuccess: (updated) => {
+          setUser({ ...user, ...updated });
+          toast.success(t('profile.update_success'));
+        },
+        onError: (error) =>
+          toast.error(extractErrorMessage(error, t('common.error'))),
+      },
+    );
+  };
 
   const { data: linkStatus, refetch: refetchLinkStatus } =
     useTelegramLinkStatus();
@@ -156,8 +183,10 @@ const ProfilePage = () => {
             <Label htmlFor="profile-name">{t('profile.name')}</Label>
             <Input
               id="profile-name"
-              defaultValue={user?.name}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               autoComplete="name"
+              disabled={!canEditProfile}
               className="mt-1.5 bg-secondary border-border"
             />
           </div>
@@ -168,6 +197,7 @@ const ProfilePage = () => {
               type="email"
               autoComplete="email"
               defaultValue={user?.email}
+              disabled
               className="mt-1.5 bg-secondary border-border"
             />
           </div>
@@ -180,6 +210,7 @@ const ProfilePage = () => {
               autoComplete="tel"
               value={phone}
               onChange={(e) => setPhone(formatUzPhoneInput(e.target.value))}
+              disabled={!canEditProfile}
               className="mt-1.5 bg-secondary border-border"
             />
             {uzLocalDigits(phone).length > 0 && !isValidUzPhone(phone) && (
@@ -190,7 +221,20 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        <Button>{t('profile.save')}</Button>
+        {!canEditProfile && (
+          <p className="text-xs text-muted-foreground">
+            {t('profile.readonly_note')}
+          </p>
+        )}
+
+        <Button
+          onClick={handleSaveProfile}
+          disabled={
+            !canEditProfile || !phoneValid || updateProfileMut.isPending
+          }
+        >
+          {t('profile.save')}
+        </Button>
       </div>
 
       {/* Telegram */}

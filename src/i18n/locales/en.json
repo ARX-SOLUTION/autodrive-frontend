@@ -722,6 +722,8 @@
     "phone": "Phone",
     "must_change_password_notice": "You must change your password before continuing.",
     "update_password_success": "Password updated successfully.",
+    "update_success": "Profile updated successfully.",
+    "readonly_note": "Only the company owner, branch manager, or platform admin can change this.",
     "telegram": {
       "title": "Telegram",
       "description": "Connect your account to the bot to receive CRM notifications in Telegram.",
