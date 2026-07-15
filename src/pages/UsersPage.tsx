@@ -44,11 +44,13 @@ import {
   UserCog,
   Plus,
   Search,
+  Loader2,
 } from 'lucide-react';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
+import { cn } from '@/lib/utils';
 
 const formatDate = (d?: string) => {
   if (!d) return '—';
@@ -102,12 +104,15 @@ const UsersPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, branchId, isActive]);
 
-  const { data: usersPage, isLoading } = useUsersPage(
-    'manager',
-    currentPage,
-    SERVER_PAGE_SIZE,
-    { search: debouncedSearch, branchId, isActive },
-  );
+  const {
+    data: usersPage,
+    isLoading,
+    isFetching,
+  } = useUsersPage('manager', currentPage, SERVER_PAGE_SIZE, {
+    search: debouncedSearch,
+    branchId,
+    isActive,
+  });
   const users = useMemo(() => usersPage?.data ?? [], [usersPage]);
   const totalPages = Math.max(1, usersPage?.meta.totalPages ?? 1);
   const { data: branches } = useBranches();
@@ -276,177 +281,189 @@ const UsersPage = () => {
         </div>
       </div>
 
-      <div className="hidden md:block glass-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  #
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  <button
-                    onClick={() => toggleSort('email')}
-                    className="flex items-center gap-1 hover:text-foreground transition-colors"
-                  >
-                    Email
-                    {sortField === 'email' ? (
-                      sortDir === 'asc' ? (
-                        <ChevronUp className="h-3 w-3" />
-                      ) : (
-                        <ChevronDown className="h-3 w-3" />
-                      )
-                    ) : (
-                      <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                    )}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  <button
-                    onClick={() => toggleSort('phone')}
-                    className="flex items-center gap-1 hover:text-foreground transition-colors"
-                  >
-                    {t('users.detail.phone')}
-                    {sortField === 'phone' ? (
-                      sortDir === 'asc' ? (
-                        <ChevronUp className="h-3 w-3" />
-                      ) : (
-                        <ChevronDown className="h-3 w-3" />
-                      )
-                    ) : (
-                      <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                    )}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  <button
-                    onClick={() => toggleSort('branch_name')}
-                    className="flex items-center gap-1 hover:text-foreground transition-colors"
-                  >
-                    {t('users.detail.branch')}
-                    {sortField === 'branch_name' ? (
-                      sortDir === 'asc' ? (
-                        <ChevronUp className="h-3 w-3" />
-                      ) : (
-                        <ChevronDown className="h-3 w-3" />
-                      )
-                    ) : (
-                      <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                    )}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  {t('common.status')}
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  <button
-                    onClick={() => toggleSort('created_at')}
-                    className="flex items-center gap-1 hover:text-foreground transition-colors"
-                  >
-                    {t('users.detail.created')}
-                    {sortField === 'created_at' ? (
-                      sortDir === 'asc' ? (
-                        <ChevronUp className="h-3 w-3" />
-                      ) : (
-                        <ChevronDown className="h-3 w-3" />
-                      )
-                    ) : (
-                      <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                    )}
-                  </button>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading
-                ? [...Array(3)].map((_, i) => (
-                    <tr key={i} className="border-b border-border/50">
-                      <td colSpan={6} className="p-4">
-                        <Skeleton className="h-5 w-full" />
-                      </td>
-                    </tr>
-                  ))
-                : paginatedItems.map((u, idx) => (
-                    <tr
-                      key={u.id}
-                      className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
-                      onClick={() => {
-                        if (window.getSelection()?.toString()) return;
-                        navigate(`/users/${u.id}`);
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') navigate(`/users/${u.id}`);
-                        if (e.key === ' ') {
-                          e.preventDefault();
-                          navigate(`/users/${u.id}`);
-                        }
-                      }}
+      <div className="relative">
+        {isFetching && !isLoading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        )}
+        <div
+          className={cn(
+            'hidden md:block glass-card overflow-hidden transition-opacity duration-200',
+            isFetching && !isLoading && 'opacity-50',
+          )}
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    #
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    <button
+                      onClick={() => toggleSort('email')}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
                     >
-                      <td className="px-4 py-3 text-center text-muted-foreground">
-                        {startIndex + idx + 1}
-                      </td>
-                      <td className="px-4 py-3 font-medium">{u.email}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {u.phone || t('common.na')}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {u.branch_name || t('common.na')}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${u.is_active ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}
-                        >
-                          {u.is_active
-                            ? t('common.active')
-                            : t('common.inactive')}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground tabular-nums">
-                        {formatDate(u.created_at)}
-                      </td>
-                    </tr>
-                  ))}
-            </tbody>
-          </table>
-          {users.length === 0 && !isLoading && (
+                      Email
+                      {sortField === 'email' ? (
+                        sortDir === 'asc' ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )
+                      ) : (
+                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    <button
+                      onClick={() => toggleSort('phone')}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      {t('users.detail.phone')}
+                      {sortField === 'phone' ? (
+                        sortDir === 'asc' ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )
+                      ) : (
+                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    <button
+                      onClick={() => toggleSort('branch_name')}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      {t('users.detail.branch')}
+                      {sortField === 'branch_name' ? (
+                        sortDir === 'asc' ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )
+                      ) : (
+                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('common.status')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    <button
+                      onClick={() => toggleSort('created_at')}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      {t('users.detail.created')}
+                      {sortField === 'created_at' ? (
+                        sortDir === 'asc' ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )
+                      ) : (
+                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                      )}
+                    </button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading
+                  ? [...Array(3)].map((_, i) => (
+                      <tr key={i} className="border-b border-border/50">
+                        <td colSpan={6} className="p-4">
+                          <Skeleton className="h-5 w-full" />
+                        </td>
+                      </tr>
+                    ))
+                  : paginatedItems.map((u, idx) => (
+                      <tr
+                        key={u.id}
+                        className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
+                        onClick={() => {
+                          if (window.getSelection()?.toString()) return;
+                          navigate(`/users/${u.id}`);
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') navigate(`/users/${u.id}`);
+                          if (e.key === ' ') {
+                            e.preventDefault();
+                            navigate(`/users/${u.id}`);
+                          }
+                        }}
+                      >
+                        <td className="px-4 py-3 text-center text-muted-foreground">
+                          {startIndex + idx + 1}
+                        </td>
+                        <td className="px-4 py-3 font-medium">{u.email}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {u.phone || t('common.na')}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {u.branch_name || t('common.na')}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${u.is_active ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}
+                          >
+                            {u.is_active
+                              ? t('common.active')
+                              : t('common.inactive')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground tabular-nums">
+                          {formatDate(u.created_at)}
+                        </td>
+                      </tr>
+                    ))}
+              </tbody>
+            </table>
+            {users.length === 0 && !isLoading && (
+              <EmptyState icon={UserCog} title={t('users.not_found')} />
+            )}
+          </div>
+        </div>
+
+        <div className="md:hidden grid gap-3">
+          {isLoading ? (
+            [...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-28 w-full" />
+            ))
+          ) : paginatedItems.length === 0 ? (
             <EmptyState icon={UserCog} title={t('users.not_found')} />
+          ) : (
+            paginatedItems.map((u) => (
+              <DataCard
+                key={u.id}
+                title={u.name || u.email}
+                subtitle={u.email}
+                onClick={() => navigate(`/users/${u.id}`)}
+                fields={[
+                  {
+                    label: t('users.detail.branch'),
+                    value: u.branch_name ?? t('common.na'),
+                  },
+                  {
+                    label: t('users.detail.phone'),
+                    value: u.phone ?? t('common.na'),
+                  },
+                  {
+                    label: t('users.detail.created'),
+                    value: formatDate(u.created_at),
+                  },
+                ]}
+              />
+            ))
           )}
         </div>
-      </div>
-
-      <div className="md:hidden grid gap-3">
-        {isLoading ? (
-          [...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-28 w-full" />
-          ))
-        ) : paginatedItems.length === 0 ? (
-          <EmptyState icon={UserCog} title={t('users.not_found')} />
-        ) : (
-          paginatedItems.map((u) => (
-            <DataCard
-              key={u.id}
-              title={u.name || u.email}
-              subtitle={u.email}
-              onClick={() => navigate(`/users/${u.id}`)}
-              fields={[
-                {
-                  label: t('users.detail.branch'),
-                  value: u.branch_name ?? t('common.na'),
-                },
-                {
-                  label: t('users.detail.phone'),
-                  value: u.phone ?? t('common.na'),
-                },
-                {
-                  label: t('users.detail.created'),
-                  value: formatDate(u.created_at),
-                },
-              ]}
-            />
-          ))
-        )}
       </div>
 
       <PaginationControls

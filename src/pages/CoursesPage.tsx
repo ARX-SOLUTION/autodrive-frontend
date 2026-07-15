@@ -31,9 +31,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, BookOpen } from 'lucide-react';
+import { Plus, Pencil, Trash2, BookOpen, Loader2 } from 'lucide-react';
 import { extractErrorMessage } from '@/lib/errors';
 import { formatMoney, groupDigits } from '@/lib/money';
+import { cn } from '@/lib/utils';
 
 interface FormState {
   name: string;
@@ -53,7 +54,7 @@ const EMPTY_FORM: FormState = {
 
 const CoursesPage = () => {
   const { t } = useTranslation();
-  const { data: courses, isLoading } = useCourses();
+  const { data: courses, isLoading, isFetching } = useCourses();
   const { data: branches } = useBranches();
   const createMut = useCreateCourse();
   const updateMut = useUpdateCourse();
@@ -163,170 +164,185 @@ const CoursesPage = () => {
         </Button>
       </div>
 
-      <div className="glass-card overflow-hidden">
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  {t('courses.name')}
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  {t('common.branch')}
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  {t('courses.type')}
-                </th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                  {t('courses.price')}
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  {t('courses.duration')}
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  {t('common.status')}
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  {t('common.actions')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                [...Array(3)].map((_, i) => (
-                  <tr key={i} className="border-b border-border/50">
-                    <td colSpan={7} className="p-4">
-                      <Skeleton className="h-5 w-full" />
-                    </td>
-                  </tr>
-                ))
-              ) : (courses || []).length === 0 ? (
-                <tr>
-                  <td colSpan={7}>
-                    <EmptyState
-                      icon={BookOpen}
-                      title={t('courses.not_found')}
-                      description={t('courses.not_found_desc')}
-                      action={{ label: t('courses.add'), onClick: openCreate }}
-                    />
-                  </td>
-                </tr>
-              ) : (
-                (courses || []).map((c) => (
-                  <tr
-                    key={c.id}
-                    className="table-row-striped border-b border-border/50"
-                  >
-                    <td className="px-4 py-3 font-medium">{c.name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {c.branch_name || t('common.na')}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {courseTypeLabel(c.course_type)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {formatMoney(c.price)}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {t('courses.duration_days_value', {
-                        count: c.duration_days,
-                      })}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {c.is_active ? (
-                        <span className="text-success">
-                          {t('common.active')}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          {t('common.inactive')}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => openEdit(c)}
-                          aria-label={t('common.edit')}
-                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteId(c.id)}
-                          aria-label={t('common.delete')}
-                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="grid gap-3 md:hidden">
-        {isLoading ? (
-          [...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-28 w-full rounded-lg" />
-          ))
-        ) : courses && courses.length > 0 ? (
-          courses.map((c) => (
-            <DataCard
-              key={c.id}
-              title={c.name}
-              subtitle={c.branch_name}
-              fields={[
-                {
-                  label: t('courses.type'),
-                  value: courseTypeLabel(c.course_type),
-                },
-                { label: t('courses.price'), value: formatMoney(c.price) },
-                {
-                  label: t('courses.duration'),
-                  value: t('courses.duration_days_value', {
-                    count: c.duration_days,
-                  }),
-                },
-                {
-                  label: t('common.status'),
-                  value: c.is_active
-                    ? t('common.active')
-                    : t('common.inactive'),
-                },
-              ]}
-              actions={
-                <>
-                  <button
-                    onClick={() => openEdit(c)}
-                    aria-label={t('common.edit')}
-                    className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setDeleteId(c.id)}
-                    aria-label={t('common.delete')}
-                    className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </>
-              }
-            />
-          ))
-        ) : (
-          <EmptyState
-            icon={BookOpen}
-            title={t('courses.not_found')}
-            description={t('courses.not_found_desc')}
-            action={{ label: t('courses.add'), onClick: openCreate }}
-          />
+      <div className="relative">
+        {isFetching && !isLoading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
         )}
+        <div
+          className={cn(
+            'glass-card overflow-hidden transition-opacity duration-200',
+            isFetching && !isLoading && 'opacity-50',
+          )}
+        >
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    {t('courses.name')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    {t('common.branch')}
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('courses.type')}
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                    {t('courses.price')}
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('courses.duration')}
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('common.status')}
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('common.actions')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  [...Array(3)].map((_, i) => (
+                    <tr key={i} className="border-b border-border/50">
+                      <td colSpan={7} className="p-4">
+                        <Skeleton className="h-5 w-full" />
+                      </td>
+                    </tr>
+                  ))
+                ) : (courses || []).length === 0 ? (
+                  <tr>
+                    <td colSpan={7}>
+                      <EmptyState
+                        icon={BookOpen}
+                        title={t('courses.not_found')}
+                        description={t('courses.not_found_desc')}
+                        action={{
+                          label: t('courses.add'),
+                          onClick: openCreate,
+                        }}
+                      />
+                    </td>
+                  </tr>
+                ) : (
+                  (courses || []).map((c) => (
+                    <tr
+                      key={c.id}
+                      className="table-row-striped border-b border-border/50"
+                    >
+                      <td className="px-4 py-3 font-medium">{c.name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {c.branch_name || t('common.na')}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {courseTypeLabel(c.course_type)}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {formatMoney(c.price)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {t('courses.duration_days_value', {
+                          count: c.duration_days,
+                        })}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {c.is_active ? (
+                          <span className="text-success">
+                            {t('common.active')}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            {t('common.inactive')}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => openEdit(c)}
+                            aria-label={t('common.edit')}
+                            className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteId(c.id)}
+                            aria-label={t('common.delete')}
+                            className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:hidden">
+          {isLoading ? (
+            [...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-28 w-full rounded-lg" />
+            ))
+          ) : courses && courses.length > 0 ? (
+            courses.map((c) => (
+              <DataCard
+                key={c.id}
+                title={c.name}
+                subtitle={c.branch_name}
+                fields={[
+                  {
+                    label: t('courses.type'),
+                    value: courseTypeLabel(c.course_type),
+                  },
+                  { label: t('courses.price'), value: formatMoney(c.price) },
+                  {
+                    label: t('courses.duration'),
+                    value: t('courses.duration_days_value', {
+                      count: c.duration_days,
+                    }),
+                  },
+                  {
+                    label: t('common.status'),
+                    value: c.is_active
+                      ? t('common.active')
+                      : t('common.inactive'),
+                  },
+                ]}
+                actions={
+                  <>
+                    <button
+                      onClick={() => openEdit(c)}
+                      aria-label={t('common.edit')}
+                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setDeleteId(c.id)}
+                      aria-label={t('common.delete')}
+                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                }
+              />
+            ))
+          ) : (
+            <EmptyState
+              icon={BookOpen}
+              title={t('courses.not_found')}
+              description={t('courses.not_found_desc')}
+              action={{ label: t('courses.add'), onClick: openCreate }}
+            />
+          )}
+        </div>
       </div>
 
       <Dialog open={modalOpen} onOpenChange={(o) => !o && attemptClose()}>

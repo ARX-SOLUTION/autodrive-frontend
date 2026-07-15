@@ -216,6 +216,7 @@ const StudentsPage = () => {
   const {
     data: studentsPage,
     isLoading: isStudentsLoading,
+    isFetching,
     isError: isStudentsError,
     refetch: refetchStudents,
   } = useStudentsPage(
@@ -579,443 +580,455 @@ const StudentsPage = () => {
       </div>
 
       {/* Table */}
-      <div className="glass-card overflow-hidden">
-        <div className="hidden md:block">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    #
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    <button
-                      onClick={() => toggleSort('last_name')}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      {t('students.last_name')}
-                      {sortField === 'last_name' ? (
-                        sortDir === 'asc' ? (
-                          <ChevronUp className="h-3 w-3" />
-                        ) : (
-                          <ChevronDown className="h-3 w-3" />
-                        )
-                      ) : (
-                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    <button
-                      onClick={() => toggleSort('first_name')}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      {t('students.first_name')}
-                      {sortField === 'first_name' ? (
-                        sortDir === 'asc' ? (
-                          <ChevronUp className="h-3 w-3" />
-                        ) : (
-                          <ChevronDown className="h-3 w-3" />
-                        )
-                      ) : (
-                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    {t('students.phone')}
-                  </th>
-                  {courseType === 'tezkor' ? (
-                    <>
-                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                        <button
-                          onClick={() => toggleSort('debt')}
-                          className="flex items-center gap-1 hover:text-foreground transition-colors ml-auto"
-                        >
-                          {t('students.debt')}
-                          {sortField === 'debt' ? (
-                            sortDir === 'asc' ? (
-                              <ChevronUp className="h-3 w-3" />
-                            ) : (
-                              <ChevronDown className="h-3 w-3" />
-                            )
+      <div className="relative">
+        {isFetching && !isLoading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        )}
+        <div
+          className={cn(
+            'glass-card overflow-hidden transition-opacity duration-200',
+            isFetching && !isLoading && 'opacity-50',
+          )}
+        >
+          <div className="hidden md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                      #
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                      <button
+                        onClick={() => toggleSort('last_name')}
+                        className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      >
+                        {t('students.last_name')}
+                        {sortField === 'last_name' ? (
+                          sortDir === 'asc' ? (
+                            <ChevronUp className="h-3 w-3" />
                           ) : (
-                            <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                          )}
-                        </button>
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                        {t('students.group')}
-                      </th>
-                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                        {t('students.result')}
-                      </th>
-                    </>
-                  ) : (
-                    <>
-                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                        {t('students.initial_payment')}
-                      </th>
-                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                        2-{t('students.payment').toLowerCase()}
-                      </th>
-                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                        3-{t('students.payment').toLowerCase()}
-                      </th>
-                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                        <button
-                          onClick={() => toggleSort('debt')}
-                          className="flex items-center gap-1 hover:text-foreground transition-colors ml-auto"
-                        >
-                          {t('students.debt')}
-                          {sortField === 'debt' ? (
-                            sortDir === 'asc' ? (
-                              <ChevronUp className="h-3 w-3" />
-                            ) : (
-                              <ChevronDown className="h-3 w-3" />
-                            )
-                          ) : (
-                            <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                          )}
-                        </button>
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                        {t('students.group')}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                        {t('students.completion_date')}
-                      </th>
-                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                        {t('students.o83')}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                        {t('students.contract_number')}
-                      </th>
-                      <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                        {t('students.result')}
-                      </th>
-                    </>
-                  )}
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    <button
-                      onClick={() => toggleSort('created_at')}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      {t('common.date')}
-                      {sortField === 'created_at' ? (
-                        sortDir === 'asc' ? (
-                          <ChevronUp className="h-3 w-3" />
+                            <ChevronDown className="h-3 w-3" />
+                          )
                         ) : (
-                          <ChevronDown className="h-3 w-3" />
-                        )
-                      ) : (
-                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    {t('common.actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading
-                  ? [...Array(5)].map((_, i) => (
-                      <tr key={i} className="border-b border-border/50">
-                        <td colSpan={16} className="p-4">
-                          <Skeleton className="h-5 w-full" />
-                        </td>
-                      </tr>
-                    ))
-                  : sorted?.map((s, idx) => (
-                      <tr
-                        key={s.id}
-                        className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
-                        onClick={(e) => {
-                          if (window.getSelection()?.toString()) return;
-                          goToStudent(
-                            `/students/${s.id}`,
-                            e.currentTarget,
-                            `student-${s.id}`,
-                          );
-                        }}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
+                          <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                      <button
+                        onClick={() => toggleSort('first_name')}
+                        className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      >
+                        {t('students.first_name')}
+                        {sortField === 'first_name' ? (
+                          sortDir === 'asc' ? (
+                            <ChevronUp className="h-3 w-3" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3" />
+                          )
+                        ) : (
+                          <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                      {t('students.phone')}
+                    </th>
+                    {courseType === 'tezkor' ? (
+                      <>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                          <button
+                            onClick={() => toggleSort('debt')}
+                            className="flex items-center gap-1 hover:text-foreground transition-colors ml-auto"
+                          >
+                            {t('students.debt')}
+                            {sortField === 'debt' ? (
+                              sortDir === 'asc' ? (
+                                <ChevronUp className="h-3 w-3" />
+                              ) : (
+                                <ChevronDown className="h-3 w-3" />
+                              )
+                            ) : (
+                              <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                            )}
+                          </button>
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                          {t('students.group')}
+                        </th>
+                        <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                          {t('students.result')}
+                        </th>
+                      </>
+                    ) : (
+                      <>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                          {t('students.initial_payment')}
+                        </th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                          2-{t('students.payment').toLowerCase()}
+                        </th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                          3-{t('students.payment').toLowerCase()}
+                        </th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                          <button
+                            onClick={() => toggleSort('debt')}
+                            className="flex items-center gap-1 hover:text-foreground transition-colors ml-auto"
+                          >
+                            {t('students.debt')}
+                            {sortField === 'debt' ? (
+                              sortDir === 'asc' ? (
+                                <ChevronUp className="h-3 w-3" />
+                              ) : (
+                                <ChevronDown className="h-3 w-3" />
+                              )
+                            ) : (
+                              <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                            )}
+                          </button>
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                          {t('students.group')}
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                          {t('students.completion_date')}
+                        </th>
+                        <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                          {t('students.o83')}
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                          {t('students.contract_number')}
+                        </th>
+                        <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                          {t('students.result')}
+                        </th>
+                      </>
+                    )}
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                      <button
+                        onClick={() => toggleSort('created_at')}
+                        className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      >
+                        {t('common.date')}
+                        {sortField === 'created_at' ? (
+                          sortDir === 'asc' ? (
+                            <ChevronUp className="h-3 w-3" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3" />
+                          )
+                        ) : (
+                          <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                      {t('common.actions')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoading
+                    ? [...Array(5)].map((_, i) => (
+                        <tr key={i} className="border-b border-border/50">
+                          <td colSpan={16} className="p-4">
+                            <Skeleton className="h-5 w-full" />
+                          </td>
+                        </tr>
+                      ))
+                    : sorted?.map((s, idx) => (
+                        <tr
+                          key={s.id}
+                          className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
+                          onClick={(e) => {
+                            if (window.getSelection()?.toString()) return;
                             goToStudent(
                               `/students/${s.id}`,
                               e.currentTarget,
                               `student-${s.id}`,
                             );
-                          }
-                        }}
-                      >
-                        <td className="px-4 py-3 text-center text-muted-foreground">
-                          {startIndex + idx + 1}
-                        </td>
-                        <td className="px-4 py-3 font-medium">
-                          {capitalize(s.last_name)}
-                        </td>
-                        <td className="px-4 py-3">
-                          {capitalize(s.first_name)}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {formatPhone(s.phone)}
-                        </td>
-                        {courseType === 'tezkor' ? (
-                          <>
-                            <td className="px-4 py-3 text-right">
-                              <span
-                                className={
-                                  s.debt > 0
-                                    ? 'text-destructive'
-                                    : 'text-success'
-                                }
-                                aria-label={
-                                  s.debt > 0
-                                    ? t('students.debt_status_owed')
-                                    : t('students.debt_status_paid')
-                                }
-                              >
-                                {s.debt > 0
-                                  ? formatMoney(s.debt)
-                                  : t('common.na')}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground">
-                              {s.group_name || t('common.na')}
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              {localizedResultLabels[s.result]}
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="px-4 py-3 text-right tabular-nums">
-                              {formatMoney(s.initial_payment || 0)}
-                            </td>
-                            <td className="px-4 py-3 text-right tabular-nums">
-                              {formatMoney(s.second_payment || 0)}
-                            </td>
-                            <td className="px-4 py-3 text-right tabular-nums">
-                              {formatMoney(s.third_payment || 0)}
-                            </td>
-                            <td className="px-4 py-3 text-right">
-                              <span
-                                className={
-                                  s.debt > 0
-                                    ? 'text-destructive'
-                                    : 'text-success'
-                                }
-                                aria-label={
-                                  s.debt > 0
-                                    ? t('students.debt_status_owed')
-                                    : t('students.debt_status_paid')
-                                }
-                              >
-                                {s.debt > 0
-                                  ? formatMoney(s.debt)
-                                  : t('common.na')}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3">{s.group_name}</td>
-                            <td className="px-4 py-3 text-muted-foreground tabular-nums">
-                              {formatDate(s.completion_date)}
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              <span
-                                className={
-                                  s.o83 ? 'text-success' : 'text-destructive'
-                                }
-                              >
-                                {s.o83
-                                  ? t('students.o83_yes')
-                                  : t('students.o83_no')}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground">
-                              {s.contract_number}
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              {localizedResultLabels[s.result]}
-                            </td>
-                          </>
-                        )}
-                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap tabular-nums">
-                          {formatDateTime(s.created_at)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-center gap-1">
-                            {canManageStudents && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openEdit(s);
-                                }}
-                                aria-label={t('common.edit')}
-                                title={t('common.edit')}
-                                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </button>
-                            )}
-                            {isCrossTenant && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteId(s.id);
-                                }}
-                                aria-label={t('common.delete')}
-                                title={t('common.delete')}
-                                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                {!isLoading && isStudentsError && (
-                  <tr>
-                    <td colSpan={16} className="p-0">
-                      <EmptyState
-                        icon={AlertTriangle}
-                        title={t('common.error')}
-                        action={{
-                          label: t('common.retry'),
-                          onClick: () => refetchStudents(),
-                        }}
-                      />
-                    </td>
-                  </tr>
-                )}
-                {!isLoading && !isStudentsError && totalStudents === 0 && (
-                  <tr>
-                    <td colSpan={16} className="p-0">
-                      <EmptyState
-                        icon={GraduationCap}
-                        title={t('students.not_found')}
-                        description={t('students.not_found_desc')}
-                      />
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                          }}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              goToStudent(
+                                `/students/${s.id}`,
+                                e.currentTarget,
+                                `student-${s.id}`,
+                              );
+                            }
+                          }}
+                        >
+                          <td className="px-4 py-3 text-center text-muted-foreground">
+                            {startIndex + idx + 1}
+                          </td>
+                          <td className="px-4 py-3 font-medium">
+                            {capitalize(s.last_name)}
+                          </td>
+                          <td className="px-4 py-3">
+                            {capitalize(s.first_name)}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {formatPhone(s.phone)}
+                          </td>
+                          {courseType === 'tezkor' ? (
+                            <>
+                              <td className="px-4 py-3 text-right">
+                                <span
+                                  className={
+                                    s.debt > 0
+                                      ? 'text-destructive'
+                                      : 'text-success'
+                                  }
+                                  aria-label={
+                                    s.debt > 0
+                                      ? t('students.debt_status_owed')
+                                      : t('students.debt_status_paid')
+                                  }
+                                >
+                                  {s.debt > 0
+                                    ? formatMoney(s.debt)
+                                    : t('common.na')}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-muted-foreground">
+                                {s.group_name || t('common.na')}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                {localizedResultLabels[s.result]}
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="px-4 py-3 text-right tabular-nums">
+                                {formatMoney(s.initial_payment || 0)}
+                              </td>
+                              <td className="px-4 py-3 text-right tabular-nums">
+                                {formatMoney(s.second_payment || 0)}
+                              </td>
+                              <td className="px-4 py-3 text-right tabular-nums">
+                                {formatMoney(s.third_payment || 0)}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span
+                                  className={
+                                    s.debt > 0
+                                      ? 'text-destructive'
+                                      : 'text-success'
+                                  }
+                                  aria-label={
+                                    s.debt > 0
+                                      ? t('students.debt_status_owed')
+                                      : t('students.debt_status_paid')
+                                  }
+                                >
+                                  {s.debt > 0
+                                    ? formatMoney(s.debt)
+                                    : t('common.na')}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">{s.group_name}</td>
+                              <td className="px-4 py-3 text-muted-foreground tabular-nums">
+                                {formatDate(s.completion_date)}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <span
+                                  className={
+                                    s.o83 ? 'text-success' : 'text-destructive'
+                                  }
+                                >
+                                  {s.o83
+                                    ? t('students.o83_yes')
+                                    : t('students.o83_no')}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-muted-foreground">
+                                {s.contract_number}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                {localizedResultLabels[s.result]}
+                              </td>
+                            </>
+                          )}
+                          <td className="px-4 py-3 text-muted-foreground whitespace-nowrap tabular-nums">
+                            {formatDateTime(s.created_at)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-1">
+                              {canManageStudents && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEdit(s);
+                                  }}
+                                  aria-label={t('common.edit')}
+                                  title={t('common.edit')}
+                                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                              {isCrossTenant && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteId(s.id);
+                                  }}
+                                  aria-label={t('common.delete')}
+                                  title={t('common.delete')}
+                                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  {!isLoading && isStudentsError && (
+                    <tr>
+                      <td colSpan={16} className="p-0">
+                        <EmptyState
+                          icon={AlertTriangle}
+                          title={t('common.error')}
+                          action={{
+                            label: t('common.retry'),
+                            onClick: () => refetchStudents(),
+                          }}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                  {!isLoading && !isStudentsError && totalStudents === 0 && (
+                    <tr>
+                      <td colSpan={16} className="p-0">
+                        <EmptyState
+                          icon={GraduationCap}
+                          title={t('students.not_found')}
+                          description={t('students.not_found_desc')}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
-        <div className="grid gap-3 md:hidden p-3">
-          {isLoading ? (
-            [...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-28 w-full rounded-lg" />
-            ))
-          ) : isStudentsError ? (
-            <EmptyState
-              icon={AlertTriangle}
-              title={t('common.error')}
-              action={{
-                label: t('common.retry'),
-                onClick: () => refetchStudents(),
-              }}
-            />
-          ) : sorted && sorted.length > 0 ? (
-            sorted.map((s) => {
-              const fields = [
-                {
-                  label: t('students.detail.branch'),
-                  value: s.branch_name || t('common.na'),
-                },
-                {
-                  label: t('students.detail.group'),
-                  value: s.group_name ?? t('common.na'),
-                },
-                {
-                  label: t('students.detail.course'),
-                  value:
-                    s.course_type === 'tezkor'
-                      ? t('students.course_fast')
-                      : t('students.course_school'),
-                },
-                {
-                  label: t('students.detail.debt'),
-                  value: (
-                    <span
-                      className={
-                        s.debt > 0 ? 'text-destructive' : 'text-success'
-                      }
-                    >
-                      {s.debt > 0 ? formatMoney(s.debt) : t('common.na')}
-                    </span>
-                  ),
-                },
-                {
-                  label: t('students.detail.status'),
-                  value: s.result
-                    ? localizedResultLabels[s.result]
-                    : t('common.na'),
-                },
-                {
-                  label: t('students.detail.date'),
-                  value: formatDate(s.created_at),
-                },
-              ];
-              return (
-                <DataCard
-                  key={s.id}
-                  title={`${capitalize(s.first_name)} ${capitalize(s.last_name)}`}
-                  subtitle={formatPhone(s.phone)}
-                  fields={fields}
-                  onClick={(e) =>
-                    goToStudent(
-                      `/students/${s.id}`,
-                      e.currentTarget,
-                      `student-${s.id}`,
-                    )
-                  }
-                  actions={
-                    <>
-                      {canManageStudents && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEdit(s);
-                          }}
-                          aria-label={t('common.edit')}
-                          title={t('common.edit')}
-                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                      {isCrossTenant && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteId(s.id);
-                          }}
-                          aria-label={t('common.delete')}
-                          title={t('common.delete')}
-                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </>
-                  }
-                />
-              );
-            })
-          ) : (
-            <EmptyState
-              icon={GraduationCap}
-              title={t('students.not_found')}
-              description={t('students.not_found_desc')}
-            />
-          )}
+          <div className="grid gap-3 md:hidden p-3">
+            {isLoading ? (
+              [...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-lg" />
+              ))
+            ) : isStudentsError ? (
+              <EmptyState
+                icon={AlertTriangle}
+                title={t('common.error')}
+                action={{
+                  label: t('common.retry'),
+                  onClick: () => refetchStudents(),
+                }}
+              />
+            ) : sorted && sorted.length > 0 ? (
+              sorted.map((s) => {
+                const fields = [
+                  {
+                    label: t('students.detail.branch'),
+                    value: s.branch_name || t('common.na'),
+                  },
+                  {
+                    label: t('students.detail.group'),
+                    value: s.group_name ?? t('common.na'),
+                  },
+                  {
+                    label: t('students.detail.course'),
+                    value:
+                      s.course_type === 'tezkor'
+                        ? t('students.course_fast')
+                        : t('students.course_school'),
+                  },
+                  {
+                    label: t('students.detail.debt'),
+                    value: (
+                      <span
+                        className={
+                          s.debt > 0 ? 'text-destructive' : 'text-success'
+                        }
+                      >
+                        {s.debt > 0 ? formatMoney(s.debt) : t('common.na')}
+                      </span>
+                    ),
+                  },
+                  {
+                    label: t('students.detail.status'),
+                    value: s.result
+                      ? localizedResultLabels[s.result]
+                      : t('common.na'),
+                  },
+                  {
+                    label: t('students.detail.date'),
+                    value: formatDate(s.created_at),
+                  },
+                ];
+                return (
+                  <DataCard
+                    key={s.id}
+                    title={`${capitalize(s.first_name)} ${capitalize(s.last_name)}`}
+                    subtitle={formatPhone(s.phone)}
+                    fields={fields}
+                    onClick={(e) =>
+                      goToStudent(
+                        `/students/${s.id}`,
+                        e.currentTarget,
+                        `student-${s.id}`,
+                      )
+                    }
+                    actions={
+                      <>
+                        {canManageStudents && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEdit(s);
+                            }}
+                            aria-label={t('common.edit')}
+                            title={t('common.edit')}
+                            className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        {isCrossTenant && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(s.id);
+                            }}
+                            aria-label={t('common.delete')}
+                            title={t('common.delete')}
+                            className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </>
+                    }
+                  />
+                );
+              })
+            ) : (
+              <EmptyState
+                icon={GraduationCap}
+                title={t('students.not_found')}
+                description={t('students.not_found_desc')}
+              />
+            )}
+          </div>
         </div>
       </div>
 

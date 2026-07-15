@@ -15,10 +15,12 @@ import {
   ChevronDown,
   ChevronsUpDown,
   Headphones,
+  Loader2,
 } from 'lucide-react';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import PaginationControls from '@/components/ui/PaginationControls';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -88,6 +90,7 @@ const OperatorsPage = () => {
   const {
     data: operatorsPage,
     isLoading,
+    isFetching,
     isError,
     refetch,
   } = useOperatorsPage(currentPage, SERVER_PAGE_SIZE, debouncedSearch);
@@ -248,245 +251,257 @@ const OperatorsPage = () => {
           className="pl-9 bg-secondary border-border"
         />
       </div>
-      <div className="glass-card overflow-hidden">
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full min-w-[600px] text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  #
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  <button
-                    onClick={() => toggleSort('name')}
-                    className="flex items-center gap-1 hover:text-foreground transition-colors"
-                  >
-                    {t('operators.first_name')}
-                    {sortField === 'name' ? (
-                      sortDir === 'asc' ? (
-                        <ChevronUp className="h-3 w-3" />
+      <div className="relative">
+        {isFetching && !isLoading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        )}
+        <div
+          className={cn(
+            'glass-card overflow-hidden transition-opacity duration-200',
+            isFetching && !isLoading && 'opacity-50',
+          )}
+        >
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full min-w-[600px] text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    #
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    <button
+                      onClick={() => toggleSort('name')}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      {t('operators.first_name')}
+                      {sortField === 'name' ? (
+                        sortDir === 'asc' ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )
                       ) : (
-                        <ChevronDown className="h-3 w-3" />
-                      )
-                    ) : (
-                      <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                    )}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  <button
-                    onClick={() => toggleSort('phone')}
-                    className="flex items-center gap-1 hover:text-foreground transition-colors"
-                  >
-                    {t('operators.phone')}
-                    {sortField === 'phone' ? (
-                      sortDir === 'asc' ? (
-                        <ChevronUp className="h-3 w-3" />
+                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    <button
+                      onClick={() => toggleSort('phone')}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      {t('operators.phone')}
+                      {sortField === 'phone' ? (
+                        sortDir === 'asc' ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )
                       ) : (
-                        <ChevronDown className="h-3 w-3" />
-                      )
-                    ) : (
-                      <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                    )}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  <button
-                    onClick={() => toggleSort('branch_name')}
-                    className="flex items-center gap-1 hover:text-foreground transition-colors"
-                  >
-                    {t('operators.branch')}
-                    {sortField === 'branch_name' ? (
-                      sortDir === 'asc' ? (
-                        <ChevronUp className="h-3 w-3" />
+                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    <button
+                      onClick={() => toggleSort('branch_name')}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      {t('operators.branch')}
+                      {sortField === 'branch_name' ? (
+                        sortDir === 'asc' ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )
                       ) : (
-                        <ChevronDown className="h-3 w-3" />
-                      )
-                    ) : (
-                      <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                    )}
-                  </button>
-                </th>
-                {/* autodrive-sgf.4 -- lifetime counts, no date filter on this page.
+                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                      )}
+                    </button>
+                  </th>
+                  {/* autodrive-sgf.4 -- lifetime counts, no date filter on this page.
                     Never labeled "conversion" -- there is no true lead-conversion
                     data, only registered-student -> has-a-payment follow-through. */}
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  {t('operators.registered_count')}
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  {t('operators.follow_through_rate')}
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  {t('common.status')}
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  {t('common.actions')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading
-                ? [...Array(3)].map((_, i) => (
-                    <tr key={i} className="border-b border-border/50">
-                      <td colSpan={8} className="p-4">
-                        <Skeleton className="h-5 w-full" />
-                      </td>
-                    </tr>
-                  ))
-                : paginatedItems.map((o, idx) => (
-                    <tr
-                      key={o.id}
-                      className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
-                      onClick={() => {
-                        if (window.getSelection()?.toString()) return;
-                        navigate(`/users/${o.id}`);
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') navigate(`/users/${o.id}`);
-                        if (e.key === ' ') {
-                          e.preventDefault();
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('operators.registered_count')}
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('operators.follow_through_rate')}
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('common.status')}
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('common.actions')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading
+                  ? [...Array(3)].map((_, i) => (
+                      <tr key={i} className="border-b border-border/50">
+                        <td colSpan={8} className="p-4">
+                          <Skeleton className="h-5 w-full" />
+                        </td>
+                      </tr>
+                    ))
+                  : paginatedItems.map((o, idx) => (
+                      <tr
+                        key={o.id}
+                        className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
+                        onClick={() => {
+                          if (window.getSelection()?.toString()) return;
                           navigate(`/users/${o.id}`);
-                        }
-                      }}
-                    >
-                      <td className="px-4 py-3 text-center text-muted-foreground">
-                        {startIndex + idx + 1}
-                      </td>
-                      <td className="px-4 py-3 font-medium">{o?.name}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {formatPhone(o?.phone)}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {o?.branch_name || getBranchName(o?.branch_id)}
-                      </td>
-                      <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
-                        {o.registered_students_count ?? t('common.na')}
-                      </td>
-                      <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
-                        {o.payment_follow_through_rate != null
-                          ? `${o.payment_follow_through_rate}%`
-                          : t('common.na')}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${o.is_active !== false ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}
-                        >
-                          {o.is_active !== false
-                            ? t('common.active')
-                            : t('common.inactive')}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEdit(o);
-                            }}
-                            className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') navigate(`/users/${o.id}`);
+                          if (e.key === ' ') {
+                            e.preventDefault();
+                            navigate(`/users/${o.id}`);
+                          }
+                        }}
+                      >
+                        <td className="px-4 py-3 text-center text-muted-foreground">
+                          {startIndex + idx + 1}
+                        </td>
+                        <td className="px-4 py-3 font-medium">{o?.name}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {formatPhone(o?.phone)}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {o?.branch_name || getBranchName(o?.branch_id)}
+                        </td>
+                        <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
+                          {o.registered_students_count ?? t('common.na')}
+                        </td>
+                        <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
+                          {o.payment_follow_through_rate != null
+                            ? `${o.payment_follow_through_rate}%`
+                            : t('common.na')}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${o.is_active !== false ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}
                           >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteId(o.id);
-                            }}
-                            className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="md:hidden grid gap-3 p-3">
-          {isLoading
-            ? [...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-28 w-full" />
-              ))
-            : paginatedItems.map((o) => (
-                <DataCard
-                  key={o.id}
-                  title={o?.name || t('common.na')}
-                  subtitle={formatPhone(o?.phone)}
-                  onClick={() => navigate(`/users/${o.id}`)}
-                  fields={[
-                    {
-                      label: t('operators.detail.email'),
-                      value: o?.email || t('common.na'),
-                    },
-                    {
-                      label: t('operators.detail.branch'),
-                      value:
-                        o?.branch_name || getBranchName(o?.branch_id || ''),
-                    },
-                    {
-                      label: t('operators.registered_count'),
-                      value: o.registered_students_count ?? t('common.na'),
-                    },
-                    {
-                      label: t('operators.follow_through_rate'),
-                      value:
-                        o.payment_follow_through_rate != null
-                          ? `${o.payment_follow_through_rate}%`
+                            {o.is_active !== false
+                              ? t('common.active')
+                              : t('common.inactive')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEdit(o);
+                              }}
+                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteId(o.id);
+                              }}
+                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="md:hidden grid gap-3 p-3">
+            {isLoading
+              ? [...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-28 w-full" />
+                ))
+              : paginatedItems.map((o) => (
+                  <DataCard
+                    key={o.id}
+                    title={o?.name || t('common.na')}
+                    subtitle={formatPhone(o?.phone)}
+                    onClick={() => navigate(`/users/${o.id}`)}
+                    fields={[
+                      {
+                        label: t('operators.detail.email'),
+                        value: o?.email || t('common.na'),
+                      },
+                      {
+                        label: t('operators.detail.branch'),
+                        value:
+                          o?.branch_name || getBranchName(o?.branch_id || ''),
+                      },
+                      {
+                        label: t('operators.registered_count'),
+                        value: o.registered_students_count ?? t('common.na'),
+                      },
+                      {
+                        label: t('operators.follow_through_rate'),
+                        value:
+                          o.payment_follow_through_rate != null
+                            ? `${o.payment_follow_through_rate}%`
+                            : t('common.na'),
+                      },
+                      {
+                        label: t('operators.detail.created'),
+                        value: o?.created_at
+                          ? new Date(o.created_at).toLocaleDateString('uz-UZ')
                           : t('common.na'),
-                    },
-                    {
-                      label: t('operators.detail.created'),
-                      value: o?.created_at
-                        ? new Date(o.created_at).toLocaleDateString('uz-UZ')
-                        : t('common.na'),
-                    },
-                    {
-                      label: t('operators.detail.status'),
-                      value:
-                        o.is_active !== false
-                          ? t('common.active')
-                          : t('common.inactive'),
-                    },
-                  ]}
-                  actions={
-                    <>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEdit(o);
-                        }}
-                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteId(o.id);
-                        }}
-                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </>
-                  }
-                />
-              ))}
+                      },
+                      {
+                        label: t('operators.detail.status'),
+                        value:
+                          o.is_active !== false
+                            ? t('common.active')
+                            : t('common.inactive'),
+                      },
+                    ]}
+                    actions={
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEdit(o);
+                          }}
+                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteId(o.id);
+                          }}
+                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </>
+                    }
+                  />
+                ))}
+          </div>
+          {isError ? (
+            <EmptyState
+              title={t('common.error')}
+              action={{ label: t('common.retry'), onClick: () => refetch() }}
+            />
+          ) : (
+            total === 0 &&
+            !isLoading && (
+              <EmptyState icon={Headphones} title={t('operators.not_found')} />
+            )
+          )}
         </div>
-        {isError ? (
-          <EmptyState
-            title={t('common.error')}
-            action={{ label: t('common.retry'), onClick: () => refetch() }}
-          />
-        ) : (
-          total === 0 &&
-          !isLoading && (
-            <EmptyState icon={Headphones} title={t('operators.not_found')} />
-          )
-        )}
       </div>
 
       <PaginationControls
