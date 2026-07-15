@@ -118,15 +118,19 @@ const GroupDetailPage = () => {
                   fields={[
                     {
                       label: t('students.detail.debt'),
-                      value: (
-                        <span
-                          className={
-                            s.debt > 0 ? 'text-destructive' : 'text-success'
-                          }
-                        >
-                          {s.debt > 0 ? formatMoney(s.debt) : t('common.na')}
-                        </span>
-                      ),
+                      value:
+                        s.debt > 0 ? (
+                          <span className="text-destructive">
+                            {formatMoney(s.debt)}
+                          </span>
+                        ) : s.debt < 0 ? (
+                          <span className="text-success">
+                            {t('students.credit_label')}:{' '}
+                            {formatMoney(Math.abs(s.debt))}
+                          </span>
+                        ) : (
+                          <span className="text-success">{t('common.na')}</span>
+                        ),
                     },
                   ]}
                 />

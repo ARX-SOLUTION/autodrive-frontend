@@ -838,7 +838,9 @@ const PaymentsPage = () => {
                                 ? new Intl.NumberFormat('uz-UZ').format(
                                     p.remaining_debt,
                                   )
-                                : t('payments.fully_paid')}
+                                : p.remaining_debt < 0
+                                  ? `${t('students.credit_label')}: ${new Intl.NumberFormat('uz-UZ').format(Math.abs(p.remaining_debt))}`
+                                  : t('payments.fully_paid')}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground tabular-nums">
@@ -917,7 +919,6 @@ const PaymentsPage = () => {
             ? courseTypeFilter
             : undefined
         }
-        hasDebtOnly
       />
     </div>
   );

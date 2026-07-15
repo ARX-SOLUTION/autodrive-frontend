@@ -70,7 +70,6 @@ interface PaymentModalProps {
   students?: Student[];
   branchId?: string;
   courseType?: CourseType;
-  hasDebtOnly?: boolean;
   // Relation-add (bd 6ef.6): when set, the student is fixed (e.g. an
   // "Add payment" button on a student detail card) — the picker is hidden and
   // this id is pinned. UX-only: the backend still derives tenant scope from
@@ -105,7 +104,6 @@ const PaymentModal = ({
   students = [],
   branchId,
   courseType,
-  hasDebtOnly = true,
   lockedStudentId,
   lockedStudentName,
 }: PaymentModalProps) => {
@@ -136,7 +134,6 @@ const PaymentModal = ({
   } = useStudentsPage(courseType, branchId, 1, 20, undefined, {
     enabled: open && studentPopoverOpen,
     search: debouncedStudentSearch,
-    hasDebt: hasDebtOnly,
     sortBy: 'last_name',
     sortOrder: 'asc',
   });
@@ -278,6 +275,12 @@ const PaymentModal = ({
                                           {formatMoney(s.debt)}
                                         </span>
                                       )}
+                                      {s.debt !== undefined && s.debt < 0 && (
+                                        <span className="ml-auto text-xs text-success tabular-nums">
+                                          {t('students.credit_label')}:{' '}
+                                          {formatMoney(Math.abs(s.debt))}
+                                        </span>
+                                      )}
                                     </CommandItem>
                                   ))}
                                 </CommandGroup>
@@ -304,12 +307,29 @@ const PaymentModal = ({
               />
 
               {selectedStudent && selectedStudent.debt !== undefined && (
-                <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm tabular-nums">
+                <div
+                  className={cn(
+                    'rounded-md border px-3 py-2 text-sm tabular-nums',
+                    selectedStudent.debt < 0
+                      ? 'bg-success/10 border-success/20'
+                      : 'bg-destructive/10 border-destructive/20',
+                  )}
+                >
                   <span className="text-muted-foreground">
-                    {t('payments.remaining_debt')}:{' '}
+                    {selectedStudent.debt < 0
+                      ? t('students.credit_label')
+                      : t('payments.remaining_debt')}
+                    :{' '}
                   </span>
-                  <span className="font-medium text-destructive">
-                    {formatMoney(selectedStudent.debt)}
+                  <span
+                    className={cn(
+                      'font-medium',
+                      selectedStudent.debt < 0
+                        ? 'text-success'
+                        : 'text-destructive',
+                    )}
+                  >
+                    {formatMoney(Math.abs(selectedStudent.debt))}
                   </span>
                 </div>
               )}

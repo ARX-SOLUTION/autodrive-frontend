@@ -499,6 +499,8 @@
     "o83_no": "Yo'q",
     "debt_status_owed": "Qarzdor",
     "debt_status_paid": "To'langan",
+    "debt_status_credit": "Kredit",
+    "credit_label": "Kredit",
     "detail": {
       "branch": "Filial",
       "group": "Guruh",

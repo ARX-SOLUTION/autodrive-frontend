@@ -497,6 +497,8 @@
     "o83_no": "No",
     "debt_status_owed": "Owing",
     "debt_status_paid": "Paid",
+    "debt_status_credit": "Credit",
+    "credit_label": "Credit",
     "second_payment": "2nd payment",
     "third_payment": "3rd payment",
     "detail": {

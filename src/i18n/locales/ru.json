@@ -497,6 +497,8 @@
     "o83_no": "Нет",
     "debt_status_owed": "Задолжник",
     "debt_status_paid": "Оплачено",
+    "debt_status_credit": "Кредит",
+    "credit_label": "Кредит",
     "second_payment": "2-платёж",
     "third_payment": "3-платёж",
     "detail": {
