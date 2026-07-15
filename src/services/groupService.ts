@@ -115,6 +115,11 @@ export const useDeleteGroup = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['groups'] });
       qc.invalidateQueries({ queryKey: ['groups-overview'] });
+      // Backend nulls groupId on every enrolled student in the same
+      // transaction (autodrive-f9u.11) -- without this, a cached student
+      // list/detail view keeps showing the deleted group.
+      qc.invalidateQueries({ queryKey: ['students'] });
+      qc.invalidateQueries({ queryKey: ['student'] });
     },
   });
 };
