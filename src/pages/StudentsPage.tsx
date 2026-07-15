@@ -100,6 +100,7 @@ const StudentsPage = () => {
   const { t } = useTranslation();
   const isCrossTenant = useIsCrossTenant();
   const canManageStaff = useCan('manageStaff');
+  const canManageStudents = useCan('manageStudents');
   const user = useAuthStore((s) => s.user);
 
   // Same labels StudentModal shows in its result <Select> (autodrive-6cq.11.4)
@@ -433,17 +434,21 @@ const StudentsPage = () => {
             )}{' '}
             {t('students.export_excel')}
           </Button>
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => setImportModalOpen(true)}
-          >
-            <UploadCloud className="h-4 w-4" />{' '}
-            {t('students.import.button_label')}
-          </Button>
-          <Button className="gap-2" onClick={openCreate}>
-            <Plus className="h-4 w-4" /> {t('students.add')}
-          </Button>
+          {canManageStudents && (
+            <>
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => setImportModalOpen(true)}
+              >
+                <UploadCloud className="h-4 w-4" />{' '}
+                {t('students.import.button_label')}
+              </Button>
+              <Button className="gap-2" onClick={openCreate}>
+                <Plus className="h-4 w-4" /> {t('students.add')}
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -834,17 +839,19 @@ const StudentsPage = () => {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEdit(s);
-                              }}
-                              aria-label={t('common.edit')}
-                              title={t('common.edit')}
-                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </button>
+                            {canManageStudents && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEdit(s);
+                                }}
+                                aria-label={t('common.edit')}
+                                title={t('common.edit')}
+                                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                            )}
                             {isCrossTenant && (
                               <button
                                 onClick={(e) => {
@@ -962,17 +969,19 @@ const StudentsPage = () => {
                   }
                   actions={
                     <>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEdit(s);
-                        }}
-                        aria-label={t('common.edit')}
-                        title={t('common.edit')}
-                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
+                      {canManageStudents && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEdit(s);
+                          }}
+                          aria-label={t('common.edit')}
+                          title={t('common.edit')}
+                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                       {isCrossTenant && (
                         <button
                           onClick={(e) => {

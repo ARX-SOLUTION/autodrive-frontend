@@ -29,7 +29,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useIsCrossTenant } from '@/hooks/useCan';
+import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { cn } from '@/lib/utils';
 import { extractErrorMessage } from '@/lib/errors';
@@ -107,6 +107,7 @@ const PaymentsPage = () => {
   const { t } = useTranslation();
   const goToStudent = useViewTransitionNavigate();
   const isCrossTenant = useIsCrossTenant();
+  const canRecordPayment = useCan('recordPayment');
   const user = useAuthStore((s) => s.user);
 
   // Filters/sort/page live in the URL so reload / back / share preserves
@@ -416,9 +417,11 @@ const PaymentsPage = () => {
               </TooltipContent>
             </Tooltip>
           )}
-          <Button className="gap-2" onClick={() => setModalOpen(true)}>
-            <Plus className="h-4 w-4" /> {t('payments.add_payment')}
-          </Button>
+          {canRecordPayment && (
+            <Button className="gap-2" onClick={() => setModalOpen(true)}>
+              <Plus className="h-4 w-4" /> {t('payments.add_payment')}
+            </Button>
+          )}
         </div>
       </div>
 
