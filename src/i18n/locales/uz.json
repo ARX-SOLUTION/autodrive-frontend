@@ -104,7 +104,8 @@
     "hide_password": "Parolni yashirish",
     "update_available": "Yangi versiya mavjud",
     "update_reload": "Yangilash",
-    "offline_banner": "Internet aloqasi yo'q"
+    "offline_banner": "Internet aloqasi yo'q",
+    "tab_info": "Ma'lumot"
   },
   "login": {
     "title": "Tizimga kirish",
@@ -200,7 +201,7 @@
     "activity_action_delete": "o'chirdi",
     "live_label": "Jonli",
     "v2": {
-      "title": "Revenue control",
+      "title": "Tushum boshqaruvi",
       "subtitle": "Tushum, qarzdorlik va filiallar bo‘yicha boshqaruv ko‘rinishi.",
       "period": "Davr",
       "this_month": "Bu oy",
@@ -215,20 +216,20 @@
       "period_revenue": "Tanlangan davr tushumi",
       "previous_period": "Oldingi davr",
       "outstanding_debt": "Jami qarzdorlik",
-      "debtors": "{{count}} ta qarzdor student",
-      "coverage": "Payment coverage",
+      "debtors": "{{count}} ta qarzdor talaba",
+      "coverage": "To'lov qamrovi",
       "coverage_meta": "{{paid}} to‘liq · {{partial}} qisman",
       "revenue_trend": "Tushum trendi",
       "recovery": "Qarzdorlik recovery queue",
       "recovery_subtitle": "Eng katta qarzlar birinchi ko‘rsatiladi.",
       "open_payments": "To‘lovlar",
       "view_data": "Ma’lumotlarni ko‘rish",
-      "branch_performance": "Filial performance",
+      "branch_performance": "Filial samaradorligi",
       "branch_subtitle": "Tanlangan davr tushumi va joriy qarzdorlik.",
       "manage_branches": "Filiallar",
       "collection_status": "To‘lov holati",
       "collection_subtitle": "Active studentlar bo‘yicha joriy coverage.",
-      "operations": "Operational follow-through",
+      "operations": "Operatsion davomiylik",
       "operations_subtitle": "Revenue qaroridan keyingi bajariladigan ishlar.",
       "quick_actions": "Tezkor amallar",
       "quick_actions_subtitle": "Eng ko‘p ishlatiladigan harakatlar.",
@@ -243,7 +244,7 @@
       "error_subtitle": "Ulanishni tekshiring va qayta urinib ko'ring.",
       "kpi_section_label": "Tushum boshqaruvi KPI'lari",
       "coverage_bar_label": "{{rate}}% to'liq to'langan",
-      "last_payment_none": "Payment yo‘q",
+      "last_payment_none": "To'lov yo'q",
       "attendance_no_data": "Davomat maʼlumoti yo‘q",
       "financial_block": {
         "title": "Moliyaviy ko‘rsatkichlar",
@@ -286,7 +287,7 @@
         "no_data": "Maʼlumot yo‘q",
         "teacher_load_label": "O‘qituvchi yuklamasi",
         "teacher_load_unit": "dars/o‘qituvchi",
-        "teacher_load_meta": "{{teachers}} faol o‘qituvchi · {{students}} student/o‘qituvchi",
+        "teacher_load_meta": "{{teachers}} faol o'qituvchi · {{students}} talaba/o'qituvchi",
         "on_time_attendance_label": "Vaqtida davomat belgilash",
         "on_time_attendance_meta": "Dars kuni ichida belgilangan davomatlar ulushi",
         "operator_follow_through_label": "Operator to‘lov davomiyligi",
@@ -448,11 +449,11 @@
       "lead_source_other_placeholder": "Qayerdan bilganini yozing",
       "referrer_label": "Kim taklif qildi",
       "referrer_none": "Yo'q",
-      "referrer_student": "O'quvchi",
+      "referrer_student": "Talaba",
       "referrer_staff": "Xodim",
-      "referrer_student_placeholder": "O'quvchini tanlang",
+      "referrer_student_placeholder": "Talabani tanlang",
       "referrer_staff_placeholder": "Xodimni tanlang",
-      "referrer_search": "O'quvchini qidirish..."
+      "referrer_search": "Talabani qidirish..."
     },
     "first_name": "Ism",
     "last_name": "Familya",
@@ -506,13 +507,11 @@
       "status": "Holat",
       "date": "Sana",
       "total_price": "Umumiy narx",
-      "tab_info": "Ma'lumot",
       "tab_payments": "To'lovlar",
       "tab_exams": "Imtihonlar",
       "tab_attendance": "Davomat",
       "referrals_count": "Referal qilganlar soni"
     },
-    "tab_info": "Ma'lumotlar",
     "tab_exams": "Imtihonlar",
     "extra_payment": "Qo'shimcha to'lov",
     "payment_amount": "To'lov miqdori",
@@ -751,7 +750,7 @@
       "phone": "Telefon",
       "created": "Yaratilgan",
       "tab_registered_students": "Ro'yxatga olingan talabalar",
-      "referred_students_count": "Referal qilingan o'quvchilar"
+      "referred_students_count": "Referal qilingan talabalar"
     }
   },
   "profile": {
@@ -1006,7 +1005,7 @@
     "region_placeholder": "Viloyatni tanlang",
     "center_name_label": "Avtomaktab nomi",
     "center_name_placeholder": "Masalan: Tezkor Avto",
-    "student_count_label": "O’quvchilar soni",
+    "student_count_label": "Talabalar soni",
     "student_count_placeholder": "Taxminiy soni",
     "note_label": "Izoh",
     "note_placeholder": "Savol yoki qo’shimcha ma’lumot...",

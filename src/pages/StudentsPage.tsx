@@ -66,6 +66,7 @@ import {
   Download,
   UploadCloud,
   Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -206,7 +207,12 @@ const StudentsPage = () => {
 
   const SERVER_PAGE_SIZE = 50;
 
-  const { data: studentsPage, isLoading: isStudentsLoading } = useStudentsPage(
+  const {
+    data: studentsPage,
+    isLoading: isStudentsLoading,
+    isError: isStudentsError,
+    refetch: refetchStudents,
+  } = useStudentsPage(
     courseType,
     branchId,
     currentPage,
@@ -856,7 +862,21 @@ const StudentsPage = () => {
                         </td>
                       </tr>
                     ))}
-                {!isLoading && totalStudents === 0 && (
+                {!isLoading && isStudentsError && (
+                  <tr>
+                    <td colSpan={16} className="p-0">
+                      <EmptyState
+                        icon={AlertTriangle}
+                        title={t('common.error')}
+                        action={{
+                          label: t('common.retry'),
+                          onClick: () => refetchStudents(),
+                        }}
+                      />
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && !isStudentsError && totalStudents === 0 && (
                   <tr>
                     <td colSpan={16} className="p-0">
                       <EmptyState
@@ -877,6 +897,15 @@ const StudentsPage = () => {
             [...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-28 w-full rounded-lg" />
             ))
+          ) : isStudentsError ? (
+            <EmptyState
+              icon={AlertTriangle}
+              title={t('common.error')}
+              action={{
+                label: t('common.retry'),
+                onClick: () => refetchStudents(),
+              }}
+            />
           ) : sorted && sorted.length > 0 ? (
             sorted.map((s) => {
               const fields = [

@@ -453,7 +453,9 @@ const PaymentsPage = () => {
           />
           <SummaryCard
             title={t('payments.stats.debtor_students')}
-            value={`${snapshot?.students_with_debt || 0} ${t('common.count_unit')}`}
+            value={`${snapshot?.students_with_debt || 0}${
+              t('common.count_unit') ? ` ${t('common.count_unit')}` : ''
+            }`}
             icon={<Users className="h-5 w-5" />}
             isLoading={isSnapshotLoading}
           />
@@ -628,7 +630,9 @@ const PaymentsPage = () => {
             />
             <SummaryCard
               title={t('payments.payment_count')}
-              value={`${displayedSummary.period_payments_count} ${t('common.count_unit')}`}
+              value={`${displayedSummary.period_payments_count}${
+                t('common.count_unit') ? ` ${t('common.count_unit')}` : ''
+              }`}
               icon={<Receipt className="h-5 w-5" />}
             />
             <SummaryCard

@@ -396,7 +396,7 @@ const StudentModal = ({
           <Tabs defaultValue="info" className="w-full mt-2">
             {student && (
               <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="info">{t('students.tab_info')}</TabsTrigger>
+                <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
                 <TabsTrigger value="exams">
                   {t('students.tab_exams')}
                 </TabsTrigger>
