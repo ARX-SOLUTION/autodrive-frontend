@@ -37,7 +37,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, ChevronRight, Check, AlertCircle } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  AlertCircle,
+  UserPlus,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
@@ -165,20 +171,20 @@ interface AddStudentDialogProps {
 const STEPS = [
   {
     id: 1,
-    title: "Shaxsiy ma'lumotlar",
-    description: "Talabaning asosiy ma'lumotlari",
+    titleKey: 'students.wizard.step1_title',
+    descKey: 'students.wizard.step1_desc',
   },
   {
     id: 2,
-    title: 'Kurs va Filial',
-    description: "O'qish kursi va filial tanlash",
+    titleKey: 'students.wizard.step2_title',
+    descKey: 'students.wizard.step2_desc',
   },
   {
     id: 3,
-    title: "To'lov va Tasdiqlash",
-    description: "To'lov tafsilotlari va yakuniy tasdiqlash",
+    titleKey: 'students.wizard.step3_title',
+    descKey: 'students.wizard.step3_desc',
   },
-];
+] as const;
 
 const AddStudentDialog = ({
   open,
@@ -281,9 +287,14 @@ const AddStudentDialog = ({
 
   const goToStep = (step: number) => {
     if (step > activeStep) {
+      // Only ever called for the immediate next step (Next button, or a
+      // stepper click gated to step.id <= activeStep + 0 below) — jumping
+      // further would skip validating the steps in between.
       form.trigger(STEP_FIELDS[activeStep]).then((isValid) => {
         if (isValid) {
-          setStepValidated((prev) => ({ ...prev, [step]: true }));
+          // Mark the step just completed (activeStep), not the
+          // destination — the destination hasn't been touched yet.
+          setStepValidated((prev) => ({ ...prev, [activeStep]: true }));
           setActiveStep(step);
         }
       });
@@ -365,63 +376,119 @@ const AddStudentDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden">
-        <DialogHeader className="pb-4">
-          <DialogTitle className="text-lg">Yangi talaba qo'shish</DialogTitle>
-          <DialogDescription>
-            Talaba ma'lumotlarini 3 bosqichda to'ldiring
-          </DialogDescription>
+      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col overflow-hidden">
+        <DialogHeader className="shrink-0 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <UserPlus className="h-5 w-5 text-primary" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <DialogTitle className="font-heading text-lg">
+                {t('students.add')}
+              </DialogTitle>
+              <DialogDescription>
+                {t('students.wizard.subtitle', { count: STEPS.length })}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         {detailedToggle && (
-          <div className="flex items-center pb-2">{detailedToggle}</div>
+          <div className="flex shrink-0 items-center pb-2">
+            {detailedToggle}
+          </div>
         )}
 
         {/* Stepper Indicator */}
-        <div className="flex items-center justify-center gap-2 mb-4 px-4">
-          {STEPS.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div
-                className={cn(
-                  'flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all',
-                  stepValidated[step.id]
-                    ? 'bg-green-500 text-white'
-                    : activeStep >= step.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground',
-                )}
-              >
-                {stepValidated[step.id] ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  step.id
-                )}
-              </div>
-              {index < STEPS.length - 1 && (
-                <div
+        <nav
+          aria-label={t('students.wizard.progress_label')}
+          className="mb-1 shrink-0 px-1"
+        >
+          <ol className="flex items-center">
+            {STEPS.map((step, index) => {
+              const isDone = stepValidated[step.id];
+              const isActive = activeStep === step.id;
+              const isReachable = step.id <= activeStep;
+              return (
+                <li
+                  key={step.id}
                   className={cn(
-                    'w-16 h-0.5 mx-2',
-                    activeStep > index ? 'bg-primary' : 'bg-muted',
+                    'flex items-center',
+                    index < STEPS.length - 1 && 'flex-1',
                   )}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+                >
+                  <button
+                    type="button"
+                    onClick={() => isReachable && goToStep(step.id)}
+                    disabled={!isReachable}
+                    aria-current={isActive ? 'step' : undefined}
+                    className={cn(
+                      'group flex items-center gap-2 rounded-md py-1 pr-2 transition-colors',
+                      isReachable
+                        ? 'cursor-pointer'
+                        : 'cursor-default opacity-60',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium transition-colors',
+                        isDone
+                          ? 'bg-green-600 text-white dark:bg-green-500'
+                          : isActive
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground',
+                      )}
+                    >
+                      {isDone ? (
+                        <Check className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        step.id
+                      )}
+                    </span>
+                    <span
+                      className={cn(
+                        'hidden text-left text-xs font-medium sm:block',
+                        isActive ? 'text-foreground' : 'text-muted-foreground',
+                      )}
+                    >
+                      {t(step.titleKey)}
+                    </span>
+                  </button>
+                  {index < STEPS.length - 1 && (
+                    <div
+                      className={cn(
+                        'mx-1 h-0.5 flex-1 rounded-full transition-colors',
+                        activeStep > step.id ? 'bg-primary' : 'bg-muted',
+                      )}
+                    />
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+          <p className="mt-2 text-center text-xs text-muted-foreground sm:hidden">
+            {t('students.wizard.step_label', {
+              current: activeStep,
+              total: STEPS.length,
+            })}{' '}
+            · {t(STEPS[activeStep - 1].titleKey)}
+          </p>
+        </nav>
 
-        <Separator className="mb-4" />
+        <Separator className="mb-4 shrink-0" />
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onFormValid)}
-            className="h-[calc(100%-160px)] flex flex-col"
+            className="flex min-h-0 flex-1 flex-col"
           >
             <div className="flex-1 overflow-y-auto pr-2">
               {/* Step 1: Personal Info */}
               {activeStep === 1 && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-200">
                   <h3 className="text-sm font-medium text-muted-foreground">
-                    {STEPS[0].title}
+                    {t(STEPS[0].titleKey)}
                   </h3>
 
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -623,7 +690,7 @@ const AddStudentDialog = ({
               {activeStep === 2 && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
                   <h3 className="text-sm font-medium text-muted-foreground">
-                    {STEPS[1].title}
+                    {t(STEPS[1].titleKey)}
                   </h3>
 
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -693,14 +760,17 @@ const AddStudentDialog = ({
                           <FormLabel>Guruh (ixtiyoriy)</FormLabel>
                           <FormControl>
                             <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
+                              onValueChange={(value) =>
+                                field.onChange(value === 'none' ? '' : value)
+                              }
+                              value={field.value || 'none'}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Guruh tanlang (keyinroq qo'shish mumkin)" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">
+                                {/* Radix SelectItem forbids an empty-string value, so "no group" uses a sentinel mapped back to '' above. */}
+                                <SelectItem value="none">
                                   Guruh tanlanmagan
                                 </SelectItem>
                                 {filteredGroups.map((group) => (
@@ -753,7 +823,7 @@ const AddStudentDialog = ({
               {activeStep === 3 && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
                   <h3 className="text-sm font-medium text-muted-foreground">
-                    {STEPS[2].title}
+                    {t(STEPS[2].titleKey)}
                   </h3>
 
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -929,7 +999,7 @@ const AddStudentDialog = ({
             </div>
 
             {/* Footer Actions */}
-            <div className="flex items-center justify-between border-t pt-4 mt-auto">
+            <div className="mt-auto flex shrink-0 items-center justify-between border-t pt-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {activeStep > 1 && (
                   <Button
@@ -952,7 +1022,7 @@ const AddStudentDialog = ({
                     variant="outline"
                     size="sm"
                     onClick={handleNext}
-                    disabled={loading || !stepValidated[activeStep]}
+                    disabled={loading}
                   >
                     Keyingi
                     <ChevronRight className="w-4 h-4 ml-1" />

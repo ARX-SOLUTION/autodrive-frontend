@@ -361,6 +361,17 @@
     "add": "Add student",
     "detailed_toggle": "Detailed",
     "phone_invalid": "Invalid phone number (+998 XX XXX XX XX)",
+    "wizard": {
+      "subtitle": "Fill in student details in {{count}} steps",
+      "step_label": "Step {{current}}/{{total}}",
+      "progress_label": "Registration steps",
+      "step1_title": "Personal details",
+      "step1_desc": "Student's basic information",
+      "step2_title": "Course & branch",
+      "step2_desc": "Choose the course and branch",
+      "step3_title": "Payment & confirmation",
+      "step3_desc": "Payment details and final confirmation"
+    },
     "lead_source": {
       "referral": "Referral",
       "instagram": "Instagram",
