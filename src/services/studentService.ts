@@ -6,7 +6,14 @@ import type { CreateStudentPayload } from '@/components/ui/StudentModal';
 import { track } from '@/lib/umami';
 import type { ListResponse } from '@/types/list';
 import { parseListResponse } from '@/lib/listResponse';
+import { parseItemEnvelope } from '@/lib/apiEnvelope';
 import type { AddStudentPayload } from '@/components/ui/AddStudentDialog';
+import {
+  studentKeys,
+  paymentKeys,
+  dashboardKeys,
+  groupKeys,
+} from '@/lib/queryKeys';
 
 export const toLocalDateStr = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -66,9 +73,11 @@ const toStudentQueryParams = ({
 
 export const fetchStudentsPage = async (
   params: StudentListParams,
+  signal?: AbortSignal,
 ): Promise<ListResponse<Student>> => {
   const { data } = await axiosInstance.get('/students', {
     params: toStudentQueryParams(params),
+    signal,
   });
   return parseListResponse<Student>(data, params.page, params.limit);
 };
@@ -101,33 +110,20 @@ export const useStudentsPage = (
   const isCrossTenant = useIsCrossTenant();
   const baseEnabled = !!branchId || isCrossTenant;
   return useQuery<ListResponse<Student>>({
-    queryKey: [
-      'students',
+    queryKey: studentKeys.page({
       courseType,
       branchId,
       page,
       limit,
       operatorId,
-      options?.search,
-      options?.dateFrom,
-      options?.dateTo,
-      options?.sortBy,
-      options?.sortOrder,
-      options?.hasDebt,
-      options?.status,
-      options?.referredByUserId,
-      options?.referredByStudentId,
-    ],
+      ...options,
+    }),
     enabled: (options?.enabled ?? true) && baseEnabled,
-    queryFn: () =>
-      fetchStudentsPage({
-        courseType,
-        branchId,
-        page,
-        limit,
-        operatorId,
-        ...options,
-      }),
+    queryFn: ({ signal }) =>
+      fetchStudentsPage(
+        { courseType, branchId, page, limit, operatorId, ...options },
+        signal,
+      ),
   });
 };
 
@@ -142,30 +138,20 @@ export const useStudents = (
   const isCrossTenant = useIsCrossTenant();
   const baseEnabled = !!branchId || isCrossTenant;
   return useQuery<ListResponse<Student>, Error, Student[]>({
-    queryKey: [
-      'students',
+    queryKey: studentKeys.list({
       courseType,
       branchId,
       page,
       limit,
       operatorId,
-      options?.search,
-      options?.dateFrom,
-      options?.dateTo,
-      options?.sortBy,
-      options?.sortOrder,
-      options?.hasDebt,
-    ],
+      ...options,
+    }),
     enabled: (options?.enabled ?? true) && baseEnabled,
-    queryFn: () =>
-      fetchStudentsPage({
-        courseType,
-        branchId,
-        page,
-        limit,
-        operatorId,
-        ...options,
-      }),
+    queryFn: ({ signal }) =>
+      fetchStudentsPage(
+        { courseType, branchId, page, limit, operatorId, ...options },
+        signal,
+      ),
     select: (result) => result.data,
   });
 };
@@ -173,11 +159,11 @@ export const useStudents = (
 // Single student for the detail card (header + Ma'lumot/Imtihonlar tabs).
 export const useStudent = (id?: string) =>
   useQuery<Student>({
-    queryKey: ['student', id],
+    queryKey: studentKeys.detail(id),
     enabled: !!id,
-    queryFn: async () => {
-      const { data } = await axiosInstance.get(`/students/${id}`);
-      return data?.data ?? data;
+    queryFn: async ({ signal }) => {
+      const { data } = await axiosInstance.get(`/students/${id}`, { signal });
+      return parseItemEnvelope<Student>(data, 'student');
     },
   });
 
@@ -186,13 +172,12 @@ export const useCreateStudent = () => {
   return useMutation({
     mutationFn: async (student: CreateStudentPayload) => {
       const { data } = await axiosInstance.post('/students', student);
-      return data?.data || data;
+      return parseItemEnvelope<Student>(data, 'student');
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['students'] });
-      qc.invalidateQueries({ queryKey: ['payments'] });
-      qc.invalidateQueries({ queryKey: ['dashboard'] });
-      qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
+      qc.invalidateQueries({ queryKey: studentKeys.all });
+      qc.invalidateQueries({ queryKey: paymentKeys.all });
+      qc.invalidateQueries({ queryKey: dashboardKeys.all });
       track('student_create');
     },
   });
@@ -206,14 +191,16 @@ export const useUpdateStudent = () => {
       ...student
     }: Partial<CreateStudentPayload> & { id: string }) => {
       const { data } = await axiosInstance.patch(`/students/${id}`, student);
-      return data?.data || data;
+      return parseItemEnvelope<Student>(data, 'student');
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['students'] });
-      qc.invalidateQueries({ queryKey: ['student'] });
-      qc.invalidateQueries({ queryKey: ['payments'] });
-      qc.invalidateQueries({ queryKey: ['dashboard'] });
-      qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
+      // studentKeys.all (root 'students') now covers the old singular
+      // 'student' detail key too, and paymentKeys.all covers the old
+      // standalone 'payment-snapshot' root -- both nest under Stage 2's
+      // factory roots now.
+      qc.invalidateQueries({ queryKey: studentKeys.all });
+      qc.invalidateQueries({ queryKey: paymentKeys.all });
+      qc.invalidateQueries({ queryKey: dashboardKeys.all });
       track('student_update');
     },
   });
@@ -226,10 +213,9 @@ export const useDeleteStudent = () => {
       await axiosInstance.delete(`/students/${id}`);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['students'] });
-      qc.invalidateQueries({ queryKey: ['payments'] });
-      qc.invalidateQueries({ queryKey: ['dashboard'] });
-      qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
+      qc.invalidateQueries({ queryKey: studentKeys.all });
+      qc.invalidateQueries({ queryKey: paymentKeys.all });
+      qc.invalidateQueries({ queryKey: dashboardKeys.all });
       track('student_delete');
     },
   });
@@ -284,16 +270,14 @@ export const useCreateStudentWithPayment = () => {
         referred_by_student_id: payload.referred_by_student_id,
         referred_by_user_id: payload.referred_by_user_id,
       });
-      const student = studentData?.data || studentData;
 
-      return student;
+      return parseItemEnvelope<Student>(studentData, 'student');
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['students'] });
-      qc.invalidateQueries({ queryKey: ['payments'] });
-      qc.invalidateQueries({ queryKey: ['dashboard'] });
-      qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
-      qc.invalidateQueries({ queryKey: ['groups'] });
+      qc.invalidateQueries({ queryKey: studentKeys.all });
+      qc.invalidateQueries({ queryKey: paymentKeys.all });
+      qc.invalidateQueries({ queryKey: dashboardKeys.all });
+      qc.invalidateQueries({ queryKey: groupKeys.all });
       track('student_create_with_payment');
     },
   });

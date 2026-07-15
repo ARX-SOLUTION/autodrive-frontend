@@ -6,10 +6,12 @@ import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { AuthResponse, LoginCredentials, User } from '@/types/user';
 import { track } from '@/lib/umami';
+import { parseItemEnvelope } from '@/lib/apiEnvelope';
+import { authKeys } from '@/lib/queryKeys';
 
 const loginApi = async (creds: LoginCredentials): Promise<AuthResponse> => {
   const { data } = await axiosInstance.post('/auth/login', creds);
-  return data.data;
+  return parseItemEnvelope<AuthResponse>(data, 'auth');
 };
 
 export const useLogin = () => {
@@ -39,10 +41,10 @@ export const useRestoreSession = () => {
   const queryClient = useQueryClient();
 
   const query = useQuery<User>({
-    queryKey: ['me'],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get('/auth/me');
-      return data.data;
+    queryKey: authKeys.me(),
+    queryFn: async ({ signal }) => {
+      const { data } = await axiosInstance.get('/auth/me', { signal });
+      return parseItemEnvelope<User>(data, 'auth-me');
     },
     enabled: isAuthenticated,
     retry: false,
@@ -71,14 +73,14 @@ export const useChangePassword = () => {
       newPassword: string;
     }): Promise<AuthResponse> => {
       const { data } = await axiosInstance.post('/auth/change-password', dto);
-      return data.data;
+      return parseItemEnvelope<AuthResponse>(data, 'auth');
     },
     onSuccess: (data) => {
       // The backend bumps tokenVersion (kills old sessions) and returns a
       // fresh token — adopt it so THIS session survives the change; without
       // it the next request 401s and the user is dumped back to /login.
       if (data?.token && data?.user) setAuth(data.token, data.user);
-      queryClient.invalidateQueries({ queryKey: ['me'] });
+      queryClient.invalidateQueries({ queryKey: authKeys.all });
     },
   });
 };

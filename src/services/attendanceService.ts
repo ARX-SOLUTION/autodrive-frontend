@@ -11,15 +11,18 @@ import {
 } from '@/types/attendance';
 import { track } from '@/lib/umami';
 import { parseListResponse } from '@/lib/listResponse';
+import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
+import { lessonKeys, attendanceKeys } from '@/lib/queryKeys';
 
 export const useLessons = (page = 1, limit = 50) => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<PaginatedLessons>({
-    queryKey: ['lessons', branchId, page, limit],
-    queryFn: async () => {
+    queryKey: lessonKeys.page({ branchId, page, limit }),
+    queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/lessons', {
         params: { page, limit },
+        signal,
       });
       const { data } = parseListResponse<Lesson>(res, page, limit);
       // ponytail: backend LessonListResponse is flat ({data,total,page,limit},
@@ -38,22 +41,23 @@ export const useLessons = (page = 1, limit = 50) => {
 // from useLessons/useLessonById, which query per-lesson rosters.
 export const useAttendanceHistory = (studentId?: string, limit = 20) =>
   useQuery<AttendanceHistoryRecord[]>({
-    queryKey: ['attendance', 'history', studentId, limit],
-    queryFn: async () => {
+    queryKey: attendanceKeys.history(studentId, { limit }),
+    queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/attendance', {
         params: { student_id: studentId, limit },
+        signal,
       });
-      return res?.data?.data || res?.data || [];
+      return parseListEnvelope<AttendanceHistoryRecord>(res, 'attendance').data;
     },
     enabled: !!studentId,
   });
 
 export const useLessonById = ({ id }: { id: string }) =>
   useQuery<Lesson>({
-    queryKey: ['lessons', 'detail', id],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get(`/lessons/${id}`);
-      return data?.data || data;
+    queryKey: lessonKeys.detail(id),
+    queryFn: async ({ signal }) => {
+      const { data } = await axiosInstance.get(`/lessons/${id}`, { signal });
+      return parseItemEnvelope<Lesson>(data, 'lesson');
     },
     enabled: !!id,
   });
@@ -63,10 +67,10 @@ export const useCreateLesson = () => {
   return useMutation({
     mutationFn: async (payload: CreateLessonPayload) => {
       const { data } = await axiosInstance.post('/lessons', payload);
-      return data?.data || data;
+      return parseItemEnvelope<Lesson>(data, 'lesson');
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['lessons'] });
+      qc.invalidateQueries({ queryKey: lessonKeys.all });
       track('lesson_create');
     },
   });
@@ -77,12 +81,12 @@ export const useBatchAttendance = () => {
   return useMutation({
     mutationFn: async (payload: BatchAttendancePayload) => {
       const { data } = await axiosInstance.post('/attendance/batch', payload);
-      return data?.data || data;
+      return parseItemEnvelope(data, 'attendance-batch');
     },
     onSuccess: (_data, variables) => {
-      qc.invalidateQueries({ queryKey: ['lessons'] });
+      qc.invalidateQueries({ queryKey: lessonKeys.all });
       qc.invalidateQueries({
-        queryKey: ['lessons', 'detail', variables.lessonId],
+        queryKey: lessonKeys.detail(variables.lessonId),
       });
       track('attendance_mark');
     },
@@ -96,7 +100,7 @@ export const useDeleteLesson = () => {
       await axiosInstance.delete(`/lessons/${id}`);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['lessons'] });
+      qc.invalidateQueries({ queryKey: lessonKeys.all });
     },
   });
 };

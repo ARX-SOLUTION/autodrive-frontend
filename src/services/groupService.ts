@@ -4,6 +4,8 @@ import { useAuthStore } from '@/store/authStore';
 import { useIsCrossTenant } from '@/hooks/useCan';
 import { Group, GroupOverview } from '@/types/group';
 import { track } from '@/lib/umami';
+import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
+import { groupKeys, studentKeys } from '@/lib/queryKeys';
 
 export interface GroupListParams {
   search?: string;
@@ -20,19 +22,17 @@ export const useGroups = (params: GroupListParams = {}) => {
   const authBranchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<Group[]>({
-    queryKey: ['groups', authBranchId, branchId, search, courseType],
-    queryFn: async () => {
+    queryKey: groupKeys.list({ authBranchId, branchId, search, courseType }),
+    queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/groups', {
         params: {
           search: search || undefined,
           branch_id: branchId || undefined,
           course_type: courseType || undefined,
         },
+        signal,
       });
-      const arr = res?.data?.data || res?.data;
-      if (Array.isArray(arr)) return arr;
-      if (Array.isArray(res)) return res;
-      return [];
+      return parseListEnvelope<Group>(res, 'groups').data;
     },
     enabled: !!authBranchId || isCrossTenant,
   });
@@ -42,13 +42,12 @@ export const useGroupsOverview = () => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<GroupOverview[]>({
-    queryKey: ['groups-overview', branchId],
-    queryFn: async () => {
-      const { data: res } = await axiosInstance.get('/groups/overview');
-      const arr = res?.data?.data || res?.data;
-      if (Array.isArray(arr)) return arr;
-      if (Array.isArray(res)) return res;
-      return [];
+    queryKey: groupKeys.overview({ branchId }),
+    queryFn: async ({ signal }) => {
+      const { data: res } = await axiosInstance.get('/groups/overview', {
+        signal,
+      });
+      return parseListEnvelope<GroupOverview>(res, 'groups-overview').data;
     },
     enabled: !!branchId || isCrossTenant,
   });
@@ -56,10 +55,10 @@ export const useGroupsOverview = () => {
 
 export const useGroup = (id?: string) =>
   useQuery<Group>({
-    queryKey: ['groups', 'detail', id],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get(`/groups/${id}`);
-      return data?.data || data;
+    queryKey: groupKeys.detail(id),
+    queryFn: async ({ signal }) => {
+      const { data } = await axiosInstance.get(`/groups/${id}`, { signal });
+      return parseItemEnvelope<Group>(data, 'group');
     },
     enabled: !!id,
   });
@@ -73,11 +72,10 @@ export const useCreateGroup = () => {
       courseType: string;
     }) => {
       const { data } = await axiosInstance.post('/groups', group);
-      return data?.data || data;
+      return parseItemEnvelope<Group>(data, 'group');
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['groups'] });
-      qc.invalidateQueries({ queryKey: ['groups-overview'] });
+      qc.invalidateQueries({ queryKey: groupKeys.all });
       track('group_create');
     },
   });
@@ -96,12 +94,11 @@ export const useUpdateGroup = () => {
       courseType?: string;
     }) => {
       const { data } = await axiosInstance.patch(`/groups/${id}`, group);
-      return data?.data || data;
+      return parseItemEnvelope<Group>(data, 'group');
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['groups'] });
-      qc.invalidateQueries({ queryKey: ['groups-overview'] });
-      qc.invalidateQueries({ queryKey: ['students'] });
+      qc.invalidateQueries({ queryKey: groupKeys.all });
+      qc.invalidateQueries({ queryKey: studentKeys.all });
     },
   });
 };
@@ -113,13 +110,14 @@ export const useDeleteGroup = () => {
       await axiosInstance.delete(`/groups/${id}`);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['groups'] });
-      qc.invalidateQueries({ queryKey: ['groups-overview'] });
+      // groupKeys.all (root 'groups') prefix-matches groupKeys.overview too,
+      // so one call now covers what used to be two separate invalidations.
+      qc.invalidateQueries({ queryKey: groupKeys.all });
       // Backend nulls groupId on every enrolled student in the same
       // transaction (autodrive-f9u.11) -- without this, a cached student
-      // list/detail view keeps showing the deleted group.
-      qc.invalidateQueries({ queryKey: ['students'] });
-      qc.invalidateQueries({ queryKey: ['student'] });
+      // list/detail view keeps showing the deleted group. studentKeys.all
+      // (root 'students') also covers the old singular 'student' detail key.
+      qc.invalidateQueries({ queryKey: studentKeys.all });
     },
   });
 };

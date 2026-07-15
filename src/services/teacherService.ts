@@ -5,6 +5,8 @@ import { useIsCrossTenant } from '@/hooks/useCan';
 import { User } from '@/types/user';
 import type { ListResponse } from '@/types/list';
 import { parseListResponse } from '@/lib/listResponse';
+import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
+import { teacherKeys } from '@/lib/queryKeys';
 
 export type Specialization = 'THEORY' | 'PRACTICE';
 
@@ -12,16 +14,13 @@ export const useTeachers = () => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
-    queryKey: ['teachers', branchId],
+    queryKey: teacherKeys.list({ branchId }),
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/users', {
         params: { role: 'teacher' },
         signal,
       });
-      const arr = res?.data?.data || res?.data;
-      if (Array.isArray(arr)) return arr;
-      if (Array.isArray(res)) return res;
-      return [];
+      return parseListEnvelope<User>(res, 'teachers').data;
     },
     enabled: !!branchId || isCrossTenant,
   });
@@ -39,7 +38,7 @@ export const useTeachersPage = (
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<ListResponse<User>>({
-    queryKey: ['teachers', 'page', branchId, page, limit, search],
+    queryKey: teacherKeys.page({ branchId, page, limit, search }),
     queryFn: async ({ signal }) => {
       const { data } = await axiosInstance.get('/users', {
         params: { role: 'teacher', page, limit, search: search || undefined },
@@ -64,9 +63,9 @@ export const useCreateTeacher = () => {
         ...t,
         role: 'teacher',
       });
-      return data?.data || data;
+      return parseItemEnvelope<User>(data, 'teacher');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['teachers'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: teacherKeys.all }),
   });
 };
 
@@ -84,9 +83,9 @@ export const useUpdateTeacher = () => {
       branchId?: string;
     }) => {
       const { data } = await axiosInstance.patch(`/users/${id}`, t);
-      return data?.data || data;
+      return parseItemEnvelope<User>(data, 'teacher');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['teachers'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: teacherKeys.all }),
   });
 };
 
@@ -96,6 +95,6 @@ export const useDeleteTeacher = () => {
     mutationFn: async (id: string) => {
       await axiosInstance.delete(`/users/${id}`);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['teachers'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: teacherKeys.all }),
   });
 };

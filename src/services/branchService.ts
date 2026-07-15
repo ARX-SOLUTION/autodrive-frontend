@@ -1,27 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { Branch } from '@/types/branch';
+import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
+import { branchKeys } from '@/lib/queryKeys';
 
 export const useBranches = (enabled = true) =>
   useQuery<Branch[]>({
-    queryKey: ['branches'],
+    queryKey: branchKeys.list(),
     enabled,
-    queryFn: async () => {
-      const { data: res } = await axiosInstance.get('/branches');
-      const arr = res?.data?.data || res?.data;
-      if (Array.isArray(arr)) return arr;
-      if (Array.isArray(res)) return res;
-      return [];
+    queryFn: async ({ signal }) => {
+      const { data: res } = await axiosInstance.get('/branches', { signal });
+      return parseListEnvelope<Branch>(res, 'branches').data;
     },
   });
 
 export const useBranch = (id?: string) =>
   useQuery<Branch>({
-    queryKey: ['branches', id],
+    queryKey: branchKeys.detail(id),
     enabled: !!id,
-    queryFn: async () => {
-      const { data: res } = await axiosInstance.get(`/branches/${id}`);
-      return res?.data?.data || res?.data;
+    queryFn: async ({ signal }) => {
+      const { data: res } = await axiosInstance.get(`/branches/${id}`, {
+        signal,
+      });
+      return parseItemEnvelope<Branch>(res, 'branch');
     },
   });
 
@@ -34,9 +35,9 @@ export const useCreateBranch = () => {
       phone?: string;
     }) => {
       const { data } = await axiosInstance.post('/branches', b);
-      return data?.data || data;
+      return parseItemEnvelope<Branch>(data, 'branch');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['branches'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: branchKeys.all }),
   });
 };
 
@@ -53,9 +54,9 @@ export const useUpdateBranch = () => {
       phone?: string;
     }) => {
       const { data } = await axiosInstance.patch(`/branches/${id}`, b);
-      return data?.data || data;
+      return parseItemEnvelope<Branch>(data, 'branch');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['branches'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: branchKeys.all }),
   });
 };
 
@@ -65,6 +66,6 @@ export const useDeleteBranch = () => {
     mutationFn: async (id: string) => {
       await axiosInstance.delete(`/branches/${id}`);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['branches'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: branchKeys.all }),
   });
 };

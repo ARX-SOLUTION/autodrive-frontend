@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useIsCrossTenant } from '@/hooks/useCan';
 import { CourseType } from '@/types/student';
+import { parseItemEnvelope } from '@/lib/apiEnvelope';
+import { dashboardKeys } from '@/lib/queryKeys';
 
 export interface DashboardAnalytics {
   total_students: number;
@@ -32,13 +34,14 @@ export const useDashboardAnalytics = (
 ) => {
   const isCrossTenant = useIsCrossTenant();
   return useQuery<DashboardAnalytics>({
-    queryKey: ['dashboard', branchId, courseType],
+    queryKey: dashboardKeys.analytics({ branchId, courseType }),
     enabled: !!branchId || isCrossTenant,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/dashboard/analytics', {
         params: { branch_id: branchId, course_type: courseType },
+        signal,
       });
-      return res?.data || res;
+      return parseItemEnvelope<DashboardAnalytics>(res, 'dashboard-analytics');
     },
   });
 };
@@ -51,12 +54,13 @@ export interface TeacherAnalytics {
 
 export const useTeacherAnalytics = () => {
   return useQuery<TeacherAnalytics>({
-    queryKey: ['dashboard', 'teacher-analytics'],
-    queryFn: async () => {
+    queryKey: dashboardKeys.teacherAnalytics(),
+    queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get(
         '/dashboard/teacher-analytics',
+        { signal },
       );
-      return res?.data || res;
+      return parseItemEnvelope<TeacherAnalytics>(res, 'teacher-analytics');
     },
   });
 };
@@ -200,9 +204,9 @@ export const useCompanyOverview = (query: CompanyOverviewQuery = {}) => {
   const isCrossTenant = useIsCrossTenant();
   const enabled = !!query.branchId || isCrossTenant || !!query.companyId;
   return useQuery<CompanyOverview>({
-    queryKey: ['company-dashboard', query],
+    queryKey: dashboardKeys.company({ ...query }),
     enabled,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get(
         '/dashboard/company-overview',
         {
@@ -214,9 +218,10 @@ export const useCompanyOverview = (query: CompanyOverviewQuery = {}) => {
             to: query.to,
             granularity: query.granularity,
           },
+          signal,
         },
       );
-      return res?.data || res;
+      return parseItemEnvelope<CompanyOverview>(res, 'company-overview');
     },
     staleTime: 30_000,
   });
