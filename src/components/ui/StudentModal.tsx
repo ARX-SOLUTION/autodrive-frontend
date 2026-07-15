@@ -127,6 +127,9 @@ interface StudentModalProps {
   defaultBranchId?: string;
   // Rendered at the top of the dialog — the quick/detailed mode toggle.
   detailedToggle?: ReactNode;
+  // Lets a parent (e.g. the quick/detailed toggle) know when it's unsafe to
+  // switch modes without losing typed data.
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 const StudentModal = ({
@@ -141,6 +144,7 @@ const StudentModal = ({
   disabledFields = [],
   defaultBranchId,
   detailedToggle,
+  onDirtyChange,
 }: StudentModalProps) => {
   const { t } = useTranslation();
   const canAssignBranch = useCan('assignBranch');
@@ -177,6 +181,10 @@ const StudentModal = ({
     resolver: zodResolver(studentFormSchema),
     defaultValues: defaultFormValues(),
   });
+
+  useEffect(() => {
+    onDirtyChange?.(form.formState.isDirty);
+  }, [form.formState.isDirty, onDirtyChange]);
 
   // ponytail: ref tracks which submit button was clicked; defaults to 'close' so Enter → Save
   const submitModeRef = useRef<'close' | 'add'>('close');

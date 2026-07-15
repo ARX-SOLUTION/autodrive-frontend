@@ -190,6 +190,9 @@ const StudentsPage = () => {
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   // One add flow, two modes: quick (StudentModal) vs detailed (AddStudentDialog).
   const [detailed, setDetailed] = useState(false);
+  // Switching modes mid-entry unmounts the current form -- block it once
+  // the user has actually typed something, instead of silently discarding.
+  const [createFormDirty, setCreateFormDirty] = useState(false);
   const [sortField, setSortField] = useState('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -345,11 +348,13 @@ const StudentsPage = () => {
   const closeModal = () => {
     setModalOpen(false);
     setEditStudent(null);
+    setCreateFormDirty(false);
   };
 
   const closeAddFlow = () => {
     setModalOpen(false);
     setDetailed(false);
+    setCreateFormDirty(false);
   };
 
   const handleAddStudentDialogSubmit = (data: AddStudentPayload) => {
@@ -366,19 +371,28 @@ const StudentsPage = () => {
   const openEdit = (s: Student) => {
     setEditStudent(s);
     setDetailed(false);
+    setCreateFormDirty(false);
     setModalOpen(true);
   };
   const openCreate = () => {
     setEditStudent(null);
     setDetailed(false);
+    setCreateFormDirty(false);
     setModalOpen(true);
   };
 
   // Quick/detailed toggle shown inside the add dialog (create mode only).
   const detailedToggle = (
-    <label className="flex cursor-pointer select-none items-center gap-2 text-sm font-medium">
+    <label
+      className={cn(
+        'flex select-none items-center gap-2 text-sm font-medium',
+        createFormDirty ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+      )}
+      title={createFormDirty ? t('students.detailed_toggle_locked') : undefined}
+    >
       <Checkbox
         checked={detailed}
+        disabled={createFormDirty}
         onCheckedChange={(v) => setDetailed(!!v)}
         id="detailed-toggle"
       />
@@ -975,6 +989,7 @@ const StudentsPage = () => {
         operators={operators || []}
         defaultBranchId={branchId}
         detailedToggle={editStudent ? undefined : detailedToggle}
+        onDirtyChange={editStudent ? undefined : setCreateFormDirty}
       />
 
       <ImportStudentsModal
@@ -990,6 +1005,7 @@ const StudentsPage = () => {
         loading={createWithPaymentMutation.isPending}
         defaultBranchId={branchId}
         detailedToggle={detailedToggle}
+        onDirtyChange={setCreateFormDirty}
       />
 
       <ConfirmDialog

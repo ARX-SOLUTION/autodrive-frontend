@@ -166,6 +166,9 @@ interface AddStudentDialogProps {
   defaultCourseId?: string;
   // Rendered at the top of the dialog — the quick/detailed mode toggle.
   detailedToggle?: ReactNode;
+  // Lets a parent (e.g. the quick/detailed toggle) know when it's unsafe to
+  // switch modes without losing typed data.
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 const STEPS = [
@@ -194,6 +197,7 @@ const AddStudentDialog = ({
   defaultBranchId,
   defaultCourseId,
   detailedToggle,
+  onDirtyChange,
 }: AddStudentDialogProps) => {
   const { t } = useTranslation();
   const canAssignBranch = useCan('assignBranch');
@@ -249,6 +253,10 @@ const AddStudentDialog = ({
 
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
     useConfirmedClose(form.formState.isDirty || !!loading, onClose);
+
+  useEffect(() => {
+    onDirtyChange?.(form.formState.isDirty);
+  }, [form.formState.isDirty, onDirtyChange]);
 
   const resetForNext = () => {
     const current = form.getValues();

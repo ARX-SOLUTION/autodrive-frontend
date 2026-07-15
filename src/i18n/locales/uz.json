@@ -545,7 +545,8 @@
       "avto_maktab": "Avtomaktab"
     },
     "form_desc": "Talaba ma'lumotlarini kiriting",
-    "confirm_delete_desc": "\"{{name}}\" talabasini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
+    "confirm_delete_desc": "\"{{name}}\" talabasini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.",
+    "detailed_toggle_locked": "Ma'lumot kiritilgan — rejimni almashtirish uni yo'qotadi"
   },
   "exams": {
     "add_title": "Yangi natija qo'shish",
