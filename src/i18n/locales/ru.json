@@ -361,6 +361,17 @@
     "add": "Добавить студента",
     "detailed_toggle": "Подробнее",
     "phone_invalid": "Неверный номер телефона (+998 XX XXX XX XX)",
+    "wizard": {
+      "subtitle": "Заполните данные студента за {{count}} шага",
+      "step_label": "Шаг {{current}}/{{total}}",
+      "progress_label": "Этапы регистрации",
+      "step1_title": "Личные данные",
+      "step1_desc": "Основная информация о студенте",
+      "step2_title": "Курс и филиал",
+      "step2_desc": "Выбор курса обучения и филиала",
+      "step3_title": "Оплата и подтверждение",
+      "step3_desc": "Детали оплаты и итоговое подтверждение"
+    },
     "lead_source": {
       "referral": "Рекомендация",
       "instagram": "Instagram",

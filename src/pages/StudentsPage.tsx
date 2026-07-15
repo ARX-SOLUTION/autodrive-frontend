@@ -72,8 +72,7 @@ import { cn } from '@/lib/utils';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { formatPhone } from '@/lib/phoneFormater';
 import { extractErrorMessage } from '@/lib/errors';
-
-const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
+import { formatMoney } from '@/lib/money';
 const capitalize = (str?: string) =>
   str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
 

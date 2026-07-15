@@ -362,6 +362,17 @@
     "edit": "Talabani tahrirlash",
     "detailed_toggle": "Batafsil ma'lumot",
     "phone_invalid": "Telefon raqami noto'g'ri (+998 XX XXX XX XX)",
+    "wizard": {
+      "subtitle": "Talaba ma'lumotlarini {{count}} bosqichda to'ldiring",
+      "step_label": "Bosqich {{current}}/{{total}}",
+      "progress_label": "Ro'yxatdan o'tish bosqichlari",
+      "step1_title": "Shaxsiy ma'lumotlar",
+      "step1_desc": "Talabaning asosiy ma'lumotlari",
+      "step2_title": "Kurs va filial",
+      "step2_desc": "O'qish kursi va filial tanlash",
+      "step3_title": "To'lov va tasdiqlash",
+      "step3_desc": "To'lov tafsilotlari va yakuniy tasdiqlash"
+    },
     "lead_source": {
       "referral": "Tavsiya (tanish)",
       "instagram": "Instagram",

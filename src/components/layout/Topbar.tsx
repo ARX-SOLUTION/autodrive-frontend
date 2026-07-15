@@ -23,6 +23,11 @@ const langLabels: Record<string, string> = {
 const iconButtonClass =
   'inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground';
 
+const isMac =
+  typeof navigator !== 'undefined' &&
+  /Mac|iPhone|iPad/.test(navigator.platform);
+const commandShortcutLabel = isMac ? '⌘K' : 'Ctrl+K';
+
 export const Topbar = ({
   onMobileMenuClick,
   onCommandPaletteOpen,
@@ -64,7 +69,7 @@ export const Topbar = ({
             {t('actions.search', 'Qidirish') as string}
           </span>
           <kbd className="hidden rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium sm:inline">
-            ⌘K
+            {commandShortcutLabel}
           </kbd>
         </button>
         <button
