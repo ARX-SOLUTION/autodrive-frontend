@@ -198,6 +198,12 @@ async findActive(user: CurrentUserPayload) {
 - Errors via shadcn `<FormMessage />`.
 - Submit handler is `async`, awaits mutation.
 
+**Entity detail views:**
+
+- Always a dedicated route + tabs (e.g. `/students/:id` with tabs), never a modal-only detail view. Supports deep-linking, browser back, and `React.lazy` code-splitting. Precedent: admin panel's `CompanyDetailPage`, this repo's `StudentDetailPage`/`BranchDetailPage`.
+- Edit stays a launched action (modal/dialog) alongside the detail route — the route is for viewing + related-data tabs, not replaced by an edit modal.
+- A card/row that opens a detail view navigates to the route; it does not open a modal.
+
 **Performance at scale:**
 
 - Long lists → paginate (use existing `usePagination` hook).
