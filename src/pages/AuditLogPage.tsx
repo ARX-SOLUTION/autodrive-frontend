@@ -265,7 +265,7 @@ const AuditLogPage = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="font-heading text-2xl font-bold flex items-center gap-2 text-balance">
