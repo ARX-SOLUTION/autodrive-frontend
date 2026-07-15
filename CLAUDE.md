@@ -548,6 +548,18 @@ All user-facing text must use `useTranslation()` / `t()` from `react-i18next`. N
 
 ---
 
+## 🔀 Post-PR-open Conflict Check
+
+Right after `gh pr create` — and again any time `origin/main` moves while the PR sits open — check for conflicts:
+
+```bash
+gh pr view <number> --json mergeable,mergeStateStatus --jq '{mergeable,mergeStateStatus}'
+```
+
+If `mergeable` is `CONFLICTING`, fix it immediately — don't leave a conflicted PR sitting open for the user to discover later. Full resolution rules (why-first, when `--ours` is safe, verification bar) live in the workspace-root `CLAUDE.md`'s "Post-PR-open conflict check" section — same rules apply here.
+
+---
+
 ## Agent skills
 
 ### Issue tracker
