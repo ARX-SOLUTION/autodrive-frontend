@@ -125,7 +125,7 @@ const buildSchemas = (t: (key: string) => string) => {
   const step2 = z.object({
     branch_id: z.string().uuid('Filial tanlanmagan'),
     course_id: z.string().uuid('Kurs tanlanmagan'),
-    group_id: z.string().uuid().optional(),
+    group_id: z.string().uuid().optional().or(z.literal('')),
     start_date: z.string().min(1, 'Boshlanish sana majburiy'),
     completion_date: z.string().optional(),
     lead_source: z.enum(LEAD_SOURCE_VALUES).optional(),
