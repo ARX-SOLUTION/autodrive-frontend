@@ -73,10 +73,10 @@ const AuditLogPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // Filter state lives in the URL so reload / back / share preserves it
-  // (autodrive-6cq.5.8) — same setParam/setParams pattern as StudentsPage
-  // (src/hooks/useUrlParams.ts). Page and sort stay local, matching
-  // StudentsPage's split (only filters are URL-backed there).
+  // Filter + page state lives in the URL so reload / back / share preserves
+  // it (autodrive-6cq.5.8) — same setParam/setParams pattern as StudentsPage
+  // (src/hooks/useUrlParams.ts). Sort stays local (no other list page's
+  // sort is URL-synced either).
   const { searchParams, setParam, setParams } = useUrlParams();
 
   const search = searchParams.get('q') ?? '';
@@ -109,7 +109,9 @@ const AuditLogPage = () => {
       date_to: to ? toLocalDateStr(to) : undefined,
     });
 
-  const [page, setPage] = useState(1);
+  const page = Number(searchParams.get('page')) || 1;
+  const setPage = (p: number) =>
+    setParam('page', p > 1 ? String(p) : undefined);
   const LIMIT = 50;
 
   const [sortField, setSortField] = useState('createdAt');
@@ -263,7 +265,7 @@ const AuditLogPage = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="font-heading text-2xl font-bold flex items-center gap-2 text-balance">
@@ -559,7 +561,7 @@ const AuditLogPage = () => {
               variant="outline"
               size="sm"
               disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
+              onClick={() => setPage(page - 1)}
             >
               {t('common.previous')}
             </Button>
@@ -570,7 +572,7 @@ const AuditLogPage = () => {
               variant="outline"
               size="sm"
               disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
+              onClick={() => setPage(page + 1)}
             >
               {t('common.next')}
             </Button>

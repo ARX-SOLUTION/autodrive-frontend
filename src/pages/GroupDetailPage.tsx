@@ -79,9 +79,7 @@ const GroupDetailPage = () => {
       {/* Tabs */}
       <Tabs defaultValue="info">
         <TabsList>
-          <TabsTrigger value="info">
-            {t('students.detail.tab_info')}
-          </TabsTrigger>
+          <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
           <TabsTrigger value="students">{t('students.title')}</TabsTrigger>
           <TabsTrigger value="schedule">
             {t('groups.detail.tab_schedule')}

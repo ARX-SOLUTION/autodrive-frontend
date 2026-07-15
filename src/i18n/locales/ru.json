@@ -104,7 +104,8 @@
     "hide_password": "Скрыть пароль",
     "update_available": "Доступна новая версия",
     "update_reload": "Обновить",
-    "offline_banner": "Нет подключения к интернету"
+    "offline_banner": "Нет подключения к интернету",
+    "tab_info": "Информация"
   },
   "login": {
     "title": "Вход в систему",
@@ -447,11 +448,11 @@
       "lead_source_other_placeholder": "Укажите источник",
       "referrer_label": "Кто пригласил",
       "referrer_none": "Нет",
-      "referrer_student": "Ученик",
+      "referrer_student": "Студент",
       "referrer_staff": "Сотрудник",
-      "referrer_student_placeholder": "Выберите ученика",
+      "referrer_student_placeholder": "Выберите студента",
       "referrer_staff_placeholder": "Выберите сотрудника",
-      "referrer_search": "Поиск ученика..."
+      "referrer_search": "Поиск студента..."
     },
     "edit": "Редактировать студента",
     "first_name": "Имя",
@@ -506,13 +507,11 @@
       "status": "Статус",
       "date": "Дата",
       "total_price": "Общая цена",
-      "tab_info": "Информация",
       "tab_payments": "Платежи",
       "tab_exams": "Экзамены",
       "tab_attendance": "Посещаемость",
       "referrals_count": "Количество приведённых"
     },
-    "tab_info": "Данные",
     "tab_exams": "Экзамены",
     "extra_payment": "Дополнительный платёж",
     "payment_amount": "Сумма платежа",
@@ -751,7 +750,7 @@
       "phone": "Телефон",
       "created": "Создан",
       "tab_registered_students": "Зарегистрированные студенты",
-      "referred_students_count": "Приведённые ученики"
+      "referred_students_count": "Приведённые студенты"
     }
   },
   "profile": {
@@ -1006,7 +1005,7 @@
     "region_placeholder": "Выберите регион",
     "center_name_label": "Название автошколы",
     "center_name_placeholder": "Например: Скоростная Автошкола",
-    "student_count_label": "Количество учеников",
+    "student_count_label": "Количество студентов",
     "student_count_placeholder": "Приблизительное количество",
     "note_label": "Примечание",
     "note_placeholder": "Вопрос или дополнительная информация...",

@@ -160,9 +160,7 @@ const StudentDetailPage = () => {
       {/* Tabs */}
       <Tabs defaultValue={initialTab}>
         <TabsList>
-          <TabsTrigger value="info">
-            {t('students.detail.tab_info')}
-          </TabsTrigger>
+          <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
           {canRecordPayment && (
             <TabsTrigger value="payments">
               {t('students.detail.tab_payments')}

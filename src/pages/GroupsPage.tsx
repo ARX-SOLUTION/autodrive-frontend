@@ -44,9 +44,11 @@ import {
   ChevronUp,
   ChevronsUpDown,
   Layers,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/errors';
+import { cn } from '@/lib/utils';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { DataCard } from '@/components/ui/DataCard';
@@ -105,6 +107,7 @@ const GroupsPage = () => {
   const {
     data: groups,
     isLoading,
+    isFetching,
     isError: isGroupsError,
     refetch: refetchGroups,
   } = useGroups({
@@ -416,244 +419,256 @@ const GroupsPage = () => {
       </div>
 
       {/* Table */}
-      <div className="glass-card overflow-hidden">
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  #
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  <button
-                    onClick={() => toggleSort('name')}
-                    className="flex items-center gap-1 hover:text-foreground transition-colors"
-                  >
-                    {t('groups.name')}
-                    {sortField === 'name' ? (
-                      sortDir === 'asc' ? (
-                        <ChevronUp className="h-3 w-3" />
+      <div className="relative">
+        {isFetching && !isLoading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        )}
+        <div
+          className={cn(
+            'glass-card overflow-hidden transition-opacity duration-200',
+            isFetching && !isLoading && 'opacity-50',
+          )}
+        >
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    #
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    <button
+                      onClick={() => toggleSort('name')}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      {t('groups.name')}
+                      {sortField === 'name' ? (
+                        sortDir === 'asc' ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )
                       ) : (
-                        <ChevronDown className="h-3 w-3" />
-                      )
-                    ) : (
-                      <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                    )}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  {t('common.branch')}
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  <button
-                    onClick={() => toggleSort('course_type')}
-                    className="flex items-center gap-1 hover:text-foreground transition-colors mx-auto"
-                  >
-                    {t('groups.course_type')}
-                    {sortField === 'course_type' ? (
-                      sortDir === 'asc' ? (
-                        <ChevronUp className="h-3 w-3" />
+                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    {t('common.branch')}
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    <button
+                      onClick={() => toggleSort('course_type')}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors mx-auto"
+                    >
+                      {t('groups.course_type')}
+                      {sortField === 'course_type' ? (
+                        sortDir === 'asc' ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )
                       ) : (
-                        <ChevronDown className="h-3 w-3" />
-                      )
-                    ) : (
-                      <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
-                    )}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  {t('groups.student_count')}
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  {t('common.status')}
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                  {t('groups.created')}
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                  {t('common.actions')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading
-                ? [...Array(3)].map((_, i) => (
-                    <tr key={i} className="border-b border-border/50">
-                      <td colSpan={8} className="p-4">
-                        <Skeleton className="h-5 w-full" />
-                      </td>
-                    </tr>
-                  ))
-                : filtered.map((g, idx) => (
-                    <tr
-                      key={g.id}
-                      className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/10"
-                      onClick={(e) => {
-                        if (window.getSelection()?.toString()) return;
-                        goToGroup(
-                          `/groups/${g.id}`,
-                          e.currentTarget,
-                          `group-${g.id}`,
-                        );
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
+                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('groups.student_count')}
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('common.status')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    {t('groups.created')}
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('common.actions')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading
+                  ? [...Array(3)].map((_, i) => (
+                      <tr key={i} className="border-b border-border/50">
+                        <td colSpan={8} className="p-4">
+                          <Skeleton className="h-5 w-full" />
+                        </td>
+                      </tr>
+                    ))
+                  : filtered.map((g, idx) => (
+                      <tr
+                        key={g.id}
+                        className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/10"
+                        onClick={(e) => {
+                          if (window.getSelection()?.toString()) return;
                           goToGroup(
                             `/groups/${g.id}`,
                             e.currentTarget,
                             `group-${g.id}`,
                           );
-                        }
-                      }}
-                    >
-                      <td className="px-4 py-3 text-center text-muted-foreground">
-                        {startIndex + idx + 1}
-                      </td>
-                      <td className="px-4 py-3 font-medium">{g.name}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {g.branch_name || getBranchName(g.branch_id)}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${g.course_type === 'avto_maktab' ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent-foreground'}`}
-                        >
-                          {g.course_type === 'avto_maktab'
-                            ? t('groups.course_school')
-                            : t('groups.course_fast')}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {g.active_students}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${g.is_active ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}
-                        >
-                          {g.is_active
-                            ? t('common.active')
-                            : t('common.inactive')}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground tabular-nums">
-                        {formatDate(g.created_at)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            aria-label={t('common.edit')}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEdit(g);
-                            }}
-                            className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            goToGroup(
+                              `/groups/${g.id}`,
+                              e.currentTarget,
+                              `group-${g.id}`,
+                            );
+                          }
+                        }}
+                      >
+                        <td className="px-4 py-3 text-center text-muted-foreground">
+                          {startIndex + idx + 1}
+                        </td>
+                        <td className="px-4 py-3 font-medium">{g.name}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {g.branch_name || getBranchName(g.branch_id)}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${g.course_type === 'avto_maktab' ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent-foreground'}`}
                           >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          {canManageGroups && (
+                            {g.course_type === 'avto_maktab'
+                              ? t('groups.course_school')
+                              : t('groups.course_fast')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {g.active_students}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${g.is_active ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}
+                          >
+                            {g.is_active
+                              ? t('common.active')
+                              : t('common.inactive')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground tabular-nums">
+                          {formatDate(g.created_at)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1">
                             <button
-                              aria-label={t('common.delete')}
+                              aria-label={t('common.edit')}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setDeleteId(g.id);
+                                openEdit(g);
                               }}
-                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Pencil className="h-3.5 w-3.5" />
                             </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="md:hidden grid gap-3 p-3">
-          {isLoading
-            ? [...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-28 w-full" />
-              ))
-            : filtered.map((g) => (
-                <DataCard
-                  key={g.id}
-                  title={g.name}
-                  subtitle={g.branch_name || getBranchName(g.branch_id)}
-                  onClick={(e) =>
-                    goToGroup(
-                      `/groups/${g.id}`,
-                      e.currentTarget,
-                      `group-${g.id}`,
-                    )
-                  }
-                  fields={[
-                    {
-                      label: t('groups.course_type'),
-                      value:
-                        g.course_type === 'avto_maktab'
-                          ? t('groups.course_school')
-                          : t('groups.course_fast'),
-                    },
-                    {
-                      label: t('groups.student_count'),
-                      value: g.active_students,
-                    },
-                    {
-                      label: t('groups.created'),
-                      value: formatDate(g.created_at),
-                    },
-                    {
-                      label: t('common.status'),
-                      value: g.is_active
-                        ? t('common.active')
-                        : t('common.inactive'),
-                    },
-                  ]}
-                  actions={
-                    <>
-                      <button
-                        aria-label={t('common.edit')}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEdit(g);
-                        }}
-                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      {canManageGroups && (
+                            {canManageGroups && (
+                              <button
+                                aria-label={t('common.delete')}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteId(g.id);
+                                }}
+                                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="md:hidden grid gap-3 p-3">
+            {isLoading
+              ? [...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-28 w-full" />
+                ))
+              : filtered.map((g) => (
+                  <DataCard
+                    key={g.id}
+                    title={g.name}
+                    subtitle={g.branch_name || getBranchName(g.branch_id)}
+                    onClick={(e) =>
+                      goToGroup(
+                        `/groups/${g.id}`,
+                        e.currentTarget,
+                        `group-${g.id}`,
+                      )
+                    }
+                    fields={[
+                      {
+                        label: t('groups.course_type'),
+                        value:
+                          g.course_type === 'avto_maktab'
+                            ? t('groups.course_school')
+                            : t('groups.course_fast'),
+                      },
+                      {
+                        label: t('groups.student_count'),
+                        value: g.active_students,
+                      },
+                      {
+                        label: t('groups.created'),
+                        value: formatDate(g.created_at),
+                      },
+                      {
+                        label: t('common.status'),
+                        value: g.is_active
+                          ? t('common.active')
+                          : t('common.inactive'),
+                      },
+                    ]}
+                    actions={
+                      <>
                         <button
-                          aria-label={t('common.delete')}
+                          aria-label={t('common.edit')}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setDeleteId(g.id);
+                            openEdit(g);
                           }}
-                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Pencil className="h-3.5 w-3.5" />
                         </button>
-                      )}
-                    </>
-                  }
-                />
-              ))}
+                        {canManageGroups && (
+                          <button
+                            aria-label={t('common.delete')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(g.id);
+                            }}
+                            className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </>
+                    }
+                  />
+                ))}
+          </div>
+          {isGroupsError ? (
+            <EmptyState
+              title={t('common.error')}
+              action={{
+                label: t('common.retry'),
+                onClick: () => refetchGroups(),
+              }}
+            />
+          ) : (
+            filteredGroups.length === 0 &&
+            !isLoading && (
+              <EmptyState icon={Layers} title={t('groups.not_found')} />
+            )
+          )}
         </div>
-        {isGroupsError ? (
-          <EmptyState
-            title={t('common.error')}
-            action={{
-              label: t('common.retry'),
-              onClick: () => refetchGroups(),
-            }}
-          />
-        ) : (
-          filteredGroups.length === 0 &&
-          !isLoading && (
-            <EmptyState icon={Layers} title={t('groups.not_found')} />
-          )
-        )}
       </div>
 
       <PaginationControls

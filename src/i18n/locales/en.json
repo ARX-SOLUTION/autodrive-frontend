@@ -104,7 +104,8 @@
     "hide_password": "Hide password",
     "update_available": "A new version is available",
     "update_reload": "Reload",
-    "offline_banner": "No internet connection"
+    "offline_banner": "No internet connection",
+    "tab_info": "Info"
   },
   "login": {
     "title": "Sign in",
@@ -506,13 +507,11 @@
       "status": "Status",
       "date": "Date",
       "total_price": "Total price",
-      "tab_info": "Info",
       "tab_payments": "Payments",
       "tab_exams": "Exams",
       "tab_attendance": "Attendance",
       "referrals_count": "Referral count"
     },
-    "tab_info": "Details",
     "tab_exams": "Exams",
     "extra_payment": "Additional payment",
     "payment_amount": "Payment amount",

@@ -29,7 +29,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useIsCrossTenant } from '@/hooks/useCan';
+import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { cn } from '@/lib/utils';
 import { extractErrorMessage } from '@/lib/errors';
@@ -107,6 +107,7 @@ const PaymentsPage = () => {
   const { t } = useTranslation();
   const goToStudent = useViewTransitionNavigate();
   const isCrossTenant = useIsCrossTenant();
+  const canRecordPayment = useCan('recordPayment');
   const user = useAuthStore((s) => s.user);
 
   // Filters/sort/page live in the URL so reload / back / share preserves
@@ -379,7 +380,7 @@ const PaymentsPage = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -416,9 +417,11 @@ const PaymentsPage = () => {
               </TooltipContent>
             </Tooltip>
           )}
-          <Button className="gap-2" onClick={() => setModalOpen(true)}>
-            <Plus className="h-4 w-4" /> {t('payments.add_payment')}
-          </Button>
+          {canRecordPayment && (
+            <Button className="gap-2" onClick={() => setModalOpen(true)}>
+              <Plus className="h-4 w-4" /> {t('payments.add_payment')}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -453,7 +456,9 @@ const PaymentsPage = () => {
           />
           <SummaryCard
             title={t('payments.stats.debtor_students')}
-            value={`${snapshot?.students_with_debt || 0} ${t('common.count_unit')}`}
+            value={`${snapshot?.students_with_debt || 0}${
+              t('common.count_unit') ? ` ${t('common.count_unit')}` : ''
+            }`}
             icon={<Users className="h-5 w-5" />}
             isLoading={isSnapshotLoading}
           />
@@ -628,7 +633,9 @@ const PaymentsPage = () => {
             />
             <SummaryCard
               title={t('payments.payment_count')}
-              value={`${displayedSummary.period_payments_count} ${t('common.count_unit')}`}
+              value={`${displayedSummary.period_payments_count}${
+                t('common.count_unit') ? ` ${t('common.count_unit')}` : ''
+              }`}
               icon={<Receipt className="h-5 w-5" />}
             />
             <SummaryCard

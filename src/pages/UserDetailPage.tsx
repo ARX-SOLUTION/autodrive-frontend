@@ -82,9 +82,7 @@ const UserDetailPage = () => {
       {/* Tabs */}
       <Tabs defaultValue="info">
         <TabsList>
-          <TabsTrigger value="info">
-            {t('students.detail.tab_info')}
-          </TabsTrigger>
+          <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
           {user.role === 'teacher' && (
             <TabsTrigger value="groups">{t('groups.title')}</TabsTrigger>
           )}
