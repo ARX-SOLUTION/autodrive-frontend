@@ -635,6 +635,13 @@ const TeachersPage = () => {
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
         loading={deleteMut.isPending}
+        description={
+          deleteId
+            ? t('teachers.confirm_delete_desc', {
+                name: teachers?.find((tc) => tc.id === deleteId)?.name,
+              })
+            : undefined
+        }
       />
 
       <ConfirmDialog

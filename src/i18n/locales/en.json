@@ -321,7 +321,8 @@
       "revenue_trend": "6-month revenue",
       "top_debtors": "Top debtors",
       "view_all_debtors": "View all"
-    }
+    },
+    "confirm_delete_desc": "Delete branch \"{{name}}\"? This action cannot be undone."
   },
   "groups": {
     "title": "Groups",
@@ -355,7 +356,8 @@
       "method": "Payment method",
       "tab_schedule": "Schedule",
       "no_schedule": "No schedule yet"
-    }
+    },
+    "confirm_delete_desc": "Delete group \"{{name}}\"? This action cannot be undone."
   },
   "courses": {
     "title": "Courses",
@@ -374,7 +376,8 @@
     "not_found_desc": "Add a new course.",
     "added": "Course added",
     "updated": "Course updated",
-    "deleted": "Course deleted"
+    "deleted": "Course deleted",
+    "confirm_delete_desc": "Delete course \"{{name}}\"? This action cannot be undone."
   },
   "students": {
     "title": "Students",
@@ -541,7 +544,8 @@
       "tezkor": "Express",
       "avto_maktab": "Full course"
     },
-    "form_desc": "Enter the student's details"
+    "form_desc": "Enter the student's details",
+    "confirm_delete_desc": "Delete student \"{{name}}\"? This action cannot be undone."
   },
   "exams": {
     "add_title": "Add new result",
@@ -700,7 +704,8 @@
       "branch": "Branch",
       "created": "Created",
       "status": "Status"
-    }
+    },
+    "confirm_delete_desc": "Delete operator \"{{name}}\"? This action cannot be undone."
   },
   "teachers": {
     "title": "Teachers",
@@ -723,7 +728,8 @@
     "search_placeholder": "Search...",
     "form_desc": "Enter the teacher's details",
     "lesson_count": "Lesson count",
-    "student_count": "Student count"
+    "student_count": "Student count",
+    "confirm_delete_desc": "Delete teacher \"{{name}}\"? This action cannot be undone."
   },
   "users": {
     "title": "Users",

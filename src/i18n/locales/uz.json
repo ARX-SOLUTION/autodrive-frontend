@@ -66,8 +66,8 @@
     "not_found": "Topilmadi",
     "no_data": "Ma'lumot topilmadi",
     "confirm_delete": "Confirm deletion?",
-    "confirm_delete_title": "Confirm deletion",
-    "confirm_delete_desc": "This action cannot be undone. Do you want to continue?",
+    "confirm_delete_title": "O'chirishni tasdiqlang",
+    "confirm_delete_desc": "Bu amalni ortga qaytarib bo'lmaydi. Davom etasizmi?",
     "discard_changes_title": "Saqlanmagan o'zgarishlar bekor qilinsinmi?",
     "discard_changes_desc": "Saqlanmagan o'zgarishlar bor. Hozir yopsangiz, ular yo'qoladi.",
     "discard": "Bekor qilish",
@@ -321,7 +321,8 @@
       "revenue_trend": "6 oylik tushum",
       "top_debtors": "Eng katta qarzdorlar",
       "view_all_debtors": "Hammasini ko'rish"
-    }
+    },
+    "confirm_delete_desc": "\"{{name}}\" filialini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
   },
   "groups": {
     "title": "Guruhlar",
@@ -355,7 +356,8 @@
       "method": "To'lov turi",
       "tab_schedule": "Jadval",
       "no_schedule": "Dars jadvali yo'q"
-    }
+    },
+    "confirm_delete_desc": "\"{{name}}\" guruhini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
   },
   "courses": {
     "title": "Kurslar",
@@ -374,7 +376,8 @@
     "not_found_desc": "Yangi kurs qo'shing.",
     "added": "Kurs qo'shildi",
     "updated": "Kurs yangilandi",
-    "deleted": "Kurs o'chirildi"
+    "deleted": "Kurs o'chirildi",
+    "confirm_delete_desc": "\"{{name}}\" kursini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
   },
   "students": {
     "title": "Talabalar",
@@ -541,7 +544,8 @@
       "tezkor": "Tezkor",
       "avto_maktab": "Avtomaktab"
     },
-    "form_desc": "Talaba ma'lumotlarini kiriting"
+    "form_desc": "Talaba ma'lumotlarini kiriting",
+    "confirm_delete_desc": "\"{{name}}\" talabasini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
   },
   "exams": {
     "add_title": "Yangi natija qo'shish",
@@ -700,7 +704,8 @@
       "branch": "Filial",
       "created": "Yaratilgan",
       "status": "Holat"
-    }
+    },
+    "confirm_delete_desc": "\"{{name}}\" operatorini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
   },
   "teachers": {
     "title": "O'qituvchilar",
@@ -723,7 +728,8 @@
     "search_placeholder": "Qidirish...",
     "form_desc": "O'qituvchi ma'lumotlarini kiriting",
     "lesson_count": "Darslar soni",
-    "student_count": "Studentlar soni"
+    "student_count": "Studentlar soni",
+    "confirm_delete_desc": "\"{{name}}\" o'qituvchisini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
   },
   "users": {
     "title": "Foydalanuvchilar",

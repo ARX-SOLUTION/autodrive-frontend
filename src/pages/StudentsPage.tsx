@@ -997,6 +997,16 @@ const StudentsPage = () => {
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
         loading={deleteMutation.isPending}
+        description={
+          deleteId
+            ? t('students.confirm_delete_desc', {
+                name: (() => {
+                  const s = sorted.find((st) => st.id === deleteId);
+                  return s ? `${s.first_name} ${s.last_name}` : undefined;
+                })(),
+              })
+            : undefined
+        }
       />
     </div>
   );

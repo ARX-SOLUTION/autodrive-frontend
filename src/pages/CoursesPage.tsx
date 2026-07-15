@@ -446,6 +446,13 @@ const CoursesPage = () => {
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
         loading={deleteMut.isPending}
+        description={
+          deleteId
+            ? t('courses.confirm_delete_desc', {
+                name: courses?.find((c) => c.id === deleteId)?.name,
+              })
+            : undefined
+        }
       />
 
       <ConfirmDialog

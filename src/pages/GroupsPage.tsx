@@ -748,6 +748,13 @@ const GroupsPage = () => {
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
         loading={deleteMutation.isPending}
+        description={
+          deleteId
+            ? t('groups.confirm_delete_desc', {
+                name: groups?.find((g) => g.id === deleteId)?.name,
+              })
+            : undefined
+        }
       />
 
       <ConfirmDialog
