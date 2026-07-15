@@ -788,12 +788,16 @@ const StudentsPage = () => {
                                   aria-label={
                                     s.debt > 0
                                       ? t('students.debt_status_owed')
-                                      : t('students.debt_status_paid')
+                                      : s.debt < 0
+                                        ? t('students.debt_status_credit')
+                                        : t('students.debt_status_paid')
                                   }
                                 >
                                   {s.debt > 0
                                     ? formatMoney(s.debt)
-                                    : t('common.na')}
+                                    : s.debt < 0
+                                      ? `${t('students.credit_label')}: ${formatMoney(Math.abs(s.debt))}`
+                                      : t('common.na')}
                                 </span>
                               </td>
                               <td className="px-4 py-3 text-muted-foreground">
@@ -824,12 +828,16 @@ const StudentsPage = () => {
                                   aria-label={
                                     s.debt > 0
                                       ? t('students.debt_status_owed')
-                                      : t('students.debt_status_paid')
+                                      : s.debt < 0
+                                        ? t('students.debt_status_credit')
+                                        : t('students.debt_status_paid')
                                   }
                                 >
                                   {s.debt > 0
                                     ? formatMoney(s.debt)
-                                    : t('common.na')}
+                                    : s.debt < 0
+                                      ? `${t('students.credit_label')}: ${formatMoney(Math.abs(s.debt))}`
+                                      : t('common.na')}
                                 </span>
                               </td>
                               <td className="px-4 py-3">{s.group_name}</td>
@@ -960,7 +968,11 @@ const StudentsPage = () => {
                           s.debt > 0 ? 'text-destructive' : 'text-success'
                         }
                       >
-                        {s.debt > 0 ? formatMoney(s.debt) : t('common.na')}
+                        {s.debt > 0
+                          ? formatMoney(s.debt)
+                          : s.debt < 0
+                            ? `${t('students.credit_label')}: ${formatMoney(Math.abs(s.debt))}`
+                            : t('common.na')}
                       </span>
                     ),
                   },

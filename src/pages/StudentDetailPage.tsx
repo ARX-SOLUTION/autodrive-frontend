@@ -140,6 +140,11 @@ const StudentDetailPage = () => {
               <Badge variant="destructive">
                 {t('students.detail.debt')}: {formatMoney(student.debt)}
               </Badge>
+            ) : student.debt < 0 ? (
+              <Badge variant="secondary" className="text-success">
+                {t('students.credit_label')}:{' '}
+                {formatMoney(Math.abs(student.debt))}
+              </Badge>
             ) : (
               <Badge variant="secondary">{t('students.no_debt')}</Badge>
             )}
@@ -195,7 +200,16 @@ const StudentDetailPage = () => {
             />
             <Field
               label={t('students.detail.debt')}
-              value={formatMoney(student.debt)}
+              value={
+                student.debt < 0 ? (
+                  <span className="text-success">
+                    {t('students.credit_label')}:{' '}
+                    {formatMoney(Math.abs(student.debt))}
+                  </span>
+                ) : (
+                  formatMoney(student.debt)
+                )
+              }
             />
             <Field
               label={t('students.payment_method')}

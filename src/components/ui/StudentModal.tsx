@@ -281,17 +281,17 @@ const StudentModal = ({
 
   useEffect(() => {
     if (student) {
-      // Both course types: amount_paid in edit mode = additional new payment (backend adds it)
-      setDebt(
-        Math.max(0, (student.debt || 0) - (Number(watchedAmountPaid) || 0)),
-      );
+      // Both course types: amount_paid in edit mode = additional new payment
+      // (backend adds it). Advance payments (autodrive-6cq.11.6) are allowed,
+      // so this can go negative (credit) — do not clamp to 0.
+      setDebt((student.debt || 0) - (Number(watchedAmountPaid) || 0));
     } else {
       const total = Number(watchedTotalPrice) || 0;
       const paid =
         courseType === 'tezkor'
           ? Number(watchedAmountPaid) || 0
           : Number(watchedInitialPayment) || 0;
-      setDebt(Math.max(0, total - paid));
+      setDebt(total - paid);
     }
   }, [
     watchedTotalPrice,
@@ -618,9 +618,13 @@ const StudentModal = ({
                               : t('students.debt')}
                           </Label>
                           <Input
-                            value={formatMoney(debt)}
+                            value={
+                              debt < 0
+                                ? `${t('students.credit_label')}: ${formatMoney(Math.abs(debt))}`
+                                : formatMoney(debt)
+                            }
                             disabled
-                            className="bg-muted border-border text-destructive font-medium"
+                            className={`bg-muted border-border font-medium ${debt < 0 ? 'text-success' : 'text-destructive'}`}
                           />
                         </div>
                       </div>
@@ -702,9 +706,13 @@ const StudentModal = ({
                               : t('students.debt')}
                           </Label>
                           <Input
-                            value={formatMoney(debt)}
+                            value={
+                              debt < 0
+                                ? `${t('students.credit_label')}: ${formatMoney(Math.abs(debt))}`
+                                : formatMoney(debt)
+                            }
                             disabled
-                            className="bg-muted border-border text-destructive font-medium"
+                            className={`bg-muted border-border font-medium ${debt < 0 ? 'text-success' : 'text-destructive'}`}
                           />
                         </div>
                       </div>
