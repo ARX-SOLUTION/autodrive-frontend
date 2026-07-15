@@ -1,21 +1,61 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Pencil } from 'lucide-react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DataCard } from '@/components/ui/DataCard';
+import StudentModal, {
+  type CreateStudentPayload,
+} from '@/components/ui/StudentModal';
 import { useGroup } from '@/services/groupService';
+import { useUpdateStudent } from '@/services/studentService';
+import { useOperators } from '@/services/operatorService';
+import { extractErrorMessage } from '@/lib/errors';
 import { DAY_LABELS } from '@/types/schedule';
 import { formatMoney } from '@/lib/money';
+import type { Student } from '@/types/student';
+
+const EDIT_DISABLED_FIELDS = [
+  'total_price',
+  'payment_method',
+  'initial_payment',
+  'debt',
+];
 
 const GroupDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const qc = useQueryClient();
 
   const { data: group, isLoading, isError } = useGroup(id);
+  const { data: operators } = useOperators();
+  const updateStudent = useUpdateStudent();
+  const [editStudent, setEditStudent] = useState<Student | null>(null);
+
+  const handleUpdate = (data: CreateStudentPayload) => {
+    if (!editStudent) return;
+    updateStudent.mutate(
+      { id: editStudent.id, ...data },
+      {
+        onSuccess: () => {
+          toast.success(t('students.updated'));
+          setEditStudent(null);
+          // useUpdateStudent invalidates students/payments/dashboard but not
+          // this group's own query — group membership can change on edit.
+          qc.invalidateQueries({ queryKey: ['groups'] });
+        },
+        onError: (err) =>
+          toast.error(extractErrorMessage(err, t('common.error'))),
+      },
+    );
+  };
 
   if (isLoading) {
     return (
@@ -115,6 +155,21 @@ const GroupDetailPage = () => {
                   title={`${s.last_name} ${s.first_name}`.trim()}
                   subtitle={s.phone}
                   onClick={() => navigate(`/students/${s.id}`)}
+                  actions={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      aria-label={t('common.edit')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditStudent(s);
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  }
                   fields={[
                     {
                       label: t('students.detail.debt'),
@@ -168,6 +223,17 @@ const GroupDetailPage = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      <StudentModal
+        open={!!editStudent}
+        onClose={() => setEditStudent(null)}
+        onSubmit={handleUpdate}
+        loading={updateStudent.isPending}
+        student={editStudent}
+        courseType={group.course_type}
+        operators={operators || []}
+        disabledFields={EDIT_DISABLED_FIELDS}
+      />
     </div>
   );
 };

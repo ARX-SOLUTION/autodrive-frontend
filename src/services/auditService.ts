@@ -8,6 +8,7 @@ const toLocalDateStr = (d: Date): string =>
 
 export const useAuditLogs = (params: {
   entity?: string;
+  entityId?: string;
   action?: string;
   userId?: string;
   startDate?: Date;
@@ -26,6 +27,7 @@ export const useAuditLogs = (params: {
       const { data: res } = await axiosInstance.get('/audit-logs', {
         params: {
           entity: params.entity,
+          entity_id: params.entityId,
           action: params.action,
           userId: params.userId,
           startDate: params.startDate

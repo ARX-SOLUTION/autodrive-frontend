@@ -512,7 +512,10 @@
       "tab_payments": "Payments",
       "tab_exams": "Exams",
       "tab_attendance": "Attendance",
-      "referrals_count": "Referral count"
+      "referrals_count": "Referral count",
+      "tab_group_history": "Group history",
+      "group_history_change": "Group change",
+      "group_history_empty": "No group history"
     },
     "tab_exams": "Exams",
     "extra_payment": "Additional payment",
@@ -541,6 +544,7 @@
       "branch_required": "Select a branch first to import students."
     },
     "no_debt": "No debt",
+    "no_group": "No group",
     "course": {
       "tezkor": "Express",
       "avto_maktab": "Full course"

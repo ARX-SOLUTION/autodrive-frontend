@@ -27,11 +27,15 @@ import {
 } from '@/services/paymentService';
 import { useOperators } from '@/services/operatorService';
 import { useAttendanceHistory } from '@/services/attendanceService';
+import { useAuditLogs } from '@/services/auditService';
+import { useGroups } from '@/services/groupService';
 import { useCan } from '@/hooks/useCan';
+import { useAuthStore } from '@/store/authStore';
 import { statusColors } from '@/lib/attendanceStatus';
 import { extractErrorMessage } from '@/lib/errors';
 import { formatMoney } from '@/lib/money';
 import type { PaymentMethod } from '@/types/student';
+import type { AuditLog } from '@/types/audit';
 
 const StudentDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -42,6 +46,13 @@ const StudentDetailPage = () => {
   const { data: student, isLoading, isError } = useStudent(id);
   const canRecordPayment = useCan('recordPayment');
   const { data: operators } = useOperators();
+  // Matches backend /audit-logs @Roles(owner, manager, dev) guard — no
+  // matching useCan capability exists (viewAudit is owner/dev only, for the
+  // standalone AuditLogPage's cross-tenant-only OwnerRoute), so this embedded
+  // tab checks the role directly, same pattern as ProfilePage's canEditProfile.
+  const role = useAuthStore((s) => s.user?.role);
+  const canViewGroupHistory =
+    role === 'owner' || role === 'manager' || role === 'dev';
 
   const [editOpen, setEditOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
@@ -177,6 +188,11 @@ const StudentDetailPage = () => {
           <TabsTrigger value="attendance">
             {t('students.detail.tab_attendance')}
           </TabsTrigger>
+          {canViewGroupHistory && (
+            <TabsTrigger value="group-history">
+              {t('students.detail.tab_group_history')}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="info">
@@ -275,6 +291,12 @@ const StudentDetailPage = () => {
         <TabsContent value="attendance">
           <AttendanceHistoryTab studentId={student.id} />
         </TabsContent>
+
+        {canViewGroupHistory && (
+          <TabsContent value="group-history">
+            <GroupHistoryTab studentId={student.id} />
+          </TabsContent>
+        )}
       </Tabs>
 
       <StudentModal
@@ -458,6 +480,95 @@ const AttendanceHistoryTab = ({ studentId }: { studentId: string }) => {
                     >
                       {t(`attendance.status_${record.status}`)}
                     </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface GroupChange {
+  from: string | null;
+  to: string | null;
+}
+
+// changes is a generic per-entry diff blob (e.g. { groupId: {from,to}, ... }
+// other fields) -- pull out just the groupId sub-key, if present.
+const getGroupChange = (
+  changes: Record<string, unknown> | null,
+): GroupChange | undefined => {
+  const raw = changes?.groupId;
+  if (raw == null || typeof raw !== 'object') return undefined;
+  const { from, to } = raw as { from?: unknown; to?: unknown };
+  return {
+    from: typeof from === 'string' ? from : null,
+    to: typeof to === 'string' ? to : null,
+  };
+};
+
+const GroupHistoryTab = ({ studentId }: { studentId: string }) => {
+  const { t } = useTranslation();
+  const { data, isLoading } = useAuditLogs({
+    entity: 'student',
+    entityId: studentId,
+    limit: 100,
+  });
+  const { data: groups } = useGroups();
+
+  const groupName = (groupId: string | null) => {
+    if (!groupId) return t('students.no_group');
+    return groups?.find((g) => g.id === groupId)?.name ?? t('common.na');
+  };
+
+  const rows: { log: AuditLog; change: GroupChange }[] = [];
+  for (const log of data?.data ?? []) {
+    const change = getGroupChange(log.changes);
+    if (change) rows.push({ log, change });
+  }
+
+  return (
+    <div className="glass-card overflow-hidden">
+      {isLoading ? (
+        <div className="space-y-2 p-4">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="p-6">
+          <EmptyState title={t('students.detail.group_history_empty')} />
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[480px] text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="px-4 py-2 font-medium">
+                  {t('students.detail.date')}
+                </th>
+                <th className="px-4 py-2 font-medium">
+                  {t('audit.table_user')}
+                </th>
+                <th className="px-4 py-2 font-medium">
+                  {t('students.detail.group_history_change')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ log, change }) => (
+                <tr
+                  key={log.id}
+                  className="border-b border-border last:border-0"
+                >
+                  <td className="px-4 py-2">{log.created_at?.slice(0, 10)}</td>
+                  <td className="px-4 py-2 text-muted-foreground">
+                    {log.user_name ?? t('common.na')}
+                  </td>
+                  <td className="px-4 py-2">
+                    {`${groupName(change.from)} → ${groupName(change.to)}`}
                   </td>
                 </tr>
               ))}
