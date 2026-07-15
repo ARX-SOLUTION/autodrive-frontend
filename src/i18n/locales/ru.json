@@ -6,6 +6,7 @@
     "dashboard": "Панель",
     "branches": "Филиалы",
     "groups": "Группы",
+    "courses": "Курсы",
     "students": "Студенты",
     "payments": "Платежи",
     "documents": "Документы",
@@ -355,6 +356,25 @@
       "tab_schedule": "Расписание",
       "no_schedule": "Расписания нет"
     }
+  },
+  "courses": {
+    "title": "Курсы",
+    "subtitle": "Управление курсами и ценами по филиалам",
+    "add": "Добавить курс",
+    "edit": "Редактировать курс",
+    "form_desc": "Введите данные курса",
+    "name": "Название курса",
+    "type": "Тип курса",
+    "type_tezkor": "Экспресс",
+    "type_avto_maktab": "Автошкола",
+    "price": "Цена",
+    "duration": "Длительность",
+    "duration_days_value": "{{count}} дн.",
+    "not_found": "Курсы не найдены",
+    "not_found_desc": "Добавьте новый курс.",
+    "added": "Курс добавлен",
+    "updated": "Курс обновлён",
+    "deleted": "Курс удалён"
   },
   "students": {
     "title": "Студенты",

@@ -6,6 +6,7 @@
     "dashboard": "Dashboard",
     "branches": "Filiallar",
     "groups": "Guruhlar",
+    "courses": "Kurslar",
     "students": "Talabalar",
     "payments": "To'lovlar",
     "documents": "Hujjatlar",
@@ -355,6 +356,25 @@
       "tab_schedule": "Jadval",
       "no_schedule": "Dars jadvali yo'q"
     }
+  },
+  "courses": {
+    "title": "Kurslar",
+    "subtitle": "Filiallar bo'yicha kurs va narxlarni boshqarish",
+    "add": "Yangi kurs qo'shish",
+    "edit": "Kursni tahrirlash",
+    "form_desc": "Kurs ma'lumotlarini kiriting",
+    "name": "Kurs nomi",
+    "type": "Kurs turi",
+    "type_tezkor": "Tezkor",
+    "type_avto_maktab": "Avto maktab",
+    "price": "Narxi",
+    "duration": "Davomiyligi",
+    "duration_days_value": "{{count}} kun",
+    "not_found": "Kurslar topilmadi",
+    "not_found_desc": "Yangi kurs qo'shing.",
+    "added": "Kurs qo'shildi",
+    "updated": "Kurs yangilandi",
+    "deleted": "Kurs o'chirildi"
   },
   "students": {
     "title": "Talabalar",
