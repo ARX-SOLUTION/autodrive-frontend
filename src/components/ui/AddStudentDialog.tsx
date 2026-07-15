@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { addDays, format } from 'date-fns';
 import {
   isValidUzPhone,
   uzPhoneE164,
@@ -31,6 +32,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -71,6 +73,7 @@ export interface AddStudentPayload {
   course_price: number;
   group_id?: string;
   start_date: string;
+  completion_date?: string;
 
   // Step 3: Payment & Confirmation
   payment_type: 'FULL' | 'PARTIAL' | 'INSTALLMENT';
@@ -124,6 +127,7 @@ const buildSchemas = (t: (key: string) => string) => {
     course_id: z.string().uuid('Kurs tanlanmagan'),
     group_id: z.string().uuid().optional(),
     start_date: z.string().min(1, 'Boshlanish sana majburiy'),
+    completion_date: z.string().optional(),
     lead_source: z.enum(LEAD_SOURCE_VALUES).optional(),
     lead_source_other: z.string().optional(),
     referred_by_student_id: z.string().uuid().optional().or(z.literal('')),
@@ -233,6 +237,7 @@ const AddStudentDialog = ({
       course_id: defaultCourseId || '',
       group_id: '',
       start_date: new Date().toISOString().split('T')[0],
+      completion_date: '',
       payment_type: 'FULL',
       amount: 0,
       payment_method: 'CASH',
@@ -261,6 +266,7 @@ const AddStudentDialog = ({
       address: '',
       group_id: '',
       start_date: new Date().toISOString().split('T')[0],
+      completion_date: '',
       amount: 0,
       first_payment_date: new Date().toISOString().split('T')[0],
       contract_signed: false,
@@ -284,6 +290,27 @@ const AddStudentDialog = ({
       (!watchedBranchId || g.branch_id === watchedBranchId) &&
       g.is_active,
   );
+
+  const filteredCourses = courseList.filter(
+    (course) => !watchedBranchId || course.branch_id === watchedBranchId,
+  );
+
+  const watchedStartDate = form.watch('start_date');
+
+  // Auto-fill completion_date from the selected course's duration, staying in
+  // sync with start_date/course changes until the user manually edits the
+  // field themselves (dirtyFields flips once they type into it directly).
+  useEffect(() => {
+    if (form.formState.dirtyFields.completion_date) return;
+    if (!watchedCourse || !watchedStartDate) return;
+    const start = new Date(watchedStartDate);
+    if (Number.isNaN(start.getTime())) return;
+    const computed = format(
+      addDays(start, watchedCourse.duration_days),
+      'yyyy-MM-dd',
+    );
+    form.setValue('completion_date', computed);
+  }, [watchedCourse, watchedStartDate, form]);
 
   const goToStep = (step: number) => {
     if (step > activeStep) {
@@ -737,7 +764,7 @@ const AddStudentDialog = ({
                                 <SelectValue placeholder="Kurs tanlang" />
                               </SelectTrigger>
                               <SelectContent>
-                                {courseList.map((course) => (
+                                {filteredCourses.map((course) => (
                                   <SelectItem key={course.id} value={course.id}>
                                     {course.name}
                                   </SelectItem>
@@ -751,7 +778,7 @@ const AddStudentDialog = ({
                     />
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-3">
                     <FormField
                       control={form.control}
                       name="group_id"
@@ -795,6 +822,23 @@ const AddStudentDialog = ({
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="completion_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bitirish sanasi (taxminiy)</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Tanlangan kurs davomiyligidan avtomatik hisoblanadi
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}

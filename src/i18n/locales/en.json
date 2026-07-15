@@ -6,6 +6,7 @@
     "dashboard": "Dashboard",
     "branches": "Branches",
     "groups": "Groups",
+    "courses": "Courses",
     "students": "Students",
     "payments": "Payments",
     "documents": "Documents",
@@ -355,6 +356,25 @@
       "tab_schedule": "Schedule",
       "no_schedule": "No schedule yet"
     }
+  },
+  "courses": {
+    "title": "Courses",
+    "subtitle": "Manage courses and pricing per branch",
+    "add": "Add course",
+    "edit": "Edit course",
+    "form_desc": "Enter the course details",
+    "name": "Course name",
+    "type": "Course type",
+    "type_tezkor": "Fast track",
+    "type_avto_maktab": "Driving school",
+    "price": "Price",
+    "duration": "Duration",
+    "duration_days_value": "{{count}} days",
+    "not_found": "No courses found",
+    "not_found_desc": "Add a new course.",
+    "added": "Course added",
+    "updated": "Course updated",
+    "deleted": "Course deleted"
   },
   "students": {
     "title": "Students",

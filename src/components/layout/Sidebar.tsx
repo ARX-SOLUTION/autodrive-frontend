@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Calendar,
   ClipboardCheck,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -43,6 +44,12 @@ const navItems: NavItem[] = [
   { path: '/schedule', labelKey: 'nav.schedule', icon: Calendar },
   { path: '/attendance', labelKey: 'nav.attendance', icon: ClipboardCheck },
   { path: '/groups', labelKey: 'nav.groups', icon: Layers },
+  {
+    path: '/courses',
+    labelKey: 'nav.courses',
+    icon: BookOpen,
+    cap: 'manageStaff',
+  },
   { path: '/students', labelKey: 'nav.students', icon: GraduationCap },
   { path: '/payments', labelKey: 'nav.payments', icon: CreditCard },
   {

@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Calendar,
   ClipboardCheck,
+  BookOpen,
 } from 'lucide-react';
 import {
   CommandDialog,
@@ -51,6 +52,12 @@ const NAV_ENTRIES: NavEntry[] = [
   { labelKey: 'nav.schedule', path: '/schedule', icon: Calendar },
   { labelKey: 'nav.attendance', path: '/attendance', icon: ClipboardCheck },
   { labelKey: 'nav.groups', path: '/groups', icon: Layers },
+  {
+    labelKey: 'nav.courses',
+    path: '/courses',
+    icon: BookOpen,
+    cap: 'manageStaff',
+  },
   { labelKey: 'nav.students', path: '/students', icon: GraduationCap },
   { labelKey: 'nav.payments', path: '/payments', icon: CreditCard },
   {
