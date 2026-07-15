@@ -14,6 +14,21 @@ vi.mock('@/store/authStore', () => ({
     selector({ user: { role: auth.role } }),
 }));
 
+// Controllable per-test fixture for the group history tab (autodrive
+// "Guruh tarixi") — group-change audit entries for student s1.
+const auditMock = vi.hoisted(() => ({ logs: [] as Record<string, unknown>[] }));
+
+vi.mock('@/services/auditService', () => ({
+  useAuditLogs: () => ({
+    data: { data: auditMock.logs },
+    isLoading: false,
+  }),
+}));
+
+vi.mock('@/services/groupService', () => ({
+  useGroups: () => ({ data: [{ id: 'g1', name: 'B-1' }] }),
+}));
+
 const STUDENT = {
   id: 's1',
   last_name: 'Karimov',
@@ -141,5 +156,104 @@ describe('StudentDetailPage payment_method null-safety (autodrive-f9u.12)', () =
     auth.role = 'manager';
     renderPage();
     expect(screen.getAllByText('common.na').length).toBeGreaterThan(0);
+  });
+});
+
+// Group history tab: owner + manager only (broader than the standalone
+// AuditLogPage's owner/dev-only OwnerRoute, per this task's decision), and
+// entries are client-filtered down to changes.groupId.
+describe('StudentDetailPage group history tab gating', () => {
+  it('shows the group history tab for a manager', () => {
+    auth.role = 'manager';
+    auditMock.logs = [];
+    renderPage();
+    expect(screen.getByText('students.detail.tab_group_history')).toBeTruthy();
+  });
+
+  it('shows the group history tab for an owner', () => {
+    auth.role = 'owner';
+    auditMock.logs = [];
+    renderPage();
+    expect(screen.getByText('students.detail.tab_group_history')).toBeTruthy();
+  });
+
+  it('hides the group history tab for an operator', () => {
+    auth.role = 'operator';
+    auditMock.logs = [];
+    renderPage();
+    expect(screen.queryByText('students.detail.tab_group_history')).toBeNull();
+  });
+
+  it('hides the group history tab for a teacher', () => {
+    auth.role = 'teacher';
+    auditMock.logs = [];
+    renderPage();
+    expect(screen.queryByText('students.detail.tab_group_history')).toBeNull();
+  });
+});
+
+describe('StudentDetailPage group history tab content', () => {
+  it('resolves group names, ignores non-groupId changes, and falls back for no-group/deleted-group', () => {
+    auth.role = 'manager';
+    auditMock.logs = [
+      {
+        id: 'al1',
+        action: 'UPDATE',
+        entity: 'student',
+        entity_id: 's1',
+        user_id: 'u1',
+        user_name: 'Nigora',
+        user_role: 'operator',
+        branch_id: 'b1',
+        company_id: 'c1',
+        changes: { groupId: { from: null, to: 'g1' } },
+        created_at: '2026-07-10T10:00:00.000Z',
+      },
+      {
+        id: 'al2',
+        action: 'UPDATE',
+        entity: 'student',
+        entity_id: 's1',
+        user_id: 'u2',
+        user_name: 'Aziz',
+        user_role: 'manager',
+        branch_id: 'b1',
+        company_id: 'c1',
+        // g-deleted no longer resolves in the groups fixture (group removed).
+        changes: { groupId: { from: 'g1', to: 'g-deleted' } },
+        created_at: '2026-07-12T10:00:00.000Z',
+      },
+      {
+        id: 'al3',
+        action: 'UPDATE',
+        entity: 'student',
+        entity_id: 's1',
+        user_id: 'u2',
+        user_name: 'Aziz',
+        user_role: 'manager',
+        branch_id: 'b1',
+        company_id: 'c1',
+        // No groupId sub-key -- must be filtered out entirely.
+        changes: { notes: { from: 'a', to: 'b' } },
+        created_at: '2026-07-13T10:00:00.000Z',
+      },
+    ];
+    renderPage();
+    fireEvent.mouseDown(screen.getByText('students.detail.tab_group_history'));
+
+    expect(screen.getByText('students.no_group → B-1')).toBeTruthy();
+    expect(screen.getByText('B-1 → common.na')).toBeTruthy();
+    expect(screen.getByText('Nigora')).toBeTruthy();
+    expect(screen.queryByText('2026-07-13')).toBeNull();
+  });
+
+  it('shows the empty state when there is no group-change history', () => {
+    auth.role = 'manager';
+    auditMock.logs = [];
+    renderPage();
+    fireEvent.mouseDown(screen.getByText('students.detail.tab_group_history'));
+    expect(
+      screen.getByText('students.detail.group_history_empty'),
+    ).toBeTruthy();
   });
 });

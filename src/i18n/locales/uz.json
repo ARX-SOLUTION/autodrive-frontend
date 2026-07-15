@@ -512,7 +512,10 @@
       "tab_payments": "To'lovlar",
       "tab_exams": "Imtihonlar",
       "tab_attendance": "Davomat",
-      "referrals_count": "Referal qilganlar soni"
+      "referrals_count": "Referal qilganlar soni",
+      "tab_group_history": "Guruh tarixi",
+      "group_history_change": "Guruh o'zgarishi",
+      "group_history_empty": "Guruh tarixi mavjud emas"
     },
     "tab_exams": "Imtihonlar",
     "extra_payment": "Qo'shimcha to'lov",
@@ -541,6 +544,7 @@
       "branch_required": "Talabalarni yuklashdan oldin filialni tanlang."
     },
     "no_debt": "Qarzsiz",
+    "no_group": "Guruhsiz",
     "course": {
       "tezkor": "Tezkor",
       "avto_maktab": "Avtomaktab"

@@ -77,40 +77,28 @@ export interface CreateStudentPayload {
 // Factory so the phone error can be localized via t(); other messages stay as
 // their existing literals (out of scope to translate here).
 const makeStudentFormSchema = (t: (key: string) => string) =>
-  z
-    .object({
-      first_name: z.string().min(1, 'Required'),
-      last_name: z.string().min(1, 'Required'),
-      phone: z.string().refine(isValidUzPhone, t('students.phone_invalid')),
-      course_type: z.enum(['tezkor', 'avto_maktab']),
-      branch_id: z
-        .string()
-        .min(1, 'Branch not selected. Please select a branch.'),
-      payment_method: z.enum(['naqd', 'karta', 'perechisleniya']).optional(),
-      result: z.enum(['oqimoqda', 'topshirdi', 'yiqildi']).optional(),
-      has_document: z.boolean().optional(),
-      o83: z.boolean().optional(),
-      total_price: z.coerce.number().nonnegative('Required'),
-      amount_paid: z.coerce.number().nonnegative().optional(),
-      initial_payment: z.coerce.number().nonnegative().optional(),
-      group_id: z.string().optional(),
-      completion_date: z.string().optional(),
-      contract_number: z.string().optional(),
-      notes: z.string().optional(),
-      status: z
-        .enum(['active', 'completed', 'dropped', 'suspended'])
-        .optional(),
-      registered_by: z.string().optional(),
-    })
-    .superRefine((data, ctx) => {
-      if (data.course_type === 'avto_maktab' && !data.group_id?.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['group_id'],
-          message: 'Group is required for driving school course',
-        });
-      }
-    });
+  z.object({
+    first_name: z.string().min(1, 'Required'),
+    last_name: z.string().min(1, 'Required'),
+    phone: z.string().refine(isValidUzPhone, t('students.phone_invalid')),
+    course_type: z.enum(['tezkor', 'avto_maktab']),
+    branch_id: z
+      .string()
+      .min(1, 'Branch not selected. Please select a branch.'),
+    payment_method: z.enum(['naqd', 'karta', 'perechisleniya']).optional(),
+    result: z.enum(['oqimoqda', 'topshirdi', 'yiqildi']).optional(),
+    has_document: z.boolean().optional(),
+    o83: z.boolean().optional(),
+    total_price: z.coerce.number().nonnegative('Required'),
+    amount_paid: z.coerce.number().nonnegative().optional(),
+    initial_payment: z.coerce.number().nonnegative().optional(),
+    group_id: z.string().optional(),
+    completion_date: z.string().optional(),
+    contract_number: z.string().optional(),
+    notes: z.string().optional(),
+    status: z.enum(['active', 'completed', 'dropped', 'suspended']).optional(),
+    registered_by: z.string().optional(),
+  });
 
 type StudentFormValues = z.infer<ReturnType<typeof makeStudentFormSchema>>;
 
@@ -757,10 +745,7 @@ const StudentModal = ({
                           name="group_id"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>
-                                {t('students.group_required')}{' '}
-                                <span className="text-destructive">*</span>
-                              </FormLabel>
+                              <FormLabel>{t('students.group')}</FormLabel>
                               <Select
                                 value={field.value || ''}
                                 onValueChange={field.onChange}
