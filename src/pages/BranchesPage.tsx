@@ -33,7 +33,7 @@ import {
   uzPhoneE164,
 } from '@/lib/phoneFormater';
 import { Branch } from '@/types/branch';
-import { useAuthStore } from '@/store/authStore';
+import { useCan } from '@/hooks/useCan';
 
 interface FormState {
   name: string;
@@ -50,7 +50,7 @@ const EMPTY_FORM: FormState = {
 const BranchesPage = () => {
   const { t } = useTranslation();
   const goToBranch = useViewTransitionNavigate();
-  const canManageBranches = useAuthStore((s) => s.canManageBranches);
+  const canManageBranches = useCan('manageBranches');
   const { data: branches, isLoading } = useBranches();
   const createMut = useCreateBranch();
   const updateMut = useUpdateBranch();
@@ -147,12 +147,12 @@ const BranchesPage = () => {
             {t('branches.title')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {canManageBranches()
+            {canManageBranches
               ? t('branches.subtitle')
               : t('branches.subtitle_readonly')}
           </p>
         </div>
-        {canManageBranches() && (
+        {canManageBranches && (
           <Button className="gap-2" onClick={openCreate}>
             <Plus className="h-4 w-4" /> {t('branches.add')}
           </Button>
@@ -173,7 +173,7 @@ const BranchesPage = () => {
                   title={t('branches.not_found')}
                   description={t('branches.not_found_desc')}
                   action={
-                    canManageBranches()
+                    canManageBranches
                       ? { label: t('branches.add'), onClick: openCreate }
                       : undefined
                   }
@@ -221,7 +221,7 @@ const BranchesPage = () => {
                       )}
                     </div>
                     <div className="flex gap-1">
-                      {canManageBranches() && (
+                      {canManageBranches && (
                         <>
                           <button
                             onClick={(e) => {
@@ -306,7 +306,7 @@ const BranchesPage = () => {
                 },
               ]}
               actions={
-                canManageBranches() ? (
+                canManageBranches ? (
                   <>
                     <button
                       onClick={(e) => {
@@ -339,7 +339,7 @@ const BranchesPage = () => {
             title={t('branches.not_found')}
             description={t('branches.not_found_desc')}
             action={
-              canManageBranches()
+              canManageBranches
                 ? { label: t('branches.add'), onClick: openCreate }
                 : undefined
             }
