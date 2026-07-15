@@ -321,7 +321,8 @@
       "revenue_trend": "6-month revenue",
       "top_debtors": "Top debtors",
       "view_all_debtors": "View all"
-    }
+    },
+    "confirm_delete_desc": "Delete branch \"{{name}}\"? This action cannot be undone."
   },
   "groups": {
     "title": "Groups",
@@ -355,7 +356,8 @@
       "method": "Payment method",
       "tab_schedule": "Schedule",
       "no_schedule": "No schedule yet"
-    }
+    },
+    "confirm_delete_desc": "Delete group \"{{name}}\"? This action cannot be undone."
   },
   "courses": {
     "title": "Courses",
@@ -374,7 +376,8 @@
     "not_found_desc": "Add a new course.",
     "added": "Course added",
     "updated": "Course updated",
-    "deleted": "Course deleted"
+    "deleted": "Course deleted",
+    "confirm_delete_desc": "Delete course \"{{name}}\"? This action cannot be undone."
   },
   "students": {
     "title": "Students",
@@ -390,7 +393,44 @@
       "step2_title": "Course & branch",
       "step2_desc": "Choose the course and branch",
       "step3_title": "Payment & confirmation",
-      "step3_desc": "Payment details and final confirmation"
+      "step3_desc": "Payment details and final confirmation",
+      "middle_name": "Middle name",
+      "passport_series": "Passport series",
+      "passport_series_placeholder": "AA",
+      "passport_number": "Passport number",
+      "passport_number_placeholder": "1234567",
+      "birth_date": "Date of birth",
+      "gender": "Gender",
+      "gender_male": "Male",
+      "gender_female": "Female",
+      "address": "Home address",
+      "address_placeholder": "Tashkent, Chilanzar district, house 15",
+      "select_placeholder": "Select",
+      "branch": "Branch",
+      "branch_placeholder": "Select branch",
+      "course": "Course",
+      "course_placeholder": "Select course",
+      "group_placeholder": "Select group (can be added later)",
+      "group_none": "No group selected",
+      "group_later": "Will be selected later",
+      "start_date": "Start date",
+      "payment_type": "Payment type",
+      "payment_type_full": "Full",
+      "payment_type_partial": "Partial",
+      "payment_type_installment": "Installments",
+      "amount": "Amount (UZS)",
+      "amount_placeholder": "E.g. 5,000,000",
+      "first_payment_date": "First payment date",
+      "contract_agree": "I agree to the contract terms",
+      "summary_title": "Final review",
+      "summary_full_name": "Full name",
+      "confirm_title": "Confirm this information?",
+      "confirm_desc": "Make sure all details are correct. Once confirmed, the student will be registered and a payment record created.",
+      "confirm_yes": "Yes, confirm",
+      "saving": "Saving...",
+      "completion_date_label": "Completion date (estimated)",
+      "completion_date_desc": "Calculated automatically from the selected course's duration",
+      "group_optional_label": "Group (optional)"
     },
     "lead_source": {
       "referral": "Referral",
@@ -504,7 +544,8 @@
       "tezkor": "Express",
       "avto_maktab": "Full course"
     },
-    "form_desc": "Enter the student's details"
+    "form_desc": "Enter the student's details",
+    "confirm_delete_desc": "Delete student \"{{name}}\"? This action cannot be undone."
   },
   "exams": {
     "add_title": "Add new result",
@@ -663,7 +704,8 @@
       "branch": "Branch",
       "created": "Created",
       "status": "Status"
-    }
+    },
+    "confirm_delete_desc": "Delete operator \"{{name}}\"? This action cannot be undone."
   },
   "teachers": {
     "title": "Teachers",
@@ -686,7 +728,8 @@
     "search_placeholder": "Search...",
     "form_desc": "Enter the teacher's details",
     "lesson_count": "Lesson count",
-    "student_count": "Student count"
+    "student_count": "Student count",
+    "confirm_delete_desc": "Delete teacher \"{{name}}\"? This action cannot be undone."
   },
   "users": {
     "title": "Users",

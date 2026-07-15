@@ -427,6 +427,13 @@ const BranchesPage = () => {
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
         loading={deleteMut.isPending}
+        description={
+          deleteId
+            ? t('branches.confirm_delete_desc', {
+                name: branches?.find((b) => b.id === deleteId)?.name,
+              })
+            : undefined
+        }
       />
 
       <ConfirmDialog

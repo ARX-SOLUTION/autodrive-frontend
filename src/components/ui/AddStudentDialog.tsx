@@ -13,6 +13,7 @@ import { groupDigits } from '@/lib/money';
 import type { LeadSource } from '@/types/student';
 import ReferralFields from '@/components/ui/ReferralFields';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import {
   Dialog,
   DialogContent,
@@ -246,6 +247,9 @@ const AddStudentDialog = ({
     mode: 'onBlur',
   });
 
+  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
+    useConfirmedClose(form.formState.isDirty || !!loading, onClose);
+
   const resetForNext = () => {
     const current = form.getValues();
     form.reset({
@@ -398,7 +402,7 @@ const AddStudentDialog = ({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onClose}>
+      <Dialog open={open} onOpenChange={(o) => !o && attemptClose()}>
         <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col overflow-hidden">
           <DialogHeader className="shrink-0 pb-4">
             <div className="flex items-center gap-3">
@@ -522,7 +526,7 @@ const AddStudentDialog = ({
                         name="last_name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Familiya *</FormLabel>
+                            <FormLabel>{t('students.last_name')} *</FormLabel>
                             <FormControl>
                               <Input placeholder="Ivanov" {...field} />
                             </FormControl>
@@ -535,7 +539,7 @@ const AddStudentDialog = ({
                         name="first_name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Ism *</FormLabel>
+                            <FormLabel>{t('students.first_name')} *</FormLabel>
                             <FormControl>
                               <Input placeholder="Ivan" {...field} />
                             </FormControl>
@@ -550,7 +554,9 @@ const AddStudentDialog = ({
                       name="middle_name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Otasining ismi</FormLabel>
+                          <FormLabel>
+                            {t('students.wizard.middle_name')}
+                          </FormLabel>
                           <FormControl>
                             <Input placeholder="Ivanovich" {...field} />
                           </FormControl>
@@ -565,7 +571,7 @@ const AddStudentDialog = ({
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Telefon *</FormLabel>
+                            <FormLabel>{t('students.phone')} *</FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
@@ -590,7 +596,7 @@ const AddStudentDialog = ({
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>{t('common.email')}</FormLabel>
                             <FormControl>
                               <Input
                                 type="email"
@@ -610,7 +616,9 @@ const AddStudentDialog = ({
                         name="passport_series"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Pasport seriyasi *</FormLabel>
+                            <FormLabel>
+                              {t('students.wizard.passport_series')} *
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="AA"
@@ -630,7 +638,9 @@ const AddStudentDialog = ({
                         name="passport_number"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Pasport raqami *</FormLabel>
+                            <FormLabel>
+                              {t('students.wizard.passport_number')} *
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="1234567"
@@ -655,7 +665,9 @@ const AddStudentDialog = ({
                         name="birth_date"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Tug'ilgan sana *</FormLabel>
+                            <FormLabel>
+                              {t('students.wizard.birth_date')} *
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 type="date"
@@ -672,18 +684,28 @@ const AddStudentDialog = ({
                         name="gender"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Jins *</FormLabel>
+                            <FormLabel>
+                              {t('students.wizard.gender')} *
+                            </FormLabel>
                             <FormControl>
                               <Select
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Tanlang" />
+                                  <SelectValue
+                                    placeholder={t(
+                                      'students.wizard.select_placeholder',
+                                    )}
+                                  />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="MALE">Erkak</SelectItem>
-                                  <SelectItem value="FEMALE">Ayol</SelectItem>
+                                  <SelectItem value="MALE">
+                                    {t('students.wizard.gender_male')}
+                                  </SelectItem>
+                                  <SelectItem value="FEMALE">
+                                    {t('students.wizard.gender_female')}
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                             </FormControl>
@@ -696,10 +718,14 @@ const AddStudentDialog = ({
                         name="address"
                         render={({ field }) => (
                           <FormItem className="sm:col-span-2">
-                            <FormLabel>Yashash manzili *</FormLabel>
+                            <FormLabel>
+                              {t('students.wizard.address')} *
+                            </FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Toshkent sh., Chilonzor tum., 15-uy"
+                                placeholder={t(
+                                  'students.wizard.address_placeholder',
+                                )}
                                 {...field}
                               />
                             </FormControl>
@@ -724,14 +750,20 @@ const AddStudentDialog = ({
                         name="branch_id"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Filial *</FormLabel>
+                            <FormLabel>
+                              {t('students.wizard.branch')} *
+                            </FormLabel>
                             <FormControl>
                               <Select
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Filial tanlang" />
+                                  <SelectValue
+                                    placeholder={t(
+                                      'students.wizard.branch_placeholder',
+                                    )}
+                                  />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {branchList.map((branch) => (
@@ -755,14 +787,20 @@ const AddStudentDialog = ({
                         name="course_id"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Kurs *</FormLabel>
+                            <FormLabel>
+                              {t('students.wizard.course')} *
+                            </FormLabel>
                             <FormControl>
                               <Select
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Kurs tanlang" />
+                                  <SelectValue
+                                    placeholder={t(
+                                      'students.wizard.course_placeholder',
+                                    )}
+                                  />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {filteredCourses.map((course) => (
@@ -788,7 +826,9 @@ const AddStudentDialog = ({
                         name="group_id"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Guruh (ixtiyoriy)</FormLabel>
+                            <FormLabel>
+                              {t('students.wizard.group_optional_label')}
+                            </FormLabel>
                             <FormControl>
                               <Select
                                 onValueChange={(value) =>
@@ -797,12 +837,16 @@ const AddStudentDialog = ({
                                 value={field.value || 'none'}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Guruh tanlang (keyinroq qo'shish mumkin)" />
+                                  <SelectValue
+                                    placeholder={t(
+                                      'students.wizard.group_placeholder',
+                                    )}
+                                  />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {/* Radix SelectItem forbids an empty-string value, so "no group" uses a sentinel mapped back to '' above. */}
                                   <SelectItem value="none">
-                                    Guruh tanlanmagan
+                                    {t('students.wizard.group_none')}
                                   </SelectItem>
                                   {filteredGroups.map((group) => (
                                     <SelectItem key={group.id} value={group.id}>
@@ -822,7 +866,9 @@ const AddStudentDialog = ({
                         name="start_date"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Boshlanish sanasi *</FormLabel>
+                            <FormLabel>
+                              {t('students.wizard.start_date')} *
+                            </FormLabel>
                             <FormControl>
                               <Input type="date" {...field} />
                             </FormControl>
@@ -836,13 +882,14 @@ const AddStudentDialog = ({
                         name="completion_date"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Bitirish sanasi (taxminiy)</FormLabel>
+                            <FormLabel>
+                              {t('students.wizard.completion_date_label')}
+                            </FormLabel>
                             <FormControl>
                               <Input type="date" {...field} />
                             </FormControl>
                             <FormDescription>
-                              Tanlangan kurs davomiyligidan avtomatik
-                              hisoblanadi
+                              {t('students.wizard.completion_date_desc')}
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -886,24 +933,32 @@ const AddStudentDialog = ({
                         name="payment_type"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>To'lov turi *</FormLabel>
+                            <FormLabel>
+                              {t('students.wizard.payment_type')} *
+                            </FormLabel>
                             <FormControl>
                               <Select
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Tanlang" />
+                                  <SelectValue
+                                    placeholder={t(
+                                      'students.wizard.select_placeholder',
+                                    )}
+                                  />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="FULL">
-                                    To'liq to'lov
+                                    {t('students.wizard.payment_type_full')}
                                   </SelectItem>
                                   <SelectItem value="PARTIAL">
-                                    Qisman to'lov
+                                    {t('students.wizard.payment_type_partial')}
                                   </SelectItem>
                                   <SelectItem value="INSTALLMENT">
-                                    Bo'lib to'lash
+                                    {t(
+                                      'students.wizard.payment_type_installment',
+                                    )}
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
@@ -918,20 +973,30 @@ const AddStudentDialog = ({
                         name="payment_method"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>To'lov usuli *</FormLabel>
+                            <FormLabel>
+                              {t('students.payment_method')} *
+                            </FormLabel>
                             <FormControl>
                               <Select
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Tanlang" />
+                                  <SelectValue
+                                    placeholder={t(
+                                      'students.wizard.select_placeholder',
+                                    )}
+                                  />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="CASH">Naqd</SelectItem>
-                                  <SelectItem value="CARD">Karta</SelectItem>
+                                  <SelectItem value="CASH">
+                                    {t('students.payment_cash')}
+                                  </SelectItem>
+                                  <SelectItem value="CARD">
+                                    {t('students.payment_card')}
+                                  </SelectItem>
                                   <SelectItem value="TRANSFER">
-                                    O'tkazma
+                                    {t('payments.method.perechisleniya')}
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
@@ -948,12 +1013,16 @@ const AddStudentDialog = ({
                         name="amount"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Summa (so'm) *</FormLabel>
+                            <FormLabel>
+                              {t('students.wizard.amount')} *
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 type="text"
                                 inputMode="numeric"
-                                placeholder="Masalan: 5 000 000"
+                                placeholder={t(
+                                  'students.wizard.amount_placeholder',
+                                )}
                                 value={
                                   field.value
                                     ? groupDigits(String(field.value))
@@ -978,7 +1047,9 @@ const AddStudentDialog = ({
                         name="first_payment_date"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Birinchi to'lov sanasi *</FormLabel>
+                            <FormLabel>
+                              {t('students.wizard.first_payment_date')} *
+                            </FormLabel>
                             <FormControl>
                               <Input type="date" {...field} />
                             </FormControl>
@@ -999,7 +1070,7 @@ const AddStudentDialog = ({
                               />
                             </FormControl>
                             <FormLabel className="ml-2 cursor-pointer">
-                              Shartnoma shartlariga roziman *
+                              {t('students.wizard.contract_agree')} *
                             </FormLabel>
                             <FormMessage />
                           </FormItem>
@@ -1009,40 +1080,58 @@ const AddStudentDialog = ({
 
                     {/* Summary Card */}
                     <div className="bg-muted/50 rounded-lg p-4 border">
-                      <h4 className="font-medium mb-3">Yakuniy ko'rinish</h4>
+                      <h4 className="font-medium mb-3">
+                        {t('students.wizard.summary_title')}
+                      </h4>
                       <dl className="grid gap-2 sm:grid-cols-2 text-sm">
-                        <dt className="text-muted-foreground">Ism Familiya:</dt>
+                        <dt className="text-muted-foreground">
+                          {t('students.wizard.summary_full_name')}:
+                        </dt>
                         <dd className="font-medium">
                           {form.watch('last_name')} {form.watch('first_name')}
                         </dd>
-                        <dt className="text-muted-foreground">Telefon:</dt>
+                        <dt className="text-muted-foreground">
+                          {t('students.phone')}:
+                        </dt>
                         <dd className="font-medium">{form.watch('phone')}</dd>
-                        <dt className="text-muted-foreground">Kurs:</dt>
+                        <dt className="text-muted-foreground">
+                          {t('students.wizard.course')}:
+                        </dt>
                         <dd className="font-medium">
                           {courseList.find(
                             (c) => c.id === form.watch('course_id'),
                           )?.name || '—'}
                         </dd>
-                        <dt className="text-muted-foreground">Filial:</dt>
+                        <dt className="text-muted-foreground">
+                          {t('students.wizard.branch')}:
+                        </dt>
                         <dd className="font-medium">
                           {branchList.find(
                             (b) => b.id === form.watch('branch_id'),
                           )?.name || '—'}
                         </dd>
-                        <dt className="text-muted-foreground">Guruh:</dt>
+                        <dt className="text-muted-foreground">
+                          {t('students.group')}:
+                        </dt>
                         <dd className="font-medium">
                           {filteredGroups.find(
                             (g) => g.id === form.watch('group_id'),
-                          )?.name || 'Keyinroq tanlanadi'}
+                          )?.name || t('students.wizard.group_later')}
                         </dd>
-                        <dt className="text-muted-foreground">To'lov turi:</dt>
+                        <dt className="text-muted-foreground">
+                          {t('students.wizard.payment_type')}:
+                        </dt>
                         <dd className="font-medium">
-                          {form.watch('payment_type') === 'FULL' && "To'liq"}
-                          {form.watch('payment_type') === 'PARTIAL' && 'Qisman'}
+                          {form.watch('payment_type') === 'FULL' &&
+                            t('students.wizard.payment_type_full')}
+                          {form.watch('payment_type') === 'PARTIAL' &&
+                            t('students.wizard.payment_type_partial')}
                           {form.watch('payment_type') === 'INSTALLMENT' &&
-                            "Bo'lib to'lash"}
+                            t('students.wizard.payment_type_installment')}
                         </dd>
-                        <dt className="text-muted-foreground">Summa:</dt>
+                        <dt className="text-muted-foreground">
+                          {t('students.wizard.amount')}:
+                        </dt>
                         <dd className="font-medium">
                           {form.watch('amount').toLocaleString('uz-UZ')} so'm
                         </dd>
@@ -1112,9 +1201,21 @@ const AddStudentDialog = ({
         onClose={() => setShowConfirm(false)}
         onConfirm={confirmSubmit}
         loading={loading}
-        title="Ma'lumotlarni tasdiqlaysizmi?"
-        description="Barcha ma'lumotlar to'g'ri ekanligiga ishonch hosil qiling. Tasdiqlagach, talaba ro'yxatdan o'tkaziladi va to'lov yozuvi yaratiladi."
-        confirmLabel={loading ? 'Saqlanmoqda...' : 'Ha, tasdiqlayman'}
+        title={t('students.wizard.confirm_title')}
+        description={t('students.wizard.confirm_desc')}
+        confirmLabel={
+          loading
+            ? t('students.wizard.saving')
+            : t('students.wizard.confirm_yes')
+        }
+      />
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={cancelDiscard}
+        onConfirm={confirmDiscard}
+        title={t('common.discard_changes_title')}
+        description={t('common.discard_changes_desc')}
+        confirmLabel={t('common.discard')}
       />
     </>
   );

@@ -66,8 +66,8 @@
     "not_found": "Topilmadi",
     "no_data": "Ma'lumot topilmadi",
     "confirm_delete": "Confirm deletion?",
-    "confirm_delete_title": "Confirm deletion",
-    "confirm_delete_desc": "This action cannot be undone. Do you want to continue?",
+    "confirm_delete_title": "O'chirishni tasdiqlang",
+    "confirm_delete_desc": "Bu amalni ortga qaytarib bo'lmaydi. Davom etasizmi?",
     "discard_changes_title": "Saqlanmagan o'zgarishlar bekor qilinsinmi?",
     "discard_changes_desc": "Saqlanmagan o'zgarishlar bor. Hozir yopsangiz, ular yo'qoladi.",
     "discard": "Bekor qilish",
@@ -321,7 +321,8 @@
       "revenue_trend": "6 oylik tushum",
       "top_debtors": "Eng katta qarzdorlar",
       "view_all_debtors": "Hammasini ko'rish"
-    }
+    },
+    "confirm_delete_desc": "\"{{name}}\" filialini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
   },
   "groups": {
     "title": "Guruhlar",
@@ -355,7 +356,8 @@
       "method": "To'lov turi",
       "tab_schedule": "Jadval",
       "no_schedule": "Dars jadvali yo'q"
-    }
+    },
+    "confirm_delete_desc": "\"{{name}}\" guruhini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
   },
   "courses": {
     "title": "Kurslar",
@@ -374,7 +376,8 @@
     "not_found_desc": "Yangi kurs qo'shing.",
     "added": "Kurs qo'shildi",
     "updated": "Kurs yangilandi",
-    "deleted": "Kurs o'chirildi"
+    "deleted": "Kurs o'chirildi",
+    "confirm_delete_desc": "\"{{name}}\" kursini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
   },
   "students": {
     "title": "Talabalar",
@@ -391,7 +394,44 @@
       "step2_title": "Kurs va filial",
       "step2_desc": "O'qish kursi va filial tanlash",
       "step3_title": "To'lov va tasdiqlash",
-      "step3_desc": "To'lov tafsilotlari va yakuniy tasdiqlash"
+      "step3_desc": "To'lov tafsilotlari va yakuniy tasdiqlash",
+      "middle_name": "Otasining ismi",
+      "passport_series": "Pasport seriyasi",
+      "passport_series_placeholder": "AA",
+      "passport_number": "Pasport raqami",
+      "passport_number_placeholder": "1234567",
+      "birth_date": "Tug'ilgan sana",
+      "gender": "Jins",
+      "gender_male": "Erkak",
+      "gender_female": "Ayol",
+      "address": "Yashash manzili",
+      "address_placeholder": "Toshkent sh., Chilonzor tum., 15-uy",
+      "select_placeholder": "Tanlang",
+      "branch": "Filial",
+      "branch_placeholder": "Filial tanlang",
+      "course": "Kurs",
+      "course_placeholder": "Kurs tanlang",
+      "group_placeholder": "Guruh tanlang (keyinroq qo'shish mumkin)",
+      "group_none": "Guruh tanlanmagan",
+      "group_later": "Keyinroq tanlanadi",
+      "start_date": "Boshlanish sanasi",
+      "payment_type": "To'lov turi",
+      "payment_type_full": "To'liq",
+      "payment_type_partial": "Qisman",
+      "payment_type_installment": "Bo'lib to'lash",
+      "amount": "Summa (so'm)",
+      "amount_placeholder": "Masalan: 5 000 000",
+      "first_payment_date": "Birinchi to'lov sanasi",
+      "contract_agree": "Shartnoma shartlariga roziman",
+      "summary_title": "Yakuniy ko'rinish",
+      "summary_full_name": "Ism Familiya",
+      "confirm_title": "Ma'lumotlarni tasdiqlaysizmi?",
+      "confirm_desc": "Barcha ma'lumotlar to'g'ri ekanligiga ishonch hosil qiling. Tasdiqlagach, talaba ro'yxatdan o'tkaziladi va to'lov yozuvi yaratiladi.",
+      "confirm_yes": "Ha, tasdiqlayman",
+      "saving": "Saqlanmoqda...",
+      "completion_date_label": "Bitirish sanasi (taxminiy)",
+      "completion_date_desc": "Tanlangan kurs davomiyligidan avtomatik hisoblanadi",
+      "group_optional_label": "Guruh (ixtiyoriy)"
     },
     "lead_source": {
       "referral": "Tavsiya (tanish)",
@@ -504,7 +544,8 @@
       "tezkor": "Tezkor",
       "avto_maktab": "Avtomaktab"
     },
-    "form_desc": "Talaba ma'lumotlarini kiriting"
+    "form_desc": "Talaba ma'lumotlarini kiriting",
+    "confirm_delete_desc": "\"{{name}}\" talabasini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
   },
   "exams": {
     "add_title": "Yangi natija qo'shish",
@@ -663,7 +704,8 @@
       "branch": "Filial",
       "created": "Yaratilgan",
       "status": "Holat"
-    }
+    },
+    "confirm_delete_desc": "\"{{name}}\" operatorini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
   },
   "teachers": {
     "title": "O'qituvchilar",
@@ -686,7 +728,8 @@
     "search_placeholder": "Qidirish...",
     "form_desc": "O'qituvchi ma'lumotlarini kiriting",
     "lesson_count": "Darslar soni",
-    "student_count": "Studentlar soni"
+    "student_count": "Studentlar soni",
+    "confirm_delete_desc": "\"{{name}}\" o'qituvchisini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
   },
   "users": {
     "title": "Foydalanuvchilar",

@@ -591,6 +591,13 @@ const OperatorsPage = () => {
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
         loading={deleteMut.isPending}
+        description={
+          deleteId
+            ? t('operators.confirm_delete_desc', {
+                name: operators?.find((o) => o.id === deleteId)?.name,
+              })
+            : undefined
+        }
       />
 
       <ConfirmDialog

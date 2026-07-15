@@ -321,7 +321,8 @@
       "revenue_trend": "Выручка за 6 месяцев",
       "top_debtors": "Крупнейшие должники",
       "view_all_debtors": "Смотреть всё"
-    }
+    },
+    "confirm_delete_desc": "Удалить филиал «{{name}}»? Это действие необратимо."
   },
   "groups": {
     "title": "Группы",
@@ -355,7 +356,8 @@
       "method": "Способ оплаты",
       "tab_schedule": "Расписание",
       "no_schedule": "Расписания нет"
-    }
+    },
+    "confirm_delete_desc": "Удалить группу «{{name}}»? Это действие необратимо."
   },
   "courses": {
     "title": "Курсы",
@@ -374,7 +376,8 @@
     "not_found_desc": "Добавьте новый курс.",
     "added": "Курс добавлен",
     "updated": "Курс обновлён",
-    "deleted": "Курс удалён"
+    "deleted": "Курс удалён",
+    "confirm_delete_desc": "Удалить курс «{{name}}»? Это действие необратимо."
   },
   "students": {
     "title": "Студенты",
@@ -390,7 +393,44 @@
       "step2_title": "Курс и филиал",
       "step2_desc": "Выбор курса обучения и филиала",
       "step3_title": "Оплата и подтверждение",
-      "step3_desc": "Детали оплаты и итоговое подтверждение"
+      "step3_desc": "Детали оплаты и итоговое подтверждение",
+      "middle_name": "Отчество",
+      "passport_series": "Серия паспорта",
+      "passport_series_placeholder": "AA",
+      "passport_number": "Номер паспорта",
+      "passport_number_placeholder": "1234567",
+      "birth_date": "Дата рождения",
+      "gender": "Пол",
+      "gender_male": "Мужской",
+      "gender_female": "Женский",
+      "address": "Адрес проживания",
+      "address_placeholder": "г. Ташкент, Чиланзарский р-н, дом 15",
+      "select_placeholder": "Выберите",
+      "branch": "Филиал",
+      "branch_placeholder": "Выберите филиал",
+      "course": "Курс",
+      "course_placeholder": "Выберите курс",
+      "group_placeholder": "Выберите группу (можно добавить позже)",
+      "group_none": "Группа не выбрана",
+      "group_later": "Будет выбрана позже",
+      "start_date": "Дата начала",
+      "payment_type": "Тип оплаты",
+      "payment_type_full": "Полная",
+      "payment_type_partial": "Частичная",
+      "payment_type_installment": "Рассрочка",
+      "amount": "Сумма (сум)",
+      "amount_placeholder": "Например: 5 000 000",
+      "first_payment_date": "Дата первого платежа",
+      "contract_agree": "Согласен с условиями договора",
+      "summary_title": "Итоговый просмотр",
+      "summary_full_name": "Фамилия Имя",
+      "confirm_title": "Подтвердить данные?",
+      "confirm_desc": "Убедитесь, что все данные верны. После подтверждения студент будет зарегистрирован и создана запись об оплате.",
+      "confirm_yes": "Да, подтверждаю",
+      "saving": "Сохранение...",
+      "completion_date_label": "Дата окончания (примерно)",
+      "completion_date_desc": "Рассчитывается автоматически по длительности выбранного курса",
+      "group_optional_label": "Группа (необязательно)"
     },
     "lead_source": {
       "referral": "Рекомендация",
@@ -504,7 +544,8 @@
       "tezkor": "Экспресс",
       "avto_maktab": "Автошкола"
     },
-    "form_desc": "Введите данные студента"
+    "form_desc": "Введите данные студента",
+    "confirm_delete_desc": "Удалить студента «{{name}}»? Это действие необратимо."
   },
   "exams": {
     "add_title": "Добавить результат",
@@ -663,7 +704,8 @@
       "branch": "Филиал",
       "created": "Создан",
       "status": "Статус"
-    }
+    },
+    "confirm_delete_desc": "Удалить оператора «{{name}}»? Это действие необратимо."
   },
   "teachers": {
     "title": "Преподаватели",
@@ -686,7 +728,8 @@
     "search_placeholder": "Поиск...",
     "form_desc": "Введите данные преподавателя",
     "lesson_count": "Кол-во занятий",
-    "student_count": "Кол-во студентов"
+    "student_count": "Кол-во студентов",
+    "confirm_delete_desc": "Удалить преподавателя «{{name}}»? Это действие необратимо."
   },
   "users": {
     "title": "Пользователи",
