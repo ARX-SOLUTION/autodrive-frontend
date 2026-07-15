@@ -89,9 +89,17 @@ const UsersPage = () => {
 
   const debouncedSearch = useDebounce(search, 300);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  // Page in the URL too (like every other filter here) so refresh/share
+  // preserves it instead of silently resetting to page 1.
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const setCurrentPage = (p: number) =>
+    setParam('page', p > 1 ? String(p) : undefined);
+  // setCurrentPage is a fresh closure each render (derived from setParam,
+  // which useUrlParams doesn't memoize) -- adding it here would fire this
+  // effect on every render instead of only on an actual filter change.
   useEffect(() => {
     setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, branchId, isActive]);
 
   const { data: usersPage, isLoading } = useUsersPage(
