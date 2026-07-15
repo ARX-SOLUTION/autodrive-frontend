@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
-import { AuditLogsResponse } from '@/types/audit';
+import { AuditLog, AuditLogsResponse } from '@/types/audit';
 
 const toLocalDateStr = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -37,6 +37,19 @@ export const useAuditLogs = (params: {
           branch_id: branchId,
         },
       });
+      return res?.data || res;
+    },
+  });
+};
+
+export const useAuditLogById = (id: string | undefined) => {
+  const role = useAuthStore((s) => s.user?.role);
+  const canViewAudit = role === 'owner' || role === 'manager' || role === 'dev';
+  return useQuery<AuditLog>({
+    queryKey: ['audit-logs', 'detail', id],
+    enabled: canViewAudit && !!id,
+    queryFn: async () => {
+      const { data: res } = await axiosInstance.get(`/audit-logs/${id}`);
       return res?.data || res;
     },
   });

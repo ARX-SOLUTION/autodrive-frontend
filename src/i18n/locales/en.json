@@ -545,7 +545,8 @@
       "avto_maktab": "Full course"
     },
     "form_desc": "Enter the student's details",
-    "confirm_delete_desc": "Delete student \"{{name}}\"? This action cannot be undone."
+    "confirm_delete_desc": "Delete student \"{{name}}\"? This action cannot be undone.",
+    "detailed_toggle_locked": "Data entered — switching modes will discard it"
   },
   "exams": {
     "add_title": "Add new result",

@@ -1,7 +1,9 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { useAuditLogById } from '@/services/auditService';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { AuditLog } from '@/types/audit';
@@ -176,13 +178,40 @@ const AuditDetailPage = () => {
   const location = useLocation();
   const { t } = useTranslation();
 
-  // ponytail: no GET /audit-logs/:id on the backend — the row already has
-  // the full log in memory, so it's passed via router state instead of a
-  // refetch. Upgrade path if this needs to be a real bookmarkable/shareable
-  // link: add a backend single-log endpoint and fetch by `id` here.
-  const log = (location.state as { log?: AuditLog } | null)?.log;
+  // Router state is an optimistic pre-fill (instant paint when navigated
+  // from AuditLogPage's row click) — the real source of truth is the
+  // GET /audit-logs/:id fetch below, which also makes this route work on
+  // direct load, refresh, or a bookmarked/shared link.
+  const stateLog = (location.state as { log?: AuditLog } | null)?.log;
+  const { data: fetchedLog, isLoading, isError } = useAuditLogById(id);
+  const log = fetchedLog ?? (stateLog?.id === id ? stateLog : undefined);
 
-  if (!log || log.id !== id) {
+  if (isLoading && !log) {
+    return (
+      <div className="space-y-6">
+        <BackButton
+          onClick={() => navigate('/audit')}
+          label={t('audit.title')}
+        />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  if (isError && !log) {
+    return (
+      <div className="space-y-6">
+        <BackButton
+          onClick={() => navigate('/audit')}
+          label={t('audit.title')}
+        />
+        <EmptyState icon={AlertTriangle} title={t('common.error')} />
+      </div>
+    );
+  }
+
+  if (!log) {
     return (
       <div className="space-y-6">
         <BackButton
