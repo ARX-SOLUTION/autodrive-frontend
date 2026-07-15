@@ -3,6 +3,8 @@ import axiosInstance from '@/api/axiosInstance';
 import { useIsCrossTenant } from '@/hooks/useCan';
 import { Course, CreateCoursePayload } from '@/types/course';
 import { track } from '@/lib/umami';
+import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
+import { courseKeys } from '@/lib/queryKeys';
 
 export interface CourseListParams {
   branchId?: string;
@@ -14,19 +16,17 @@ export const useCourses = (params: CourseListParams = {}) => {
   const { branchId, courseType, search } = params;
   const isCrossTenant = useIsCrossTenant();
   return useQuery<Course[]>({
-    queryKey: ['courses', branchId, courseType, search],
-    queryFn: async () => {
+    queryKey: courseKeys.list({ branchId, courseType, search }),
+    queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/courses', {
         params: {
           branch_id: branchId || undefined,
           course_type: courseType || undefined,
           search: search || undefined,
         },
+        signal,
       });
-      const arr = res?.data?.data || res?.data;
-      if (Array.isArray(arr)) return arr;
-      if (Array.isArray(res)) return res;
-      return [];
+      return parseListEnvelope<Course>(res, 'courses').data;
     },
     enabled: !!branchId || isCrossTenant,
   });
@@ -34,10 +34,10 @@ export const useCourses = (params: CourseListParams = {}) => {
 
 export const useCourse = (id?: string) =>
   useQuery<Course>({
-    queryKey: ['courses', 'detail', id],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get(`/courses/${id}`);
-      return data?.data || data;
+    queryKey: courseKeys.detail(id),
+    queryFn: async ({ signal }) => {
+      const { data } = await axiosInstance.get(`/courses/${id}`, { signal });
+      return parseItemEnvelope<Course>(data, 'course');
     },
     enabled: !!id,
   });
@@ -47,10 +47,10 @@ export const useCreateCourse = () => {
   return useMutation({
     mutationFn: async (course: CreateCoursePayload) => {
       const { data } = await axiosInstance.post('/courses', course);
-      return data?.data || data;
+      return parseItemEnvelope<Course>(data, 'course');
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['courses'] });
+      qc.invalidateQueries({ queryKey: courseKeys.all });
       track('course_create');
     },
   });
@@ -64,10 +64,10 @@ export const useUpdateCourse = () => {
       ...course
     }: Partial<CreateCoursePayload> & { id: string }) => {
       const { data } = await axiosInstance.patch(`/courses/${id}`, course);
-      return data?.data || data;
+      return parseItemEnvelope<Course>(data, 'course');
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['courses'] });
+      qc.invalidateQueries({ queryKey: courseKeys.all });
       track('course_update');
     },
   });
@@ -80,7 +80,7 @@ export const useDeleteCourse = () => {
       await axiosInstance.delete(`/courses/${id}`);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['courses'] });
+      qc.invalidateQueries({ queryKey: courseKeys.all });
       track('course_delete');
     },
   });

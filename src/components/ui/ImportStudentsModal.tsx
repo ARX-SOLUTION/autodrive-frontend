@@ -16,6 +16,7 @@ import { UploadCloud } from 'lucide-react';
 import { track } from '@/lib/umami';
 import { useIsCrossTenant } from '@/hooks/useCan';
 import { extractErrorMessage } from '@/lib/errors';
+import { studentKeys, dashboardKeys, paymentKeys } from '@/lib/queryKeys';
 
 interface ImportStudentsModalProps {
   open: boolean;
@@ -59,9 +60,9 @@ export default function ImportStudentsModal({
         toast.success(t('students.import.success', { count: successCount }));
       }
       if (successCount > 0) track('import_students', { count: successCount });
-      qc.invalidateQueries({ queryKey: ['students'] });
-      qc.invalidateQueries({ queryKey: ['dashboard'] });
-      qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
+      qc.invalidateQueries({ queryKey: studentKeys.all });
+      qc.invalidateQueries({ queryKey: dashboardKeys.all });
+      qc.invalidateQueries({ queryKey: paymentKeys.all });
       handleClose();
     },
     onError: (err) => {

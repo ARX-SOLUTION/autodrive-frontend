@@ -5,21 +5,20 @@ import { useIsCrossTenant } from '@/hooks/useCan';
 import { User } from '@/types/user';
 import type { ListResponse } from '@/types/list';
 import { parseListResponse } from '@/lib/listResponse';
+import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
+import { operatorKeys } from '@/lib/queryKeys';
 
 export const useOperators = () => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
-    queryKey: ['operators', branchId],
+    queryKey: operatorKeys.list({ branchId }),
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/users', {
         params: { role: 'operator' },
         signal,
       });
-      const arr = res?.data?.data || res?.data;
-      if (Array.isArray(arr)) return arr;
-      if (Array.isArray(res)) return res;
-      return [];
+      return parseListEnvelope<User>(res, 'operators').data;
     },
     enabled: !!branchId || isCrossTenant,
   });
@@ -37,7 +36,7 @@ export const useOperatorsPage = (
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<ListResponse<User>>({
-    queryKey: ['operators', 'page', branchId, page, limit, search],
+    queryKey: operatorKeys.page({ branchId, page, limit, search }),
     queryFn: async ({ signal }) => {
       const { data } = await axiosInstance.get('/users', {
         params: {
@@ -67,9 +66,9 @@ export const useCreateOperator = () => {
         ...op,
         role: 'operator',
       });
-      return data?.data || data;
+      return parseItemEnvelope<User>(data, 'operator');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['operators'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: operatorKeys.all }),
   });
 };
 
@@ -86,9 +85,9 @@ export const useUpdateOperator = () => {
       branchId?: string;
     }) => {
       const { data } = await axiosInstance.patch(`/users/${id}`, op);
-      return data?.data || data;
+      return parseItemEnvelope<User>(data, 'operator');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['operators'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: operatorKeys.all }),
   });
 };
 
@@ -98,6 +97,6 @@ export const useDeleteOperator = () => {
     mutationFn: async (id: string) => {
       await axiosInstance.delete(`/users/${id}`);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['operators'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: operatorKeys.all }),
   });
 };

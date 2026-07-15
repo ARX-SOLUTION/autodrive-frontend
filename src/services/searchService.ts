@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
+import { parseItemEnvelope } from '@/lib/apiEnvelope';
+import { searchKeys } from '@/lib/queryKeys';
 
 export interface SearchResultItem {
   id: string;
@@ -14,7 +16,6 @@ export interface SearchResponse {
 }
 
 const MIN_QUERY_LENGTH = 2;
-const EMPTY: SearchResponse = { students: [], groups: [], staff: [] };
 
 // autodrive-cdy: GET /search?q= — tenant-scoped. Shape confirmed against
 // backend PR #114 (autodrive-backend src/modules/search/search.service.ts):
@@ -23,12 +24,13 @@ const EMPTY: SearchResponse = { students: [], groups: [], staff: [] };
 export const useGlobalSearch = (query: string) => {
   const trimmed = query.trim();
   return useQuery<SearchResponse>({
-    queryKey: ['search', trimmed],
-    queryFn: async () => {
+    queryKey: searchKeys.query(trimmed),
+    queryFn: async ({ signal }) => {
       const { data } = await axiosInstance.get('/search', {
         params: { q: trimmed },
+        signal,
       });
-      return data?.data ?? data ?? EMPTY;
+      return parseItemEnvelope<SearchResponse>(data, 'search');
     },
     enabled: trimmed.length >= MIN_QUERY_LENGTH,
   });

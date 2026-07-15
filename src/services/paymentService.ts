@@ -5,6 +5,8 @@ import { Payment, PaymentSnapshot, PaymentSummary } from '@/types/payment';
 import { track } from '@/lib/umami';
 import type { ListResponse } from '@/types/list';
 import { parseListResponse } from '@/lib/listResponse';
+import { parseItemEnvelope } from '@/lib/apiEnvelope';
+import { paymentKeys, studentKeys, dashboardKeys } from '@/lib/queryKeys';
 
 const toLocalDateStr = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -54,9 +56,11 @@ export const toPaymentQueryParams = ({
 
 export const fetchPaymentsPage = async (
   filters: PaymentListFilters,
+  signal?: AbortSignal,
 ): Promise<ListResponse<Payment>> => {
   const { data } = await axiosInstance.get('/payments', {
     params: toPaymentQueryParams(filters),
+    signal,
   });
   return parseListResponse<Payment>(data, filters.page, filters.limit);
 };
@@ -92,31 +96,21 @@ export const usePaymentsPage = (
 ) => {
   const isCrossTenant = useIsCrossTenant();
   return useQuery<ListResponse<Payment>>({
-    queryKey: [
-      'payments',
+    queryKey: paymentKeys.page({
       branchId,
       courseType,
       startDate,
       endDate,
       page,
       limit,
-      options?.search,
-      options?.paymentStatus,
-      options?.paymentMethod,
-      options?.sortBy,
-      options?.sortOrder,
-    ],
+      ...options,
+    }),
     enabled: !!branchId || isCrossTenant,
-    queryFn: () =>
-      fetchPaymentsPage({
-        branchId,
-        courseType,
-        startDate,
-        endDate,
-        page,
-        limit,
-        ...options,
-      }),
+    queryFn: ({ signal }) =>
+      fetchPaymentsPage(
+        { branchId, courseType, startDate, endDate, page, limit, ...options },
+        signal,
+      ),
   });
 };
 
@@ -128,46 +122,40 @@ export const usePayments = (
 ) => {
   const isCrossTenant = useIsCrossTenant();
   return useQuery<ListResponse<Payment>, Error, Payment[]>({
-    queryKey: ['payments', branchId, courseType, startDate, endDate],
+    queryKey: paymentKeys.list({ branchId, courseType, startDate, endDate }),
     enabled: !!branchId || isCrossTenant,
-    queryFn: () =>
-      fetchPaymentsPage({
-        branchId,
-        courseType,
-        startDate,
-        endDate,
-      }),
+    queryFn: ({ signal }) =>
+      fetchPaymentsPage({ branchId, courseType, startDate, endDate }, signal),
     select: (result) => result.data,
   });
 };
 
 // Per-student payment ledger for the student detail card "To'lovlar" tab.
-// Reuses GET /payments with a student_id filter; the broad ['payments']
-// invalidation in useCreatePayment/useDeletePayment refreshes this key for free.
+// Reuses GET /payments with a student_id filter; the broad paymentKeys.all
+// invalidation in useCreatePayment/useDeletePayment refreshes this key for
+// free (byStudent nests under the same 'payments' root).
 export const useStudentPayments = (studentId?: string, page = 1, limit = 20) =>
   useQuery<ListResponse<Payment>>({
-    queryKey: ['payments', 'student', studentId, page, limit],
+    queryKey: paymentKeys.byStudent(studentId, { page, limit }),
     enabled: !!studentId,
-    queryFn: () =>
-      fetchPaymentsPage({
-        studentId,
-        page,
-        limit,
-        sortBy: 'date',
-        sortOrder: 'desc',
-      }),
+    queryFn: ({ signal }) =>
+      fetchPaymentsPage(
+        { studentId, page, limit, sortBy: 'date', sortOrder: 'desc' },
+        signal,
+      ),
   });
 
 export const usePaymentSnapshot = (branchId?: string) => {
   const isCrossTenant = useIsCrossTenant();
   return useQuery<PaymentSnapshot>({
-    queryKey: ['payment-snapshot', branchId],
+    queryKey: paymentKeys.snapshot(branchId),
     enabled: !!branchId || isCrossTenant,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/payments/snapshot', {
         params: { branch_id: branchId },
+        signal,
       });
-      return res?.data || res;
+      return parseItemEnvelope<PaymentSnapshot>(res, 'payment-snapshot');
     },
   });
 };
@@ -181,13 +169,14 @@ export const usePaymentSummary = (
 ) => {
   const isCrossTenant = useIsCrossTenant();
   return useQuery<PaymentSummary>({
-    queryKey: ['payment-summary', filters],
+    queryKey: paymentKeys.summary({ ...filters }),
     enabled: enabled && (!!filters.branchId || isCrossTenant),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/payments/summary', {
         params: toPaymentQueryParams(filters),
+        signal,
       });
-      return res?.data || res;
+      return parseItemEnvelope<PaymentSummary>(res, 'payment-summary');
     },
   });
 };
@@ -202,15 +191,14 @@ export const useCreatePayment = () => {
       idempotency_key: string;
     }) => {
       const { data } = await axiosInstance.post('/payments', payment);
-      return data?.data || data;
+      return parseItemEnvelope<Payment>(data, 'payment');
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['payments'] });
-      qc.invalidateQueries({ queryKey: ['payment-summary'] });
-      qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
-      qc.invalidateQueries({ queryKey: ['students'] });
-      qc.invalidateQueries({ queryKey: ['student'] });
-      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      // paymentKeys.all (root 'payments') now covers summary/snapshot/
+      // byStudent too -- they all nest under the same root.
+      qc.invalidateQueries({ queryKey: paymentKeys.all });
+      qc.invalidateQueries({ queryKey: studentKeys.all });
+      qc.invalidateQueries({ queryKey: dashboardKeys.all });
       track('payment_create');
     },
   });
@@ -223,12 +211,9 @@ export const useDeletePayment = () => {
       await axiosInstance.delete(`/payments/${id}`);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['payments'] });
-      qc.invalidateQueries({ queryKey: ['payment-summary'] });
-      qc.invalidateQueries({ queryKey: ['payment-snapshot'] });
-      qc.invalidateQueries({ queryKey: ['students'] });
-      qc.invalidateQueries({ queryKey: ['student'] });
-      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: paymentKeys.all });
+      qc.invalidateQueries({ queryKey: studentKeys.all });
+      qc.invalidateQueries({ queryKey: dashboardKeys.all });
       track('payment_delete');
     },
   });

@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { AuditLog, AuditLogsResponse } from '@/types/audit';
+import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
+import { auditLogKeys } from '@/lib/queryKeys';
 
 const toLocalDateStr = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -21,9 +23,9 @@ export const useAuditLogs = (params: {
   // Backend gates /audit-logs to owner/manager/dev — don't fire for others (operator/teacher → 403).
   const canViewAudit = role === 'owner' || role === 'manager' || role === 'dev';
   return useQuery<AuditLogsResponse>({
-    queryKey: ['audit-logs', { ...params, branchId }],
+    queryKey: auditLogKeys.page({ ...params, branchId }),
     enabled: canViewAudit,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/audit-logs', {
         params: {
           entity: params.entity,
@@ -38,8 +40,9 @@ export const useAuditLogs = (params: {
           limit: params.limit,
           branch_id: branchId,
         },
+        signal,
       });
-      return res?.data || res;
+      return parseListEnvelope<AuditLog>(res, 'audit-logs');
     },
   });
 };
@@ -48,11 +51,13 @@ export const useAuditLogById = (id: string | undefined) => {
   const role = useAuthStore((s) => s.user?.role);
   const canViewAudit = role === 'owner' || role === 'manager' || role === 'dev';
   return useQuery<AuditLog>({
-    queryKey: ['audit-logs', 'detail', id],
+    queryKey: auditLogKeys.detail(id),
     enabled: canViewAudit && !!id,
-    queryFn: async () => {
-      const { data: res } = await axiosInstance.get(`/audit-logs/${id}`);
-      return res?.data || res;
+    queryFn: async ({ signal }) => {
+      const { data: res } = await axiosInstance.get(`/audit-logs/${id}`, {
+        signal,
+      });
+      return parseItemEnvelope<AuditLog>(res, 'audit-log');
     },
   });
 };

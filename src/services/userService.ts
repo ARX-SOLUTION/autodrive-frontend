@@ -5,21 +5,20 @@ import { useIsCrossTenant } from '@/hooks/useCan';
 import { User } from '@/types/user';
 import type { ListResponse } from '@/types/list';
 import { parseListResponse } from '@/lib/listResponse';
+import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
+import { userKeys } from '@/lib/queryKeys';
 
 export const useUsers = (role?: string) => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
-    queryKey: ['users', branchId, role],
+    queryKey: userKeys.list({ branchId, role }),
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/users', {
         params: role ? { role } : {},
         signal,
       });
-      const arr = res?.data?.data || res?.data;
-      if (Array.isArray(arr)) return arr;
-      if (Array.isArray(res)) return res;
-      return [];
+      return parseListEnvelope<User>(res, 'users').data;
     },
     enabled: !!branchId || isCrossTenant,
   });
@@ -37,7 +36,13 @@ export const useUsersPage = (
   const userBranchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<ListResponse<User>>({
-    queryKey: ['users', 'page', userBranchId, role, page, limit, filters],
+    queryKey: userKeys.page({
+      branchId: userBranchId,
+      role,
+      page,
+      limit,
+      ...filters,
+    }),
     queryFn: async ({ signal }) => {
       const { data } = await axiosInstance.get('/users', {
         params: {
@@ -58,11 +63,13 @@ export const useUsersPage = (
 
 export const useUser = (id?: string) =>
   useQuery<User>({
-    queryKey: ['users', 'detail', id],
+    queryKey: userKeys.detail(id),
     enabled: !!id,
-    queryFn: async () => {
-      const { data: res } = await axiosInstance.get(`/users/${id}`);
-      return res?.data || res;
+    queryFn: async ({ signal }) => {
+      const { data: res } = await axiosInstance.get(`/users/${id}`, {
+        signal,
+      });
+      return parseItemEnvelope<User>(res, 'user');
     },
   });
 
@@ -80,9 +87,9 @@ export const useCreateManager = () => {
         ...m,
         role: 'manager',
       });
-      return data?.data || data;
+      return parseItemEnvelope<User>(data, 'user');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
   });
 };
 
@@ -100,8 +107,8 @@ export const useUpdateUser = () => {
       specialization?: 'THEORY' | 'PRACTICE';
     }) => {
       const { data } = await axiosInstance.patch(`/users/${id}`, op);
-      return data?.data || data;
+      return parseItemEnvelope<User>(data, 'user');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
   });
 };

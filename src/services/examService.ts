@@ -1,14 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { ExamResult, CreateExamPayload } from '@/types/exam';
+import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
+import { examKeys } from '@/lib/queryKeys';
 
 export const useStudentExams = (studentId?: string) => {
   return useQuery<ExamResult[]>({
-    queryKey: ['exams', studentId],
+    queryKey: examKeys.byStudent(studentId),
     enabled: !!studentId,
-    queryFn: async () => {
-      const { data } = await axiosInstance.get(`/exams/student/${studentId}`);
-      return data?.data || data || [];
+    queryFn: async ({ signal }) => {
+      const { data } = await axiosInstance.get(`/exams/student/${studentId}`, {
+        signal,
+      });
+      return parseListEnvelope<ExamResult>(data, 'exams').data;
     },
   });
 };
@@ -18,10 +22,12 @@ export const useCreateExam = () => {
   return useMutation({
     mutationFn: async (payload: CreateExamPayload) => {
       const { data } = await axiosInstance.post('/exams', payload);
-      return data?.data || data;
+      return parseItemEnvelope<ExamResult>(data, 'exam');
     },
     onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: ['exams', variables.student_id] });
+      qc.invalidateQueries({
+        queryKey: examKeys.byStudent(variables.student_id),
+      });
     },
   });
 };
