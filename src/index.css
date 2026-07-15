@@ -50,6 +50,18 @@
   * {
     @apply border-border;
   }
+  /* Fallback for hand-rolled <button>/<a> controls (row actions, topbar
+     icons, etc.) that don't go through the shared Button component and so
+     don't get its focus-visible:ring-2 utility. Keyboard-tabbing through
+     these previously fell back to the browser default outline. Harmless
+     no-op on elements that already set their own focus-visible ring. */
+  button:focus-visible,
+  a:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px hsl(var(--background)),
+      0 0 0 4px hsl(var(--ring));
+  }
   body {
     @apply text-foreground font-body antialiased;
     background-color: hsl(var(--background));
