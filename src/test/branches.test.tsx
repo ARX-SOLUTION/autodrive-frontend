@@ -9,10 +9,12 @@ import { Branch } from '@/types/branch';
 const mockMutate = vi.fn();
 let mockBranchesData: Branch[] = [];
 
+const auth = vi.hoisted(() => ({ role: 'owner' as string }));
+
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
     selector({
-      canManageBranches: () => true,
+      user: { role: auth.role },
     }),
 }));
 
@@ -58,6 +60,7 @@ const renderComponent = () => {
 describe('BranchesPage Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    auth.role = 'owner';
     mockBranchesData = [
       {
         id: 'branch-1',
@@ -156,5 +159,34 @@ describe('BranchesPage Component', () => {
 
     fireEvent.click(screen.getByText('common.discard'));
     expect(screen.queryByText('branches.edit')).toBeNull();
+  });
+});
+
+// Regression test for autodrive-f9u.9: canManageBranches used to be an
+// ad-hoc `role === 'owner'` check in authStore, excluding `dev` -- which
+// permissions.ts documents as a strict superset of `owner`. Now derived
+// from the same CAPABILITIES matrix via useCan('manageBranches').
+describe('BranchesPage manage-branches capability (autodrive-f9u.9)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockBranchesData = [];
+  });
+
+  it('shows the Add button for dev (previously hidden)', () => {
+    auth.role = 'dev';
+    renderComponent();
+    expect(screen.getAllByText('branches.add').length).toBeGreaterThan(0);
+  });
+
+  it('shows the Add button for owner', () => {
+    auth.role = 'owner';
+    renderComponent();
+    expect(screen.getAllByText('branches.add').length).toBeGreaterThan(0);
+  });
+
+  it('hides the Add button for manager', () => {
+    auth.role = 'manager';
+    renderComponent();
+    expect(screen.queryByText('branches.add')).not.toBeInTheDocument();
   });
 });

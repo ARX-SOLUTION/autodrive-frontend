@@ -15,7 +15,6 @@ interface AuthState {
   isDev: () => boolean;
   isCrossTenant: () => boolean;
   canViewBranches: () => boolean;
-  canManageBranches: () => boolean;
   setHasHydrated: (state: boolean) => void;
 }
 
@@ -47,7 +46,6 @@ export const useAuthStore = create<AuthState>()(
         const role = get().user?.role;
         return role === 'owner' || role === 'manager';
       },
-      canManageBranches: () => get().user?.role === 'owner',
       setHasHydrated: (state) => set({ hasHydrated: state }),
     }),
     {

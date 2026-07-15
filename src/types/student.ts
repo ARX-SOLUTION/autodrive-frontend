@@ -31,7 +31,7 @@ export interface Student {
   course_name?: string;
   branch_id: string;
   branch_name?: string;
-  payment_method: PaymentMethod;
+  payment_method: PaymentMethod | null;
   debt: number;
   has_document: boolean;
   registered_by?: string;

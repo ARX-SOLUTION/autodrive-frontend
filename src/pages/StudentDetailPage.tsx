@@ -201,7 +201,11 @@ const StudentDetailPage = () => {
             />
             <Field
               label={t('students.payment_method')}
-              value={methodLabels[student.payment_method]}
+              value={
+                student.payment_method
+                  ? methodLabels[student.payment_method]
+                  : t('common.na')
+              }
             />
             <Field
               label={t('students.has_document')}

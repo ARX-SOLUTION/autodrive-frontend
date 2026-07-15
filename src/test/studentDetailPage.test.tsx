@@ -130,3 +130,16 @@ describe('StudentDetailPage referrals_count Field', () => {
     );
   });
 });
+
+// Regression test for autodrive-f9u.12: Student.payment_method is nullable
+// on the backend (a student may never have made a payment), but was typed
+// non-null on the frontend -- methodLabels[student.payment_method] rendered
+// blank with no compile-time warning for exactly this STUDENT fixture,
+// which has never set payment_method.
+describe('StudentDetailPage payment_method null-safety (autodrive-f9u.12)', () => {
+  it('shows a fallback instead of a blank value when payment_method is unset', () => {
+    auth.role = 'manager';
+    renderPage();
+    expect(screen.getAllByText('common.na').length).toBeGreaterThan(0);
+  });
+});

@@ -722,6 +722,8 @@
     "phone": "Telefon",
     "must_change_password_notice": "Davom etishdan oldin parolingizni o'zgartiring.",
     "update_password_success": "Parol muvaffaqiyatli yangilandi.",
+    "update_success": "Ma'lumotlar muvaffaqiyatli yangilandi.",
+    "readonly_note": "Bu ma'lumotlarni faqat kompaniya egasi, filial menejeri yoki platforma admini o'zgartira oladi.",
     "telegram": {
       "title": "Telegram",
       "description": "CRM bildirishnomalarini Telegram orqali olish uchun hisobingizni botga ulang.",

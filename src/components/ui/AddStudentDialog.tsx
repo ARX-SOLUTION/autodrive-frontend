@@ -12,6 +12,7 @@ import {
 import { groupDigits } from '@/lib/money';
 import type { LeadSource } from '@/types/student';
 import ReferralFields from '@/components/ui/ReferralFields';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import {
   Dialog,
   DialogContent,
@@ -39,13 +40,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  AlertCircle,
-  UserPlus,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
@@ -402,730 +397,726 @@ const AddStudentDialog = ({
   ]);
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col overflow-hidden">
-        <DialogHeader className="shrink-0 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-              <UserPlus className="h-5 w-5 text-primary" aria-hidden="true" />
+    <>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col overflow-hidden">
+          <DialogHeader className="shrink-0 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <UserPlus className="h-5 w-5 text-primary" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <DialogTitle className="font-heading text-lg">
+                  {t('students.add')}
+                </DialogTitle>
+                <DialogDescription>
+                  {t('students.wizard.subtitle', { count: STEPS.length })}
+                </DialogDescription>
+              </div>
             </div>
-            <div className="min-w-0">
-              <DialogTitle className="font-heading text-lg">
-                {t('students.add')}
-              </DialogTitle>
-              <DialogDescription>
-                {t('students.wizard.subtitle', { count: STEPS.length })}
-              </DialogDescription>
+          </DialogHeader>
+
+          {detailedToggle && (
+            <div className="flex shrink-0 items-center pb-2">
+              {detailedToggle}
             </div>
-          </div>
-        </DialogHeader>
+          )}
 
-        {detailedToggle && (
-          <div className="flex shrink-0 items-center pb-2">
-            {detailedToggle}
-          </div>
-        )}
-
-        {/* Stepper Indicator */}
-        <nav
-          aria-label={t('students.wizard.progress_label')}
-          className="mb-1 shrink-0 px-1"
-        >
-          <ol className="flex items-center">
-            {STEPS.map((step, index) => {
-              const isDone = stepValidated[step.id];
-              const isActive = activeStep === step.id;
-              const isReachable = step.id <= activeStep;
-              return (
-                <li
-                  key={step.id}
-                  className={cn(
-                    'flex items-center',
-                    index < STEPS.length - 1 && 'flex-1',
-                  )}
-                >
-                  <button
-                    type="button"
-                    onClick={() => isReachable && goToStep(step.id)}
-                    disabled={!isReachable}
-                    aria-current={isActive ? 'step' : undefined}
-                    className={cn(
-                      'group flex items-center gap-2 rounded-md py-1 pr-2 transition-colors',
-                      isReachable
-                        ? 'cursor-pointer'
-                        : 'cursor-default opacity-60',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium transition-colors',
-                        isDone
-                          ? 'bg-green-600 text-white dark:bg-green-500'
-                          : isActive
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-muted-foreground',
-                      )}
-                    >
-                      {isDone ? (
-                        <Check className="h-4 w-4" aria-hidden="true" />
-                      ) : (
-                        step.id
-                      )}
-                    </span>
-                    <span
-                      className={cn(
-                        'hidden text-left text-xs font-medium sm:block',
-                        isActive ? 'text-foreground' : 'text-muted-foreground',
-                      )}
-                    >
-                      {t(step.titleKey)}
-                    </span>
-                  </button>
-                  {index < STEPS.length - 1 && (
-                    <div
-                      className={cn(
-                        'mx-1 h-0.5 flex-1 rounded-full transition-colors',
-                        activeStep > step.id ? 'bg-primary' : 'bg-muted',
-                      )}
-                    />
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-          <p className="mt-2 text-center text-xs text-muted-foreground sm:hidden">
-            {t('students.wizard.step_label', {
-              current: activeStep,
-              total: STEPS.length,
-            })}{' '}
-            · {t(STEPS[activeStep - 1].titleKey)}
-          </p>
-        </nav>
-
-        <Separator className="mb-4 shrink-0" />
-
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onFormValid)}
-            className="flex min-h-0 flex-1 flex-col"
+          {/* Stepper Indicator */}
+          <nav
+            aria-label={t('students.wizard.progress_label')}
+            className="mb-1 shrink-0 px-1"
           >
-            <div className="flex-1 overflow-y-auto pr-2">
-              {/* Step 1: Personal Info */}
-              {activeStep === 1 && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-200">
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    {t(STEPS[0].titleKey)}
-                  </h3>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="last_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Familiya *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ivanov" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="first_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ism *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ivan" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="middle_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Otasining ismi</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ivanovich" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+            <ol className="flex items-center">
+              {STEPS.map((step, index) => {
+                const isDone = stepValidated[step.id];
+                const isActive = activeStep === step.id;
+                const isReachable = step.id <= activeStep;
+                return (
+                  <li
+                    key={step.id}
+                    className={cn(
+                      'flex items-center',
+                      index < STEPS.length - 1 && 'flex-1',
                     )}
-                  />
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Telefon *</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              type="tel"
-                              inputMode="tel"
-                              autoComplete="tel"
-                              placeholder="+998 90 123 45 67"
-                              value={formatUzPhoneInput(field.value)}
-                              onChange={(e) =>
-                                field.onChange(
-                                  formatUzPhoneInput(e.target.value),
-                                )
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="email"
-                              placeholder="student@example.com"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="passport_series"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Pasport seriyasi *</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="AA"
-                              maxLength={2}
-                              {...field}
-                              onChange={(e) =>
-                                field.onChange(e.target.value.toUpperCase())
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="passport_number"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Pasport raqami *</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="1234567"
-                              maxLength={7}
-                              {...field}
-                              onChange={(e) =>
-                                field.onChange(
-                                  e.target.value.replace(/\D/g, ''),
-                                )
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <FormField
-                      control={form.control}
-                      name="birth_date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tug'ilgan sana *</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="date"
-                              max={new Date().toISOString().split('T')[0]}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="gender"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Jins *</FormLabel>
-                          <FormControl>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Tanlang" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="MALE">Erkak</SelectItem>
-                                <SelectItem value="FEMALE">Ayol</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem className="sm:col-span-2">
-                          <FormLabel>Yashash manzili *</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Toshkent sh., Chilonzor tum., 15-uy"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Step 2: Course & Branch */}
-              {activeStep === 2 && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    {t(STEPS[1].titleKey)}
-                  </h3>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="branch_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Filial *</FormLabel>
-                          <FormControl>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Filial tanlang" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {branchList.map((branch) => (
-                                  <SelectItem key={branch.id} value={branch.id}>
-                                    {branch.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="course_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Kurs *</FormLabel>
-                          <FormControl>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Kurs tanlang" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {filteredCourses.map((course) => (
-                                  <SelectItem key={course.id} value={course.id}>
-                                    {course.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <FormField
-                      control={form.control}
-                      name="group_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Guruh (ixtiyoriy)</FormLabel>
-                          <FormControl>
-                            <Select
-                              onValueChange={(value) =>
-                                field.onChange(value === 'none' ? '' : value)
-                              }
-                              value={field.value || 'none'}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Guruh tanlang (keyinroq qo'shish mumkin)" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {/* Radix SelectItem forbids an empty-string value, so "no group" uses a sentinel mapped back to '' above. */}
-                                <SelectItem value="none">
-                                  Guruh tanlanmagan
-                                </SelectItem>
-                                {filteredGroups.map((group) => (
-                                  <SelectItem key={group.id} value={group.id}>
-                                    {group.name} ({group.branch_name})
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="start_date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Boshlanish sanasi *</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="completion_date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Bitirish sanasi (taxminiy)</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Tanlangan kurs davomiyligidan avtomatik hisoblanadi
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <ReferralFields
-                    branchId={watchedBranchId}
-                    leadSource={form.watch('lead_source')}
-                    onLeadSourceChange={(v) => form.setValue('lead_source', v)}
-                    leadSourceOther={form.watch('lead_source_other')}
-                    onLeadSourceOtherChange={(v) =>
-                      form.setValue('lead_source_other', v)
-                    }
-                    referredByStudentId={form.watch('referred_by_student_id')}
-                    referredByUserId={form.watch('referred_by_user_id')}
-                    onReferrerChange={({ studentId, userId }) => {
-                      form.setValue('referred_by_student_id', studentId ?? '');
-                      form.setValue('referred_by_user_id', userId ?? '');
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* Step 3: Payment & Confirmation */}
-              {activeStep === 3 && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    {t(STEPS[2].titleKey)}
-                  </h3>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="payment_type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>To'lov turi *</FormLabel>
-                          <FormControl>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Tanlang" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="FULL">
-                                  To'liq to'lov
-                                </SelectItem>
-                                <SelectItem value="PARTIAL">
-                                  Qisman to'lov
-                                </SelectItem>
-                                <SelectItem value="INSTALLMENT">
-                                  Bo'lib to'lash
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="payment_method"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>To'lov usuli *</FormLabel>
-                          <FormControl>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Tanlang" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="CASH">Naqd</SelectItem>
-                                <SelectItem value="CARD">Karta</SelectItem>
-                                <SelectItem value="TRANSFER">
-                                  O'tkazma
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <FormField
-                      control={form.control}
-                      name="amount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Summa (so'm) *</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="text"
-                              inputMode="numeric"
-                              placeholder="Masalan: 5 000 000"
-                              value={
-                                field.value
-                                  ? groupDigits(String(field.value))
-                                  : ''
-                              }
-                              onChange={(e) =>
-                                field.onChange(
-                                  Number(e.target.value.replace(/\D/g, '')) ||
-                                    0,
-                                )
-                              }
-                              onBlur={field.onBlur}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="first_payment_date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Birinchi to'lov sanasi *</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="contract_signed"
-                      render={({ field }) => (
-                        <FormItem className="flex items-end">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel className="ml-2 cursor-pointer">
-                            Shartnoma shartlariga roziman *
-                          </FormLabel>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Summary Card */}
-                  <div className="bg-muted/50 rounded-lg p-4 border">
-                    <h4 className="font-medium mb-3">Yakuniy ko'rinish</h4>
-                    <dl className="grid gap-2 sm:grid-cols-2 text-sm">
-                      <dt className="text-muted-foreground">Ism Familiya:</dt>
-                      <dd className="font-medium">
-                        {form.watch('last_name')} {form.watch('first_name')}
-                      </dd>
-                      <dt className="text-muted-foreground">Telefon:</dt>
-                      <dd className="font-medium">{form.watch('phone')}</dd>
-                      <dt className="text-muted-foreground">Kurs:</dt>
-                      <dd className="font-medium">
-                        {courseList.find(
-                          (c) => c.id === form.watch('course_id'),
-                        )?.name || '—'}
-                      </dd>
-                      <dt className="text-muted-foreground">Filial:</dt>
-                      <dd className="font-medium">
-                        {branchList.find(
-                          (b) => b.id === form.watch('branch_id'),
-                        )?.name || '—'}
-                      </dd>
-                      <dt className="text-muted-foreground">Guruh:</dt>
-                      <dd className="font-medium">
-                        {filteredGroups.find(
-                          (g) => g.id === form.watch('group_id'),
-                        )?.name || 'Keyinroq tanlanadi'}
-                      </dd>
-                      <dt className="text-muted-foreground">To'lov turi:</dt>
-                      <dd className="font-medium">
-                        {form.watch('payment_type') === 'FULL' && "To'liq"}
-                        {form.watch('payment_type') === 'PARTIAL' && 'Qisman'}
-                        {form.watch('payment_type') === 'INSTALLMENT' &&
-                          "Bo'lib to'lash"}
-                      </dd>
-                      <dt className="text-muted-foreground">Summa:</dt>
-                      <dd className="font-medium">
-                        {form.watch('amount').toLocaleString('uz-UZ')} so'm
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Footer Actions */}
-            <div className="mt-auto flex shrink-0 items-center justify-between border-t pt-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {activeStep > 1 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleBack}
-                    disabled={loading}
                   >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Oldingi
-                  </Button>
+                    <button
+                      type="button"
+                      onClick={() => isReachable && goToStep(step.id)}
+                      disabled={!isReachable}
+                      aria-current={isActive ? 'step' : undefined}
+                      className={cn(
+                        'group flex items-center gap-2 rounded-md py-1 pr-2 transition-colors',
+                        isReachable
+                          ? 'cursor-pointer'
+                          : 'cursor-default opacity-60',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium transition-colors',
+                          isDone
+                            ? 'bg-green-600 text-white dark:bg-green-500'
+                            : isActive
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted text-muted-foreground',
+                        )}
+                      >
+                        {isDone ? (
+                          <Check className="h-4 w-4" aria-hidden="true" />
+                        ) : (
+                          step.id
+                        )}
+                      </span>
+                      <span
+                        className={cn(
+                          'hidden text-left text-xs font-medium sm:block',
+                          isActive
+                            ? 'text-foreground'
+                            : 'text-muted-foreground',
+                        )}
+                      >
+                        {t(step.titleKey)}
+                      </span>
+                    </button>
+                    {index < STEPS.length - 1 && (
+                      <div
+                        className={cn(
+                          'mx-1 h-0.5 flex-1 rounded-full transition-colors',
+                          activeStep > step.id ? 'bg-primary' : 'bg-muted',
+                        )}
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+            <p className="mt-2 text-center text-xs text-muted-foreground sm:hidden">
+              {t('students.wizard.step_label', {
+                current: activeStep,
+                total: STEPS.length,
+              })}{' '}
+              · {t(STEPS[activeStep - 1].titleKey)}
+            </p>
+          </nav>
+
+          <Separator className="mb-4 shrink-0" />
+
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onFormValid)}
+              className="flex min-h-0 flex-1 flex-col"
+            >
+              <div className="flex-1 overflow-y-auto pr-2">
+                {/* Step 1: Personal Info */}
+                {activeStep === 1 && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-200">
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      {t(STEPS[0].titleKey)}
+                    </h3>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="last_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Familiya *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Ivanov" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="first_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ism *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Ivan" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="middle_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Otasining ismi</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ivanovich" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Telefon *</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                type="tel"
+                                inputMode="tel"
+                                autoComplete="tel"
+                                placeholder="+998 90 123 45 67"
+                                value={formatUzPhoneInput(field.value)}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    formatUzPhoneInput(e.target.value),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="email"
+                                placeholder="student@example.com"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="passport_series"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Pasport seriyasi *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="AA"
+                                maxLength={2}
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(e.target.value.toUpperCase())
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="passport_number"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Pasport raqami *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="1234567"
+                                maxLength={7}
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value.replace(/\D/g, ''),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <FormField
+                        control={form.control}
+                        name="birth_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tug'ilgan sana *</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="date"
+                                max={new Date().toISOString().split('T')[0]}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Jins *</FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Tanlang" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="MALE">Erkak</SelectItem>
+                                  <SelectItem value="FEMALE">Ayol</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem className="sm:col-span-2">
+                            <FormLabel>Yashash manzili *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Toshkent sh., Chilonzor tum., 15-uy"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 2: Course & Branch */}
+                {activeStep === 2 && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      {t(STEPS[1].titleKey)}
+                    </h3>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="branch_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Filial *</FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Filial tanlang" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {branchList.map((branch) => (
+                                    <SelectItem
+                                      key={branch.id}
+                                      value={branch.id}
+                                    >
+                                      {branch.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="course_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Kurs *</FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Kurs tanlang" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {filteredCourses.map((course) => (
+                                    <SelectItem
+                                      key={course.id}
+                                      value={course.id}
+                                    >
+                                      {course.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <FormField
+                        control={form.control}
+                        name="group_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Guruh (ixtiyoriy)</FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={(value) =>
+                                  field.onChange(value === 'none' ? '' : value)
+                                }
+                                value={field.value || 'none'}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Guruh tanlang (keyinroq qo'shish mumkin)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {/* Radix SelectItem forbids an empty-string value, so "no group" uses a sentinel mapped back to '' above. */}
+                                  <SelectItem value="none">
+                                    Guruh tanlanmagan
+                                  </SelectItem>
+                                  {filteredGroups.map((group) => (
+                                    <SelectItem key={group.id} value={group.id}>
+                                      {group.name} ({group.branch_name})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="start_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Boshlanish sanasi *</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="completion_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Bitirish sanasi (taxminiy)</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormDescription>
+                              Tanlangan kurs davomiyligidan avtomatik
+                              hisoblanadi
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <ReferralFields
+                      branchId={watchedBranchId}
+                      leadSource={form.watch('lead_source')}
+                      onLeadSourceChange={(v) =>
+                        form.setValue('lead_source', v)
+                      }
+                      leadSourceOther={form.watch('lead_source_other')}
+                      onLeadSourceOtherChange={(v) =>
+                        form.setValue('lead_source_other', v)
+                      }
+                      referredByStudentId={form.watch('referred_by_student_id')}
+                      referredByUserId={form.watch('referred_by_user_id')}
+                      onReferrerChange={({ studentId, userId }) => {
+                        form.setValue(
+                          'referred_by_student_id',
+                          studentId ?? '',
+                        );
+                        form.setValue('referred_by_user_id', userId ?? '');
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Step 3: Payment & Confirmation */}
+                {activeStep === 3 && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      {t(STEPS[2].titleKey)}
+                    </h3>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="payment_type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>To'lov turi *</FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Tanlang" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="FULL">
+                                    To'liq to'lov
+                                  </SelectItem>
+                                  <SelectItem value="PARTIAL">
+                                    Qisman to'lov
+                                  </SelectItem>
+                                  <SelectItem value="INSTALLMENT">
+                                    Bo'lib to'lash
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="payment_method"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>To'lov usuli *</FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Tanlang" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="CASH">Naqd</SelectItem>
+                                  <SelectItem value="CARD">Karta</SelectItem>
+                                  <SelectItem value="TRANSFER">
+                                    O'tkazma
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <FormField
+                        control={form.control}
+                        name="amount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Summa (so'm) *</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="Masalan: 5 000 000"
+                                value={
+                                  field.value
+                                    ? groupDigits(String(field.value))
+                                    : ''
+                                }
+                                onChange={(e) =>
+                                  field.onChange(
+                                    Number(e.target.value.replace(/\D/g, '')) ||
+                                      0,
+                                  )
+                                }
+                                onBlur={field.onBlur}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="first_payment_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Birinchi to'lov sanasi *</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="contract_signed"
+                        render={({ field }) => (
+                          <FormItem className="flex items-end">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="ml-2 cursor-pointer">
+                              Shartnoma shartlariga roziman *
+                            </FormLabel>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Summary Card */}
+                    <div className="bg-muted/50 rounded-lg p-4 border">
+                      <h4 className="font-medium mb-3">Yakuniy ko'rinish</h4>
+                      <dl className="grid gap-2 sm:grid-cols-2 text-sm">
+                        <dt className="text-muted-foreground">Ism Familiya:</dt>
+                        <dd className="font-medium">
+                          {form.watch('last_name')} {form.watch('first_name')}
+                        </dd>
+                        <dt className="text-muted-foreground">Telefon:</dt>
+                        <dd className="font-medium">{form.watch('phone')}</dd>
+                        <dt className="text-muted-foreground">Kurs:</dt>
+                        <dd className="font-medium">
+                          {courseList.find(
+                            (c) => c.id === form.watch('course_id'),
+                          )?.name || '—'}
+                        </dd>
+                        <dt className="text-muted-foreground">Filial:</dt>
+                        <dd className="font-medium">
+                          {branchList.find(
+                            (b) => b.id === form.watch('branch_id'),
+                          )?.name || '—'}
+                        </dd>
+                        <dt className="text-muted-foreground">Guruh:</dt>
+                        <dd className="font-medium">
+                          {filteredGroups.find(
+                            (g) => g.id === form.watch('group_id'),
+                          )?.name || 'Keyinroq tanlanadi'}
+                        </dd>
+                        <dt className="text-muted-foreground">To'lov turi:</dt>
+                        <dd className="font-medium">
+                          {form.watch('payment_type') === 'FULL' && "To'liq"}
+                          {form.watch('payment_type') === 'PARTIAL' && 'Qisman'}
+                          {form.watch('payment_type') === 'INSTALLMENT' &&
+                            "Bo'lib to'lash"}
+                        </dd>
+                        <dt className="text-muted-foreground">Summa:</dt>
+                        <dd className="font-medium">
+                          {form.watch('amount').toLocaleString('uz-UZ')} so'm
+                        </dd>
+                      </dl>
+                    </div>
+                  </div>
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
-                {activeStep < 3 ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleNext}
-                    disabled={loading}
-                  >
-                    Keyingi
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
-                ) : (
-                  <>
+              {/* Footer Actions */}
+              <div className="mt-auto flex shrink-0 items-center justify-between border-t pt-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {activeStep > 1 && (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        submitModeRef.current = 'add';
-                        setShowConfirm(true);
-                      }}
+                      onClick={handleBack}
                       disabled={loading}
-                      className="hidden sm:inline-flex"
                     >
-                      Saqlab, yana qo'shish
+                      <ChevronLeft className="w-4 h-4 mr-1" />
+                      Oldingi
                     </Button>
-                    <Button type="submit" size="sm" disabled={loading}>
-                      {loading ? 'Saqlanmoqda...' : 'Saqlash va tasdiqlash'}
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          </form>
-        </Form>
-
-        {/* Confirmation Dialog */}
-        {showConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-background rounded-lg p-6 w-full max-w-md mx-4 shadow-lg animate-in zoom-in">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-primary" />
+                  )}
                 </div>
-                <h3 className="text-lg font-semibold">
-                  Ma'lumotlarni tasdiqlaysizmi?
-                </h3>
+
+                <div className="flex items-center gap-2">
+                  {activeStep < 3 ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleNext}
+                      disabled={loading}
+                    >
+                      Keyingi
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          submitModeRef.current = 'add';
+                          setShowConfirm(true);
+                        }}
+                        disabled={loading}
+                        className="hidden sm:inline-flex"
+                      >
+                        Saqlab, yana qo'shish
+                      </Button>
+                      <Button type="submit" size="sm" disabled={loading}>
+                        {loading ? 'Saqlanmoqda...' : 'Saqlash va tasdiqlash'}
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-6">
-                Barcha ma'lumotlar to'g'ri ekanligiga ishonch hosil qiling.
-                Tasdiqlagach, talaba ro'yxatdan o'tkaziladi va to'lov yozuvi
-                yaratiladi.
-              </p>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowConfirm(false)}>
-                  Bekor qilish
-                </Button>
-                <Button onClick={confirmSubmit} disabled={loading}>
-                  {loading ? 'Saqlanmoqda...' : 'Ha, tasdiqlayman'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      <ConfirmDialog
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={confirmSubmit}
+        loading={loading}
+        title="Ma'lumotlarni tasdiqlaysizmi?"
+        description="Barcha ma'lumotlar to'g'ri ekanligiga ishonch hosil qiling. Tasdiqlagach, talaba ro'yxatdan o'tkaziladi va to'lov yozuvi yaratiladi."
+        confirmLabel={loading ? 'Saqlanmoqda...' : 'Ha, tasdiqlayman'}
+      />
+    </>
   );
 };
 
