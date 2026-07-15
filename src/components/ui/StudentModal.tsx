@@ -241,7 +241,9 @@ const StudentModal = ({
           phone: student.phone,
           course_type: student.course_type,
           branch_id: student.branch_id,
-          payment_method: student.payment_method,
+          // Student.payment_method can be null (never paid); the edit
+          // form's field is a required select, so fall back to a default.
+          payment_method: student.payment_method ?? 'naqd',
           result: student.result,
           has_document: student.has_document,
           o83: student.o83,
