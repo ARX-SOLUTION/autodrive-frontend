@@ -1,10 +1,9 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { DataCard } from '@/components/ui/DataCard';
 import { useUser } from '@/services/userService';
 
@@ -29,57 +28,46 @@ const UserDetailPage = () => {
       })
     : { path: '/users', labelKey: 'users.title' };
 
-  if (isLoading) {
+  if (isLoading || isError || !user) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
-
-  if (isError || !user) {
-    return (
-      <div className="space-y-6">
-        <BackButton
-          onClick={() => navigate(backTarget.path)}
-          label={t(backTarget.labelKey)}
-        />
-        <EmptyState title={t('common.not_found')} />
-      </div>
+      <EntityDetailShell
+        onBack={() => navigate(backTarget.path)}
+        backLabel={t(backTarget.labelKey)}
+        isLoading={isLoading}
+        isError={isError || !user}
+        errorTitle={t('common.not_found')}
+      />
     );
   }
 
   return (
-    <div className="space-y-6">
-      <BackButton
-        onClick={() => navigate(backTarget.path)}
-        label={t(backTarget.labelKey)}
-      />
-
-      {/* Header */}
-      <div className="glass-card flex flex-wrap items-start justify-between gap-4 p-5">
-        <div className="space-y-2">
-          <h1 className="font-heading text-2xl font-bold text-balance">
-            {user.name || user.email}
-          </h1>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span>{user.phone || t('common.na')}</span>
-            <span>·</span>
-            <span>{user.branch_name ?? t('common.na')}</span>
+    <EntityDetailShell
+      onBack={() => navigate(backTarget.path)}
+      backLabel={t(backTarget.labelKey)}
+      isLoading={false}
+      isError={false}
+      header={
+        <div className="glass-card flex flex-wrap items-start justify-between gap-4 p-5">
+          <div className="space-y-2">
+            <h1 className="font-heading text-2xl font-bold text-balance">
+              {user.name || user.email}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span>{user.phone || t('common.na')}</span>
+              <span>·</span>
+              <span>{user.branch_name ?? t('common.na')}</span>
+            </div>
+            <Badge
+              variant={user.is_active !== false ? 'secondary' : 'destructive'}
+            >
+              {user.is_active !== false
+                ? t('common.active')
+                : t('common.inactive')}
+            </Badge>
           </div>
-          <Badge
-            variant={user.is_active !== false ? 'secondary' : 'destructive'}
-          >
-            {user.is_active !== false
-              ? t('common.active')
-              : t('common.inactive')}
-          </Badge>
         </div>
-      </div>
-
-      {/* Tabs */}
+      }
+    >
       <Tabs defaultValue="info">
         <TabsList>
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
@@ -156,24 +144,9 @@ const UserDetailPage = () => {
           </TabsContent>
         )}
       </Tabs>
-    </div>
+    </EntityDetailShell>
   );
 };
-
-const BackButton = ({
-  onClick,
-  label,
-}: {
-  onClick: () => void;
-  label: string;
-}) => (
-  <button
-    onClick={onClick}
-    className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-  >
-    <ArrowLeft className="h-4 w-4" /> {label}
-  </button>
-);
 
 const Field = ({
   label,
