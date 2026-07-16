@@ -6,7 +6,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Pencil, Plus } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { StudentExamsTab } from '@/components/ui/StudentExamsTab';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import StudentModal, {
   type CreateStudentPayload,
 } from '@/components/ui/StudentModal';
@@ -25,6 +26,8 @@ import { useStudent, useUpdateStudent } from '@/services/studentService';
 import {
   useStudentPayments,
   useCreatePayment,
+  useDeletePayment,
+  useUpdatePayment,
 } from '@/services/paymentService';
 import { useOperators } from '@/services/operatorService';
 import { useAttendanceHistory } from '@/services/attendanceService';
@@ -36,6 +39,7 @@ import { statusColors } from '@/lib/attendanceStatus';
 import { extractErrorMessage } from '@/lib/errors';
 import { formatMoney } from '@/lib/money';
 import type { PaymentMethod } from '@/types/student';
+import type { Payment } from '@/types/payment';
 import type { AuditLog } from '@/types/audit';
 
 const StudentDetailPage = () => {
@@ -57,8 +61,15 @@ const StudentDetailPage = () => {
 
   const [editOpen, setEditOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
+  const [deletePaymentTarget, setDeletePaymentTarget] =
+    useState<Payment | null>(null);
+  const [editPaymentTarget, setEditPaymentTarget] = useState<Payment | null>(
+    null,
+  );
   const updateStudent = useUpdateStudent();
   const createPayment = useCreatePayment();
+  const deletePayment = useDeletePayment();
+  const updatePayment = useUpdatePayment();
 
   const methodLabels: Record<PaymentMethod, string> = {
     naqd: t('payments.method.naqd'),
@@ -90,6 +101,37 @@ const StudentDetailPage = () => {
       onError: (err) =>
         toast.error(extractErrorMessage(err, t('common.error'))),
     });
+  };
+
+  const handleDeletePayment = () => {
+    if (!deletePaymentTarget) return;
+    deletePayment.mutate(deletePaymentTarget.id, {
+      onSuccess: () => {
+        toast.success(t('payments.deleted'));
+        setDeletePaymentTarget(null);
+      },
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
+    });
+  };
+
+  const handleEditPayment = (data: CreatePaymentPayload) => {
+    if (!editPaymentTarget) return;
+    updatePayment.mutate(
+      {
+        id: editPaymentTarget.id,
+        amount: data.amount,
+        payment_method: data.payment_method,
+      },
+      {
+        onSuccess: () => {
+          toast.success(t('payments.updated'));
+          setEditPaymentTarget(null);
+        },
+        onError: (err) =>
+          toast.error(extractErrorMessage(err, t('common.error'))),
+      },
+    );
   };
 
   if (isLoading || isError || !student) {
@@ -260,6 +302,9 @@ const StudentDetailPage = () => {
               studentId={student.id}
               methodLabels={methodLabels}
               onAdd={() => setPayOpen(true)}
+              onEdit={setEditPaymentTarget}
+              onDelete={setDeletePaymentTarget}
+              canManage={canRecordPayment}
               addLabel={t('payments.add')}
               emptyLabel={t('payments.empty')}
               cols={{
@@ -267,6 +312,7 @@ const StudentDetailPage = () => {
                 amount: t('payments.table.amount'),
                 method: t('payments.table.method'),
                 operator: t('payments.table.operator'),
+                actions: t('common.actions'),
               }}
             />
           </TabsContent>
@@ -306,6 +352,32 @@ const StudentDetailPage = () => {
         loading={createPayment.isPending}
         lockedStudentId={student.id}
         lockedStudentName={fullName}
+        lockedStudentDebt={student.debt}
+        submitError={createPayment.isError}
+      />
+
+      <PaymentModal
+        open={!!editPaymentTarget}
+        onClose={() => setEditPaymentTarget(null)}
+        onSubmit={handleEditPayment}
+        loading={updatePayment.isPending}
+        payment={editPaymentTarget}
+        submitError={updatePayment.isError}
+      />
+
+      <ConfirmDialog
+        open={!!deletePaymentTarget}
+        onClose={() => setDeletePaymentTarget(null)}
+        onConfirm={handleDeletePayment}
+        loading={deletePayment.isPending}
+        title={t('payments.delete_confirm_title')}
+        description={
+          deletePaymentTarget
+            ? t('payments.delete_confirm_desc', {
+                amount: formatMoney(deletePaymentTarget.amount_paid),
+              })
+            : undefined
+        }
       />
     </EntityDetailShell>
   );
@@ -343,6 +415,9 @@ const PaymentsTab = ({
   studentId,
   methodLabels,
   onAdd,
+  onEdit,
+  onDelete,
+  canManage,
   addLabel,
   emptyLabel,
   cols,
@@ -350,10 +425,20 @@ const PaymentsTab = ({
   studentId: string;
   methodLabels: Record<PaymentMethod, string>;
   onAdd: () => void;
+  onEdit: (payment: Payment) => void;
+  onDelete: (payment: Payment) => void;
+  canManage: boolean;
   addLabel: string;
   emptyLabel: string;
-  cols: { date: string; amount: string; method: string; operator: string };
+  cols: {
+    date: string;
+    amount: string;
+    method: string;
+    operator: string;
+    actions: string;
+  };
 }) => {
+  const { t } = useTranslation();
   const { data, isLoading } = useStudentPayments(studentId);
   const rows = data?.data ?? [];
 
@@ -384,6 +469,11 @@ const PaymentsTab = ({
                 </th>
                 <th className="px-4 py-2 font-medium">{cols.method}</th>
                 <th className="px-4 py-2 font-medium">{cols.operator}</th>
+                {canManage && (
+                  <th className="px-4 py-2 text-center font-medium">
+                    {cols.actions}
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -399,6 +489,28 @@ const PaymentsTab = ({
                   <td className="px-4 py-2 text-muted-foreground">
                     {p.recorded_by ?? '—'}
                   </td>
+                  {canManage && (
+                    <td className="px-4 py-2">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => onEdit(p)}
+                          aria-label={t('common.edit')}
+                          title={t('common.edit')}
+                          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => onDelete(p)}
+                          aria-label={t('common.delete')}
+                          title={t('common.delete')}
+                          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

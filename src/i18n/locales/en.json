@@ -358,7 +358,11 @@
       "tab_schedule": "Schedule",
       "no_schedule": "No schedule yet"
     },
-    "confirm_delete_desc": "Delete group \"{{name}}\"? This action cannot be undone."
+    "confirm_delete_desc": "Delete group \"{{name}}\"? This action cannot be undone.",
+    "duplicate_warning": {
+      "title": "Possible duplicate",
+      "desc": "A group with this name already exists in this branch:"
+    }
   },
   "courses": {
     "title": "Courses",
@@ -551,7 +555,11 @@
     },
     "form_desc": "Enter the student's details",
     "confirm_delete_desc": "Delete student \"{{name}}\"? This action cannot be undone.",
-    "detailed_toggle_locked": "Data entered — switching modes will discard it"
+    "detailed_toggle_locked": "Data entered — switching modes will discard it",
+    "duplicate_warning": {
+      "title": "Possible duplicate",
+      "desc": "Found existing students that may match:"
+    }
   },
   "exams": {
     "add_title": "Add new result",
@@ -640,7 +648,17 @@
       "amount_positive": "Payment amount must be greater than 0",
       "select_method": "Select payment method"
     },
-    "add_desc": "Enter the student and payment details"
+    "add_desc": "Enter the student and payment details",
+    "edit_payment": "Edit payment",
+    "edit_desc": "Edit the payment details",
+    "deleted": "Payment deleted",
+    "updated": "Payment updated",
+    "delete_confirm_title": "Delete payment",
+    "delete_confirm_desc": "Deleting this will increase the student's debt by {{amount}}. Continue?",
+    "exceeds_debt_title": "This will create a credit",
+    "exceeds_debt_desc": "This payment will create a credit of {{amount}}. Continue?",
+    "exceeds_debt_confirm": "Continue",
+    "retry_safe": "Something went wrong. It's safe to retry — this won't create a duplicate payment."
   },
   "audit": {
     "title": "Audit log",

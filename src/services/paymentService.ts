@@ -204,6 +204,29 @@ export const useCreatePayment = () => {
   });
 };
 
+export const useUpdatePayment = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      ...payment
+    }: {
+      id: string;
+      amount?: number;
+      payment_method?: string;
+    }) => {
+      const { data } = await axiosInstance.patch(`/payments/${id}`, payment);
+      return parseItemEnvelope<Payment>(data, 'payment');
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: paymentKeys.all });
+      qc.invalidateQueries({ queryKey: studentKeys.all });
+      qc.invalidateQueries({ queryKey: dashboardKeys.all });
+      track('payment_update');
+    },
+  });
+};
+
 export const useDeletePayment = () => {
   const qc = useQueryClient();
   return useMutation({
