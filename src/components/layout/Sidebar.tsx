@@ -1,8 +1,9 @@
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useLogout } from '@/services/authService';
 import { useCan } from '@/hooks/useCan';
+import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import type { Capability } from '@/lib/permissions';
 import {
   LayoutDashboard,
@@ -88,6 +89,32 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const goTo = useViewTransitionNavigate();
+
+  // ponytail: real <a href> instead of <Link> so the view transition can be
+  // triggered from onClick — keeps native Enter-key activation and
+  // ctrl/cmd/shift/middle-click "open in new tab" behavior for free, same as
+  // <Link> gave us. Only a plain left-click intercepts for the SPA/transition
+  // navigate; anything else falls through to the browser's default anchor
+  // behavior.
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    path: string,
+  ) => {
+    onNavigate?.();
+    if (
+      e.defaultPrevented ||
+      e.button !== 0 ||
+      e.metaKey ||
+      e.ctrlKey ||
+      e.shiftKey ||
+      e.altKey
+    ) {
+      return;
+    }
+    e.preventDefault();
+    goTo(path, null, '');
+  };
 
   // Precompute every gate (hooks can't run in a loop). Keyed by capability so
   // canSee is a plain lookup that mirrors CommandPalette and the App.tsx guards.
@@ -121,10 +148,10 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
         {filteredItems.map((item) => {
           const active = location.pathname === item.path;
           return (
-            <Link
+            <a
               key={item.path}
-              to={item.path}
-              onClick={onNavigate}
+              href={item.path}
+              onClick={(e) => handleNavClick(e, item.path)}
               aria-label={t(item.labelKey)}
               className={cn(
                 'flex items-center text-sm font-medium transition-colors rounded-lg',
@@ -138,7 +165,7 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
             >
               <item.icon className="h-[18px] w-[18px] shrink-0" />
               {!collapsed && <span>{t(item.labelKey)}</span>}
-            </Link>
+            </a>
           );
         })}
       </nav>
