@@ -23,6 +23,9 @@ export const useGroups = (params: GroupListParams = {}) => {
   const isCrossTenant = useIsCrossTenant();
   return useQuery<Group[]>({
     queryKey: groupKeys.list({ authBranchId, branchId, search, courseType }),
+    // autodrive-6ef.17: group list is org structure, rarely changes -- longer
+    // than the 30s global default (matches blogService's precedent).
+    staleTime: 5 * 60_000,
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/groups', {
         params: {

@@ -13,6 +13,9 @@ export const useUsers = (role?: string) => {
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
     queryKey: userKeys.list({ branchId, role }),
+    // autodrive-6ef.17: user list is org structure, rarely changes -- longer
+    // than the 30s global default (matches blogService's precedent).
+    staleTime: 5 * 60_000,
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/users', {
         params: role ? { role } : {},
