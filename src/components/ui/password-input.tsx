@@ -29,7 +29,7 @@ const PasswordInput = React.forwardRef<
           visible ? t('common.hide_password') : t('common.show_password')
         }
         aria-pressed={visible}
-        className="absolute bottom-0 right-0 flex h-10 w-10 items-center justify-center text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+        className="absolute bottom-0 right-0 flex h-10 w-10 items-center justify-center text-muted-foreground transition-transform hover:text-foreground active:scale-[0.96] motion-reduce:transition-none motion-reduce:transform-none disabled:pointer-events-none disabled:opacity-50"
       >
         {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </button>
