@@ -35,7 +35,12 @@ import { extractErrorMessage } from '@/lib/errors';
 
 const schema = z.object({
   exam_type: z.enum(['THEORY', 'PRACTICE']),
-  score: z.coerce.number().min(0).max(100).optional().or(z.literal('')),
+  // Blank must mean "no score", not 0 — z.coerce.number() turns '' into 0,
+  // so map ''/null to undefined BEFORE coercion.
+  score: z.preprocess(
+    (v) => (v === '' || v == null ? undefined : v),
+    z.coerce.number().min(0).max(100).optional(),
+  ),
   passed: z.boolean(),
   notes: z.string().optional(),
   date: z.string().min(1, 'Date is required'),
@@ -61,7 +66,7 @@ export const RecordExamModal = ({
     resolver: zodResolver(schema),
     defaultValues: {
       exam_type: 'THEORY',
-      score: '',
+      score: undefined,
       passed: false,
       notes: '',
       // ponytail: shift by UZ+5 before reading the UTC date so 00:00-04:59
@@ -76,11 +81,13 @@ export const RecordExamModal = ({
     const payload: CreateExamPayload = {
       student_id: studentId,
       exam_type: values.exam_type as ExamType,
-      score: values.score === '' ? null : Number(values.score),
       passed: values.passed,
       notes: values.notes,
       date: new Date(values.date).toISOString(),
     };
+    if (values.score !== undefined) {
+      payload.score = values.score;
+    }
 
     createMutation.mutate(payload, {
       onSuccess: () => {
