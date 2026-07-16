@@ -126,7 +126,13 @@ describe('GroupsPage rendering', () => {
 describe('GroupsPage URL filter params', () => {
   it('feeds q/course_type/branch_id from the URL into useGroups', () => {
     renderPage('/groups?q=alpha&course_type=tezkor&branch_id=b2');
-    const lastCall = h.useGroupsSpy.mock.calls.at(-1)?.[0];
+    // autodrive-553: GroupFormDialog (always mounted, just closed) now also
+    // calls useGroups for its own create-time duplicate check, so `.at(-1)`
+    // is no longer reliably the page's call -- only the page passes
+    // `courseType` explicitly.
+    const lastCall = h.useGroupsSpy.mock.calls.find(
+      (c) => 'courseType' in (c[0] as object),
+    )?.[0];
     expect(lastCall).toEqual({
       search: 'alpha',
       branchId: 'b2',
@@ -141,7 +147,10 @@ describe('GroupsPage URL filter params', () => {
 
   it('defaults to no filters for a cross-tenant owner', () => {
     renderPage();
-    expect(h.useGroupsSpy.mock.calls.at(-1)?.[0]).toEqual({
+    const pageCall = h.useGroupsSpy.mock.calls.find(
+      (c) => 'courseType' in (c[0] as object),
+    )?.[0];
+    expect(pageCall).toEqual({
       search: '',
       branchId: undefined,
       courseType: undefined,
@@ -176,7 +185,10 @@ describe('GroupsPage role gating', () => {
     // Only the course-type select renders — no branch picker.
     expect(screen.getAllByRole('combobox').length).toBe(1);
     // Fetch is pinned to the teacher's own branch from the auth store.
-    expect(h.useGroupsSpy.mock.calls.at(-1)?.[0]).toEqual({
+    const pageCall = h.useGroupsSpy.mock.calls.find(
+      (c) => 'courseType' in (c[0] as object),
+    )?.[0];
+    expect(pageCall).toEqual({
       search: '',
       branchId: 'b1',
       courseType: undefined,

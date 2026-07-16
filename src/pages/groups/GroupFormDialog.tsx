@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useCreateGroup, useUpdateGroup } from '@/services/groupService';
+import { AlertTriangle, X } from 'lucide-react';
+import {
+  useCreateGroup,
+  useUpdateGroup,
+  useGroups,
+} from '@/services/groupService';
 import { Group } from '@/types/group';
 import { Branch } from '@/types/branch';
 import { Button } from '@/components/ui/button';
@@ -9,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
+import { useDebounce } from '@/hooks/useDebounce';
 import {
   Dialog,
   DialogContent,
@@ -79,6 +86,29 @@ const GroupFormDialog = ({
       isFormDirty || createMutation.isPending || updateMutation.isPending,
       onClose,
     );
+
+  // autodrive-553: create-time duplicate check, scoped to the selected
+  // branch -- a same-named group in a DIFFERENT branch must not warn, so
+  // branch_id rides along in the same GET /groups?search= call (backend
+  // already intersects search + branch_id). "Close match" = normalized
+  // (trim + case-insensitive) equality, not just substring contains.
+  const debouncedName = useDebounce(formName, 300);
+  const [dupWarningDismissed, setDupWarningDismissed] = useState(false);
+  useEffect(() => {
+    setDupWarningDismissed(false);
+  }, [debouncedName]);
+
+  const { data: branchGroups } = useGroups({
+    search: debouncedName.trim() || undefined,
+    branchId: formBranchId || undefined,
+  });
+  const normalizedName = debouncedName.trim().toLowerCase();
+  const dupMatches =
+    !editGroup && normalizedName.length >= 2 && formBranchId
+      ? (branchGroups || []).filter(
+          (g) => g.name.trim().toLowerCase() === normalizedName,
+        )
+      : [];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,6 +207,42 @@ const GroupFormDialog = ({
                 </SelectContent>
               </Select>
             </div>
+            {dupMatches.length > 0 && !dupWarningDismissed && (
+              <div className="flex items-start justify-between gap-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-sm">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 font-medium text-warning">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    {t('groups.duplicate_warning.title')}
+                  </div>
+                  <p className="text-muted-foreground">
+                    {t('groups.duplicate_warning.desc')}
+                  </p>
+                  <ul className="space-y-1">
+                    {dupMatches.map((g) => (
+                      <li key={g.id}>
+                        <Link
+                          to={`/groups/${g.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          {g.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDupWarningDismissed(true)}
+                  aria-label={t('common.close')}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
             <div className="flex justify-end gap-3 pt-2">
               <Button type="button" variant="outline" onClick={attemptClose}>
                 {t('common.cancel')}

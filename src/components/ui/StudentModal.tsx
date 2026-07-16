@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { AlertTriangle, X } from 'lucide-react';
 import {
   isValidUzPhone,
   uzPhoneE164,
   formatUzPhoneInput,
+  uzLocalDigits,
 } from '@/lib/phoneFormater';
 import { groupDigits } from '@/lib/money';
 import {
@@ -49,8 +52,10 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useBranches } from '@/services/branchService';
 import { useGroups } from '@/services/groupService';
+import { useStudentsPage } from '@/services/studentService';
 import { User } from '@/types/user';
 
 export interface CreateStudentPayload {
@@ -202,6 +207,41 @@ const StudentModal = ({
   const watchedBranchId = form.watch('branch_id');
   const watchedGroupId = form.watch('group_id');
   const watchedRegisteredBy = form.watch('registered_by');
+  const watchedLastName = form.watch('last_name');
+  const watchedPhone = form.watch('phone');
+
+  // autodrive-553: create-time duplicate check -- phone primarily (once
+  // enough digits are typed), last name secondarily. Debounced like
+  // PaymentModal/ReferralFields' search comboboxes, but rendered as a
+  // dismissible list rather than a picker (no selection, just links out),
+  // so it's a direct, consistent copy of the debounce+query shape rather
+  // than a forced shared abstraction with those two.
+  const dupPhoneDigits = uzLocalDigits(watchedPhone);
+  const dupSearchQuery =
+    dupPhoneDigits.length >= 4
+      ? dupPhoneDigits
+      : watchedLastName.trim().length >= 2
+        ? watchedLastName.trim()
+        : '';
+  const debouncedDupQuery = useDebounce(dupSearchQuery, 300);
+  const [dupWarningDismissed, setDupWarningDismissed] = useState(false);
+
+  useEffect(() => {
+    setDupWarningDismissed(false);
+  }, [debouncedDupQuery]);
+
+  const { data: dupMatchesPage } = useStudentsPage(
+    undefined,
+    watchedBranchId || user?.branch_id,
+    1,
+    5,
+    undefined,
+    {
+      search: debouncedDupQuery,
+      enabled: open && !student && debouncedDupQuery.length >= 2,
+    },
+  );
+  const dupMatches = !student ? (dupMatchesPage?.data ?? []) : [];
 
   const groupList = (groups || []).filter(
     (g) =>
@@ -937,6 +977,44 @@ const StudentModal = ({
                       </FormItem>
                     )}
                   />
+
+                  {!student &&
+                    dupMatches.length > 0 &&
+                    !dupWarningDismissed && (
+                      <div className="flex items-start justify-between gap-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-sm">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 font-medium text-warning">
+                            <AlertTriangle className="h-4 w-4 shrink-0" />
+                            {t('students.duplicate_warning.title')}
+                          </div>
+                          <p className="text-muted-foreground">
+                            {t('students.duplicate_warning.desc')}
+                          </p>
+                          <ul className="space-y-1">
+                            {dupMatches.map((m) => (
+                              <li key={m.id}>
+                                <Link
+                                  to={`/students/${m.id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline"
+                                >
+                                  {m.last_name} {m.first_name} · {m.phone}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setDupWarningDismissed(true)}
+                          aria-label={t('common.close')}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
 
                   <div className="flex justify-end gap-3 pt-2">
                     <Button

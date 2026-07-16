@@ -16,6 +16,11 @@ vi.mock('@/services/branchService', () => ({
 vi.mock('@/services/groupService', () => ({
   useGroups: () => ({ data: [], refetch: vi.fn() }),
 }));
+// autodrive-553: StudentModal now also runs a debounced create-time
+// duplicate-check query (search-as-you-type on last name / phone).
+vi.mock('@/services/studentService', () => ({
+  useStudentsPage: () => ({ data: undefined, isFetching: false }),
+}));
 vi.mock('@/components/ui/StudentExamsTab', () => ({
   StudentExamsTab: () => null,
 }));
