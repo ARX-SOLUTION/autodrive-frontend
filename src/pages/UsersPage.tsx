@@ -93,6 +93,8 @@ const UsersPage = () => {
     data: usersPage,
     isLoading,
     isFetching,
+    isError,
+    refetch,
   } = useUsersPage('manager', currentPage, SERVER_PAGE_SIZE, {
     search: debouncedSearch,
     branchId,
@@ -370,8 +372,16 @@ const UsersPage = () => {
                     ))}
               </tbody>
             </table>
-            {users.length === 0 && !isLoading && (
-              <EmptyState icon={UserCog} title={t('users.not_found')} />
+            {isError ? (
+              <EmptyState
+                title={t('common.error')}
+                action={{ label: t('common.retry'), onClick: () => refetch() }}
+              />
+            ) : (
+              users.length === 0 &&
+              !isLoading && (
+                <EmptyState icon={UserCog} title={t('users.not_found')} />
+              )
             )}
           </div>
         </div>
@@ -381,6 +391,11 @@ const UsersPage = () => {
             [...Array(3)].map((_, i) => (
               <Skeleton key={i} className="h-28 w-full" />
             ))
+          ) : isError ? (
+            <EmptyState
+              title={t('common.error')}
+              action={{ label: t('common.retry'), onClick: () => refetch() }}
+            />
           ) : paginatedItems.length === 0 ? (
             <EmptyState icon={UserCog} title={t('users.not_found')} />
           ) : (

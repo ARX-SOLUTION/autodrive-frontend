@@ -1,6 +1,6 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MapPin, Phone } from 'lucide-react';
+import { AlertTriangle, MapPin, Phone, ShieldCheck } from 'lucide-react';
 import {
   Area,
   AreaChart,
@@ -42,7 +42,8 @@ const BranchDetailPage = () => {
         backLabel={t('branches.title')}
         isLoading={isLoading}
         isError={isError || !branch}
-        errorTitle={t('common.not_found')}
+        errorTitle={isError ? t('common.error') : t('common.not_found')}
+        errorIcon={isError ? AlertTriangle : ShieldCheck}
       />
     );
   }
