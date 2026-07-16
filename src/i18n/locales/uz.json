@@ -465,6 +465,7 @@
     "course_type": "Kurs",
     "course_fast": "Tezkor",
     "course_school": "Avto maktab",
+    "course": "Kurs",
     "group": "Guruh",
     "total_price": "Kurs narxi",
     "debt": "Qarz",
@@ -545,7 +546,26 @@
       "upload_button": "Yuklash",
       "success": "{{count}} ta talaba yuklandi",
       "partial": "{{success}} yuklandi, {{errors}} ta xato",
-      "branch_required": "Talabalarni yuklashdan oldin filialni tanlang."
+      "branch_required": "Talabalarni yuklashdan oldin filialni tanlang.",
+      "preview": {
+        "title": "Ko'rib chiqish ({{count}} qator)",
+        "first_name": "Ism",
+        "last_name": "Familiya",
+        "phone": "Telefon",
+        "course_type": "Kurs turi",
+        "error_missing": "Majburiy maydon to'ldirilmagan",
+        "error_course_type": "Noto'g'ri kurs turi"
+      },
+      "duplicate_warning": {
+        "title": "Ehtimoliy takrorlanishlar",
+        "desc": "Bu telefon raqamlari mavjud talabalarga tegishli:"
+      },
+      "errors": {
+        "title": "Yuklash xatolari",
+        "row": "Qator",
+        "data": "Ma'lumot",
+        "message": "Xato"
+      }
     },
     "no_debt": "Qarzsiz",
     "no_group": "Guruhsiz",

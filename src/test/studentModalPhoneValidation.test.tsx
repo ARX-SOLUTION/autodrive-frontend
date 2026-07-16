@@ -16,6 +16,9 @@ vi.mock('@/services/branchService', () => ({
 vi.mock('@/services/groupService', () => ({
   useGroups: () => ({ data: [], refetch: vi.fn() }),
 }));
+vi.mock('@/services/courseService', () => ({
+  useCourses: () => ({ data: [] }),
+}));
 // autodrive-553: StudentModal now also runs a debounced create-time
 // duplicate-check query (search-as-you-type on last name / phone).
 vi.mock('@/services/studentService', () => ({

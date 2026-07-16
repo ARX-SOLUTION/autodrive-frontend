@@ -236,6 +236,21 @@ export const bulkCreateStudents = async (file: File, branchId?: string) => {
   return data;
 };
 
+// CSV-import preview dedupe check (autodrive-0d6) -- one call per file
+// select/reparse, not cached, so a plain mutation is the right shape (mirrors
+// bulkCreateStudents above, not a useQuery hook).
+export const checkStudentPhones = async (
+  phones: string[],
+): Promise<{ existing_phones: string[] }> => {
+  const { data } = await axiosInstance.post('/students/check-phones', {
+    phones,
+  });
+  return data?.data ?? data;
+};
+
+export const useCheckStudentPhones = () =>
+  useMutation({ mutationFn: checkStudentPhones });
+
 export const useCreateStudentWithPayment = () => {
   const qc = useQueryClient();
   return useMutation({
@@ -265,6 +280,11 @@ export const useCreateStudentWithPayment = () => {
         result: 'oqimoqda',
         notes: '',
         status: 'active',
+        birth_date: payload.birth_date,
+        gender: payload.gender === 'MALE' ? 'male' : 'female',
+        address: payload.address,
+        passport_series: payload.passport_series,
+        passport_number: payload.passport_number,
         lead_source: payload.lead_source,
         lead_source_other: payload.lead_source_other,
         referred_by_student_id: payload.referred_by_student_id,

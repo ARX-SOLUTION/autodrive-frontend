@@ -54,6 +54,7 @@ import { useCan } from '@/hooks/useCan';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useBranches } from '@/services/branchService';
+import { useCourses } from '@/services/courseService';
 import { useGroups } from '@/services/groupService';
 import { useStudentsPage } from '@/services/studentService';
 import { User } from '@/types/user';
@@ -98,6 +99,7 @@ const makeStudentFormSchema = (t: (key: string) => string) =>
     amount_paid: z.coerce.number().nonnegative().optional(),
     initial_payment: z.coerce.number().nonnegative().optional(),
     group_id: z.string().optional(),
+    course_id: z.string().optional(),
     completion_date: z.string().optional(),
     contract_number: z.string().optional(),
     notes: z.string().optional(),
@@ -159,10 +161,13 @@ const StudentModal = ({
     result: 'oqimoqda',
     has_document: false,
     o83: false,
-    total_price: courseType === 'tezkor' ? 2500000 : 6000000,
+    // Real price comes from the selected Course (see courseList effect below);
+    // 0 until a course is picked/auto-selected.
+    total_price: 0,
     amount_paid: 0,
     initial_payment: 0,
     group_id: '',
+    course_id: '',
     completion_date: '',
     contract_number: '',
     notes: '',
@@ -206,6 +211,7 @@ const StudentModal = ({
   const watchedInitialPayment = form.watch('initial_payment');
   const watchedBranchId = form.watch('branch_id');
   const watchedGroupId = form.watch('group_id');
+  const watchedCourseId = form.watch('course_id');
   const watchedRegisteredBy = form.watch('registered_by');
   const watchedLastName = form.watch('last_name');
   const watchedPhone = form.watch('phone');
@@ -242,6 +248,32 @@ const StudentModal = ({
     },
   );
   const dupMatches = !student ? (dupMatchesPage?.data ?? []) : [];
+
+  // autodrive-0d6: total_price used to be a hardcoded constant per
+  // courseType. Real prices now live on Course rows, scoped by branch +
+  // course_type — fetch them and let the picker below drive the pre-fill.
+  const { data: courses } = useCourses({
+    branchId: watchedBranchId || user?.branch_id,
+    courseType,
+  });
+  const activeCourseList = (courses || []).filter((c) => c.is_active);
+
+  useEffect(() => {
+    if (student) return; // course picker/pre-fill is create-flow only
+    if (activeCourseList.length === 1) {
+      const only = activeCourseList[0];
+      if (watchedCourseId !== only.id) {
+        form.setValue('course_id', only.id);
+        form.setValue('total_price', only.price);
+      }
+    } else if (
+      watchedCourseId &&
+      !activeCourseList.some((c) => c.id === watchedCourseId)
+    ) {
+      form.setValue('course_id', '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCourseList, student, watchedCourseId]);
 
   const groupList = (groups || []).filter(
     (g) =>
@@ -289,6 +321,7 @@ const StudentModal = ({
           amount_paid: 0,
           initial_payment: student.initial_payment || 0,
           group_id: student.group_id || '',
+          course_id: '',
           completion_date:
             student.completion_date === undefined
               ? ''
@@ -534,6 +567,47 @@ const StudentModal = ({
                       )}
                     />
                   </div>
+
+                  {!student && (
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                      <FormField
+                        control={form.control}
+                        name="course_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('students.course')}</FormLabel>
+                            <Select
+                              value={field.value || ''}
+                              onValueChange={(v) => {
+                                field.onChange(v);
+                                const selected = activeCourseList.find(
+                                  (c) => c.id === v,
+                                );
+                                if (selected)
+                                  form.setValue('total_price', selected.price);
+                              }}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="bg-secondary border-border">
+                                  <SelectValue
+                                    placeholder={t('common.select_placeholder')}
+                                  />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {activeCourseList.map((c) => (
+                                  <SelectItem key={c.id} value={c.id}>
+                                    {c.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
                     <FormField

@@ -465,6 +465,7 @@
     "course_type": "Course",
     "course_fast": "Fast track",
     "course_school": "Driving school",
+    "course": "Course",
     "group": "Group",
     "total_price": "Course price",
     "debt": "Debt",
@@ -545,7 +546,26 @@
       "upload_button": "Upload",
       "success": "{{count}} students imported",
       "partial": "{{success}} imported, {{errors}} row errors",
-      "branch_required": "Select a branch first to import students."
+      "branch_required": "Select a branch first to import students.",
+      "preview": {
+        "title": "Preview ({{count}} rows)",
+        "first_name": "First name",
+        "last_name": "Last name",
+        "phone": "Phone",
+        "course_type": "Course type",
+        "error_missing": "Missing required field",
+        "error_course_type": "Invalid course type"
+      },
+      "duplicate_warning": {
+        "title": "Possible duplicates",
+        "desc": "These phone numbers already belong to existing students:"
+      },
+      "errors": {
+        "title": "Import errors",
+        "row": "Row",
+        "data": "Data",
+        "message": "Error"
+      }
     },
     "no_debt": "No debt",
     "no_group": "No group",
