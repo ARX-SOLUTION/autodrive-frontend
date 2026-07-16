@@ -23,7 +23,7 @@ export interface Student {
   passport_series?: string;
   passport_number?: string;
   birth_date?: string;
-  gender?: 'MALE' | 'FEMALE';
+  gender?: 'male' | 'female';
   address?: string;
   total_price: number;
   course_type: CourseType;

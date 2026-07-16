@@ -26,6 +26,9 @@ vi.mock('@/services/branchService', () => ({
 vi.mock('@/services/groupService', () => ({
   useGroups: () => ({ data: [], refetch: vi.fn() }),
 }));
+vi.mock('@/services/courseService', () => ({
+  useCourses: () => ({ data: [] }),
+}));
 vi.mock('@/components/ui/StudentExamsTab', () => ({
   StudentExamsTab: () => null,
 }));
