@@ -6,13 +6,14 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Pencil, Plus } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { StudentExamsTab } from '@/components/ui/StudentExamsTab';
 import StudentModal, {
   type CreateStudentPayload,
@@ -91,25 +92,15 @@ const StudentDetailPage = () => {
     });
   };
 
-  if (isLoading) {
+  if (isLoading || isError || !student) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
-
-  if (isError || !student) {
-    return (
-      <div className="space-y-6">
-        <BackButton
-          onClick={() => navigate('/students')}
-          label={t('students.title')}
-        />
-        <EmptyState title={t('common.not_found')} />
-      </div>
+      <EntityDetailShell
+        onBack={() => navigate('/students')}
+        backLabel={t('students.title')}
+        isLoading={isLoading}
+        isError={isError || !student}
+        errorTitle={t('common.not_found')}
+      />
     );
   }
 
@@ -120,60 +111,59 @@ const StudentDetailPage = () => {
       : 'info';
 
   return (
-    <div className="space-y-6">
-      <BackButton
-        onClick={() => navigate('/students')}
-        label={t('students.title')}
-      />
-
-      {/* Header */}
-      <div className="glass-card flex flex-wrap items-start justify-between gap-4 p-5">
-        <div className="space-y-2">
-          <h1
-            className="font-heading text-2xl font-bold text-balance"
-            style={{ viewTransitionName: `student-${student.id}` }}
+    <EntityDetailShell
+      onBack={() => navigate('/students')}
+      backLabel={t('students.title')}
+      isLoading={false}
+      isError={false}
+      header={
+        <div className="glass-card flex flex-wrap items-start justify-between gap-4 p-5">
+          <div className="space-y-2">
+            <h1
+              className="font-heading text-2xl font-bold text-balance"
+              style={{ viewTransitionName: `student-${student.id}` }}
+            >
+              {fullName}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span>{student.phone}</span>
+              <span>·</span>
+              <span>{student.branch_name ?? t('common.na')}</span>
+              {student.group_name && (
+                <>
+                  <span>·</span>
+                  <span>{student.group_name}</span>
+                </>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {student.debt > 0 ? (
+                <Badge variant="destructive">
+                  {t('students.detail.debt')}: {formatMoney(student.debt)}
+                </Badge>
+              ) : student.debt < 0 ? (
+                <Badge variant="secondary" className="text-success">
+                  {t('students.credit_label')}:{' '}
+                  {formatMoney(Math.abs(student.debt))}
+                </Badge>
+              ) : (
+                <Badge variant="secondary">{t('students.no_debt')}</Badge>
+              )}
+              <Badge variant="outline">
+                {t(`students.course.${student.course_type}`)}
+              </Badge>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => setEditOpen(true)}
           >
-            {fullName}
-          </h1>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span>{student.phone}</span>
-            <span>·</span>
-            <span>{student.branch_name ?? t('common.na')}</span>
-            {student.group_name && (
-              <>
-                <span>·</span>
-                <span>{student.group_name}</span>
-              </>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2 pt-1">
-            {student.debt > 0 ? (
-              <Badge variant="destructive">
-                {t('students.detail.debt')}: {formatMoney(student.debt)}
-              </Badge>
-            ) : student.debt < 0 ? (
-              <Badge variant="secondary" className="text-success">
-                {t('students.credit_label')}:{' '}
-                {formatMoney(Math.abs(student.debt))}
-              </Badge>
-            ) : (
-              <Badge variant="secondary">{t('students.no_debt')}</Badge>
-            )}
-            <Badge variant="outline">
-              {t(`students.course.${student.course_type}`)}
-            </Badge>
-          </div>
+            <Pencil className="h-4 w-4" /> {t('common.edit')}
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          className="gap-2"
-          onClick={() => setEditOpen(true)}
-        >
-          <Pencil className="h-4 w-4" /> {t('common.edit')}
-        </Button>
-      </div>
-
-      {/* Tabs */}
+      }
+    >
       <Tabs defaultValue={initialTab}>
         <TabsList>
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
@@ -317,24 +307,9 @@ const StudentDetailPage = () => {
         lockedStudentId={student.id}
         lockedStudentName={fullName}
       />
-    </div>
+    </EntityDetailShell>
   );
 };
-
-const BackButton = ({
-  onClick,
-  label,
-}: {
-  onClick: () => void;
-  label: string;
-}) => (
-  <button
-    onClick={onClick}
-    className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-  >
-    <ArrowLeft className="h-4 w-4" /> {label}
-  </button>
-);
 
 const Field = ({
   label,

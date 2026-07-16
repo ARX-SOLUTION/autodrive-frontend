@@ -1,9 +1,8 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, AlertTriangle } from 'lucide-react';
 import { useAuditLogById } from '@/services/auditService';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { Skeleton } from '@/components/ui/skeleton';
+import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { AuditLog } from '@/types/audit';
@@ -186,72 +185,56 @@ const AuditDetailPage = () => {
   const { data: fetchedLog, isLoading, isError } = useAuditLogById(id);
   const log = fetchedLog ?? (stateLog?.id === id ? stateLog : undefined);
 
-  if (isLoading && !log) {
-    return (
-      <div className="space-y-6">
-        <BackButton
-          onClick={() => navigate('/audit')}
-          label={t('audit.title')}
-        />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
+  // stateLog is an optimistic pre-fill, so "loading" only means something
+  // while there's no log yet at all -- same for the error/not-found split
+  // below (isError picks AlertTriangle+common.error, otherwise it's a plain
+  // not-found with ShieldCheck+common.not_found).
+  const effectiveLoading = isLoading && !log;
 
-  if (isError && !log) {
+  if (effectiveLoading || !log) {
     return (
-      <div className="space-y-6">
-        <BackButton
-          onClick={() => navigate('/audit')}
-          label={t('audit.title')}
-        />
-        <EmptyState icon={AlertTriangle} title={t('common.error')} />
-      </div>
-    );
-  }
-
-  if (!log) {
-    return (
-      <div className="space-y-6">
-        <BackButton
-          onClick={() => navigate('/audit')}
-          label={t('audit.title')}
-        />
-        <EmptyState icon={ShieldCheck} title={t('common.not_found')} />
-      </div>
+      <EntityDetailShell
+        onBack={() => navigate('/audit')}
+        backLabel={t('audit.title')}
+        isLoading={effectiveLoading}
+        isError={!effectiveLoading}
+        errorTitle={isError ? t('common.error') : t('common.not_found')}
+        errorIcon={isError ? AlertTriangle : ShieldCheck}
+      />
     );
   }
 
   const entityLink = entityRoute[log.entity];
 
   return (
-    <div className="space-y-6">
-      <BackButton onClick={() => navigate('/audit')} label={t('audit.title')} />
-
-      {/* Header */}
-      <div className="glass-card flex flex-wrap items-start justify-between gap-4 p-5">
-        <div className="space-y-2">
-          <h1 className="font-heading text-2xl font-bold flex items-center gap-2 flex-wrap text-balance">
-            <span
-              className={cn(
-                'text-xs font-semibold px-2 py-0.5 rounded-full',
-                auditActionBg(log.action),
-              )}
-            >
-              {formatAuditAction(log.action, t)}
-            </span>
-            <span>{formatAuditEntity(log.entity, t)}</span>
-          </h1>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span>{log.user_name || t('common.na')}</span>
-            <span>·</span>
-            <span>{formatAuditDate(log.created_at)}</span>
+    <EntityDetailShell
+      onBack={() => navigate('/audit')}
+      backLabel={t('audit.title')}
+      isLoading={false}
+      isError={false}
+      header={
+        <div className="glass-card flex flex-wrap items-start justify-between gap-4 p-5">
+          <div className="space-y-2">
+            <h1 className="font-heading text-2xl font-bold flex items-center gap-2 flex-wrap text-balance">
+              <span
+                className={cn(
+                  'text-xs font-semibold px-2 py-0.5 rounded-full',
+                  auditActionBg(log.action),
+                )}
+              >
+                {formatAuditAction(log.action, t)}
+              </span>
+              <span>{formatAuditEntity(log.entity, t)}</span>
+            </h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span>{log.user_name || t('common.na')}</span>
+              <span>·</span>
+              <span>{formatAuditDate(log.created_at)}</span>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Tabs */}
+      }
+    >
       <Tabs defaultValue="info">
         <TabsList>
           <TabsTrigger value="info">{t('audit.detail_info')}</TabsTrigger>
@@ -310,24 +293,9 @@ const AuditDetailPage = () => {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </EntityDetailShell>
   );
 };
-
-const BackButton = ({
-  onClick,
-  label,
-}: {
-  onClick: () => void;
-  label: string;
-}) => (
-  <button
-    onClick={onClick}
-    className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-  >
-    <ArrowLeft className="h-4 w-4" /> {label}
-  </button>
-);
 
 const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
   <div className="flex flex-col gap-0.5">

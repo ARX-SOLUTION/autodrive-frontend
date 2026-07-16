@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Pencil } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { DataCard } from '@/components/ui/DataCard';
 import StudentModal, {
   type CreateStudentPayload,
@@ -57,25 +57,15 @@ const GroupDetailPage = () => {
     );
   };
 
-  if (isLoading) {
+  if (isLoading || isError || !group) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
-
-  if (isError || !group) {
-    return (
-      <div className="space-y-6">
-        <BackButton
-          onClick={() => navigate('/groups')}
-          label={t('groups.title')}
-        />
-        <EmptyState title={t('common.not_found')} />
-      </div>
+      <EntityDetailShell
+        onBack={() => navigate('/groups')}
+        backLabel={t('groups.title')}
+        isLoading={isLoading}
+        isError={isError || !group}
+        errorTitle={t('common.not_found')}
+      />
     );
   }
 
@@ -86,37 +76,36 @@ const GroupDetailPage = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <BackButton
-        onClick={() => navigate('/groups')}
-        label={t('groups.title')}
-      />
-
-      {/* Header */}
-      <div className="glass-card flex flex-wrap items-start justify-between gap-4 p-5">
-        <div className="space-y-2">
-          <h1
-            className="font-heading text-2xl font-bold text-balance"
-            style={{ viewTransitionName: `group-${group.id}` }}
-          >
-            {group.name}
-          </h1>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span>{group.branch_name ?? t('common.na')}</span>
-            <span>·</span>
-            <span>{courseLabel}</span>
-            <span>·</span>
-            <span>
-              {t('groups.teacher')}: {group.teacher_name ?? t('common.na')}
-            </span>
+    <EntityDetailShell
+      onBack={() => navigate('/groups')}
+      backLabel={t('groups.title')}
+      isLoading={false}
+      isError={false}
+      header={
+        <div className="glass-card flex flex-wrap items-start justify-between gap-4 p-5">
+          <div className="space-y-2">
+            <h1
+              className="font-heading text-2xl font-bold text-balance"
+              style={{ viewTransitionName: `group-${group.id}` }}
+            >
+              {group.name}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span>{group.branch_name ?? t('common.na')}</span>
+              <span>·</span>
+              <span>{courseLabel}</span>
+              <span>·</span>
+              <span>
+                {t('groups.teacher')}: {group.teacher_name ?? t('common.na')}
+              </span>
+            </div>
+            <Badge variant={group.is_active ? 'secondary' : 'destructive'}>
+              {group.is_active ? t('common.active') : t('common.inactive')}
+            </Badge>
           </div>
-          <Badge variant={group.is_active ? 'secondary' : 'destructive'}>
-            {group.is_active ? t('common.active') : t('common.inactive')}
-          </Badge>
         </div>
-      </div>
-
-      {/* Tabs */}
+      }
+    >
       <Tabs defaultValue="info">
         <TabsList>
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
@@ -234,24 +223,9 @@ const GroupDetailPage = () => {
         operators={operators || []}
         disabledFields={EDIT_DISABLED_FIELDS}
       />
-    </div>
+    </EntityDetailShell>
   );
 };
-
-const BackButton = ({
-  onClick,
-  label,
-}: {
-  onClick: () => void;
-  label: string;
-}) => (
-  <button
-    onClick={onClick}
-    className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-  >
-    <ArrowLeft className="h-4 w-4" /> {label}
-  </button>
-);
 
 const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
   <div className="flex flex-col gap-0.5">
