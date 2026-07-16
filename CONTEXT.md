@@ -8,16 +8,16 @@ React 18 + Vite + TypeScript frontend for a Uzbek driving school CRM. Tenant-fac
 
 ## Domain Glossary
 
-| Term (UZ) | English | Definition |
-|---|---|---|
-| Filial | Branch | Tenant boundary — each branch has its own manager, operators, teachers, students, groups, schedule. Equivalent to a franchise location or school office. |
-| Guruh | Group | A class of students. Has a teacher, a course type (teoriya / amaliy), a schedule template, and a fixed capacity. |
-| Talaba | Student | Two types: **tezkor** (express course, shorter duration, compact payment plan) and **avto_maktab** (full course, standard duration, more expensive, installment payments). Students carry payment fields (debt, total_amount, paid_amount). |
-| Dars | Lesson | Individual session — either **teoriya** (theory, classroom) or **amaliy** (practice, driving). Linked to a group. Generated automatically from a schedule template. |
-| Davomat | Attendance | Per-student-per-lesson record. States: **present** (keldi), **absent** (kelmadi), **late** (kech qoldi), **excused** (uzrli). |
-| Jadval | Schedule | Weekly schedule template assigned to a group. Defines which days/hours lessons occur. Auto-generates lessons for the scheduled period. |
-| To'lov | Payment | Student payment record. Supports partial payments, installment tracking, and debt management (debt tracking is a key feature). |
-| Foydalanuvchi | User | Five roles: **dev** (platform developer, all access), **owner** (company owner, cross-branch analytics + branch CRUD), **manager** (branch manager, full branch operations), **operator** (day-to-day registrar), **teacher** (read-only on assigned students/groups). |
+| Term (UZ)     | English    | Definition                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Filial        | Branch     | Tenant boundary — each branch has its own manager, operators, teachers, students, groups, schedule. Equivalent to a franchise location or school office.                                                                                                                                                                                                                                                                                            |
+| Guruh         | Group      | A class of students. Has a teacher, a course type (teoriya / amaliy), a schedule template, and a fixed capacity.                                                                                                                                                                                                                                                                                                                                    |
+| Talaba        | Student    | Two types: **tezkor** (express course, shorter duration, compact payment plan) and **avto_maktab** (full course, standard duration, more expensive, installment payments). Students carry payment fields (debt, total_amount, paid_amount). `group_id`/`group_name` are optional for both course types — a student (tezkor or avto_maktab) can exist with no assigned group; no frontend validation requires one.                                   |
+| Dars          | Lesson     | Individual session — either **teoriya** (theory, classroom) or **amaliy** (practice, driving). Linked to a group. Generated automatically from a schedule template.                                                                                                                                                                                                                                                                                 |
+| Davomat       | Attendance | Per-student-per-lesson record. States: **present** (keldi), **absent** (kelmadi), **late** (kech qoldi), **excused** (uzrli).                                                                                                                                                                                                                                                                                                                       |
+| Jadval        | Schedule   | Weekly schedule template assigned to a group. Defines which days/hours lessons occur. Auto-generates lessons for the scheduled period.                                                                                                                                                                                                                                                                                                              |
+| To'lov        | Payment    | Student payment record. Supports partial payments, installment tracking, and debt management. `debt` is a single running balance, not an invoice/ledger entity — it can go **negative**, meaning the student has a credit balance (overpaid / advance payment), not an amount owed. UI treats `debt > 0` as owed (destructive/red), `debt < 0` as credit (shown via `students.credit_label`, abs value, success/green), `debt === 0` as fully paid. |
+| Foydalanuvchi | User       | Five roles: **dev** (platform developer, all access), **owner** (company owner, cross-branch analytics + branch CRUD), **manager** (branch manager, full branch operations), **operator** (day-to-day registrar), **teacher** (read-only on assigned students/groups).                                                                                                                                                                              |
 
 ---
 
@@ -35,13 +35,14 @@ React 18 + Vite + TypeScript frontend for a Uzbek driving school CRM. Tenant-fac
 
 ## State Management
 
-| Concern | Tool | Location |
-|---|---|---|
-| Server state (API data) | TanStack Query 5 | `src/services/*Service.ts` |
-| Auth / session | Zustand 5 | `src/store/authStore.ts` |
-| Local component state | `useState` / `useReducer` | In component files |
+| Concern                 | Tool                      | Location                   |
+| ----------------------- | ------------------------- | -------------------------- |
+| Server state (API data) | TanStack Query 5          | `src/services/*Service.ts` |
+| Auth / session          | Zustand 5                 | `src/store/authStore.ts`   |
+| Local component state   | `useState` / `useReducer` | In component files         |
 
 ### Query patterns
+
 - `staleTime: 30_000` (30s) on most queries.
 - Query keys include `branchId` for tenant isolation: `['students', branchId, { page, search }]`.
 - Mutations: `mutationFn` via `axiosInstance` → `onSuccess` invalidates related keys → `toast.success()` → `disabled={mutation.isPending}` on submit button.
@@ -49,6 +50,7 @@ React 18 + Vite + TypeScript frontend for a Uzbek driving school CRM. Tenant-fac
 - Logout → `queryClient.clear()` prevents data leakage to next session.
 
 ### Auth
+
 - JWT via httpOnly cookies (primary) + Bearer token (fallback).
 - Session restore: GET `/auth/me` on app mount.
 - `axiosInstance` interceptor: auto-attaches token, handles 401 redirect to login.
@@ -57,20 +59,20 @@ React 18 + Vite + TypeScript frontend for a Uzbek driving school CRM. Tenant-fac
 
 ## Route Map (Uzbek path names)
 
-| Path | Page | Access |
-|---|---|---|
-| `/dashboard` | Analytics dashboard with Recharts (bar, pie charts) | All authenticated |
-| `/filiallar` | Branch management CRUD | Owner only |
-| `/jadval` | Schedule calendar + template management | Manager, operator |
-| `/davomat` | Lesson attendance tracking | Teacher, operator |
-| `/guruhlar` | Group CRUD | Manager, operator |
-| `/talabalar` | Student CRUD with payment data | Operator, manager |
-| `/tolovlar` | Payment list + debt management | Operator, manager |
-| `/operatorlar` | Operator staff management | Manager |
-| `/oqituvchilar` | Teacher staff management | Manager |
-| `/foydalanuvchilar` | User management | Manager |
-| `/audit` | Audit log viewer | Owner only |
-| `/profile` | User profile / settings | All authenticated |
+| Path                | Page                                                | Access            |
+| ------------------- | --------------------------------------------------- | ----------------- |
+| `/dashboard`        | Analytics dashboard with Recharts (bar, pie charts) | All authenticated |
+| `/filiallar`        | Branch management CRUD                              | Owner only        |
+| `/jadval`           | Schedule calendar + template management             | Manager, operator |
+| `/davomat`          | Lesson attendance tracking                          | Teacher, operator |
+| `/guruhlar`         | Group CRUD                                          | Manager, operator |
+| `/talabalar`        | Student CRUD with payment data                      | Operator, manager |
+| `/tolovlar`         | Payment list + debt management                      | Operator, manager |
+| `/operatorlar`      | Operator staff management                           | Manager           |
+| `/oqituvchilar`     | Teacher staff management                            | Manager           |
+| `/foydalanuvchilar` | User management                                     | Manager           |
+| `/audit`            | Audit log viewer                                    | Owner only        |
+| `/profile`          | User profile / settings                             | All authenticated |
 
 All route pages use `React.lazy()` for code splitting.
 
@@ -78,20 +80,20 @@ All route pages use `React.lazy()` for code splitting.
 
 ## Tech Stack
 
-| Category | Technology |
-|---|---|
-| Framework | React 18, Vite 6, TypeScript 5.8 |
-| Styling | Tailwind CSS, shadcn/ui, Radix UI primitives |
-| Server state | TanStack Query 5 |
-| Client state | Zustand 5 |
-| Routing | react-router-dom 6 |
-| Forms | react-hook-form + zod resolver |
-| HTTP | axios (shared `axiosInstance`) |
-| Charts | Recharts |
-| Icons | lucide-react |
-| Notifications | sonner |
-| Testing | Vitest |
-| PWA | vite-plugin-pwa |
+| Category      | Technology                                   |
+| ------------- | -------------------------------------------- |
+| Framework     | React 18, Vite 6, TypeScript 5.8             |
+| Styling       | Tailwind CSS, shadcn/ui, Radix UI primitives |
+| Server state  | TanStack Query 5                             |
+| Client state  | Zustand 5                                    |
+| Routing       | react-router-dom 6                           |
+| Forms         | react-hook-form + zod resolver               |
+| HTTP          | axios (shared `axiosInstance`)               |
+| Charts        | Recharts                                     |
+| Icons         | lucide-react                                 |
+| Notifications | sonner                                       |
+| Testing       | Vitest                                       |
+| PWA           | vite-plugin-pwa                              |
 
 ---
 
@@ -110,6 +112,7 @@ All route pages use `React.lazy()` for code splitting.
 ## Cross-Repo Relationships
 
 This frontend communicates with **autodrive-backend** (NestJS API) exclusively via REST. The backend is the source of truth for:
+
 - Auth (JWT generation, session, RBAC)
 - Tenant scoping (branch isolation enforced server-side)
 - Business logic (payment calculations, schedule generation, attendance rules)
