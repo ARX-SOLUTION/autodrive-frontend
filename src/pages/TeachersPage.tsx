@@ -1,11 +1,10 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSearchSortFilters } from '@/hooks/useSearchSortFilters';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Plus,
   Search,
@@ -21,23 +20,11 @@ import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { cn } from '@/lib/utils';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import PersonModal, {
+  type PersonFormPayload,
+} from '@/components/ui/PersonModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import {
   useTeachersPage,
   useCreateTeacher,
@@ -48,15 +35,7 @@ import {
 import { useBranches } from '@/services/branchService';
 import { toast } from 'sonner';
 import { User } from '@/types/user';
-import { RoleGate } from '@/components/RoleGate';
 import { extractErrorMessage } from '@/lib/errors';
-import { isValidName } from '@/lib/validation';
-import {
-  formatUzPhoneInput,
-  isValidUzPhone,
-  uzLocalDigits,
-  uzPhoneE164,
-} from '@/lib/phoneFormater';
 
 // Backend GetUsersQueryDto caps limit at 100 -- large enough that a single
 // branch/company's teacher list never needs a second server page in
@@ -82,17 +61,6 @@ const TeachersPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    fullName: '',
-    phone: '',
-    branchId: '',
-    specialization: 'THEORY' as Specialization,
-  });
-  // Snapshot taken whenever the dialog opens, compared against current form
-  // state to drive the unsaved-changes guard below (autodrive-6cq.5.15) --
-  // this form is plain useState, not react-hook-form, so there's no
-  // formState.isDirty to read.
-  const initialFormRef = useRef(form);
 
   const {
     data: teachersPage,
@@ -153,58 +121,24 @@ const TeachersPage = () => {
 
   const openCreate = () => {
     setEditItem(null);
-    const empty = {
-      fullName: '',
-      phone: formatUzPhoneInput(''),
-      branchId: '',
-      specialization: 'THEORY' as Specialization,
-    };
-    setForm(empty);
-    initialFormRef.current = empty;
     setModalOpen(true);
   };
 
   const openEdit = (teacher: User) => {
     setEditItem(teacher);
-    const initial = {
-      fullName: teacher.name || '',
-      phone: formatUzPhoneInput(teacher.phone),
-      branchId: teacher.branch_id || '',
-      specialization: teacher.specialization || ('THEORY' as Specialization),
-    };
-    setForm(initial);
-    initialFormRef.current = initial;
     setModalOpen(true);
   };
 
-  const isFormDirty =
-    JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
-  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
-    useConfirmedClose(
-      isFormDirty || createMut.isPending || updateMut.isPending,
-      () => setModalOpen(false),
-    );
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.fullName.trim()) return;
-    if (!isValidName(form.fullName)) {
-      toast.error(t('common.invalid_name'));
-      return;
-    }
-    if (!isValidUzPhone(form.phone)) {
-      toast.error(t('common.invalid_phone'));
-      return;
-    }
-    const payload = {
-      fullName: form.fullName,
-      phone: uzPhoneE164(form.phone),
-      branchId: form.branchId || undefined,
-      specialization: form.specialization || undefined,
-    };
+  const handleSubmit = (data: PersonFormPayload) => {
     if (editItem) {
       updateMut.mutate(
-        { id: editItem.id, ...payload },
+        {
+          id: editItem.id,
+          fullName: data.fullName,
+          phone: data.phone,
+          branchId: data.branchId,
+          specialization: data.specialization,
+        },
         {
           onSuccess: () => {
             toast.success(t('teachers.updated'));
@@ -215,14 +149,22 @@ const TeachersPage = () => {
         },
       );
     } else {
-      createMut.mutate(payload, {
-        onSuccess: () => {
-          toast.success(t('teachers.added'));
-          setModalOpen(false);
+      createMut.mutate(
+        {
+          fullName: data.fullName,
+          phone: data.phone!,
+          branchId: data.branchId,
+          specialization: data.specialization!,
         },
-        onError: (err) =>
-          toast.error(extractErrorMessage(err, t('common.error'))),
-      });
+        {
+          onSuccess: () => {
+            toast.success(t('teachers.added'));
+            setModalOpen(false);
+          },
+          onError: (err) =>
+            toast.error(extractErrorMessage(err, t('common.error'))),
+        },
+      );
     }
   };
 
@@ -523,130 +465,16 @@ const TeachersPage = () => {
         onPageChange={setCurrentPage}
       />
 
-      <Dialog open={modalOpen} onOpenChange={(o) => !o && attemptClose()}>
-        <DialogContent className="max-w-md bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="font-heading">
-              {editItem ? t('teachers.edit') : t('teachers.add')}
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              {t('teachers.form_desc')}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="teacher-name">{t('teachers.first_name')} *</Label>
-              <Input
-                id="teacher-name"
-                value={form.fullName}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, fullName: e.target.value }))
-                }
-                required
-                autoComplete="name"
-                className="bg-secondary border-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="teacher-phone">{t('teachers.phone')} *</Label>
-              <Input
-                id="teacher-phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                value={form.phone}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    phone: formatUzPhoneInput(e.target.value),
-                  }))
-                }
-                required
-                placeholder="+998 90 123 45 67"
-                className="bg-secondary border-border"
-              />
-              {uzLocalDigits(form.phone).length > 0 &&
-                !isValidUzPhone(form.phone) && (
-                  <p className="text-xs text-destructive">
-                    {t('common.invalid_phone')}
-                  </p>
-                )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="teacher-spec">
-                {t('teachers.specialization')} *
-              </Label>
-              <Select
-                value={form.specialization}
-                onValueChange={(v) =>
-                  setForm((f) => ({
-                    ...f,
-                    specialization: v as Specialization,
-                  }))
-                }
-              >
-                <SelectTrigger
-                  id="teacher-spec"
-                  className="bg-secondary border-border"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="THEORY">
-                    {t('teachers.spec_theory')}
-                  </SelectItem>
-                  <SelectItem value="PRACTICE">
-                    {t('teachers.spec_practice')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Only cross-branch roles pick a branch; a manager/operator's
-                branch is fixed by their JWT and the backend auto-assigns it
-                (assertBranchScope). GET /branches is owner/dev-only, so showing
-                this Select to a manager rendered an empty, un-fillable dropdown
-                that blocked adding a teacher. */}
-            <RoleGate cap="assignBranch">
-              <div className="space-y-2">
-                <Label htmlFor="teacher-branch">{t('teachers.branch')}</Label>
-                <Select
-                  value={form.branchId}
-                  onValueChange={(v) => setForm((f) => ({ ...f, branchId: v }))}
-                >
-                  <SelectTrigger
-                    id="teacher-branch"
-                    className="bg-secondary border-border"
-                  >
-                    <SelectValue placeholder={t('common.select_placeholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(branches || []).map((b) => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </RoleGate>
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={attemptClose}>
-                {t('common.cancel')}
-              </Button>
-              <Button
-                type="submit"
-                disabled={createMut.isPending || updateMut.isPending}
-              >
-                {createMut.isPending || updateMut.isPending
-                  ? t('common.saving')
-                  : editItem
-                    ? t('common.save')
-                    : t('common.add')}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <PersonModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleSubmit}
+        loading={createMut.isPending || updateMut.isPending}
+        role="teacher"
+        person={editItem}
+        title={editItem ? t('teachers.edit') : t('teachers.add')}
+        description={t('teachers.form_desc')}
+      />
 
       <ConfirmDialog
         open={!!deleteId}
@@ -660,15 +488,6 @@ const TeachersPage = () => {
               })
             : undefined
         }
-      />
-
-      <ConfirmDialog
-        open={confirmOpen}
-        onClose={cancelDiscard}
-        onConfirm={confirmDiscard}
-        title={t('common.discard_changes_title')}
-        description={t('common.discard_changes_desc')}
-        confirmLabel={t('common.discard')}
       />
     </div>
   );
