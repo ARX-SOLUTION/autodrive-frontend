@@ -107,6 +107,12 @@ const StudentsPage = () => {
   const operatorId = searchParams.get('operator_id') ?? undefined;
   const setOperatorId = (v: string | undefined) => setParam('operator_id', v);
 
+  const hasGroup = searchParams.get('has_group')
+    ? searchParams.get('has_group') === 'true'
+    : undefined;
+  const setHasGroup = (v: boolean | undefined) =>
+    setParam('has_group', v === undefined ? undefined : String(v));
+
   // Dashboard drill-through filters (autodrive-ls5) — no UI control, just
   // consumed from the URL when navigated to with a status/debt context.
   const status = (searchParams.get('status') as StudentStatus) || undefined;
@@ -164,6 +170,7 @@ const StudentsPage = () => {
       sortOrder: sortDir,
       status,
       hasDebt,
+      hasGroup,
       referredByUserId,
       referredByStudentId,
     },
@@ -186,6 +193,7 @@ const StudentsPage = () => {
     sortDir,
     status,
     hasDebt,
+    hasGroup,
     referredByUserId,
     referredByStudentId,
   ]);
@@ -357,6 +365,8 @@ const StudentsPage = () => {
         setOperatorId={setOperatorId}
         operators={operators || []}
         userBranchId={user?.branch_id}
+        hasGroup={hasGroup}
+        setHasGroup={setHasGroup}
         dateFrom={dateFrom}
         dateTo={dateTo}
         setDateRange={setDateRange}

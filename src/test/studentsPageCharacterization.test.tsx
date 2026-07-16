@@ -155,7 +155,7 @@ describe('StudentsPage characterization', () => {
   it('feeds URL filter params into the students fetch', () => {
     renderPage(
       '/students?course_type=avto_maktab&branch_id=b9&operator_id=op7' +
-        '&q=aziz&status=active&has_debt=true' +
+        '&q=aziz&status=active&has_debt=true&has_group=false' +
         '&date_from=2026-07-01&date_to=2026-07-03',
     );
 
@@ -167,6 +167,7 @@ describe('StudentsPage characterization', () => {
       search: 'aziz',
       status: 'active',
       hasDebt: true,
+      hasGroup: false,
     });
     expect(last[5].dateFrom).toBeInstanceOf(Date);
     expect(last[5].dateTo).toBeInstanceOf(Date);

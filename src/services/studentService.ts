@@ -26,6 +26,7 @@ interface StudentListOptions {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   hasDebt?: boolean;
+  hasGroup?: boolean;
   status?: StudentStatus;
   referredByUserId?: string;
   referredByStudentId?: string;
@@ -51,6 +52,7 @@ const toStudentQueryParams = ({
   sortBy,
   sortOrder,
   hasDebt,
+  hasGroup,
   status,
   referredByUserId,
   referredByStudentId,
@@ -66,6 +68,7 @@ const toStudentQueryParams = ({
   sort_by: sortBy,
   sort_order: sortOrder,
   has_debt: hasDebt,
+  has_group: hasGroup,
   status,
   referred_by_user_id: referredByUserId,
   referred_by_student_id: referredByStudentId,

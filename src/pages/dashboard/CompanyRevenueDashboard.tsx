@@ -691,7 +691,14 @@ const CompanyRevenueDashboard = () => {
           meta={t('dashboard.v2.today_meta', 'Asia/Tashkent bo‘yicha')}
           icon={WalletCards}
           tone="primary"
-          onClick={() => navigate(withContext('/payments'))}
+          onClick={() =>
+            navigate(
+              withContext('/payments', {
+                date_from: todayInUz(),
+                date_to: todayInUz(),
+              }),
+            )
+          }
         />
         <KpiCard
           label={t('dashboard.v2.period_revenue', 'Tanlangan davr tushumi')}
@@ -764,13 +771,7 @@ const CompanyRevenueDashboard = () => {
                 <button
                   key={student.student_id}
                   type="button"
-                  onClick={() =>
-                    navigate(
-                      withContext('/students', {
-                        q: student.student_name,
-                      }),
-                    )
-                  }
+                  onClick={() => navigate(`/students/${student.student_id}`)}
                   className="flex min-h-12 w-full items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/30 px-3 py-2 text-left motion-safe:transition-[background-color,transform] duration-150 hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="min-w-0">
@@ -1203,6 +1204,14 @@ const CompanyRevenueDashboard = () => {
               )}
               icon={AlertTriangle}
               tone="warning"
+              onClick={() =>
+                navigate(
+                  withContext('/students', {
+                    status: 'active',
+                    has_debt: 'true',
+                  }),
+                )
+              }
             />
             <KpiCard
               label={t('dashboard.v2.financial_block.arpu', 'ARPU')}
