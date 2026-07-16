@@ -8,6 +8,9 @@ export const useBranches = (enabled = true) =>
   useQuery<Branch[]>({
     queryKey: branchKeys.list(),
     enabled,
+    // autodrive-6ef.17: branch list is org structure, rarely changes -- longer
+    // than the 30s global default (matches blogService's precedent).
+    staleTime: 5 * 60_000,
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/branches', { signal });
       return parseListEnvelope<Branch>(res, 'branches').data;

@@ -13,6 +13,9 @@ export const useOperators = () => {
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
     queryKey: operatorKeys.list({ branchId }),
+    // autodrive-6ef.17: operator list is org structure, rarely changes --
+    // longer than the 30s global default (matches blogService's precedent).
+    staleTime: 5 * 60_000,
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/users', {
         params: { role: 'operator' },
