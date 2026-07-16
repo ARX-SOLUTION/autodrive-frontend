@@ -4,6 +4,9 @@ import App from './App.tsx';
 import './index.css';
 import i18n from './i18n';
 import { registerSW } from 'virtual:pwa-register';
+import { initWebVitals } from './lib/webVitals';
+
+initWebVitals();
 
 const updateSW = registerSW({
   immediate: true,
