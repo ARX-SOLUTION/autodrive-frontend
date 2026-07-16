@@ -30,11 +30,14 @@ Operating rules for **Auto Drive CRM** (NestJS backend + React frontend). Optimi
 
 ---
 
-## 🧠 1. Think Before Coding
+## 🧠 1. Advisor First — Plan Before Code
+
+**Advisor = Fable 5 (plans) · Executor = Opus 4.8 (implements).** Complex task (multi-file, new design, migration, cross-repo)? The Advisor pass runs first, automatically: an explicit plan — files touched, interfaces/signatures, error handling, edge cases, pass/fail validation criteria. The Executor then implements it exactly (implementation subagents: `model: opus`). Trivial edits (typo, config value, single line) skip the Advisor — just do them. Full routing rules: workspace-root `CLAUDE.md` → "Advisor–Executor workflow".
 
 - [ ] Surface assumptions explicitly. Pick? → Show options.
 - [ ] Unclear? → Stop. Ask **one** specific question (with grep evidence).
 - [ ] Simpler way? → Push back before coding.
+- [ ] Executor hits ambiguity mid-implementation? → Flag back to the Advisor/user. Never resolve silently.
 
 **❌** _"Active students" → silently uses `isActive`._
 **✅** _"`status='active'` or `deletedAt IS NULL`? Existing code uses status — confirm?"_
@@ -103,7 +106,7 @@ async findActive(user: CurrentUserPayload) {
 
 ## ✅ 4. Goal-Driven Execution — Checkpoint Discipline
 
-**Every task = verifiable goal. Loop until each checkpoint passes.**
+**Every task = verifiable goal. The Advisor defines the checkpoints (§1); the Executor loops until each passes.**
 
 | Vague              | Verifiable                                                  |
 | ------------------ | ----------------------------------------------------------- |
