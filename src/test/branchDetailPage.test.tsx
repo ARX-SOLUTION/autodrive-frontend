@@ -29,14 +29,17 @@ const BRANCH = {
 
 // vi.hoisted so individual tests can swap the branch payload (e.g. the
 // empty-state test below) without re-mocking the whole module per test.
-const branch = vi.hoisted(() => ({ current: null as typeof BRANCH | null }));
+const branch = vi.hoisted(() => ({
+  current: null as typeof BRANCH | null,
+  isError: false,
+}));
 branch.current = BRANCH;
 
 vi.mock('@/services/branchService', () => ({
   useBranch: () => ({
     data: branch.current,
     isLoading: false,
-    isError: false,
+    isError: branch.isError,
   }),
 }));
 
@@ -75,6 +78,7 @@ const renderPageWithRoutes = () =>
 
 afterEach(() => {
   branch.current = BRANCH;
+  branch.isError = false;
   cleanup();
 });
 
@@ -146,5 +150,26 @@ describe('BranchDetailPage drill-down navigation (autodrive-6ef.20)', () => {
     branch.current = { ...BRANCH, monthly_revenue: [], top_debtors: [] };
     renderPage();
     expect(screen.getAllByText('common.no_data').length).toBe(2);
+  });
+});
+
+// autodrive-d4j: a real fetch error must not read the same as a genuine
+// not-found -- distinct title/icon per EntityDetailShell's isError/
+// errorTitle/errorIcon props, same split AuditDetailPage already does.
+describe('BranchDetailPage error vs not-found (autodrive-d4j)', () => {
+  it('shows the not-found message when the branch genuinely does not exist', () => {
+    branch.current = null;
+    branch.isError = false;
+    renderPage();
+    expect(screen.getByText('common.not_found')).toBeTruthy();
+    expect(screen.queryByText('common.error')).toBeNull();
+  });
+
+  it('shows the error message, not not-found, on a real fetch error', () => {
+    branch.current = null;
+    branch.isError = true;
+    renderPage();
+    expect(screen.getByText('common.error')).toBeTruthy();
+    expect(screen.queryByText('common.not_found')).toBeNull();
   });
 });

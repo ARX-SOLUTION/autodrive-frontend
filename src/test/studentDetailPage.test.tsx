@@ -35,6 +35,21 @@ vi.mock('@/services/groupService', () => ({
   useGroups: () => ({ data: [{ id: 'g1', name: 'B-1' }] }),
 }));
 
+// Controllable per-test fixture for isLoading/isError/data-not-found split
+// below (autodrive-d4j). Starts undefined (vi.hoisted runs before STUDENT is
+// initialized) -- backfilled to STUDENT right after the const, same as
+// branch.current in branchDetailPage.test.tsx.
+const studentQuery = vi.hoisted(() => ({
+  data: undefined as Record<string, unknown> | undefined,
+  isLoading: false,
+  isError: false,
+}));
+
+vi.mock('@/services/studentService', () => ({
+  useStudent: () => studentQuery,
+  useUpdateStudent: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
 const STUDENT = {
   id: 's1',
   last_name: 'Karimov',
@@ -47,11 +62,7 @@ const STUDENT = {
   debt: 1200000,
   referrals_count: 2,
 };
-
-vi.mock('@/services/studentService', () => ({
-  useStudent: () => ({ data: STUDENT, isLoading: false, isError: false }),
-  useUpdateStudent: () => ({ mutate: vi.fn(), isPending: false }),
-}));
+studentQuery.data = STUDENT;
 
 const paymentMocks = vi.hoisted(() => ({
   deleteMutate: vi.fn(),
@@ -135,7 +146,12 @@ const renderPage = () =>
     </MemoryRouter>,
   );
 
-afterEach(cleanup);
+afterEach(() => {
+  studentQuery.data = STUDENT;
+  studentQuery.isLoading = false;
+  studentQuery.isError = false;
+  cleanup();
+});
 
 describe('StudentDetailPage payments-tab gating', () => {
   it('shows the payments tab for a manager', () => {
@@ -336,5 +352,26 @@ describe('StudentDetailPage payments-tab row actions', () => {
     expect(
       (capturedPaymentModalProps.current?.payment as { id: string })?.id,
     ).toBe('p1');
+  });
+});
+
+// autodrive-d4j: a real fetch error must not read the same as a genuine
+// not-found -- distinct title (and icon) per EntityDetailShell's isError/
+// errorTitle/errorIcon props, same split AuditDetailPage already does.
+describe('StudentDetailPage error vs not-found (autodrive-d4j)', () => {
+  it('shows the not-found message when the student genuinely does not exist', () => {
+    studentQuery.data = undefined;
+    studentQuery.isError = false;
+    renderPage();
+    expect(screen.getByText('common.not_found')).toBeTruthy();
+    expect(screen.queryByText('common.error')).toBeNull();
+  });
+
+  it('shows the error message, not not-found, on a real fetch error', () => {
+    studentQuery.data = undefined;
+    studentQuery.isError = true;
+    renderPage();
+    expect(screen.getByText('common.error')).toBeTruthy();
+    expect(screen.queryByText('common.not_found')).toBeNull();
   });
 });

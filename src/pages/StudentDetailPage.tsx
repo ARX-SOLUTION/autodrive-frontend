@@ -6,7 +6,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -141,7 +141,8 @@ const StudentDetailPage = () => {
         backLabel={t('students.title')}
         isLoading={isLoading}
         isError={isError || !student}
-        errorTitle={t('common.not_found')}
+        errorTitle={isError ? t('common.error') : t('common.not_found')}
+        errorIcon={isError ? AlertTriangle : ShieldCheck}
       />
     );
   }

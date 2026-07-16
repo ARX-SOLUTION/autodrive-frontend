@@ -8,6 +8,7 @@ import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { cn } from '@/lib/utils';
 import { extractErrorMessage } from '@/lib/errors';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useBranches } from '@/services/branchService';
 import {
   useCreatePayment,
@@ -137,6 +138,8 @@ const PaymentsPage = () => {
     data: paymentsPage,
     isLoading,
     isFetching,
+    isError: isPaymentsError,
+    refetch: refetchPayments,
   } = usePaymentsPage(
     branchId,
     activeCourseType,
@@ -315,18 +318,30 @@ const PaymentsPage = () => {
               isFetching && !isLoading && 'opacity-50',
             )}
           >
-            <PaymentsTable
-              payments={visiblePayments}
-              isLoading={isLoading}
-              startIndex={startIndex}
-              sortField={sortField}
-              sortDir={sortDir}
-              onToggleSort={toggleSort}
-            />
-            <PaymentsMobileList
-              payments={visiblePayments}
-              isLoading={isLoading}
-            />
+            {isPaymentsError ? (
+              <EmptyState
+                title={t('common.error')}
+                action={{
+                  label: t('common.retry'),
+                  onClick: () => refetchPayments(),
+                }}
+              />
+            ) : (
+              <>
+                <PaymentsTable
+                  payments={visiblePayments}
+                  isLoading={isLoading}
+                  startIndex={startIndex}
+                  sortField={sortField}
+                  sortDir={sortDir}
+                  onToggleSort={toggleSort}
+                />
+                <PaymentsMobileList
+                  payments={visiblePayments}
+                  isLoading={isLoading}
+                />
+              </>
+            )}
           </div>
         </div>
 

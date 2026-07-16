@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -156,6 +156,24 @@ describe('PaymentsPage characterization', () => {
     // EmptyState appears in both the desktop table and mobile list branches.
     expect(screen.getAllByText('payments.not_found').length).toBeGreaterThan(0);
     expect(screen.queryByText('Aziz Karimov')).not.toBeInTheDocument();
+  });
+
+  it('shows a distinct error state (not the empty state) with a working retry on fetch failure', () => {
+    const refetch = vi.fn();
+    usePaymentsPageMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      isError: true,
+      refetch,
+    });
+    renderPage();
+
+    expect(screen.getAllByText('common.error').length).toBeGreaterThan(0);
+    expect(screen.queryByText('payments.not_found')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByText('common.retry')[0]);
+    expect(refetch).toHaveBeenCalled();
   });
 
   it('shows export + add payment for cross-tenant owner', () => {

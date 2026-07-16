@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { Pencil } from 'lucide-react';
+import { AlertTriangle, Pencil, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -64,7 +64,8 @@ const GroupDetailPage = () => {
         backLabel={t('groups.title')}
         isLoading={isLoading}
         isError={isError || !group}
-        errorTitle={t('common.not_found')}
+        errorTitle={isError ? t('common.error') : t('common.not_found')}
+        errorIcon={isError ? AlertTriangle : ShieldCheck}
       />
     );
   }
