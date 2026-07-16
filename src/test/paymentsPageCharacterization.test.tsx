@@ -41,6 +41,11 @@ vi.mock('@/services/paymentService', async (importOriginal) => {
     }),
     usePaymentSummary: () => ({ data: undefined }),
     useCreatePayment: () => ({ mutate: vi.fn(), isPending: false }),
+    // PaymentsTable (autodrive-9e4.4) now calls these for its own row
+    // actions -- without a mock they'd hit the real useMutation/
+    // useQueryClient with no QueryClientProvider in this test tree.
+    useDeletePayment: () => ({ mutate: vi.fn(), isPending: false }),
+    useUpdatePayment: () => ({ mutate: vi.fn(), isPending: false }),
   };
 });
 

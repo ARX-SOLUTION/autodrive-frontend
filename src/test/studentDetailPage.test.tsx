@@ -1,6 +1,12 @@
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  within,
+} from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { vi, describe, it, expect, afterEach } from 'vitest';
+import { vi, describe, it, expect, afterEach, beforeEach } from 'vitest';
 import StudentDetailPage from '@/pages/StudentDetailPage';
 
 // W15: the "To'lovlar" (payments) tab must be hidden for teachers — GET
@@ -47,22 +53,41 @@ vi.mock('@/services/studentService', () => ({
   useUpdateStudent: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
+const paymentMocks = vi.hoisted(() => ({
+  deleteMutate: vi.fn(),
+  updateMutate: vi.fn(),
+}));
+
+const PAYMENT_ROW = {
+  id: 'p1',
+  student_id: 's1',
+  student_name: 'Karimov Aziz',
+  branch_id: 'b1',
+  branch_name: 'Yunusobod',
+  course_type: 'tezkor',
+  total_price: 3000000,
+  amount_paid: 500000,
+  remaining_debt: 700000,
+  payment_method: 'naqd',
+  recorded_by: 'Nigora',
+  date: '2026-07-08',
+  created_at: '2026-07-08',
+};
+
 vi.mock('@/services/paymentService', () => ({
   useStudentPayments: () => ({
-    data: {
-      data: [
-        {
-          id: 'p1',
-          amount_paid: 500000,
-          payment_method: 'naqd',
-          recorded_by: 'Nigora',
-          date: '2026-07-08',
-        },
-      ],
-    },
+    data: { data: [PAYMENT_ROW] },
     isLoading: false,
   }),
   useCreatePayment: () => ({ mutate: vi.fn(), isPending: false }),
+  useDeletePayment: () => ({
+    mutate: paymentMocks.deleteMutate,
+    isPending: false,
+  }),
+  useUpdatePayment: () => ({
+    mutate: paymentMocks.updateMutate,
+    isPending: false,
+  }),
 }));
 
 vi.mock('@/services/operatorService', () => ({
@@ -81,7 +106,22 @@ vi.mock('@/services/attendanceService', () => ({
 
 // Keep the heavy modals / exam tab out of the render.
 vi.mock('@/components/ui/StudentModal', () => ({ default: () => null }));
-vi.mock('@/components/ui/PaymentModal', () => ({ default: () => null }));
+
+// PaymentModal is mocked out (kept out of the render like StudentModal) but
+// still captures the last props it was called with, so the payments-tab
+// edit action's wiring (open + payment prop) can be asserted without
+// rendering the real modal -- PaymentModal's own edit-mode behavior is
+// covered directly in paymentModalConfirmations.test.tsx.
+const capturedPaymentModalProps = vi.hoisted(() => ({
+  current: null as Record<string, unknown> | null,
+}));
+vi.mock('@/components/ui/PaymentModal', () => ({
+  default: (props: Record<string, unknown>) => {
+    capturedPaymentModalProps.current = props;
+    return null;
+  },
+}));
+
 vi.mock('@/components/ui/StudentExamsTab', () => ({
   StudentExamsTab: () => null,
 }));
@@ -255,5 +295,46 @@ describe('StudentDetailPage group history tab content', () => {
     expect(
       screen.getByText('students.detail.group_history_empty'),
     ).toBeTruthy();
+  });
+});
+
+// autodrive-9e4.5: the previously read-only payments ledger now gets the
+// same delete/edit row actions as PaymentsTable, gated on the same
+// recordPayment capability that already gates the tab itself.
+describe('StudentDetailPage payments-tab row actions', () => {
+  beforeEach(() => {
+    paymentMocks.deleteMutate.mockClear();
+    paymentMocks.updateMutate.mockClear();
+    capturedPaymentModalProps.current = null;
+  });
+
+  const openPaymentsTab = () => {
+    auth.role = 'manager';
+    renderPage();
+    fireEvent.mouseDown(screen.getByText('students.detail.tab_payments'));
+  };
+
+  it('confirms, then calls useDeletePayment.mutate with the row id', () => {
+    openPaymentsTab();
+
+    fireEvent.click(screen.getByLabelText('common.delete'));
+    const dialog = screen
+      .getByText('payments.delete_confirm_title')
+      .closest('[role="dialog"]') as HTMLElement;
+    fireEvent.click(within(dialog).getByText('common.delete'));
+
+    expect(paymentMocks.deleteMutate).toHaveBeenCalledTimes(1);
+    expect(paymentMocks.deleteMutate.mock.calls[0][0]).toBe('p1');
+  });
+
+  it('opens PaymentModal in edit mode with the clicked row', () => {
+    openPaymentsTab();
+
+    fireEvent.click(screen.getByLabelText('common.edit'));
+
+    expect(capturedPaymentModalProps.current?.open).toBe(true);
+    expect(
+      (capturedPaymentModalProps.current?.payment as { id: string })?.id,
+    ).toBe('p1');
   });
 });

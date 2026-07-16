@@ -358,7 +358,11 @@
       "tab_schedule": "Jadval",
       "no_schedule": "Dars jadvali yo'q"
     },
-    "confirm_delete_desc": "\"{{name}}\" guruhini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
+    "confirm_delete_desc": "\"{{name}}\" guruhini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.",
+    "duplicate_warning": {
+      "title": "Ehtimoliy takrorlanish",
+      "desc": "Bu filialda shu nomli guruh allaqachon mavjud:"
+    }
   },
   "courses": {
     "title": "Kurslar",
@@ -551,7 +555,11 @@
     },
     "form_desc": "Talaba ma'lumotlarini kiriting",
     "confirm_delete_desc": "\"{{name}}\" talabasini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.",
-    "detailed_toggle_locked": "Ma'lumot kiritilgan — rejimni almashtirish uni yo'qotadi"
+    "detailed_toggle_locked": "Ma'lumot kiritilgan — rejimni almashtirish uni yo'qotadi",
+    "duplicate_warning": {
+      "title": "Ehtimoliy takrorlanish",
+      "desc": "Mos kelishi mumkin bo'lgan talabalar topildi:"
+    }
   },
   "exams": {
     "add_title": "Yangi natija qo'shish",
@@ -640,7 +648,17 @@
       "amount_positive": "To'lov summasi 0 dan katta bo'lishi kerak",
       "select_method": "To'lov turini tanlang"
     },
-    "add_desc": "Talaba va to'lov ma'lumotlarini kiriting"
+    "add_desc": "Talaba va to'lov ma'lumotlarini kiriting",
+    "edit_payment": "To'lovni tahrirlash",
+    "edit_desc": "To'lov ma'lumotlarini tahrirlang",
+    "deleted": "To'lov o'chirildi",
+    "updated": "To'lov yangilandi",
+    "delete_confirm_title": "To'lovni o'chirish",
+    "delete_confirm_desc": "O'chirilgach, talabaning qarzi {{amount}} miqdorida ortadi. Davom etasizmi?",
+    "exceeds_debt_title": "Kredit hosil bo'ladi",
+    "exceeds_debt_desc": "Bu to'lov {{amount}} miqdorida kredit hosil qiladi. Davom etasizmi?",
+    "exceeds_debt_confirm": "Davom etish",
+    "retry_safe": "Xatolik yuz berdi. Qayta urinish xavfsiz — ikkilamchi to'lov yaratilmaydi."
   },
   "audit": {
     "title": "Audit log",

@@ -27,6 +27,7 @@ import {
 import { ChevronsUpDown, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatMoney, groupDigits } from '@/lib/money';
+import { formatPhone } from '@/lib/phoneFormater';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
@@ -47,6 +48,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { CourseType, PaymentMethod } from '@/types/student';
+import type { Payment } from '@/types/payment';
 
 export interface CreatePaymentPayload {
   student_id: string;
@@ -59,6 +61,7 @@ interface Student {
   id: string;
   first_name: string;
   last_name: string;
+  phone?: string;
   debt?: number;
 }
 
@@ -76,6 +79,19 @@ interface PaymentModalProps {
   // the JWT and never trusts this value.
   lockedStudentId?: string;
   lockedStudentName?: string;
+  // Current debt for the locked student (bd 9e4.2) -- the picker's own
+  // studentOptions/selectedStudent lookup never runs when the picker is
+  // hidden, so the exceeds-debt check has nothing to compare against unless
+  // the caller passes it explicitly.
+  lockedStudentDebt?: number;
+  // Edit mode: pass the payment being edited. Mirrors StudentModal's
+  // create/edit dual-mode convention (`student` prop present = edit) --
+  // pins the student (like lockedStudentId) and pre-fills amount/method.
+  payment?: Payment | null;
+  // Set by the caller when the previous submit attempt on this same open
+  // session failed -- shows a "safe to retry" banner instead of the modal
+  // silently closing or looking like nothing happened.
+  submitError?: boolean;
 }
 
 const paymentMethodLabels: Record<PaymentMethod, string> = {
@@ -106,8 +122,12 @@ const PaymentModal = ({
   courseType,
   lockedStudentId,
   lockedStudentName,
+  lockedStudentDebt,
+  payment,
+  submitError,
 }: PaymentModalProps) => {
   const { t } = useTranslation();
+  const isEdit = !!payment;
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
@@ -127,6 +147,17 @@ const PaymentModal = ({
   // reuses the same key; reopening the modal for a new payment gets a fresh one.
   const idempotencyKeyRef = useRef(crypto.randomUUID());
 
+  // Exceeds-debt confirm (bd 9e4.2): a payment amount above the student's
+  // current debt is a deliberately supported credit-balance payment, but it
+  // still gets a confirm step so it's never an accidental fat-finger.
+  const [pendingValues, setPendingValues] = useState<PaymentFormValues | null>(
+    null,
+  );
+  const [exceedsDebtOpen, setExceedsDebtOpen] = useState(false);
+
+  const effectiveLockedId = payment?.student_id ?? lockedStudentId;
+  const effectiveLockedName = payment?.student_name ?? lockedStudentName;
+
   const {
     data: studentPage,
     isFetching: isStudentsFetching,
@@ -141,27 +172,65 @@ const PaymentModal = ({
   useEffect(() => {
     if (open) {
       form.reset({
-        student_id: lockedStudentId ?? '',
-        amount: 0,
-        payment_method: 'naqd',
+        student_id: payment?.student_id ?? lockedStudentId ?? '',
+        amount: payment?.amount_paid ?? 0,
+        payment_method: payment?.payment_method ?? 'naqd',
       });
       setStudentSearch('');
       setSelectedStudentCache(undefined);
       idempotencyKeyRef.current = crypto.randomUUID();
     }
-  }, [open, form, lockedStudentId]);
+    // `payment` is captured once by the caller at "open edit" time (same
+    // convention as StudentsPage's editStudent state) so its identity is
+    // stable for the whole open session -- safe as an effect dep here
+    // without regenerating idempotencyKeyRef on every parent re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, form, lockedStudentId, payment]);
 
   const studentId = form.watch('student_id');
   const studentOptions = studentPage?.data ?? students;
   const selectedStudent =
     studentOptions.find((s) => s.id === studentId) ?? selectedStudentCache;
 
-  const handleSubmit = form.handleSubmit((values) => {
+  // Debt baseline for both the info card and the exceeds-debt confirm. Edit
+  // mode reconstructs the pre-this-payment debt from the ledger row itself
+  // (remaining_debt already has this payment's amount subtracted out) since
+  // the picker -- and its debt lookup -- never renders when the student is
+  // locked/pinned.
+  const effectiveDebt = payment
+    ? payment.remaining_debt + payment.amount_paid
+    : (selectedStudent?.debt ??
+      (lockedStudentId ? lockedStudentDebt : undefined));
+
+  const doSubmit = (values: PaymentFormValues) => {
     onSubmit({ ...values, idempotency_key: idempotencyKeyRef.current });
+  };
+
+  const handleSubmit = form.handleSubmit((values) => {
+    if (effectiveDebt !== undefined && values.amount > effectiveDebt) {
+      setPendingValues(values);
+      setExceedsDebtOpen(true);
+      return;
+    }
+    doSubmit(values);
   });
+
+  const confirmExceedsDebt = () => {
+    if (pendingValues) doSubmit(pendingValues);
+    setExceedsDebtOpen(false);
+    setPendingValues(null);
+  };
+  const cancelExceedsDebt = () => {
+    setExceedsDebtOpen(false);
+    setPendingValues(null);
+  };
 
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
     useConfirmedClose(form.formState.isDirty, onClose);
+
+  const creditAmount = pendingValues
+    ? pendingValues.amount - (effectiveDebt ?? 0)
+    : 0;
 
   return (
     <>
@@ -172,10 +241,10 @@ const PaymentModal = ({
         <DialogContent className="max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle className="font-heading">
-              {t('payments.add_payment')}
+              {isEdit ? t('payments.edit_payment') : t('payments.add_payment')}
             </DialogTitle>
             <DialogDescription className="sr-only">
-              {t('payments.add_desc')}
+              {isEdit ? t('payments.edit_desc') : t('payments.add_desc')}
             </DialogDescription>
           </DialogHeader>
 
@@ -187,14 +256,14 @@ const PaymentModal = ({
                 render={({ field, fieldState }) => (
                   <FormItem className="space-y-2">
                     <FormLabel>{t('payments.student_name')} *</FormLabel>
-                    {lockedStudentId ? (
+                    {effectiveLockedId ? (
                       <Button
                         type="button"
                         variant="outline"
                         disabled
                         className="w-full justify-start bg-secondary border-border font-normal opacity-100"
                       >
-                        {lockedStudentName ??
+                        {effectiveLockedName ??
                           t('students.select_student', {
                             defaultValue: 'Student',
                           })}
@@ -269,7 +338,14 @@ const PaymentModal = ({
                                             : 'opacity-0',
                                         )}
                                       />
-                                      {s.last_name} {s.first_name}
+                                      <div className="flex flex-col">
+                                        <span>
+                                          {s.last_name} {s.first_name}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {formatPhone(s.phone)}
+                                        </span>
+                                      </div>
                                       {s.debt !== undefined && s.debt > 0 && (
                                         <span className="ml-auto text-xs text-destructive tabular-nums">
                                           {formatMoney(s.debt)}
@@ -306,17 +382,17 @@ const PaymentModal = ({
                 )}
               />
 
-              {selectedStudent && selectedStudent.debt !== undefined && (
+              {effectiveDebt !== undefined && (
                 <div
                   className={cn(
                     'rounded-md border px-3 py-2 text-sm tabular-nums',
-                    selectedStudent.debt < 0
+                    effectiveDebt < 0
                       ? 'bg-success/10 border-success/20'
                       : 'bg-destructive/10 border-destructive/20',
                   )}
                 >
                   <span className="text-muted-foreground">
-                    {selectedStudent.debt < 0
+                    {effectiveDebt < 0
                       ? t('students.credit_label')
                       : t('payments.remaining_debt')}
                     :{' '}
@@ -324,12 +400,10 @@ const PaymentModal = ({
                   <span
                     className={cn(
                       'font-medium',
-                      selectedStudent.debt < 0
-                        ? 'text-success'
-                        : 'text-destructive',
+                      effectiveDebt < 0 ? 'text-success' : 'text-destructive',
                     )}
                   >
-                    {formatMoney(Math.abs(selectedStudent.debt))}
+                    {formatMoney(Math.abs(effectiveDebt))}
                   </span>
                 </div>
               )}
@@ -395,6 +469,12 @@ const PaymentModal = ({
                 )}
               />
 
+              {submitError && (
+                <div className="rounded-md border border-warning/20 bg-warning/10 px-3 py-2 text-sm text-warning">
+                  {t('payments.retry_safe')}
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 pt-2">
                 <Button
                   type="button"
@@ -408,7 +488,11 @@ const PaymentModal = ({
                   type="submit"
                   disabled={loading || form.formState.isSubmitting}
                 >
-                  {loading ? t('common.saving') : t('common.add')}
+                  {loading
+                    ? t('common.saving')
+                    : isEdit
+                      ? t('common.save')
+                      : t('common.add')}
                 </Button>
               </div>
             </form>
@@ -422,6 +506,16 @@ const PaymentModal = ({
         title={t('common.discard_changes_title')}
         description={t('common.discard_changes_desc')}
         confirmLabel={t('common.discard')}
+      />
+      <ConfirmDialog
+        open={exceedsDebtOpen}
+        onClose={cancelExceedsDebt}
+        onConfirm={confirmExceedsDebt}
+        title={t('payments.exceeds_debt_title')}
+        description={t('payments.exceeds_debt_desc', {
+          amount: formatMoney(creditAmount),
+        })}
+        confirmLabel={t('payments.exceeds_debt_confirm')}
       />
     </>
   );
