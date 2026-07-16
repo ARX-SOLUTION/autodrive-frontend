@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -9,25 +9,12 @@ import { useIsCrossTenant } from '@/hooks/useCan';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { extractErrorMessage } from '@/lib/errors';
-import { isValidName } from '@/lib/validation';
-import {
-  formatUzPhoneInput,
-  isValidUzPhone,
-  uzLocalDigits,
-  uzPhoneE164,
-} from '@/lib/phoneFormater';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PasswordInput } from '@/components/ui/password-input';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import PersonModal, {
+  type PersonFormPayload,
+} from '@/components/ui/PersonModal';
 import {
   Select,
   SelectContent,
@@ -48,8 +35,6 @@ import {
 } from 'lucide-react';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import { cn } from '@/lib/utils';
 
 const formatDate = (d?: string) => {
@@ -120,58 +105,17 @@ const UsersPage = () => {
   const [sortField, setSortField] = useState('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [modalOpen, setModalOpen] = useState(false);
-  const EMPTY_FORM = {
-    fullName: '',
-    email: '',
-    password: '',
-    phone: formatUzPhoneInput(''),
-    branchId: '',
-  };
-  const [form, setForm] = useState(EMPTY_FORM);
-  // Snapshot taken whenever the dialog opens, compared against current form
-  // state to drive the unsaved-changes guard below (autodrive-6cq.5.15) --
-  // this form is plain useState, not react-hook-form, so there's no
-  // formState.isDirty to read.
-  const initialFormRef = useRef(form);
 
-  const openCreate = () => {
-    setForm(EMPTY_FORM);
-    initialFormRef.current = EMPTY_FORM;
-    setModalOpen(true);
-  };
+  const openCreate = () => setModalOpen(true);
 
-  const isFormDirty =
-    JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
-  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
-    useConfirmedClose(isFormDirty || createMut.isPending, () =>
-      setModalOpen(false),
-    );
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (
-      !form.fullName.trim() ||
-      !form.email.trim() ||
-      !form.password.trim() ||
-      !form.branchId
-    )
-      return;
-    if (!isValidName(form.fullName)) {
-      toast.error(t('common.invalid_name'));
-      return;
-    }
-    const phoneHasDigits = uzLocalDigits(form.phone).length > 0;
-    if (phoneHasDigits && !isValidUzPhone(form.phone)) {
-      toast.error(t('common.invalid_phone'));
-      return;
-    }
+  const handleCreate = (data: PersonFormPayload) => {
     createMut.mutate(
       {
-        fullName: form.fullName.trim(),
-        email: form.email.trim(),
-        password: form.password,
-        phone: phoneHasDigits ? uzPhoneE164(form.phone) : undefined,
-        branchId: form.branchId,
+        fullName: data.fullName,
+        email: data.email!,
+        password: data.password!,
+        phone: data.phone,
+        branchId: data.branchId!,
       },
       {
         onSuccess: () => {
@@ -472,129 +416,14 @@ const UsersPage = () => {
         onPageChange={setCurrentPage}
       />
 
-      <Dialog open={modalOpen} onOpenChange={(o) => !o && attemptClose()}>
-        <DialogContent className="max-w-md bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="font-heading">
-              {t('users.add_title')}
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              {t('users.add_desc')}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="user-name">{t('users.name_label')} *</Label>
-              <Input
-                id="user-name"
-                value={form.fullName}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, fullName: e.target.value }))
-                }
-                required
-                autoComplete="name"
-                className="bg-secondary border-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="user-email">{t('users.email_label')} *</Label>
-              <Input
-                id="user-email"
-                type="email"
-                autoComplete="email"
-                value={form.email}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, email: e.target.value }))
-                }
-                required
-                className="bg-secondary border-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="user-password">
-                {t('users.password_label')} *
-              </Label>
-              <PasswordInput
-                id="user-password"
-                value={form.password}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, password: e.target.value }))
-                }
-                required
-                className="bg-secondary border-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="user-phone">{t('common.phone')}</Label>
-              <Input
-                id="user-phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                value={form.phone}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    phone: formatUzPhoneInput(e.target.value),
-                  }))
-                }
-                placeholder="+998 90 123 45 67"
-                className="bg-secondary border-border"
-              />
-              {uzLocalDigits(form.phone).length > 0 &&
-                !isValidUzPhone(form.phone) && (
-                  <p className="text-xs text-destructive">
-                    {t('common.invalid_phone')}
-                  </p>
-                )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="user-branch">{t('common.branch')} *</Label>
-              <Select
-                value={form.branchId}
-                onValueChange={(v) => setForm((f) => ({ ...f, branchId: v }))}
-                disabled={(branches || []).length === 0}
-              >
-                <SelectTrigger
-                  id="user-branch"
-                  className="bg-secondary border-border"
-                >
-                  <SelectValue
-                    placeholder={
-                      (branches || []).length === 0
-                        ? t('users.no_branches')
-                        : t('common.select_placeholder')
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {(branches || []).map((b) => (
-                    <SelectItem key={b.id} value={b.id}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={attemptClose}>
-                {t('common.cancel')}
-              </Button>
-              <Button type="submit" disabled={createMut.isPending}>
-                {createMut.isPending ? t('common.saving') : t('common.add')}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <ConfirmDialog
-        open={confirmOpen}
-        onClose={cancelDiscard}
-        onConfirm={confirmDiscard}
-        title={t('common.discard_changes_title')}
-        description={t('common.discard_changes_desc')}
-        confirmLabel={t('common.discard')}
+      <PersonModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleCreate}
+        loading={createMut.isPending}
+        role="manager"
+        title={t('users.add_title')}
+        description={t('users.add_desc')}
       />
     </div>
   );
