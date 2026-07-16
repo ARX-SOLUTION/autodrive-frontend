@@ -1,0 +1,62 @@
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import { Plus, Download, UploadCloud, Loader2 } from 'lucide-react';
+
+interface StudentsPageHeaderProps {
+  totalStudents: number;
+  isExporting: boolean;
+  onExport: () => void;
+  canManageStudents: boolean;
+  onImport: () => void;
+  onCreate: () => void;
+}
+
+export const StudentsPageHeader = ({
+  totalStudents,
+  isExporting,
+  onExport,
+  canManageStudents,
+  onImport,
+  onCreate,
+}: StudentsPageHeaderProps) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 className="font-heading text-2xl font-bold text-balance">
+          {t('students.title')}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {t('students.count', { count: totalStudents })}
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={onExport}
+          disabled={totalStudents === 0 || isExporting}
+        >
+          {isExporting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}{' '}
+          {t('students.export_excel')}
+        </Button>
+        {canManageStudents && (
+          <>
+            <Button variant="outline" className="gap-2" onClick={onImport}>
+              <UploadCloud className="h-4 w-4" />{' '}
+              {t('students.import.button_label')}
+            </Button>
+            <Button className="gap-2" onClick={onCreate}>
+              <Plus className="h-4 w-4" /> {t('students.add')}
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
