@@ -34,6 +34,8 @@ interface StudentsFilterBarProps {
   setOperatorId: (v: string | undefined) => void;
   operators: User[];
   userBranchId: string | null | undefined;
+  hasGroup: boolean | undefined;
+  setHasGroup: (v: boolean | undefined) => void;
   dateFrom: Date | undefined;
   dateTo: Date | undefined;
   setDateRange: (from: Date | undefined, to: Date | undefined) => void;
@@ -53,6 +55,8 @@ export const StudentsFilterBar = ({
   setOperatorId,
   operators,
   userBranchId,
+  hasGroup,
+  setHasGroup,
   dateFrom,
   dateTo,
   setDateRange,
@@ -114,6 +118,20 @@ export const StudentsFilterBar = ({
           </SelectContent>
         </Select>
       )}
+
+      {/* Group filter — ungrouped students */}
+      <Select
+        value={hasGroup === false ? 'no_group' : 'all'}
+        onValueChange={(v) => setHasGroup(v === 'no_group' ? false : undefined)}
+      >
+        <SelectTrigger className="w-40 bg-secondary border-border">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">{t('common.all')}</SelectItem>
+          <SelectItem value="no_group">{t('students.no_group')}</SelectItem>
+        </SelectContent>
+      </Select>
 
       {/* Date filter — single or range */}
       <Popover>

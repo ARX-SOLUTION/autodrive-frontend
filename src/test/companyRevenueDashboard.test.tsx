@@ -194,10 +194,18 @@ const renderDashboardWithRoutes = () =>
         <Route path="/dashboard" element={<CompanyRevenueDashboard />} />
         <Route path="/payments" element={<DestinationProbe />} />
         <Route path="/students" element={<DestinationProbe />} />
+        <Route path="/students/:id" element={<DestinationProbe />} />
         <Route path="/branches" element={<DestinationProbe />} />
         <Route path="/branches/:id" element={<DestinationProbe />} />
       </Routes>
     </MemoryRouter>,
+  );
+
+// Matches the component's own todayInUz() so the assertion doesn't hardcode
+// a date that drifts stale the day after this test is written.
+const todayInUz = () =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tashkent' }).format(
+    new Date(),
   );
 
 describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
@@ -220,15 +228,28 @@ describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
     expect(params.get('has_debt')).toBe('true');
   });
 
-  it('recovery-queue row navigates to /students with q=<name>, not search=', () => {
+  it('recovery-queue row navigates to /students/:id, not a name-search', () => {
     renderDashboardWithRoutes();
     fireEvent.click(screen.getByText('Ali Valiyev'));
+    expect(screen.getByTestId('destination').textContent).toBe(
+      '/students/student-1|',
+    );
+  });
+
+  // overview-fixes-frontend — the 90+ day debt-aging bucket had no
+  // click-through at all; it now links to the same debt filter as the
+  // "Jami qarzdorlik" KPI (recovery queue's underlying data).
+  it('90+ day debt-aging card navigates to /students with status+has_debt', () => {
+    renderDashboardWithRoutes();
+    fireEvent.click(
+      screen.getByText('dashboard.v2.financial_block.bucket_90_plus'),
+    );
     const [pathname, search] =
       screen.getByTestId('destination').textContent?.split('|') ?? [];
     expect(pathname).toBe('/students');
     const params = new URLSearchParams(search);
-    expect(params.get('q')).toBe('Ali Valiyev');
-    expect(params.get('search')).toBeNull();
+    expect(params.get('status')).toBe('active');
+    expect(params.get('has_debt')).toBe('true');
   });
 
   it('"manage branches" link navigates to the /branches list, not /filiallar', () => {
@@ -254,7 +275,12 @@ describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
   // dashboard-deep-review finding 1 — dashboardContext used to build
   // from/to, but /payments (and /students) only read date_from/date_to via
   // useUrlParams, so the date filter silently dropped on drill-down nav.
-  it('today-revenue KPI navigates to /payments with date_from/date_to, not from/to', () => {
+  //
+  // overview-fixes-frontend — the KPI also used to carry whatever ambient
+  // range filter was selected (e.g. "this month") instead of today's date;
+  // it now always overrides date_from/date_to to today regardless of the
+  // ambient from/to filter.
+  it('today-revenue KPI navigates to /payments with an explicit today date_from/date_to, not the ambient range', () => {
     render(
       <MemoryRouter
         initialEntries={['/dashboard?from=2026-07-01&to=2026-07-10']}
@@ -270,8 +296,8 @@ describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
       screen.getByTestId('destination').textContent?.split('|') ?? [];
     expect(pathname).toBe('/payments');
     const params = new URLSearchParams(search);
-    expect(params.get('date_from')).toBe('2026-07-01');
-    expect(params.get('date_to')).toBe('2026-07-10');
+    expect(params.get('date_from')).toBe(todayInUz());
+    expect(params.get('date_to')).toBe(todayInUz());
     expect(params.get('from')).toBeNull();
     expect(params.get('to')).toBeNull();
   });
