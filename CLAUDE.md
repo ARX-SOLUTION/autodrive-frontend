@@ -10,7 +10,7 @@ React 18 + Vite + TS · shadcn/ui + Tailwind · Zustand (auth only) + TanStack Q
 
 ## Advisor first — plan before code
 
-**Advisor = Fable 5 (plans) · Executor = Opus 4.8 (implements; subagents `model: opus`).** Complex task → explicit Advisor plan first (files, interfaces/signatures, error handling, edge cases, pass/fail validation criteria); the Executor implements it exactly. Trivial edits skip the Advisor. Executor hits ambiguity → flag back, never resolve silently. Unclear requirement → ask ONE specific question with grep evidence; simpler way exists → push back before coding. Full routing: root `CLAUDE.md`.
+**Advisor = Fable 5 / Opus 4.8 (plans) · Executor = Sonnet 5 (implements; subagents `model: sonnet`).** Complex task → explicit Advisor plan first (files, interfaces/signatures, error handling, edge cases, pass/fail validation criteria); the Executor implements it exactly. Trivial edits skip the Advisor. Executor hits ambiguity → flag back, never resolve silently. Unclear requirement → ask ONE specific question with grep evidence; simpler way exists → push back before coding. Full routing: root `CLAUDE.md`.
 
 ## Verification — every significant change
 
