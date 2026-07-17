@@ -7,7 +7,10 @@
 const groupSep = (n: number): string =>
   // ru-RU groups with a non-breaking space; normalise both nbsp and any comma
   // to a plain space so the output is consistent regardless of the JS runtime.
-  n.toLocaleString('ru-RU').replace(/ /g, ' ').replace(/,/g, ' ');
+  n
+    .toLocaleString('ru-RU')
+    .replace(/\u00A0/g, ' ')
+    .replace(/,/g, ' ');
 
 /** "1 234 567 soʻm". Nullish / non-finite input renders as "0 soʻm". */
 export const formatMoney = (value?: number | string | null): string => {
