@@ -368,13 +368,25 @@ export const KpiCard = ({
   );
 };
 
-const DeltaChip = ({ delta }: { delta: number }) => (
+// `ink` = Design.md "on accent surfaces, text/icons use ink" rule — the
+// primary/gradient KPI tile keeps this chip in ink tone regardless of delta
+// sign, since a red/green chip on the amber gradient reads as a second
+// clashing accent. Non-primary callers omit `ink` and keep semantic colors.
+const DeltaChip = ({
+  delta,
+  ink = false,
+}: {
+  delta: number;
+  ink?: boolean;
+}) => (
   <span
     className={cn(
       'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums',
-      delta < 0
-        ? 'bg-destructive/[14%] text-destructive'
-        : 'bg-success/[14%] text-success',
+      ink
+        ? 'bg-primary-foreground/[14%] text-primary-foreground'
+        : delta < 0
+          ? 'bg-destructive/[14%] text-destructive'
+          : 'bg-success/[14%] text-success',
     )}
   >
     {delta < 0 ? (
@@ -442,6 +454,13 @@ const KpiTile = ({
       }}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
+      // Explicit, concise name instead of the browser's default (verbose)
+      // name-from-content concatenation of label+delta+value+sub.
+      aria-label={
+        onClick
+          ? `${label}: ${displayValue}${unit ? ` ${unit}` : ''}`
+          : undefined
+      }
       style={
         primary
           ? {
@@ -470,7 +489,9 @@ const KpiTile = ({
         >
           {label}
         </p>
-        {delta !== undefined && delta !== null && <DeltaChip delta={delta} />}
+        {delta !== undefined && delta !== null && (
+          <DeltaChip delta={delta} ink={primary} />
+        )}
       </div>
       <p className="num mt-3 flex items-baseline gap-1 text-[31px] font-extrabold leading-none">
         <span ref={valueRef}>{displayValue}</span>
@@ -1273,14 +1294,16 @@ const CompanyRevenueDashboard = () => {
           <RevenueChart data={data.revenue_trend} onReset={resetFilters} />
         </DashboardCard>
         <DashboardCard
-          title={t('dashboard.v2.recovery', 'Qarzdorlik recovery queue')}
+          title={t('dashboard.v2.recovery', 'Qarzdorlik navbati')}
           description={t(
             'dashboard.v2.recovery_subtitle',
             'Eng katta qarzlar birinchi ko‘rsatiladi.',
           )}
           action={
             <span className="rounded-full bg-destructive/[13%] px-2 py-0.5 font-mono text-[11px] font-bold text-destructive">
-              {kpis.debt.students_with_debt}
+              {t('dashboard.v2.recovery_count', '{{count}} ta', {
+                count: kpis.debt.students_with_debt,
+              })}
             </span>
           }
         >
@@ -1333,8 +1356,20 @@ const CompanyRevenueDashboard = () => {
                           event.stopPropagation();
                           navigate(`/students/${student.student_id}`);
                         }}
-                        aria-label={t('common.view', "Ko'rish")}
-                        title={t('common.view', "Ko'rish")}
+                        aria-label={t(
+                          'dashboard.v2.view_debtor',
+                          "Ko'rish: {{name}}",
+                          {
+                            name: student.student_name,
+                          },
+                        )}
+                        title={t(
+                          'dashboard.v2.view_debtor',
+                          "Ko'rish: {{name}}",
+                          {
+                            name: student.student_name,
+                          },
+                        )}
                         // ponytail: visible box is 24px (mock spec) —
                         // after:-inset-2 grows the invisible hit area to
                         // 40x40 without changing what's drawn. Same

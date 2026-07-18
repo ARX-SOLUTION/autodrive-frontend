@@ -226,6 +226,8 @@
       "revenue_trend": "Тренд выручки",
       "recovery": "Очередь по долгам",
       "recovery_subtitle": "Сначала самые крупные задолженности.",
+      "recovery_count": "{{count}}",
+      "view_debtor": "Просмотр: {{name}}",
       "priority_high": "Высокий",
       "open_payments": "Платежи",
       "view_data": "Показать данные",
