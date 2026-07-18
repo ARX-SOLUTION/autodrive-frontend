@@ -50,6 +50,7 @@
   body {
     @apply text-foreground font-body antialiased;
     background-color: hsl(var(--background));
+    -webkit-font-smoothing: antialiased;
   }
   /* Ultra-low grain overlay — night-console texture, sits above the solid
      background but below all real content. */
