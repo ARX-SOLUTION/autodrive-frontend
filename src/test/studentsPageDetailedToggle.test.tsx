@@ -71,7 +71,12 @@ describe('StudentsPage add flow toggle', () => {
     expect(screen.queryByTestId('quick-dialog')).toBeNull();
     expect(screen.queryByTestId('detailed-dialog')).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'students.add' }));
+    // exec-dash 4-polish: the empty-state (0 students, per the mock above)
+    // now also renders its own "students.add" action in both the table and
+    // mobile-list EmptyState, alongside the header's — same accessible name,
+    // 3 matches. [0] is the header's button (first in DOM order); all three
+    // wire to the same openCreate handler, so any would do.
+    fireEvent.click(screen.getAllByRole('button', { name: 'students.add' })[0]);
     expect(screen.getByTestId('quick-dialog')).toBeInTheDocument();
     expect(screen.queryByTestId('detailed-dialog')).toBeNull();
 

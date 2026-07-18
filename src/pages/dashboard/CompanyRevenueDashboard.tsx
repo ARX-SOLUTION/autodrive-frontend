@@ -981,7 +981,11 @@ const CompanyRevenueDashboard = () => {
                         }}
                         aria-label={t('common.view', "Ko'rish")}
                         title={t('common.view', "Ko'rish")}
-                        className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground opacity-0 transition-opacity duration-150 hover:bg-muted hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        // ponytail: visible box stays h-8 w-8 (icon-density
+                        // spec) — after:-inset-1 grows the invisible hit area
+                        // to 40x40 without changing what's drawn. Same
+                        // after:-inset-N technique as components/ui/sidebar.tsx.
+                        className="relative grid h-8 w-8 place-items-center rounded-md text-muted-foreground opacity-0 transition-opacity duration-150 after:absolute after:-inset-1 hover:bg-muted hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         <CaretRight className="h-4 w-4" aria-hidden="true" />
                       </button>
