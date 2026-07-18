@@ -8,7 +8,7 @@ import StudentsPage from '@/pages/StudentsPage';
 //  1. rows/cards render from mocked list data (desktop table + mobile card)
 //  2. URL filter params drive the useStudentsPage fetch args
 //  3. explicit empty state (not a blank table) when the list is empty
-//  4. role gating: teacher sees no add/import/edit/delete controls
+//  4. role gating: teacher sees no add/edit/delete controls
 // They must pass unmodified before AND after the decomposition.
 
 const h = vi.hoisted(() => ({
@@ -87,9 +87,6 @@ vi.mock('@/services/operatorService', () => ({
 }));
 
 vi.mock('@/components/ui/StudentModal', () => ({ default: () => null }));
-vi.mock('@/components/ui/ImportStudentsModal', () => ({
-  default: () => null,
-}));
 vi.mock('@/components/ui/AddStudentDialog', () => ({ default: () => null }));
 
 vi.mock('@/services/courseService', () => ({
@@ -202,9 +199,8 @@ describe('StudentsPage characterization', () => {
 
     // Rows still render...
     expect(screen.getAllByText('Karimov').length).toBeGreaterThan(0);
-    // ...but no add/import (manageStudents) or edit/delete controls.
+    // ...but no add (manageStudents) or edit/delete controls.
     expect(screen.queryByRole('button', { name: 'students.add' })).toBeNull();
-    expect(screen.queryByText('students.import.button_label')).toBeNull();
     expect(screen.queryAllByLabelText('common.edit').length).toBe(0);
     expect(screen.queryAllByLabelText('common.delete').length).toBe(0);
     // Export stays available regardless of role.

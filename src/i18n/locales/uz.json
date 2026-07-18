@@ -536,37 +536,6 @@
     "validation_branch": "Filial tanlanmagan! Iltimos filial tanlang.",
     "save_and_add": "Saqlash va yana qo'shish",
     "validation_group_required": "Avto maktab kursi uchun Guruh tanlash shart!",
-    "import": {
-      "button_label": "CSV Orqali Yuklash",
-      "modal_title": "CSV Orqali Yuklash",
-      "description": "Yuklash uchun .csv faylni tanlang.",
-      "format_help": "Fayl formati qanday bo'lishini bilmaysizmi?",
-      "download_sample": "Namuna yuklab olish",
-      "uploading": "Yuklanmoqda...",
-      "upload_button": "Yuklash",
-      "success": "{{count}} ta talaba yuklandi",
-      "partial": "{{success}} yuklandi, {{errors}} ta xato",
-      "branch_required": "Talabalarni yuklashdan oldin filialni tanlang.",
-      "preview": {
-        "title": "Ko'rib chiqish ({{count}} qator)",
-        "first_name": "Ism",
-        "last_name": "Familiya",
-        "phone": "Telefon",
-        "course_type": "Kurs turi",
-        "error_missing": "Majburiy maydon to'ldirilmagan",
-        "error_course_type": "Noto'g'ri kurs turi"
-      },
-      "duplicate_warning": {
-        "title": "Ehtimoliy takrorlanishlar",
-        "desc": "Bu telefon raqamlari mavjud talabalarga tegishli:"
-      },
-      "errors": {
-        "title": "Yuklash xatolari",
-        "row": "Qator",
-        "data": "Ma'lumot",
-        "message": "Xato"
-      }
-    },
     "no_debt": "Qarzsiz",
     "no_group": "Guruhsiz",
     "course": {

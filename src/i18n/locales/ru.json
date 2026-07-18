@@ -536,37 +536,6 @@
     "validation_branch": "Филиал не выбран. Выберите филиал.",
     "save_and_add": "Сохранить и добавить ещё",
     "validation_group_required": "Для курса автошколы необходимо выбрать группу",
-    "import": {
-      "button_label": "Импорт через CSV",
-      "modal_title": "Импорт через CSV",
-      "description": "Выберите .csv файл для загрузки.",
-      "format_help": "Не знаете формат файла?",
-      "download_sample": "Скачать образец",
-      "uploading": "Загрузка...",
-      "upload_button": "Загрузить",
-      "success": "{{count}} студентов загружено",
-      "partial": "{{success}} загружено, {{errors}} ошибок",
-      "branch_required": "Сначала выберите филиал для импорта студентов.",
-      "preview": {
-        "title": "Предпросмотр ({{count}} строк)",
-        "first_name": "Имя",
-        "last_name": "Фамилия",
-        "phone": "Телефон",
-        "course_type": "Тип курса",
-        "error_missing": "Отсутствует обязательное поле",
-        "error_course_type": "Неверный тип курса"
-      },
-      "duplicate_warning": {
-        "title": "Возможные дубликаты",
-        "desc": "Эти номера телефонов уже принадлежат существующим студентам:"
-      },
-      "errors": {
-        "title": "Ошибки импорта",
-        "row": "Строка",
-        "data": "Данные",
-        "message": "Ошибка"
-      }
-    },
     "no_debt": "Без долга",
     "no_group": "Без группы",
     "course": {

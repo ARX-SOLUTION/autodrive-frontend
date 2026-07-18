@@ -229,31 +229,6 @@ export const searchStudents = async (q: string): Promise<Student[]> => {
   return result.data;
 };
 
-export const bulkCreateStudents = async (file: File, branchId?: string) => {
-  const formData = new FormData();
-  formData.append('file', file);
-  if (branchId) formData.append('branch_id', branchId);
-  const { data } = await axiosInstance.post('/students/bulk-create', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-  return data;
-};
-
-// CSV-import preview dedupe check (autodrive-0d6) -- one call per file
-// select/reparse, not cached, so a plain mutation is the right shape (mirrors
-// bulkCreateStudents above, not a useQuery hook).
-export const checkStudentPhones = async (
-  phones: string[],
-): Promise<{ existing_phones: string[] }> => {
-  const { data } = await axiosInstance.post('/students/check-phones', {
-    phones,
-  });
-  return data?.data ?? data;
-};
-
-export const useCheckStudentPhones = () =>
-  useMutation({ mutationFn: checkStudentPhones });
-
 export const useCreateStudentWithPayment = () => {
   const qc = useQueryClient();
   return useMutation({

@@ -134,7 +134,6 @@ const StudentsPage = () => {
   const [createFormDirty, setCreateFormDirty] = useState(false);
   const [sortField, setSortField] = useState('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-  const [importModalOpen, setImportModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
   // Page in the URL too (like every other filter here) so refresh/share
@@ -349,7 +348,6 @@ const StudentsPage = () => {
         isExporting={isExporting}
         onExport={exportToExcel}
         canManageStudents={canManageStudents}
-        onImport={() => setImportModalOpen(true)}
         onCreate={openCreate}
       />
 
@@ -440,8 +438,6 @@ const StudentsPage = () => {
         onModalSubmit={handleModalSubmit}
         onSaveAndAdd={handleSaveAndAdd}
         modalLoading={createMutation.isPending || updateMutation.isPending}
-        importModalOpen={importModalOpen}
-        onImportModalClose={() => setImportModalOpen(false)}
         onAddFlowClose={closeAddFlow}
         onAddStudentSubmit={handleAddStudentDialogSubmit}
         addFlowLoading={createWithPaymentMutation.isPending}
