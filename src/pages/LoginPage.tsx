@@ -13,6 +13,7 @@ const LoginPage = () => {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const login = useLogin();
@@ -41,7 +42,7 @@ const LoginPage = () => {
     } else if (!error.response) {
       toast.error(t('login.network_error'));
     } else {
-      toast.error(t('login.error'));
+      setFormError(t('login.error'));
     }
   };
 
@@ -90,7 +91,10 @@ const LoginPage = () => {
               type="email"
               autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setFormError(null);
+              }}
               placeholder={t('login.email_placeholder')}
               className="mt-1.5 bg-secondary border-border"
               required
@@ -102,12 +106,20 @@ const LoginPage = () => {
               id="password"
               autoComplete="current-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setFormError(null);
+              }}
               placeholder={t('login.password_placeholder')}
               className="mt-1.5 bg-secondary border-border"
               required
             />
           </div>
+          {formError && (
+            <p role="alert" className="text-sm text-destructive">
+              {formError}
+            </p>
+          )}
           <Button type="submit" className="w-full" disabled={login.isPending}>
             {login.isPending ? t('login.submitting') : t('login.submit')}
           </Button>

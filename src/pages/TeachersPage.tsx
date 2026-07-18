@@ -354,6 +354,7 @@ const TeachersPage = () => {
                                 e.stopPropagation();
                                 openEdit(teacher);
                               }}
+                              aria-label={t('common.edit')}
                               className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                             >
                               <Pencil className="h-3.5 w-3.5" />
@@ -363,6 +364,7 @@ const TeachersPage = () => {
                                 e.stopPropagation();
                                 setDeleteId(teacher.id);
                               }}
+                              aria-label={t('common.delete')}
                               className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -427,6 +429,7 @@ const TeachersPage = () => {
                             e.stopPropagation();
                             openEdit(teacher);
                           }}
+                          aria-label={t('common.edit')}
                           className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                         >
                           <Pencil className="h-3.5 w-3.5" />
@@ -436,6 +439,7 @@ const TeachersPage = () => {
                             e.stopPropagation();
                             setDeleteId(teacher.id);
                           }}
+                          aria-label={t('common.delete')}
                           className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
