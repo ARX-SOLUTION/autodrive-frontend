@@ -401,6 +401,7 @@ const StudentsPage = () => {
             onOpenStudent={openStudent}
             onEdit={openEdit}
             onDelete={setDeleteId}
+            onCreate={openCreate}
           />
 
           <StudentsMobileList
@@ -413,6 +414,7 @@ const StudentsPage = () => {
             onOpenStudent={openStudent}
             onEdit={openEdit}
             onDelete={setDeleteId}
+            onCreate={openCreate}
           />
         </div>
       </div>

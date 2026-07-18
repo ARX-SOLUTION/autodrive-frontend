@@ -2,11 +2,13 @@ import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DataCard } from '@/components/ui/DataCard';
+import { Button } from '@/components/ui/button';
 import {
   PencilSimple,
   Trash,
   GraduationCap,
   Warning,
+  Plus,
 } from '@phosphor-icons/react';
 import { formatPhone } from '@/lib/phoneFormater';
 import { formatMoney } from '@/lib/money';
@@ -23,6 +25,7 @@ interface StudentsMobileListProps {
   onOpenStudent: (student: Student, el: HTMLElement) => void;
   onEdit: (student: Student) => void;
   onDelete: (id: string) => void;
+  onCreate: () => void;
 }
 
 export const StudentsMobileList = ({
@@ -35,6 +38,7 @@ export const StudentsMobileList = ({
   onOpenStudent,
   onEdit,
   onDelete,
+  onCreate,
 }: StudentsMobileListProps) => {
   const { t } = useTranslation();
   const localizedResultLabels = resultLabels(t);
@@ -139,6 +143,13 @@ export const StudentsMobileList = ({
           icon={GraduationCap}
           title={t('students.not_found')}
           description={t('students.not_found_desc')}
+          action={
+            canManageStudents ? (
+              <Button size="sm" className="gap-2" onClick={onCreate}>
+                <Plus className="h-4 w-4" /> {t('students.add')}
+              </Button>
+            ) : undefined
+          }
         />
       )}
     </div>

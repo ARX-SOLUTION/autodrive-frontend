@@ -127,11 +127,17 @@ describe('CompanyRevenueDashboard', () => {
     );
 
     expect(screen.getByText('dashboard.v2.today_revenue')).toBeInTheDocument();
+    // exec-dash 7: the KPI tile's value and currency unit are now separate
+    // elements (two-tier .num value + unit typography per the mock) instead
+    // of one formatMoney() string, so check them independently.
     expect(
-      screen.getByText(
-        (content) => content.includes('700') && content.includes("so'm"),
-      ),
+      screen.getByText((content) => content.replace(/\s/g, '') === '700000'),
     ).toBeInTheDocument();
+    // react-i18next is mocked to `t: (str) => str` in test/setup.ts, so the
+    // unit renders as the raw key here, not the real "so'm" translation.
+    expect(
+      screen.getAllByText('dashboard.currency_suffix').length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText('Ali Valiyev')).toBeInTheDocument();
     expect(
       screen.getByText((content) => content.replace(/\D/g, '') === '5000000'),
@@ -329,7 +335,11 @@ describe('CompanyRevenueDashboard academic block (autodrive-sgf.3)', () => {
           <CompanyRevenueDashboard />
         </MemoryRouter>,
       );
-      expect(screen.getAllByText('—')).toHaveLength(3);
+      // exec-dash 7: the new KPI-grid "Davomat" tile also reads
+      // kpis.attendance_rate and renders '—' when it's null, same as the
+      // pre-existing academic-block card below it — 3 academic-block
+      // placeholders + 1 from the new KPI tile = 4.
+      expect(screen.getAllByText('—')).toHaveLength(4);
       expect(container.innerHTML).not.toContain('NaN%');
       expect(container.innerHTML).not.toContain('Infinity%');
     } finally {

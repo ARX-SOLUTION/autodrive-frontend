@@ -14,7 +14,7 @@ import {
   UsersThree,
   User,
   SignOut,
-  CaretLeft,
+  ArrowRight,
   Stack,
   UserGear,
   ShieldCheck,
@@ -23,7 +23,13 @@ import {
   BookOpen,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Brand } from './Brand';
 
 type NavItem = {
@@ -81,26 +87,29 @@ const navItems: NavItem[] = [
   { path: '/profile', labelKey: 'nav.profile', icon: User },
 ];
 
-interface SidebarContentProps {
-  collapsed: boolean;
-  onNavigate?: () => void;
+interface SidebarProps {
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
 }
 
-const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
+export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const goTo = useViewTransitionNavigate();
+  const logoutMutation = useLogout();
 
   // ponytail: real <a href> instead of <Link> so the view transition can be
   // triggered from onClick — keeps native Enter-key activation and
   // ctrl/cmd/shift/middle-click "open in new tab" behavior for free, same as
   // <Link> gave us. Only a plain left-click intercepts for the SPA/transition
   // navigate; anything else falls through to the browser's default anchor
-  // behavior.
+  // behavior. `onNavigate` is only passed by the mobile sheet, to close
+  // itself before navigating.
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
     path: string,
+    onNavigate?: () => void,
   ) => {
     onNavigate?.();
     if (
@@ -125,130 +134,150 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
     manageUsers: useCan('manageUsers'),
     viewAudit: useCan('viewAudit'),
   };
-  const logoutMutation = useLogout();
   const canSee = (item: NavItem) => !item.cap || gate[item.cap] === true;
   const filteredItems = navItems.filter(canSee);
 
   const roleLabel =
     user?.role === 'owner' ? t('roles.owner') : user?.branch_name;
+  const initials =
+    (user?.name || user?.email || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]!.toUpperCase())
+      .join('') || '?';
 
   return (
     <>
-      <div className="flex h-16 items-center gap-3 border-b border-border px-4">
-        {collapsed ? (
-          <span
-            aria-hidden
-            className="mx-auto h-6 w-1 rounded-full bg-primary"
-          />
-        ) : (
-          <Brand size="sm" />
-        )}
-      </div>
-
-      <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-        {filteredItems.map((item) => {
-          const active = location.pathname === item.path;
-          return (
-            <a
-              key={item.path}
-              href={item.path}
-              onClick={(e) => handleNavClick(e, item.path)}
-              aria-label={t(item.labelKey)}
-              className={cn(
-                'flex items-center text-sm font-medium transition-colors rounded-lg',
-                collapsed
-                  ? 'justify-center mx-auto w-10 h-10'
-                  : 'gap-3 px-3 py-2.5',
-                active
-                  ? 'bg-primary/10 text-primary neon-glow-sm'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-              )}
-            >
-              <item.icon className="h-[18px] w-[18px] shrink-0" />
-              {!collapsed && <span>{t(item.labelKey)}</span>}
-            </a>
-          );
-        })}
-      </nav>
-
-      <div className="border-t border-border p-3">
-        {!collapsed && (
-          <div className="mb-2 px-3">
-            <p className="text-sm font-medium text-foreground truncate">
-              {user?.name || user?.email}
-            </p>
-            <p className="text-xs text-muted-foreground">{roleLabel}</p>
+      {/* Desktop rail — fixed 82px, always expanded: labels are 8.5px
+          micro-labels under each icon, not a hover-only tooltip. */}
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[82px] flex-col border-r border-hair bg-surface md:flex">
+        <div className="flex flex-col items-center pt-5">
+          <div className="mb-[22px] flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-[0_4px_14px] shadow-primary/45">
+            <ArrowRight
+              weight="bold"
+              className="h-5 w-5 text-primary-foreground"
+            />
           </div>
-        )}
-        <div className={cn('flex items-center', collapsed && 'justify-center')}>
-          <button
-            onClick={() => {
-              onNavigate?.();
-              logoutMutation.mutate();
-            }}
-            aria-label={t('actions.logout', 'Chiqish')}
-            className={cn(
-              'flex items-center rounded-lg text-sm text-muted-foreground hover:text-destructive transition-colors',
-              collapsed ? 'justify-center w-10 h-10' : 'gap-2 px-2 py-2',
-            )}
-          >
-            <SignOut className="h-4 w-4" />
-            {!collapsed && <span>{t('actions.logout')}</span>}
-          </button>
         </div>
-      </div>
-    </>
-  );
-};
 
-interface SidebarProps {
-  collapsed: boolean;
-  onCollapsedChange: (collapsed: boolean) => void;
-  mobileOpen: boolean;
-  onMobileOpenChange: (open: boolean) => void;
-}
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2.5">
+          {filteredItems.map((item) => {
+            const active = location.pathname === item.path;
+            const label = t(item.labelKey);
+            return (
+              <a
+                key={item.path}
+                href={item.path}
+                onClick={(e) => handleNavClick(e, item.path)}
+                aria-label={label}
+                className={cn(
+                  'flex w-full flex-col items-center justify-center gap-1 rounded-xl py-2 transition-colors',
+                  active
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground',
+                )}
+              >
+                <item.icon className="h-[19px] w-[19px] shrink-0" />
+                <span className="text-center text-[8.5px] font-semibold leading-[1.05]">
+                  {label}
+                </span>
+              </a>
+            );
+          })}
+        </nav>
 
-export const Sidebar = ({
-  collapsed,
-  onCollapsedChange,
-  mobileOpen,
-  onMobileOpenChange,
-}: SidebarProps) => {
-  const { t } = useTranslation();
-
-  return (
-    <>
-      <aside
-        className={cn(
-          'fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-border bg-sidebar transition-all duration-300 md:flex',
-          collapsed ? 'w-[68px]' : 'w-60',
-        )}
-      >
-        <SidebarContent collapsed={collapsed} />
-        <button
-          onClick={() => onCollapsedChange(!collapsed)}
-          aria-label={t('actions.sidebar')}
-          className="absolute -right-3 top-20 z-10 rounded-full border border-border bg-background p-1 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-        >
-          <CaretLeft
-            className={cn(
-              'h-4 w-4 transition-transform',
-              collapsed && 'rotate-180',
-            )}
-          />
-        </button>
+        <div className="flex flex-col items-center gap-2 pb-4 pt-2">
+          <Avatar className="h-10 w-10 rounded-xl border border-border bg-muted">
+            <AvatarFallback className="rounded-xl bg-muted font-mono text-xs font-semibold text-foreground">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => logoutMutation.mutate()}
+                aria-label={t('actions.logout', 'Chiqish')}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-destructive"
+              >
+                <SignOut className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{t('actions.logout')}</TooltipContent>
+          </Tooltip>
+        </div>
       </aside>
 
+      {/* Mobile — unchanged full-label sheet (labels + icons, no rail). */}
       <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
         <SheetContent
           side="left"
           className="w-72 bg-sidebar p-0 [&>button]:text-sidebar-foreground"
         >
           <div className="flex h-full flex-col">
-            <SidebarContent
-              collapsed={false}
-              onNavigate={() => onMobileOpenChange(false)}
-            />
+            <div className="flex h-16 items-center gap-3 border-b border-border px-4">
+              <Brand size="sm" />
+            </div>
+
+            <nav className="flex-1 space-y-1 overflow-y-auto p-2">
+              {filteredItems.map((item) => {
+                const active = location.pathname === item.path;
+                const label = t(item.labelKey);
+                return (
+                  <a
+                    key={item.path}
+                    href={item.path}
+                    onClick={(e) =>
+                      handleNavClick(e, item.path, () =>
+                        onMobileOpenChange(false),
+                      )
+                    }
+                    aria-label={label}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                      active
+                        ? 'bg-primary/[12%] text-primary'
+                        : 'text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground',
+                    )}
+                  >
+                    <item.icon className="h-[18px] w-[18px] shrink-0" />
+                    <span>{label}</span>
+                  </a>
+                );
+              })}
+            </nav>
+
+            <div className="border-t border-border p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <Avatar className="h-9 w-9 shrink-0 rounded-xl">
+                    <AvatarFallback className="rounded-xl bg-muted text-xs font-semibold text-foreground">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {user?.name || user?.email}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {roleLabel}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    onMobileOpenChange(false);
+                    logoutMutation.mutate();
+                  }}
+                  aria-label={t('actions.logout', 'Chiqish')}
+                  className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground transition-colors hover:text-destructive"
+                >
+                  <SignOut className="h-4 w-4" />
+                  <span>{t('actions.logout')}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </SheetContent>
       </Sheet>

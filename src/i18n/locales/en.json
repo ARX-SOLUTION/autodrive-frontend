@@ -5,6 +5,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "branches": "Branches",
+    "branches_all": "All branches",
     "groups": "Groups",
     "courses": "Courses",
     "students": "Students",
@@ -30,10 +31,12 @@
     "sidebar": "Menu",
     "home": "Home",
     "search": "Search",
+    "search_hint": "Search students, payments",
     "search_placeholder": "Search pages...",
     "search_empty": "Nothing found",
     "search_pages": "Pages",
-    "search_group_staff": "Staff"
+    "search_group_staff": "Staff",
+    "quick_payment": "Payment"
   },
   "roles": {
     "owner": "Owner",
@@ -199,6 +202,7 @@
     "activity_action_create": "created",
     "activity_action_update": "updated",
     "activity_action_delete": "deleted",
+    "hero_sub": "{{count}} students currently have outstanding debt.",
     "live_label": "Live",
     "v2": {
       "title": "Revenue control",
@@ -222,6 +226,9 @@
       "revenue_trend": "Revenue trend",
       "recovery": "Debt recovery queue",
       "recovery_subtitle": "Largest outstanding balances first.",
+      "recovery_count": "{{count}}",
+      "view_debtor": "View: {{name}}",
+      "priority_high": "High",
       "open_payments": "Payments",
       "view_data": "View data",
       "branch_performance": "Branch performance",
@@ -246,6 +253,18 @@
       "coverage_bar_label": "{{rate}}% paid in full",
       "last_payment_none": "No payment",
       "attendance_no_data": "No attendance data",
+      "live_caption_tz": "Asia/Tashkent",
+      "week": "Week",
+      "month": "Month",
+      "last_7_days": "7 days",
+      "last_30_days": "30 days",
+      "quick_action_payment": "Accept payment",
+      "quick_action_student": "Add student",
+      "quick_action_attendance": "Take attendance",
+      "trend_peak": "peak",
+      "overdue_days": "{{count}} days overdue",
+      "view_all_debtors": "All debtors",
+      "coverage_short": "Coverage",
       "financial_block": {
         "title": "Financial KPIs",
         "subtitle": "Month-over-month growth, debt aging, and revenue by course type.",

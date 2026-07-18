@@ -24,9 +24,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['IBM Plex Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        body: ['IBM Plex Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono: ['IBM Plex Mono', 'ui-monospace', 'monospace'],
+        heading: ['Manrope', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        body: ['Manrope', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       colors: {
         sidebar: {

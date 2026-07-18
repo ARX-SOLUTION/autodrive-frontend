@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { Breadcrumbs } from './Breadcrumbs';
 import { CommandPalette, useCommandPalette } from './CommandPalette';
 
 export const AppLayout = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
   const palette = useCommandPalette();
@@ -19,17 +17,10 @@ export const AppLayout = () => {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar
-        collapsed={sidebarCollapsed}
-        onCollapsedChange={setSidebarCollapsed}
         mobileOpen={mobileSidebarOpen}
         onMobileOpenChange={setMobileSidebarOpen}
       />
-      <div
-        className={cn(
-          'flex min-h-screen flex-col transition-all duration-300',
-          sidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-60',
-        )}
-      >
+      <div className="flex min-h-screen flex-col md:ml-[82px]">
         <Topbar
           onMobileMenuClick={() => setMobileSidebarOpen(true)}
           onCommandPaletteOpen={() => palette.setOpen(true)}

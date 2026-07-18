@@ -8,7 +8,7 @@
   /* Repo-specific extensions on top of shared tokens (sidebar). */
   :root {
     /* Sidebar — light mode */
-    --sidebar-background: 40 20% 96%;
+    --sidebar-background: 40 15% 97%;
     --sidebar-foreground: 220 8% 32%;
     --sidebar-primary: 32 95% 44%;
     --sidebar-primary-foreground: 40 15% 99%;
@@ -16,18 +16,33 @@
     --sidebar-accent-foreground: 30 90% 28%;
     --sidebar-border: 40 10% 85%;
     --sidebar-ring: 32 95% 44%;
+
+    /* exec-dash 7: chart accents (dot/donut/bar fills) — distinct from the
+       solid --success/--warning/--destructive/--info text colors. Light mode
+       has no mock spec, so alias the existing (already-tuned) semantic
+       tokens rather than invent unverified hex. */
+    --chart-success: var(--success);
+    --chart-warning: var(--warning);
+    --chart-danger: var(--destructive);
+    --chart-info: var(--info);
   }
 
   .dark {
     /* Sidebar — dark mode */
-    --sidebar-background: 220 6% 9%;
+    --sidebar-background: 0 0% 9%;
     --sidebar-foreground: 220 5% 65%;
     --sidebar-primary: 35 95% 55%;
     --sidebar-primary-foreground: 220 10% 8%;
     --sidebar-accent: 220 5% 14%;
     --sidebar-accent-foreground: 40 10% 92%;
-    --sidebar-border: 220 6% 16%;
+    --sidebar-border: 0 0% 16%;
     --sidebar-ring: 35 95% 55%;
+
+    /* exec-dash 7: Design.md chart hexes — #7BD79A / #E0A93B / #E5674B / #7BA7D9 */
+    --chart-success: 140 53% 66%;
+    --chart-warning: 40 73% 55%;
+    --chart-danger: 11 75% 60%;
+    --chart-info: 212 55% 67%;
   }
 }
 
@@ -50,6 +65,7 @@
   body {
     @apply text-foreground font-body antialiased;
     background-color: hsl(var(--background));
+    -webkit-font-smoothing: antialiased;
   }
   /* Ultra-low grain overlay — night-console texture, sits above the solid
      background but below all real content. */
@@ -89,9 +105,6 @@
   }
 
   /* Table row styles */
-  .table-row-shabnam:nth-child(even) {
-    background: hsl(var(--muted) / 0.35);
-  }
   .table-row-shabnam:hover {
     background: hsl(var(--muted) / 0.6);
     transition: background 0.15s ease;
@@ -104,11 +117,23 @@
   .neon-glow-sm {
     box-shadow: inset 2px 0 0 hsl(var(--primary));
   }
+
+  /* Status chip recipe (mock): solid semantic color text on the same
+     semantic color at ~14% alpha background — e.g.
+     `text-success bg-success/[0.14]`. Apply directly with token utilities;
+     add a `.chip-tone` helper only if duplication across components
+     warrants it. */
 }
 
 @layer utilities {
   .tabular-nums {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Tabular figures for KPI/metric values — mock's `.num` recipe. */
+  .num {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
   }
 
   /* ponytail: content-visibility on below-fold sections; paired with contain-intrinsic-size to prevent scroll jumps */
@@ -130,18 +155,20 @@
 
 /* ─── Custom Scrollbar ─── */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
-  border-radius: 3px;
+  background-color: hsl(var(--border));
+  border: 3px solid transparent;
+  border-radius: 8px;
+  background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
+  background-color: hsl(var(--muted-foreground));
 }
 
 /* ─── Animations ─── */
@@ -237,6 +264,35 @@
     .card-enter {
       opacity: 0;
       translate: 0 12px;
+    }
+  }
+
+  /* Panel entrance — fade + translate-up 8px. Stagger via inline
+     animation-delay (index × 40ms), same convention as .card-enter. Use with
+     Tailwind arbitrary values, e.g. `animate-[rise_0.4s_ease-out_both]`. */
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Live status dot — e.g. `animate-[pulse-dot_2.4s_ease-in-out_infinite]`.
+     Named `pulse-dot`, not `pulse`: Tailwind's built-in `animate-pulse`
+     utility already ships its own `@keyframes pulse` (used by Skeleton and
+     the existing live-status dots) — a same-named keyframe here would
+     silently override it everywhere since @keyframes names aren't scoped. */
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
     }
   }
 }
