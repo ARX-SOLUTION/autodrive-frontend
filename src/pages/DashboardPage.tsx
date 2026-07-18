@@ -96,6 +96,34 @@ const branchHues = [
   220, // steel blue
 ];
 
+// exec-dash 8: teacher hero live caption — day/month in Asia/Tashkent via a
+// reliable numeric Intl formatter + a static Uzbek month-abbreviation table,
+// NOT Intl month:'short': browser testing shows that renders an unresolved
+// skeleton ("M07 18") for both 'uz-UZ' and bare 'uz' locales. Same fix as
+// CompanyRevenueDashboard.tsx's uzDateParts().
+const UZ_TIMEZONE = 'Asia/Tashkent';
+const uzNumericDateFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: UZ_TIMEZONE,
+});
+const UZ_MONTH_ABBR = [
+  'YAN',
+  'FEV',
+  'MAR',
+  'APR',
+  'MAY',
+  'IYUN',
+  'IYUL',
+  'AVG',
+  'SEN',
+  'OKT',
+  'NOY',
+  'DEK',
+];
+const liveDayMonth = () => {
+  const [, month, day] = uzNumericDateFormatter.format(new Date()).split('-');
+  return `${day} ${UZ_MONTH_ABBR[Number(month) - 1]}`;
+};
+
 // ---------- Shared chart styles ----------
 
 const CHART_STYLE = {
@@ -179,7 +207,7 @@ const KpiCard = ({
       </div>
       <p
         className={cn(
-          'font-bold leading-tight tracking-tight text-foreground tabular-nums font-mono',
+          'num font-bold leading-tight text-foreground font-mono',
           lead ? 'text-4xl' : 'text-[28px]',
         )}
       >
@@ -1038,6 +1066,7 @@ const RESULT_COLORS = [
 
 const TeacherDashboard = () => {
   const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
   const { data: analytics, isLoading } = useTeacherAnalytics();
 
   if (isLoading || !analytics) {
@@ -1073,10 +1102,20 @@ const TeacherDashboard = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold tracking-tight text-balance">
-          {t('dashboard.title')}
+        <div className="inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          <span
+            className="h-[7px] w-[7px] shrink-0 rounded-full bg-success shadow-[0_0_0_3px_hsl(var(--success)/0.2)] motion-safe:animate-[pulse-dot_2.4s_ease-in-out_infinite]"
+            aria-hidden="true"
+          />
+          {t('dashboard.live_label')} ·{' '}
+          {t('dashboard.v2.live_caption_tz', 'Asia/Tashkent')} ·{' '}
+          {liveDayMonth()}
+        </div>
+        <h1 className="mt-2 font-heading text-[40px] font-extrabold leading-[1.1] tracking-[-0.025em] text-balance">
+          {t(greetingKey())}
+          {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1.5 max-w-2xl text-[15px] text-muted-foreground text-pretty">
           {t('dashboard.subtitle')}
         </p>
       </div>

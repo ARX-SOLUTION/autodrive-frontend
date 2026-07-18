@@ -16,6 +16,15 @@
     --sidebar-accent-foreground: 30 90% 28%;
     --sidebar-border: 40 10% 85%;
     --sidebar-ring: 32 95% 44%;
+
+    /* exec-dash 7: chart accents (dot/donut/bar fills) — distinct from the
+       solid --success/--warning/--destructive/--info text colors. Light mode
+       has no mock spec, so alias the existing (already-tuned) semantic
+       tokens rather than invent unverified hex. */
+    --chart-success: var(--success);
+    --chart-warning: var(--warning);
+    --chart-danger: var(--destructive);
+    --chart-info: var(--info);
   }
 
   .dark {
@@ -28,6 +37,12 @@
     --sidebar-accent-foreground: 40 10% 92%;
     --sidebar-border: 0 0% 16%;
     --sidebar-ring: 35 95% 55%;
+
+    /* exec-dash 7: Design.md chart hexes — #7BD79A / #E0A93B / #E5674B / #7BA7D9 */
+    --chart-success: 140 53% 66%;
+    --chart-warning: 40 73% 55%;
+    --chart-danger: 11 75% 60%;
+    --chart-info: 212 55% 67%;
   }
 }
 

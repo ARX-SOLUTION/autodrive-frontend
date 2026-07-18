@@ -13,10 +13,8 @@ import {
   CaretRight,
   ClipboardText,
   Clock,
-  ArrowSquareOut,
   GraduationCap,
   Hourglass,
-  SquaresFour,
   PiggyBank,
   ArrowsClockwise,
   TrendUp,
@@ -37,9 +35,7 @@ import {
 } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkline } from '@/components/ui/Sparkline';
 import { useBranches } from '@/services/branchService';
 import { useCompanyOverview } from '@/services/dashboardService';
 import type {
@@ -50,7 +46,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
-import { formatMoney } from '@/lib/money';
+import { formatMoney, groupDigits } from '@/lib/money';
 
 gsap.registerPlugin(useGSAP);
 
@@ -88,6 +84,116 @@ const initialsFor = (name?: string | null) => {
     .map((p) => p[0]?.toUpperCase() ?? '')
     .join('')
     .padEnd(2, '·');
+};
+
+// ponytail: local copy of DashboardPage.tsx's greetingKey() — same
+// circular-import constraint as initialsFor above.
+const greetingKey = () => {
+  const h = new Date().getHours();
+  if (h < 12) return 'dashboard.greeting_morning';
+  if (h < 18) return 'dashboard.greeting_afternoon';
+  return 'dashboard.greeting_evening';
+};
+
+// Uzbek month abbreviation — a static table, NOT Intl month:'short'. The
+// dd.MM formatDate() helper above documents 'uz-UZ' + month:'short'
+// rendering an unresolved skeleton (e.g. "M07 1") in some browsers; testing
+// this build in an actual browser shows bare 'uz' (no region) hits the
+// exact same bug ("M07 18"), so there's no Intl locale tag that's safe here.
+const UZ_MONTH_ABBR = [
+  'YAN',
+  'FEV',
+  'MAR',
+  'APR',
+  'MAY',
+  'IYUN',
+  'IYUL',
+  'AVG',
+  'SEN',
+  'OKT',
+  'NOY',
+  'DEK',
+];
+/** {day, month (uz abbr), year} for `value`, in Asia/Tashkent — built off the
+ *  already-reliable numeric uzDateFormatter above, not Intl month names. */
+const uzDateParts = (value: string | Date) => {
+  const [year, month, day] = uzDateFormatter.format(new Date(value)).split('-');
+  return { day, month: UZ_MONTH_ABBR[Number(month) - 1], year };
+};
+
+const DAY_MS = 86_400_000;
+/** Whole days between `iso` and now, or null when there's no date to diff. */
+const daysSince = (iso?: string | null): number | null =>
+  iso ? Math.floor((Date.now() - new Date(iso).getTime()) / DAY_MS) : null;
+
+type DebtTone = 'danger' | 'warning' | 'success';
+/** Recovery-queue priority dot tone — mock thresholds: never-paid or either
+ *  amount/age past a bucket line pushes the row up a tone. */
+const debtPriorityTone = (
+  debt: number,
+  overdueDays: number | null,
+): DebtTone => {
+  if (overdueDays === null || debt >= 2_000_000 || overdueDays >= 14)
+    return 'danger';
+  if (debt >= 1_000_000 || overdueDays >= 7) return 'warning';
+  return 'success';
+};
+const DEBT_TONE_VAR: Record<DebtTone, string> = {
+  danger: 'hsl(var(--chart-danger))',
+  warning: 'hsl(var(--chart-warning))',
+  success: 'hsl(var(--chart-success))',
+};
+
+// Compact money for tight spaces (trend peak stat) — local, not
+// DashboardPage.tsx's formatCompact(): same circular-import constraint.
+const formatCompactMoney = (n: number) => {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
+  return String(Math.round(n));
+};
+
+/** Line path for a fixed-size sparkline — no Recharts, no fill (mock spec). */
+const sparklinePath = (data: number[], width: number, height: number) => {
+  if (data.length < 2) return '';
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const pad = 3; // keeps the 2px stroke from clipping at the viewBox edge
+  const innerHeight = height - pad * 2;
+  const stepX = width / (data.length - 1);
+  return data
+    .map((v, i) => {
+      const x = i * stepX;
+      const y = pad + innerHeight - ((v - min) / range) * innerHeight;
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
+};
+
+const MiniSparkline = ({ data, color }: { data: number[]; color: string }) => {
+  const width = 104;
+  const height = 30;
+  const d = sparklinePath(data, width, height);
+  if (!d) return null;
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className="mt-3"
+      aria-hidden="true"
+    >
+      <path
+        d={d}
+        fill="none"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 };
 
 // en-CA formatter always renders YYYY-MM-DD — cache it once like
@@ -131,21 +237,23 @@ export const DashboardCard = ({
   children,
 }: {
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   action?: React.ReactNode;
   className?: string;
   children: React.ReactNode;
 }) => (
   <Card
     className={cn(
-      'border-border/70 bg-card/75 p-5 shadow-sm backdrop-blur-xl',
-      'motion-safe:transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md',
+      // exec-dash 7: flat token surface (Design.md "Cards: 1px solid
+      // --border, no shadow") — no glass blur/translucency, no hover lift.
+      'border-border bg-card p-5 shadow-none',
+      'motion-safe:transition-colors duration-150 hover:translate-y-0 hover:shadow-none',
       className,
     )}
   >
     <div className="mb-4 flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="text-lg font-semibold tracking-tight text-balance">
+        <h2 className="text-lg font-bold tracking-tight text-balance">
           {title}
         </h2>
         {description && (
@@ -180,10 +288,10 @@ export const KpiCard = ({
   lead?: boolean;
 }) => {
   const toneClasses = {
-    primary: 'bg-primary/12 text-primary',
-    warning: 'bg-warning/12 text-warning',
-    success: 'bg-success/12 text-success',
-    info: 'bg-info/12 text-info',
+    primary: 'bg-primary/[14%] text-primary',
+    warning: 'bg-warning/[14%] text-warning',
+    success: 'bg-success/[14%] text-success',
+    info: 'bg-info/[14%] text-info',
   };
   const valueRef = useRef<HTMLParagraphElement>(null);
 
@@ -213,9 +321,11 @@ export const KpiCard = ({
   return (
     <Card
       className={cn(
-        'relative overflow-hidden border-border/70 bg-card/80 p-5 shadow-sm',
+        // exec-dash 7: flat token surface, no glass/shadow — hover reads via
+        // a background tint (Design.md's row-hover convention), not lift.
+        'relative overflow-hidden border-border bg-card p-5 shadow-none',
         onClick &&
-          'cursor-pointer motion-safe:transition-[background-color,transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          'cursor-pointer motion-safe:transition-colors hover:bg-muted hover:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       )}
       onClick={onClick}
       onKeyDown={(event) => {
@@ -244,7 +354,7 @@ export const KpiCard = ({
       <p
         ref={valueRef}
         className={cn(
-          'mt-4 font-bold tracking-tight tabular-nums font-mono',
+          'num mt-4 font-bold font-mono',
           lead ? 'text-4xl' : 'text-2xl',
         )}
       >
@@ -252,24 +362,7 @@ export const KpiCard = ({
       </p>
       <div className="mt-3 flex min-h-5 items-center justify-between gap-2 text-xs text-muted-foreground">
         <span>{meta}</span>
-        {delta !== undefined && delta !== null && (
-          <span
-            className={cn(
-              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold tabular-nums',
-              delta < 0
-                ? 'bg-destructive/10 text-destructive'
-                : 'bg-success/10 text-success',
-            )}
-          >
-            {delta < 0 ? (
-              <ArrowDownRight className="h-3 w-3" aria-hidden="true" />
-            ) : (
-              <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
-            )}
-            {delta >= 0 ? '+' : ''}
-            {delta}%
-          </span>
-        )}
+        {delta !== undefined && delta !== null && <DeltaChip delta={delta} />}
       </div>
     </Card>
   );
@@ -278,10 +371,10 @@ export const KpiCard = ({
 const DeltaChip = ({ delta }: { delta: number }) => (
   <span
     className={cn(
-      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums',
+      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums',
       delta < 0
-        ? 'bg-destructive/10 text-destructive'
-        : 'bg-success/10 text-success',
+        ? 'bg-destructive/[14%] text-destructive'
+        : 'bg-success/[14%] text-success',
     )}
   >
     {delta < 0 ? (
@@ -294,45 +387,49 @@ const DeltaChip = ({ delta }: { delta: number }) => (
   </span>
 );
 
-// Hero lead metric — label + big count-up value + delta. Click-through
-// preserved (autodrive-ls5 test: today-revenue must still navigate to
-// /payments with an explicit today date, same as the old lead KpiCard did).
-const HeroMetric = ({
+// KPI grid tile (mock section 3) — mono label, delta chip, .num value +
+// unit, optional sub-line + no-fill sparkline. `primary` gives card 1 the
+// gradient/ink treatment; `countUp` (card 1 only) absorbs the old HeroMetric
+// count-up verbatim, now driven by a numeric value instead of parsing digits
+// back out of a formatted string.
+const KpiTile = ({
   label,
   value,
+  unit,
+  sub,
   delta,
+  spark,
+  primary = false,
+  countUp = false,
   onClick,
 }: {
   label: string;
-  value: string;
+  value: number | null;
+  unit?: string;
+  sub?: React.ReactNode;
   delta?: number | null;
+  spark?: number[];
+  primary?: boolean;
+  countUp?: boolean;
   onClick?: () => void;
 }) => {
-  const valueRef = useRef<HTMLParagraphElement>(null);
+  const valueRef = useRef<HTMLSpanElement>(null);
+  const displayValue =
+    value == null ? '—' : groupDigits(String(Math.round(value)));
 
-  // Moved verbatim from KpiCard's lead-branch count-up (see KpiCard above,
-  // now dead there — nothing passes lead=true anymore).
   useGSAP(() => {
     const el = valueRef.current;
-    if (!el) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    // ponytail: strips sign along with non-digits (fine — money values here
-    // are non-negative); add sign handling if this ever goes negative.
-    const digits = value.replace(/\D/g, '');
-    const target = Number(digits);
-    if (!digits || !Number.isFinite(target)) return;
-    const lastDigitAt = value.search(/\d(?!.*\d)/);
-    const suffix = lastDigitAt >= 0 ? value.slice(lastDigitAt + 1) : '';
+    if (!countUp || !el || value == null || prefersReducedMotion) return;
     const proxy = { v: 0 };
     gsap.to(proxy, {
-      v: target,
-      duration: 0.9,
-      ease: 'power2.out',
+      v: value,
+      duration: 1,
+      ease: 'power2.out', // = easeOutCubic (Design.md) — GSAP's power2 is the cubic power ease
       onUpdate() {
-        el.textContent = `${Math.round(proxy.v).toLocaleString('uz-UZ')}${suffix}`;
+        el.textContent = groupDigits(String(Math.round(proxy.v)));
       },
     });
-  });
+  }, [value]);
 
   return (
     <div
@@ -345,74 +442,65 @@ const HeroMetric = ({
       }}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
+      style={
+        primary
+          ? {
+              background:
+                'linear-gradient(150deg, hsl(var(--primary)), color-mix(in srgb, hsl(var(--primary)) 82%, #C77A10))',
+            }
+          : undefined
+      }
       className={cn(
+        'relative overflow-hidden rounded-lg border p-5',
+        primary
+          ? 'border-transparent text-[hsl(var(--primary-foreground))] shadow-[0_8px_24px_hsl(var(--primary)/0.3)]'
+          : 'border-border bg-card',
         onClick &&
-          'cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          (primary
+            ? 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+            : 'cursor-pointer motion-safe:transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'),
       )}
     >
-      <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-        {label}
-      </p>
-      <div className="mt-2 flex flex-wrap items-baseline gap-3">
+      <div className="flex items-center justify-between gap-2">
         <p
-          ref={valueRef}
-          className="font-mono text-5xl font-bold tracking-tight tabular-nums"
+          className={cn(
+            'font-mono text-[10.5px] font-semibold uppercase tracking-[0.11em]',
+            primary ? 'opacity-80' : 'text-muted-foreground',
+          )}
         >
-          {value}
+          {label}
         </p>
         {delta !== undefined && delta !== null && <DeltaChip delta={delta} />}
       </div>
+      <p className="num mt-3 flex items-baseline gap-1 text-[31px] font-extrabold leading-none">
+        <span ref={valueRef}>{displayValue}</span>
+        {unit && value != null && (
+          <span className="text-[13px] font-medium opacity-70">{unit}</span>
+        )}
+      </p>
+      {sub && (
+        <p
+          className={cn(
+            'mt-2 text-[11.5px]',
+            primary ? 'opacity-80' : 'text-muted-foreground',
+          )}
+        >
+          {sub}
+        </p>
+      )}
+      {spark && spark.length > 1 && (
+        <MiniSparkline
+          data={spark}
+          color={
+            primary
+              ? 'hsl(var(--primary-foreground) / 0.55)'
+              : 'hsl(var(--primary))'
+          }
+        />
+      )}
     </div>
   );
 };
-
-// Compact KPI tile — the 3 non-lead top-row metrics (period revenue, debt,
-// coverage). Deliberately icon-less/tone-less (unlike KpiCard below, still
-// used by the financial/academic/staff blocks) per the flatter top-row spec.
-const CompactKpiCard = ({
-  label,
-  value,
-  sub,
-  delta,
-  onClick,
-  spark,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  delta?: number | null;
-  onClick?: () => void;
-  spark?: number[];
-}) => (
-  <div
-    onClick={onClick}
-    onKeyDown={(event) => {
-      if (onClick && (event.key === 'Enter' || event.key === ' ')) {
-        event.preventDefault();
-        onClick();
-      }
-    }}
-    role={onClick ? 'button' : undefined}
-    tabIndex={onClick ? 0 : undefined}
-    className={cn(
-      'relative overflow-hidden rounded-xl border border-border bg-card p-5',
-      onClick &&
-        'cursor-pointer transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-    )}
-  >
-    <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-      {label}
-    </p>
-    <p className="mt-2 font-mono text-3xl font-bold tracking-tight tabular-nums">
-      {value}
-    </p>
-    <div className="mt-2 flex min-h-5 items-center justify-between gap-2">
-      {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
-      {delta !== undefined && delta !== null && <DeltaChip delta={delta} />}
-    </div>
-    {spark && spark.length > 1 && <Sparkline data={spark} tone="primary" />}
-  </div>
-);
 
 const FilterBar = ({
   params,
@@ -441,8 +529,10 @@ const FilterBar = ({
       return onChange('range', `${addDays(today, -29)}|${today}`);
     return onChange('range', `${startOfMonthInUz()}|${today}`);
   };
+  // exec-dash 1: collapsed toolbar — h-10/rounded-[11px]/bg-card controls,
+  // no section label. Same preset()/onChange contract as before, just denser.
   const controlClassName =
-    'h-9 rounded-md border border-input bg-background px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+    'h-10 rounded-[11px] border border-border bg-card px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2">
       <select
@@ -457,8 +547,12 @@ const FilterBar = ({
         <option value={`${today}|${today}`}>
           {t('dashboard.v2.today', 'Bugun')}
         </option>
-        <option value={`${addDays(today, -6)}|${today}`}>7 kun</option>
-        <option value={`${addDays(today, -29)}|${today}`}>30 kun</option>
+        <option value={`${addDays(today, -6)}|${today}`}>
+          {t('dashboard.v2.last_7_days', '7 kun')}
+        </option>
+        <option value={`${addDays(today, -29)}|${today}`}>
+          {t('dashboard.v2.last_30_days', '30 kun')}
+        </option>
       </select>
       <input
         type="date"
@@ -528,7 +622,7 @@ const FilterBar = ({
         type="button"
         variant="outline"
         size="icon"
-        className="h-9 w-9"
+        className="h-10 w-10 rounded-[11px]"
         onClick={onRefresh}
         disabled={isFetching}
         aria-label={t('dashboard.v2.refresh', 'Yangilash')}
@@ -537,6 +631,82 @@ const FilterBar = ({
           className={cn('h-4 w-4', isFetching && 'animate-spin')}
         />
       </Button>
+    </div>
+  );
+};
+
+// Hero-adjacent period shortcuts (mock section 1) — same preset ranges as
+// FilterBar's own select, just three big-thumb-target pills. Wired to the
+// same updateParam('range', ...) contract, so both controls always agree.
+const PeriodPills = ({
+  params,
+  onChange,
+}: {
+  params: URLSearchParams;
+  onChange: (key: string, value?: string) => void;
+}) => {
+  const { t } = useTranslation();
+  const today = todayInUz();
+  const from = params.get('from') || startOfMonthInUz();
+  const to = params.get('to') || today;
+  const active = `${from}|${to}`;
+  const presets = [
+    {
+      key: 'today',
+      label: t('dashboard.v2.today', 'Bugun'),
+      range: `${today}|${today}`,
+    },
+    {
+      key: 'week',
+      label: t('dashboard.v2.week', 'Hafta'),
+      range: `${addDays(today, -6)}|${today}`,
+    },
+    {
+      key: 'month',
+      label: t('dashboard.v2.month', 'Oy'),
+      range: `${startOfMonthInUz()}|${today}`,
+    },
+  ] as const;
+  return (
+    <div
+      role="group"
+      aria-label={t('dashboard.v2.period', 'Davr')}
+      className="flex items-center gap-1.5"
+    >
+      {presets.map((preset) => (
+        <button
+          key={preset.key}
+          type="button"
+          onClick={() => onChange('range', preset.range)}
+          aria-pressed={active === preset.range}
+          className={cn(
+            'h-8 rounded-[10px] px-3 text-xs font-semibold motion-safe:transition-colors',
+            active === preset.range
+              ? 'bg-primary text-primary-foreground'
+              : 'border border-border bg-card text-muted-foreground hover:bg-muted',
+          )}
+        >
+          {preset.label}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// Hero live caption (mock section 1) — pulsing dot + "Jonli · Asia/Tashkent
+// · DD MMM" (uzDateParts' static month table, not Intl month names).
+const LiveCaption = () => {
+  const { t } = useTranslation();
+  const { day: liveDay, month: liveMonth } = uzDateParts(new Date());
+  return (
+    <div className="inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+      <span
+        className="h-[7px] w-[7px] shrink-0 rounded-full bg-success shadow-[0_0_0_3px_hsl(var(--success)/0.2)] motion-safe:animate-[pulse-dot_2.4s_ease-in-out_infinite]"
+        aria-hidden="true"
+      />
+      {t('dashboard.live_label', 'Jonli')} ·{' '}
+      {t('dashboard.v2.live_caption_tz', 'Asia/Tashkent')} · {liveDay}{' '}
+      {liveMonth}
     </div>
   );
 };
@@ -553,6 +723,7 @@ const RevenueChart = ({
     ...item,
     label: formatShortDate(item.period_start),
   }));
+  const lastIndex = chartData.length - 1;
   const total = data.reduce((sum, item) => sum + item.amount, 0);
   return (
     <div
@@ -581,7 +752,7 @@ const RevenueChart = ({
                     <stop
                       offset="0%"
                       stopColor="hsl(var(--primary))"
-                      stopOpacity={0.25}
+                      stopOpacity={0.24}
                     />
                     <stop
                       offset="100%"
@@ -590,7 +761,11 @@ const RevenueChart = ({
                     />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="hsl(var(--border))" vertical={false} />
+                <CartesianGrid
+                  stroke="hsl(var(--hair))"
+                  vertical={false}
+                  horizontal
+                />
                 <XAxis
                   dataKey="label"
                   {...AXIS_PROPS}
@@ -598,6 +773,7 @@ const RevenueChart = ({
                 />
                 <YAxis
                   {...AXIS_PROPS}
+                  tickCount={3}
                   tickFormatter={(value) =>
                     `${Math.round(Number(value) / 1_000_000)}M`
                   }
@@ -618,9 +794,26 @@ const RevenueChart = ({
                   type="monotone"
                   dataKey="amount"
                   stroke="hsl(var(--primary))"
-                  strokeWidth={2}
+                  strokeWidth={2.6}
                   fill="url(#company-revenue-fill)"
                   isAnimationActive={!prefersReducedMotion}
+                  // Dot only on the last point (mock spec) — zero it out for
+                  // every earlier point instead of branching return shape.
+                  dot={(dotProps: {
+                    cx?: number;
+                    cy?: number;
+                    index?: number;
+                  }) => (
+                    <circle
+                      key={`revenue-dot-${dotProps.index}`}
+                      cx={dotProps.cx}
+                      cy={dotProps.cy}
+                      r={dotProps.index === lastIndex ? 5 : 0}
+                      fill="hsl(var(--primary))"
+                      stroke="hsl(var(--card))"
+                      strokeWidth={dotProps.index === lastIndex ? 2.5 : 0}
+                    />
+                  )}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -680,7 +873,7 @@ const RevenueChart = ({
 
 const AXIS_PROPS = {
   stroke: 'hsl(var(--muted-foreground))',
-  fontSize: 11,
+  fontSize: 10,
   fontFamily: 'JetBrains Mono, ui-monospace, monospace',
   tickLine: false,
   axisLine: false,
@@ -702,6 +895,118 @@ const EmptyData = ({
           {t('common.clear', 'Tozalash')}
         </Button>
       )}
+    </div>
+  );
+};
+
+const LegendRow = ({
+  color,
+  label,
+  value,
+}: {
+  color: string;
+  label: string;
+  value: number;
+}) => (
+  <div className="flex items-center gap-2">
+    <span
+      className="h-[9px] w-[9px] shrink-0 rounded-[3px]"
+      style={{ backgroundColor: color }}
+      aria-hidden="true"
+    />
+    <span className="flex-1 text-[12.5px] font-semibold">{label}</span>
+    <span className="font-mono text-xs tabular-nums text-muted-foreground">
+      {value}
+    </span>
+  </div>
+);
+
+// Payment status donut (mock section 5) — inline SVG, not Recharts: fixed
+// r54/stroke16 geometry per spec, round-capped segments with a fixed gap.
+const DONUT_R = 54;
+const DONUT_STROKE = 16;
+const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_R;
+const DONUT_GAP = 8; // ponytail: tuned constant clearing the round-cap overlap between segments
+
+const PaymentStatusDonut = ({
+  paid,
+  partial,
+  debt,
+  coverageRate,
+}: {
+  paid: number;
+  partial: number;
+  debt: number;
+  coverageRate: number;
+}) => {
+  const { t } = useTranslation();
+  const total = paid + partial + debt;
+  const segments = [
+    { value: paid, color: 'hsl(var(--chart-success))' },
+    { value: partial, color: 'hsl(var(--chart-warning))' },
+    { value: debt, color: 'hsl(var(--chart-danger))' },
+  ].filter((segment) => segment.value > 0);
+  const size = (DONUT_R + DONUT_STROKE / 2) * 2;
+  const center = size / 2;
+  let cursor = 0;
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        role="img"
+        aria-label={t(
+          'dashboard.v2.coverage_bar_label',
+          '{{rate}}% to‘liq to‘langan',
+          { rate: coverageRate },
+        )}
+      >
+        <g transform={`rotate(-90 ${center} ${center})`}>
+          <circle
+            cx={center}
+            cy={center}
+            r={DONUT_R}
+            fill="none"
+            stroke="hsl(var(--muted))"
+            strokeWidth={DONUT_STROKE}
+          />
+          {total > 0 &&
+            segments.map((segment, index) => {
+              const rawLength = (segment.value / total) * DONUT_CIRCUMFERENCE;
+              const length = Math.max(
+                rawLength - (segments.length > 1 ? DONUT_GAP : 0),
+                0,
+              );
+              const offset = -cursor;
+              cursor += rawLength;
+              return (
+                <circle
+                  key={index}
+                  cx={center}
+                  cy={center}
+                  r={DONUT_R}
+                  fill="none"
+                  stroke={segment.color}
+                  strokeWidth={DONUT_STROKE}
+                  strokeLinecap="round"
+                  strokeDasharray={`${length} ${DONUT_CIRCUMFERENCE - length}`}
+                  strokeDashoffset={offset}
+                />
+              );
+            })}
+        </g>
+      </svg>
+      <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+        <div>
+          <p className="num text-[26px] font-extrabold leading-none">
+            {coverageRate}%
+          </p>
+          <p className="mt-1 font-mono text-[8.5px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+            {t('dashboard.v2.coverage_short', 'Qamrov')}
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
@@ -789,68 +1094,90 @@ const CompanyRevenueDashboard = () => {
       kpis.revenue.previous_period_to)
       ? `${formatDate(kpis.revenue.previous_period_from)} — ${formatDate(kpis.revenue.previous_period_to_inclusive || kpis.revenue.previous_period_to!)}`
       : t('dashboard.v2.previous_period', 'Oldingi davr');
+  const revenueTrendPeak = data.revenue_trend.length
+    ? data.revenue_trend.reduce((max, item) =>
+        item.amount > max.amount ? item : max,
+      )
+    : null;
+  // "01 — 18 IYUL 2026 · KUNLIK" — start day, end day+month(uz)+year, then
+  // granularity, all uppercase per the mock's mono caption.
+  const trendPeriodTo = kpis.revenue.period_to_inclusive || data.filters.to;
+  const trendEnd = uzDateParts(trendPeriodTo);
+  const trendRangeCaption = `${format(new Date(data.filters.from), 'dd')} — ${trendEnd.day} ${trendEnd.month} ${trendEnd.year} · ${t(data.filters.granularity === 'week' ? 'dashboard.v2.weekly' : 'dashboard.v2.daily').toUpperCase()}`;
 
   return (
     <div className="space-y-5 pb-8">
-      <header className="space-y-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+      <header className="space-y-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="mb-2 inline-flex items-center gap-2 text-xs font-medium text-primary">
-              <SquaresFour className="h-4 w-4" />{' '}
-              {t('dashboard.v2.title', 'Revenue control')}
-            </div>
-            <h1 className="font-heading text-4xl font-semibold tracking-tight text-balance md:text-5xl">
-              {t('dashboard.greeting_morning', 'Xayrli kun')}
+            <LiveCaption />
+            <h1 className="mt-2 font-heading text-[40px] font-extrabold leading-[1.1] tracking-[-0.025em] text-balance">
+              {t(greetingKey())}
               {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
             </h1>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground text-pretty">
+            <p className="mt-1.5 max-w-2xl text-[15px] text-muted-foreground text-pretty">
               {t(
-                'dashboard.v2.subtitle',
-                'Tushum, qarzdorlik va filiallar bo‘yicha bugungi boshqaruv ko‘rinishi.',
+                'dashboard.hero_sub',
+                '{{count}} ta talaba joriy holatda qarzdor.',
+                { count: kpis.debt.students_with_debt },
               )}
             </p>
           </div>
-          <Badge
-            variant="outline"
-            className="gap-1.5 border-success/30 bg-success/10 text-success"
-          >
-            <span
-              className="h-1.5 w-1.5 rounded-full bg-success"
-              aria-hidden="true"
-            />{' '}
-            {t('dashboard.live_label', 'Jonli')}
-          </Badge>
+          <PeriodPills params={params} onChange={updateParam} />
         </div>
 
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <HeroMetric
-            label={t('dashboard.v2.today_revenue', 'Bugungi tushum')}
-            value={formatMoney(kpis.revenue.today)}
-            delta={kpis.revenue.delta_percent}
-            onClick={() =>
-              navigate(
-                withContext('/payments', {
-                  date_from: todayInUz(),
-                  date_to: todayInUz(),
-                }),
-              )
-            }
-          />
-          <div className="flex flex-wrap gap-2">
-            <Button asChild>
-              <Link to="/payments?action=create">
-                {t('payments.add_payment', "To'lov qo'shish")}
-              </Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link to="/students?action=create">
-                {t('students.add', "Talaba qo'shish")}
-              </Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link to="/attendance">{t('nav.attendance', 'Davomat')}</Link>
-            </Button>
-          </div>
+        <div className="flex flex-wrap gap-2.5">
+          {(
+            [
+              {
+                to: '/payments?action=create',
+                icon: Wallet,
+                // ponytail: full static class strings, not `bg-${tone}` —
+                // Tailwind's scanner only picks up literal class text, so an
+                // interpolated tone would never generate the utility.
+                tileClass: 'bg-primary/[14%] text-primary',
+                label: t(
+                  'dashboard.v2.quick_action_payment',
+                  "To'lov qabul qilish",
+                ),
+              },
+              {
+                to: '/students?action=create',
+                icon: UserPlus,
+                tileClass: 'bg-info/[14%] text-info',
+                label: t(
+                  'dashboard.v2.quick_action_student',
+                  "Talaba qo'shish",
+                ),
+              },
+              {
+                to: '/attendance',
+                icon: UsersThree,
+                tileClass: 'bg-success/[14%] text-success',
+                label: t(
+                  'dashboard.v2.quick_action_attendance',
+                  'Davomat olish',
+                ),
+              },
+            ] as const
+          ).map((action) => (
+            <Link
+              key={action.to}
+              to={action.to}
+              className="flex items-center gap-2 rounded-xl border border-border bg-card px-[15px] py-[11px] text-[13.5px] font-semibold motion-safe:transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span
+                className={cn(
+                  'grid h-[26px] w-[26px] shrink-0 place-items-center rounded-lg',
+                  action.tileClass,
+                )}
+                aria-hidden="true"
+              >
+                <action.icon className="h-4 w-4" />
+              </span>
+              {action.label}
+            </Link>
+          ))}
         </div>
       </header>
 
@@ -864,20 +1191,39 @@ const CompanyRevenueDashboard = () => {
       />
 
       <section
-        className="grid gap-4 sm:grid-cols-3"
+        className="grid grid-cols-[repeat(auto-fit,minmax(216px,1fr))] gap-4 motion-safe:animate-[rise_0.5s_ease_both]"
+        style={{ animationDelay: '40ms' }}
         aria-label={t('dashboard.v2.kpi_section_label', 'Revenue control KPIs')}
       >
-        <CompactKpiCard
-          label={t('dashboard.v2.period_revenue', 'Tanlangan davr tushumi')}
-          value={formatMoney(kpis.revenue.period)}
+        <KpiTile
+          primary
+          countUp
+          label={t('dashboard.v2.today_revenue', 'Bugungi tushum')}
+          value={kpis.revenue.today}
+          unit={t('dashboard.currency_suffix')}
+          delta={kpis.revenue.delta_percent}
+          onClick={() =>
+            navigate(
+              withContext('/payments', {
+                date_from: todayInUz(),
+                date_to: todayInUz(),
+              }),
+            )
+          }
+        />
+        <KpiTile
+          label={t('dashboard.v2.period_revenue', 'Davr tushumi')}
+          value={kpis.revenue.period}
+          unit={t('dashboard.currency_suffix')}
           sub={`${comparisonRange}: ${formatMoney(kpis.revenue.previous_period)}`}
           delta={kpis.revenue.delta_percent}
-          onClick={() => navigate(withContext('/payments'))}
           spark={data.revenue_trend.map((item) => item.amount)}
+          onClick={() => navigate(withContext('/payments'))}
         />
-        <CompactKpiCard
+        <KpiTile
           label={t('dashboard.v2.outstanding_debt', 'Jami qarzdorlik')}
-          value={formatMoney(kpis.debt.current_outstanding)}
+          value={kpis.debt.current_outstanding}
+          unit={t('dashboard.currency_suffix')}
           sub={t('dashboard.v2.debtors', '{{count}} ta qarzdor student', {
             count: kpis.debt.students_with_debt,
           })}
@@ -887,24 +1233,42 @@ const CompanyRevenueDashboard = () => {
             )
           }
         />
-        <CompactKpiCard
-          label={t('dashboard.v2.coverage', 'Payment coverage')}
-          value={`${kpis.collection.coverage_rate}%`}
+        <KpiTile
+          label={t('dashboard.v2.academic_block.attendance_rate', 'Davomat')}
+          value={kpis.attendance_rate ?? null}
+          unit="%"
           sub={t(
-            'dashboard.v2.coverage_meta',
-            '{{paid}} to‘liq · {{partial}} qisman',
-            { paid: kpis.collection.paid, partial: kpis.collection.partial },
+            'dashboard.v2.academic_block.attendance_meta',
+            'Tanlangan davr bo‘yicha',
           )}
-          onClick={() =>
-            navigate(withContext('/students', { status: 'active' }))
-          }
+          onClick={() => navigate('/attendance')}
         />
       </section>
 
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.85fr)]">
+      <section
+        className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.85fr)] motion-safe:animate-[rise_0.5s_ease_both]"
+        style={{ animationDelay: '80ms' }}
+      >
         <DashboardCard
           title={t('dashboard.v2.revenue_trend', 'Tushum trendi')}
-          description={`${formatDate(data.filters.from, { year: 'numeric' })} — ${formatDate(kpis.revenue.period_to_inclusive || data.filters.to, { year: 'numeric' })}`}
+          description={
+            <span className="font-mono text-[10px] uppercase tracking-[0.08em]">
+              {trendRangeCaption}
+            </span>
+          }
+          action={
+            revenueTrendPeak && (
+              <div className="text-right">
+                <p className="num font-mono text-[21px] font-bold text-primary">
+                  {formatCompactMoney(revenueTrendPeak.amount)}
+                </p>
+                <p className="text-[11px] font-medium text-success">
+                  {t('dashboard.v2.trend_peak', 'eng yuqori')} ·{' '}
+                  {formatShortDate(revenueTrendPeak.period_start)}
+                </p>
+              </div>
+            )
+          }
         >
           <RevenueChart data={data.revenue_trend} onReset={resetFilters} />
         </DashboardCard>
@@ -915,60 +1279,50 @@ const CompanyRevenueDashboard = () => {
             'Eng katta qarzlar birinchi ko‘rsatiladi.',
           )}
           action={
-            <Link
-              to={withContext('/payments')}
-              className="text-xs font-semibold text-primary hover:underline"
-            >
-              {t('dashboard.v2.open_payments', 'To‘lovlar')}{' '}
-              <ArrowSquareOut
-                className="ml-1 inline h-3 w-3"
-                aria-hidden="true"
-              />
-            </Link>
+            <span className="rounded-full bg-destructive/[13%] px-2 py-0.5 font-mono text-[11px] font-bold text-destructive">
+              {kpis.debt.students_with_debt}
+            </span>
           }
         >
           <div className="space-y-1">
             {data.recovery_queue.length ? (
-              data.recovery_queue.map((student, index) => {
-                // Queue arrives sorted largest-debt-first (see subtitle
-                // above) — the first 3 rendered rows are the priority ones.
-                const isPriority = index < 3;
+              data.recovery_queue.map((student) => {
+                const overdueDays = daysSince(student.last_payment_at);
+                const tone = debtPriorityTone(student.debt, overdueDays);
                 return (
                   <div
                     key={student.student_id}
                     onClick={() => navigate(`/students/${student.student_id}`)}
-                    className="group flex cursor-pointer items-center gap-3 rounded-lg p-3 transition-colors hover:bg-accent"
+                    className="group flex cursor-pointer items-center gap-3 rounded-[10px] p-2 motion-safe:transition-colors hover:bg-muted"
                   >
                     <span
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-muted font-mono text-xs"
+                      className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[10px] bg-muted font-mono text-xs"
                       aria-hidden="true"
                     >
                       {initialsFor(student.student_name)}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">
+                      <span className="block truncate text-[13.5px] font-semibold">
                         {student.student_name}
                       </span>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {student.branch_name} · {student.course_type}
+                      <span className="block truncate text-[11px] text-muted-foreground">
+                        {student.branch_name} ·{' '}
+                        {overdueDays === null
+                          ? t('dashboard.v2.last_payment_none', "To'lov yo'q")
+                          : t(
+                              'dashboard.v2.overdue_days',
+                              '{{count}} kun kechikkan',
+                              { count: overdueDays },
+                            )}
                       </span>
                     </span>
                     <span className="flex shrink-0 items-center gap-1.5">
                       <span
-                        className={cn(
-                          'h-1.5 w-1.5 rounded-full',
-                          isPriority
-                            ? 'bg-destructive'
-                            : 'bg-muted-foreground/40',
-                        )}
+                        className="h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: DEBT_TONE_VAR[tone] }}
                         aria-hidden="true"
                       />
-                      {isPriority && (
-                        <span className="sr-only">
-                          {t('dashboard.v2.priority_high', 'Yuqori')}
-                        </span>
-                      )}
-                      <span className="font-mono text-sm font-semibold tabular-nums text-destructive">
+                      <span className="font-mono text-[13px] font-semibold tabular-nums text-destructive">
                         {formatMoney(student.debt)}
                       </span>
                     </span>
@@ -981,13 +1335,16 @@ const CompanyRevenueDashboard = () => {
                         }}
                         aria-label={t('common.view', "Ko'rish")}
                         title={t('common.view', "Ko'rish")}
-                        // ponytail: visible box stays h-8 w-8 (icon-density
-                        // spec) — after:-inset-1 grows the invisible hit area
-                        // to 40x40 without changing what's drawn. Same
+                        // ponytail: visible box is 24px (mock spec) —
+                        // after:-inset-2 grows the invisible hit area to
+                        // 40x40 without changing what's drawn. Same
                         // after:-inset-N technique as components/ui/sidebar.tsx.
-                        className="relative grid h-8 w-8 place-items-center rounded-md text-muted-foreground opacity-0 transition-opacity duration-150 after:absolute after:-inset-1 hover:bg-muted hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="relative grid h-6 w-6 place-items-center rounded-[7px] border border-border text-muted-foreground after:absolute after:-inset-2 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
-                        <CaretRight className="h-4 w-4" aria-hidden="true" />
+                        <CaretRight
+                          className="h-3.5 w-3.5"
+                          aria-hidden="true"
+                        />
                       </button>
                     </span>
                   </div>
@@ -997,10 +1354,22 @@ const CompanyRevenueDashboard = () => {
               <EmptyData />
             )}
           </div>
+          {data.recovery_queue.length > 0 && (
+            <Link
+              to={withContext('/payments')}
+              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+            >
+              {t('dashboard.v2.view_all_debtors', 'Barcha qarzdorlar')}
+              <CaretRight className="h-3 w-3" aria-hidden="true" />
+            </Link>
+          )}
         </DashboardCard>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <section
+        className="grid grid-cols-1 gap-4 lg:grid-cols-2 motion-safe:animate-[rise_0.5s_ease_both]"
+        style={{ animationDelay: '120ms' }}
+      >
         <DashboardCard
           title={t('dashboard.v2.branch_performance', 'Filial performance')}
           description={t(
@@ -1143,8 +1512,24 @@ const CompanyRevenueDashboard = () => {
                         <td className="py-3 text-right tabular-nums text-warning">
                           {formatMoney(branch.outstanding_debt)}
                         </td>
-                        <td className="py-3 text-right tabular-nums">
-                          {branch.collection_rate}%
+                        <td className="py-3">
+                          <div className="flex items-center justify-end gap-2">
+                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full"
+                                style={{
+                                  width: `${Math.min(branch.collection_rate, 100)}%`,
+                                  backgroundColor:
+                                    branch.collection_rate >= 85
+                                      ? 'hsl(var(--chart-success))'
+                                      : 'hsl(var(--chart-warning))',
+                                }}
+                              />
+                            </div>
+                            <span className="font-mono text-xs tabular-nums">
+                              {branch.collection_rate}%
+                            </span>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1164,49 +1549,28 @@ const CompanyRevenueDashboard = () => {
           )}
         >
           {statusTotal ? (
-            <div className="space-y-4">
-              <div
-                className="flex h-3 overflow-hidden rounded-full bg-muted"
-                aria-label={t(
-                  'dashboard.v2.coverage_bar_label',
-                  '{{rate}}% paid in full',
-                  { rate: kpis.collection.coverage_rate },
-                )}
-              >
-                <div
-                  className="bg-success"
-                  style={{
-                    width: `${(kpis.collection.paid / statusTotal) * 100}%`,
-                  }}
-                />
-                <div
-                  className="bg-warning"
-                  style={{
-                    width: `${(kpis.collection.partial / statusTotal) * 100}%`,
-                  }}
-                />
-                <div
-                  className="bg-destructive"
-                  style={{
-                    width: `${(kpis.collection.debt / statusTotal) * 100}%`,
-                  }}
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-3 text-sm">
-                <StatusItem
-                  label={t('dashboard.payment_full', 'To‘liq')}
+            <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-around">
+              <PaymentStatusDonut
+                paid={kpis.collection.paid}
+                partial={kpis.collection.partial}
+                debt={kpis.collection.debt}
+                coverageRate={kpis.collection.coverage_rate}
+              />
+              <div className="w-full max-w-[220px] space-y-2.5">
+                <LegendRow
+                  color="hsl(var(--chart-success))"
+                  label={t('dashboard.payment_full', "To'liq to'lagan")}
                   value={kpis.collection.paid}
-                  tone="success"
                 />
-                <StatusItem
+                <LegendRow
+                  color="hsl(var(--chart-warning))"
                   label={t('dashboard.payment_partial', 'Qisman')}
                   value={kpis.collection.partial}
-                  tone="warning"
                 />
-                <StatusItem
-                  label={t('dashboard.payment_none', 'Qarz')}
+                <LegendRow
+                  color="hsl(var(--chart-danger))"
+                  label={t('dashboard.payment_none', "To'lamagan")}
                   value={kpis.collection.debt}
-                  tone="danger"
                 />
               </div>
             </div>
@@ -1216,7 +1580,10 @@ const CompanyRevenueDashboard = () => {
         </DashboardCard>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+      <section
+        className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_0.9fr] motion-safe:animate-[rise_0.5s_ease_both]"
+        style={{ animationDelay: '160ms' }}
+      >
         <DashboardCard
           title={t('dashboard.v2.operations', 'Operational follow-through')}
           description={t(
@@ -1705,38 +2072,6 @@ const CompanyRevenueDashboard = () => {
           minute: '2-digit',
         })}
       </p>
-    </div>
-  );
-};
-
-const StatusItem = ({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone: 'success' | 'warning' | 'danger';
-}) => {
-  const Icon =
-    tone === 'success' ? CheckCircle : tone === 'warning' ? Clock : Warning;
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="flex items-center gap-2">
-        <Icon
-          className={cn(
-            'h-4 w-4',
-            tone === 'success'
-              ? 'text-success'
-              : tone === 'warning'
-                ? 'text-warning'
-                : 'text-destructive',
-          )}
-          aria-hidden="true"
-        />
-        {label}
-      </span>
-      <span className="font-semibold tabular-nums">{value}</span>
     </div>
   );
 };
