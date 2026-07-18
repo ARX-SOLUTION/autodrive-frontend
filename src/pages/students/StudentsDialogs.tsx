@@ -7,7 +7,6 @@ import StudentModal, {
 import AddStudentDialog, {
   type AddStudentPayload,
 } from '@/components/ui/AddStudentDialog';
-import ImportStudentsModal from '@/components/ui/ImportStudentsModal';
 import { cn } from '@/lib/utils';
 import type { CourseType, Student } from '@/types/student';
 import type { User } from '@/types/user';
@@ -29,9 +28,6 @@ interface StudentsDialogsProps {
   onSaveAndAdd: (data: CreateStudentPayload) => void;
   modalLoading: boolean;
 
-  importModalOpen: boolean;
-  onImportModalClose: () => void;
-
   onAddFlowClose: () => void;
   onAddStudentSubmit: (data: AddStudentPayload) => void;
   addFlowLoading: boolean;
@@ -42,7 +38,7 @@ interface StudentsDialogsProps {
   deleteLoading: boolean;
 }
 
-/** All create/edit/import/delete dialog wiring for the students page. */
+/** All create/edit/delete dialog wiring for the students page. */
 export const StudentsDialogs = ({
   students,
   courseType,
@@ -58,8 +54,6 @@ export const StudentsDialogs = ({
   onModalSubmit,
   onSaveAndAdd,
   modalLoading,
-  importModalOpen,
-  onImportModalClose,
   onAddFlowClose,
   onAddStudentSubmit,
   addFlowLoading,
@@ -105,12 +99,6 @@ export const StudentsDialogs = ({
         defaultBranchId={branchId}
         detailedToggle={editStudent ? undefined : detailedToggle}
         onDirtyChange={editStudent ? undefined : setCreateFormDirty}
-      />
-
-      <ImportStudentsModal
-        open={importModalOpen}
-        onClose={onImportModalClose}
-        branchId={branchId}
       />
 
       <AddStudentDialog

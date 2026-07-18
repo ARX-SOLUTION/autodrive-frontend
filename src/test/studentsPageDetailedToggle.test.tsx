@@ -35,7 +35,6 @@ vi.mock('@/services/branchService', () => ({
 vi.mock('@/services/operatorService', () => ({
   useOperators: () => ({ data: [], isLoading: false }),
 }));
-vi.mock('@/components/ui/ImportStudentsModal', () => ({ default: () => null }));
 
 // Stub the two dialogs so we only assert which one is open, and render the
 // shared toggle they receive so the checkbox is reachable.

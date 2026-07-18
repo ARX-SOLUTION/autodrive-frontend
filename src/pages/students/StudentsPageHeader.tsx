@@ -1,18 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import {
-  Plus,
-  DownloadSimple,
-  CloudArrowUp,
-  CircleNotch,
-} from '@phosphor-icons/react';
+import { Plus, DownloadSimple, CircleNotch } from '@phosphor-icons/react';
 
 interface StudentsPageHeaderProps {
   totalStudents: number;
   isExporting: boolean;
   onExport: () => void;
   canManageStudents: boolean;
-  onImport: () => void;
   onCreate: () => void;
 }
 
@@ -21,7 +15,6 @@ export const StudentsPageHeader = ({
   isExporting,
   onExport,
   canManageStudents,
-  onImport,
   onCreate,
 }: StudentsPageHeaderProps) => {
   const { t } = useTranslation();
@@ -51,15 +44,9 @@ export const StudentsPageHeader = ({
           {t('students.export_excel')}
         </Button>
         {canManageStudents && (
-          <>
-            <Button variant="outline" className="gap-2" onClick={onImport}>
-              <CloudArrowUp className="h-4 w-4" />{' '}
-              {t('students.import.button_label')}
-            </Button>
-            <Button className="gap-2" onClick={onCreate}>
-              <Plus className="h-4 w-4" /> {t('students.add')}
-            </Button>
-          </>
+          <Button className="gap-2" onClick={onCreate}>
+            <Plus className="h-4 w-4" /> {t('students.add')}
+          </Button>
         )}
       </div>
     </div>

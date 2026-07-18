@@ -536,37 +536,6 @@
     "validation_branch": "Branch not selected. Please select a branch.",
     "save_and_add": "Save and add another",
     "validation_group_required": "Group is required for driving school course",
-    "import": {
-      "button_label": "Import via CSV",
-      "modal_title": "Import via CSV",
-      "description": "Select a .csv file to upload.",
-      "format_help": "Not sure about the file format?",
-      "download_sample": "Download sample",
-      "uploading": "Uploading...",
-      "upload_button": "Upload",
-      "success": "{{count}} students imported",
-      "partial": "{{success}} imported, {{errors}} row errors",
-      "branch_required": "Select a branch first to import students.",
-      "preview": {
-        "title": "Preview ({{count}} rows)",
-        "first_name": "First name",
-        "last_name": "Last name",
-        "phone": "Phone",
-        "course_type": "Course type",
-        "error_missing": "Missing required field",
-        "error_course_type": "Invalid course type"
-      },
-      "duplicate_warning": {
-        "title": "Possible duplicates",
-        "desc": "These phone numbers already belong to existing students:"
-      },
-      "errors": {
-        "title": "Import errors",
-        "row": "Row",
-        "data": "Data",
-        "message": "Error"
-      }
-    },
     "no_debt": "No debt",
     "no_group": "No group",
     "course": {

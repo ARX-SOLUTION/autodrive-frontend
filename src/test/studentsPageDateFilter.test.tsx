@@ -53,10 +53,6 @@ vi.mock('@/components/ui/StudentModal', () => ({
   default: () => null,
 }));
 
-vi.mock('@/components/ui/ImportStudentsModal', () => ({
-  default: () => null,
-}));
-
 vi.mock('@/components/ui/AddStudentDialog', () => ({
   default: () => null,
 }));
