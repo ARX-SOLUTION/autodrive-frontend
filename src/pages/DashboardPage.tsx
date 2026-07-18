@@ -88,11 +88,11 @@ const initialsFor = (name?: string | null) => {
 };
 
 const branchHues = [
-  221, // primary blue
-  38, // warning amber
-  142, // success green
-  262, // violet
-  199, // info cyan
+  35, // amber (primary)
+  199, // cyan (info)
+  145, // green (success)
+  25, // orange
+  220, // steel blue
 ];
 
 // ---------- Shared chart styles ----------

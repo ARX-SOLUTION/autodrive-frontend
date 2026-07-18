@@ -39,7 +39,6 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
-        'glass-border': 'hsl(var(--glass-border))',
       },
       keyframes: {
         'accordion-down': {

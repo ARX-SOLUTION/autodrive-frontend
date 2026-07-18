@@ -54,14 +54,14 @@ const MiniRevenueChart = () => (
   >
     <defs>
       <linearGradient id="mlg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.28" />
-        <stop offset="100%" stopColor="#22D3EE" stopOpacity="0" />
+        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.28" />
+        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
       </linearGradient>
     </defs>
     <path
       d="M0,52 C20,48 32,42 48,38 C64,34 76,30 92,24 C108,18 120,16 136,13 C152,10 168,8 184,6 C200,4 220,3 240,2"
       fill="none"
-      stroke="#22D3EE"
+      stroke="hsl(var(--primary))"
       strokeWidth="1.5"
       strokeLinecap="round"
       vectorEffect="non-scaling-stroke"

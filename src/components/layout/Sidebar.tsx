@@ -219,10 +219,9 @@ export const Sidebar = ({
     <>
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-glass-border-light backdrop-blur-2xl transition-all duration-300 md:flex',
+          'fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-border bg-sidebar transition-all duration-300 md:flex',
           collapsed ? 'w-[68px]' : 'w-60',
         )}
-        style={{ background: 'hsl(var(--sidebar-background))' }}
       >
         <SidebarContent collapsed={collapsed} />
         <button
