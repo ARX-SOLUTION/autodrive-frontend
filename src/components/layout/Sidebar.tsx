@@ -6,45 +6,46 @@ import { useCan } from '@/hooks/useCan';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import type { Capability } from '@/lib/permissions';
 import {
-  LayoutDashboard,
-  Building2,
+  SquaresFour,
+  Buildings,
   GraduationCap,
   CreditCard,
   Headphones,
-  Users,
+  UsersThree,
   User,
-  LogOut,
-  ChevronLeft,
-  Layers,
-  UserCog,
+  SignOut,
+  CaretLeft,
+  Stack,
+  UserGear,
   ShieldCheck,
   Calendar,
-  ClipboardCheck,
+  ListChecks,
   BookOpen,
-} from 'lucide-react';
+} from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Brand } from './Brand';
 
 type NavItem = {
   path: string;
   labelKey: string;
-  icon: typeof LayoutDashboard;
+  icon: typeof SquaresFour;
   // Capability required to see this item; absent = visible to everyone.
   // Must match the route guard in App.tsx for the same path.
   cap?: Capability;
 };
 
 const navItems: NavItem[] = [
-  { path: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+  { path: '/dashboard', labelKey: 'nav.dashboard', icon: SquaresFour },
   {
     path: '/branches',
     labelKey: 'nav.branches',
-    icon: Building2,
+    icon: Buildings,
     cap: 'manageBranches',
   },
   { path: '/schedule', labelKey: 'nav.schedule', icon: Calendar },
-  { path: '/attendance', labelKey: 'nav.attendance', icon: ClipboardCheck },
-  { path: '/groups', labelKey: 'nav.groups', icon: Layers },
+  { path: '/attendance', labelKey: 'nav.attendance', icon: ListChecks },
+  { path: '/groups', labelKey: 'nav.groups', icon: Stack },
   {
     path: '/courses',
     labelKey: 'nav.courses',
@@ -62,13 +63,13 @@ const navItems: NavItem[] = [
   {
     path: '/teachers',
     labelKey: 'nav.teachers',
-    icon: Users,
+    icon: UsersThree,
     cap: 'manageStaff',
   },
   {
     path: '/users',
     labelKey: 'nav.users',
-    icon: UserCog,
+    icon: UserGear,
     cap: 'manageUsers',
   },
   {
@@ -134,13 +135,13 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
   return (
     <>
       <div className="flex h-16 items-center gap-3 border-b border-border px-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center">
-          <img src="/favicon.png" alt="Logo" className="h-full w-full" />
-        </div>
-        {!collapsed && (
-          <span className="font-heading text-lg font-bold text-foreground">
-            {t('app.title')}
-          </span>
+        {collapsed ? (
+          <span
+            aria-hidden
+            className="mx-auto h-6 w-1 rounded-full bg-primary"
+          />
+        ) : (
+          <Brand size="sm" />
         )}
       </div>
 
@@ -191,7 +192,7 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
               collapsed ? 'justify-center w-10 h-10' : 'gap-2 px-2 py-2',
             )}
           >
-            <LogOut className="h-4 w-4" />
+            <SignOut className="h-4 w-4" />
             {!collapsed && <span>{t('actions.logout')}</span>}
           </button>
         </div>
@@ -219,10 +220,9 @@ export const Sidebar = ({
     <>
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-glass-border-light backdrop-blur-2xl transition-all duration-300 md:flex',
+          'fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-border bg-sidebar transition-all duration-300 md:flex',
           collapsed ? 'w-[68px]' : 'w-60',
         )}
-        style={{ background: 'hsl(var(--sidebar-background))' }}
       >
         <SidebarContent collapsed={collapsed} />
         <button
@@ -230,7 +230,7 @@ export const Sidebar = ({
           aria-label={t('actions.sidebar')}
           className="absolute -right-3 top-20 z-10 rounded-full border border-border bg-background p-1 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
         >
-          <ChevronLeft
+          <CaretLeft
             className={cn(
               'h-4 w-4 transition-transform',
               collapsed && 'rotate-180',

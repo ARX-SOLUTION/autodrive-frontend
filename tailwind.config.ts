@@ -24,8 +24,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['Unbounded', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
+        heading: ['IBM Plex Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        body: ['IBM Plex Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'ui-monospace', 'monospace'],
       },
       colors: {
         sidebar: {
@@ -38,7 +39,6 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
-        'glass-border': 'hsl(var(--glass-border))',
       },
       keyframes: {
         'accordion-down': {

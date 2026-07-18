@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ShieldCheck, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Warning } from '@phosphor-icons/react';
 import { useAuditLogById } from '@/services/auditService';
 import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -43,7 +43,7 @@ const AuditChangesView = (
 
     return (
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground mb-2">
           {t('audit.changes')}
         </p>
         {changedKeys.length === 0 ? (
@@ -94,7 +94,7 @@ const AuditChangesView = (
 
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+      <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground mb-2">
         {action === 'CREATE'
           ? t('audit.created_data')
           : action === 'DELETE'
@@ -187,7 +187,7 @@ const AuditDetailPage = () => {
 
   // stateLog is an optimistic pre-fill, so "loading" only means something
   // while there's no log yet at all -- same for the error/not-found split
-  // below (isError picks AlertTriangle+common.error, otherwise it's a plain
+  // below (isError picks Warning+common.error, otherwise it's a plain
   // not-found with ShieldCheck+common.not_found).
   const effectiveLoading = isLoading && !log;
 
@@ -199,7 +199,7 @@ const AuditDetailPage = () => {
         isLoading={effectiveLoading}
         isError={!effectiveLoading}
         errorTitle={isError ? t('common.error') : t('common.not_found')}
-        errorIcon={isError ? AlertTriangle : ShieldCheck}
+        errorIcon={isError ? Warning : ShieldCheck}
       />
     );
   }

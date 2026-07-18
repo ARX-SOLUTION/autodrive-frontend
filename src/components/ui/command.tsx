@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { type DialogProps } from '@radix-ui/react-dialog';
 import { Command as CommandPrimitive } from 'cmdk';
-import { Loader2, Search } from 'lucide-react';
+import { CircleNotch, MagnifyingGlass } from '@phosphor-icons/react';
 
 import { cn } from '@/lib/utils';
 import {
@@ -55,9 +55,9 @@ const CommandInput = React.forwardRef<
 >(({ className, loading, ...props }, ref) => (
   <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
     {loading ? (
-      <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin opacity-50" />
+      <CircleNotch className="mr-2 h-4 w-4 shrink-0 animate-spin opacity-50" />
     ) : (
-      <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+      <MagnifyingGlass className="mr-2 h-4 w-4 shrink-0 opacity-50" />
     )}
     <CommandPrimitive.Input
       ref={ref}

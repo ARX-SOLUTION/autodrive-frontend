@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLogin } from '@/services/authService';
+import { Brand } from '@/components/layout/Brand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -13,6 +14,7 @@ const LoginPage = () => {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const login = useLogin();
@@ -41,7 +43,7 @@ const LoginPage = () => {
     } else if (!error.response) {
       toast.error(t('login.network_error'));
     } else {
-      toast.error(t('login.error'));
+      setFormError(t('login.error'));
     }
   };
 
@@ -71,12 +73,9 @@ const LoginPage = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="glass-card w-full max-w-sm p-8 animate-slide-in">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center ">
-            <img src="/favicon.png" alt="Logo" className="h-full w-full" />
+          <div className="flex justify-center">
+            <Brand size="lg" />
           </div>
-          <h1 className="font-heading text-2xl font-bold text-foreground text-balance">
-            {t('app.title')}
-          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t('login.title')}
           </p>
@@ -90,7 +89,10 @@ const LoginPage = () => {
               type="email"
               autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setFormError(null);
+              }}
               placeholder={t('login.email_placeholder')}
               className="mt-1.5 bg-secondary border-border"
               required
@@ -102,12 +104,20 @@ const LoginPage = () => {
               id="password"
               autoComplete="current-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setFormError(null);
+              }}
               placeholder={t('login.password_placeholder')}
               className="mt-1.5 bg-secondary border-border"
               required
             />
           </div>
+          {formError && (
+            <p role="alert" className="text-sm text-destructive">
+              {formError}
+            </p>
+          )}
           <Button type="submit" className="w-full" disabled={login.isPending}>
             {login.isPending ? t('login.submitting') : t('login.submit')}
           </Button>

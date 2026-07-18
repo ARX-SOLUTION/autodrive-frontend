@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Download, Loader2, Plus } from 'lucide-react';
+import { DownloadSimple, CircleNotch, Plus } from '@phosphor-icons/react';
 
 interface PaymentsPageHeaderProps {
   isCrossTenant: boolean;
@@ -47,9 +47,9 @@ export const PaymentsPageHeader = ({
                 disabled={exportDisabled}
               >
                 {isExporting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <CircleNotch className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Download className="h-4 w-4" />
+                  <DownloadSimple className="h-4 w-4" />
                 )}{' '}
                 {t('payments.export_excel')}
               </Button>

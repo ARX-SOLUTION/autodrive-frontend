@@ -23,7 +23,14 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, MapPin, Building2, Phone } from 'lucide-react';
+import {
+  Plus,
+  PencilSimple,
+  Trash,
+  MapPin,
+  Buildings,
+  Phone,
+} from '@phosphor-icons/react';
 import { formatDate } from '@/pages/StudentsPage';
 import { extractErrorMessage } from '@/lib/errors';
 import {
@@ -169,7 +176,7 @@ const BranchesPage = () => {
             ) : (branches || []).length === 0 ? (
               <div className="md:col-span-2">
                 <EmptyState
-                  icon={Building2}
+                  icon={Buildings}
                   title={t('branches.not_found')}
                   description={t('branches.not_found_desc')}
                   action={
@@ -231,7 +238,7 @@ const BranchesPage = () => {
                             aria-label={t('common.edit')}
                             className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                           >
-                            <Pencil className="h-3.5 w-3.5" />
+                            <PencilSimple className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={(e) => {
@@ -241,7 +248,7 @@ const BranchesPage = () => {
                             aria-label={t('common.delete')}
                             className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash className="h-3.5 w-3.5" />
                           </button>
                         </>
                       )}
@@ -316,7 +323,7 @@ const BranchesPage = () => {
                       aria-label={t('common.edit')}
                       className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <PencilSimple className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={(e) => {
@@ -326,7 +333,7 @@ const BranchesPage = () => {
                       aria-label={t('common.delete')}
                       className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash className="h-3.5 w-3.5" />
                     </button>
                   </>
                 ) : undefined
@@ -335,7 +342,7 @@ const BranchesPage = () => {
           ))
         ) : (
           <EmptyState
-            icon={Building2}
+            icon={Buildings}
             title={t('branches.not_found')}
             description={t('branches.not_found_desc')}
             action={

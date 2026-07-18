@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Plus, FileText } from 'lucide-react';
+import { Plus, FileText } from '@phosphor-icons/react';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 const DocumentsPage = () => {
@@ -17,11 +17,7 @@ const DocumentsPage = () => {
             {t('documents.subtitle')}
           </p>
         </div>
-        <Button
-          className="gap-2"
-          disabled
-          title={t('documents.coming_soon')}
-        >
+        <Button className="gap-2" disabled title={t('documents.coming_soon')}>
           <Plus className="h-4 w-4" /> {t('documents.add')}
         </Button>
       </div>

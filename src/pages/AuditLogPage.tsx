@@ -6,7 +6,7 @@ import { toLocalDateStr } from '@/services/studentService';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from '@phosphor-icons/react';
 import { AuditFilterBar } from '@/pages/audit/AuditFilterBar';
 import { AuditTable } from '@/pages/audit/AuditTable';
 import { AuditMobileList } from '@/pages/audit/AuditMobileList';
@@ -147,7 +147,7 @@ const AuditLogPage = () => {
       {/* Table */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-balance">
+          <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground text-balance">
             {t('audit.entries_list')}
           </h2>
           <span className="text-xs text-muted-foreground">

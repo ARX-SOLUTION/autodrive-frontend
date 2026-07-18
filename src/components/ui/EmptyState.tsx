@@ -1,15 +1,16 @@
-import { LucideIcon, Inbox } from 'lucide-react';
+import type { Icon as PhosphorIcon } from '@phosphor-icons/react';
+import { Tray } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 
 interface EmptyStateProps {
-  icon?: LucideIcon;
+  icon?: PhosphorIcon;
   title: string;
   description?: string;
   action?: { label: string; onClick: () => void };
 }
 
 export const EmptyState = ({
-  icon: Icon = Inbox,
+  icon: Icon = Tray,
   title,
   description,
   action,

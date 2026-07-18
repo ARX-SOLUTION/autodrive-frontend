@@ -31,7 +31,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, BookOpen, Loader2 } from 'lucide-react';
+import {
+  Plus,
+  PencilSimple,
+  Trash,
+  BookOpen,
+  CircleNotch,
+} from '@phosphor-icons/react';
 import { extractErrorMessage } from '@/lib/errors';
 import { formatMoney, groupDigits } from '@/lib/money';
 import { cn } from '@/lib/utils';
@@ -167,7 +173,7 @@ const CoursesPage = () => {
       <div className="relative">
         {isFetching && !isLoading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <CircleNotch className="h-6 w-6 animate-spin text-primary" />
           </div>
         )}
         <div
@@ -265,14 +271,14 @@ const CoursesPage = () => {
                             aria-label={t('common.edit')}
                             className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                           >
-                            <Pencil className="h-3.5 w-3.5" />
+                            <PencilSimple className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => setDeleteId(c.id)}
                             aria-label={t('common.delete')}
                             className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </td>
@@ -321,14 +327,14 @@ const CoursesPage = () => {
                       aria-label={t('common.edit')}
                       className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <PencilSimple className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => setDeleteId(c.id)}
                       aria-label={t('common.delete')}
                       className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash className="h-3.5 w-3.5" />
                     </button>
                   </>
                 }

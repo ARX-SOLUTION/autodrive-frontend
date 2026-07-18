@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { UploadCloud, AlertTriangle, X } from 'lucide-react';
+import { CloudArrowUp, Warning, X } from '@phosphor-icons/react';
 import { track } from '@/lib/umami';
 import { useIsCrossTenant } from '@/hooks/useCan';
 import { extractErrorMessage } from '@/lib/errors';
@@ -268,7 +268,7 @@ export default function ImportStudentsModal({
             <div className="flex items-start justify-between gap-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-sm">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 font-medium text-warning">
-                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <Warning className="h-4 w-4 shrink-0" />
                   {t('students.import.duplicate_warning.title')}
                 </div>
                 <p className="text-muted-foreground">
@@ -298,7 +298,7 @@ export default function ImportStudentsModal({
             disabled={!file || mutation.isPending || branchRequired}
             onClick={handleUpload}
           >
-            <UploadCloud className="h-4 w-4" />
+            <CloudArrowUp className="h-4 w-4" />
             {mutation.isPending
               ? t('students.import.uploading')
               : t('students.import.upload_button')}

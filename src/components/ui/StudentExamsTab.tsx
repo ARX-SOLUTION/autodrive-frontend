@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { RecordExamModal } from './RecordExamModal';
 import { Student } from '@/types/student';
 import { format } from 'date-fns';
-import { Plus } from 'lucide-react';
+import { Plus } from '@phosphor-icons/react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const StudentExamsTab = ({ student }: { student: Student }) => {

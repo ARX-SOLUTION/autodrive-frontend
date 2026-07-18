@@ -18,7 +18,7 @@ import {
 } from '@/services/paymentService';
 import { toLocalDateStr } from '@/services/studentService';
 import { useAuthStore } from '@/store/authStore';
-import { Loader2 } from 'lucide-react';
+import { CircleNotch } from '@phosphor-icons/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { presetRange, type DatePreset } from './payments/dateRangePresets';
@@ -299,7 +299,7 @@ const PaymentsPage = () => {
       {/* SECTION 4: Table */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-balance">
+          <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground text-balance">
             {t('payments.payment_list')}
           </h2>
           <span className="text-xs text-muted-foreground">
@@ -309,7 +309,7 @@ const PaymentsPage = () => {
         <div className="relative">
           {isFetching && !isLoading && (
             <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <CircleNotch className="h-6 w-6 animate-spin text-primary" />
             </div>
           )}
           <div

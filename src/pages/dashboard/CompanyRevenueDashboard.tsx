@@ -1,30 +1,32 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
 import {
-  AlertTriangle,
+  Warning,
   ArrowDownRight,
   ArrowUpRight,
-  CalendarClock,
-  CheckCircle2,
-  ChevronRight,
-  CircleDollarSign,
-  ClipboardCheck,
-  Clock3,
-  ExternalLink,
+  CalendarDot,
+  CheckCircle,
+  CaretRight,
+  CurrencyCircleDollar,
+  ClipboardText,
+  Clock,
+  ArrowSquareOut,
   GraduationCap,
   Hourglass,
-  LayoutDashboard,
+  SquaresFour,
   PiggyBank,
-  RefreshCw,
-  TrendingUp,
+  ArrowsClockwise,
+  TrendUp,
   UserCheck,
   UserMinus,
   UserPlus,
-  Users,
-  WalletCards,
-} from 'lucide-react';
+  UsersThree,
+  Wallet,
+} from '@phosphor-icons/react';
 import {
   Area,
   AreaChart,
@@ -49,6 +51,8 @@ import { useCan } from '@/hooks/useCan';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
 import { formatMoney } from '@/lib/money';
+
+gsap.registerPlugin(useGSAP);
 
 const UZ_TIMEZONE = 'Asia/Tashkent';
 
@@ -145,14 +149,16 @@ export const KpiCard = ({
   tone,
   delta,
   onClick,
+  lead = false,
 }: {
   label: string;
   value: string;
   meta: string;
-  icon: typeof WalletCards;
+  icon: typeof Wallet;
   tone: 'primary' | 'warning' | 'success' | 'info';
   delta?: number | null;
   onClick?: () => void;
+  lead?: boolean;
 }) => {
   const toneClasses = {
     primary: 'bg-primary/12 text-primary',
@@ -160,6 +166,31 @@ export const KpiCard = ({
     success: 'bg-success/12 text-success',
     info: 'bg-info/12 text-info',
   };
+  const valueRef = useRef<HTMLParagraphElement>(null);
+
+  // Lead-card count-up, mount-once (empty deps). Non-lead cards no-op.
+  useGSAP(() => {
+    const el = valueRef.current;
+    if (!lead || !el) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // ponytail: strips sign along with non-digits (fine — money/% values here
+    // are non-negative); add sign handling if a lead card ever goes negative.
+    const digits = value.replace(/\D/g, '');
+    const target = Number(digits);
+    if (!digits || !Number.isFinite(target)) return;
+    const lastDigitAt = value.search(/\d(?!.*\d)/);
+    const suffix = lastDigitAt >= 0 ? value.slice(lastDigitAt + 1) : '';
+    const proxy = { v: 0 };
+    gsap.to(proxy, {
+      v: target,
+      duration: 0.9,
+      ease: 'power2.out',
+      onUpdate() {
+        el.textContent = `${Math.round(proxy.v).toLocaleString('uz-UZ')}${suffix}`;
+      },
+    });
+  });
+
   return (
     <Card
       className={cn(
@@ -178,7 +209,7 @@ export const KpiCard = ({
       tabIndex={onClick ? 0 : undefined}
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
           {label}
         </p>
         <span
@@ -191,7 +222,13 @@ export const KpiCard = ({
           <Icon className="h-4 w-4" />
         </span>
       </div>
-      <p className="mt-4 text-2xl font-bold tracking-tight tabular-nums">
+      <p
+        ref={valueRef}
+        className={cn(
+          'mt-4 font-bold tracking-tight tabular-nums font-mono',
+          lead ? 'text-4xl' : 'text-2xl',
+        )}
+      >
         {value}
       </p>
       <div className="mt-3 flex min-h-5 items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -251,7 +288,7 @@ const FilterBar = ({
       <div className="flex min-w-[150px] flex-1 flex-col gap-1">
         <label
           htmlFor="dashboard-range"
-          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
         >
           {t('dashboard.v2.period', 'Davr')}
         </label>
@@ -274,7 +311,7 @@ const FilterBar = ({
       <div className="flex min-w-[135px] flex-1 flex-col gap-1">
         <label
           htmlFor="dashboard-from"
-          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
         >
           {t('dashboard.v2.from', 'Dan')}
         </label>
@@ -290,7 +327,7 @@ const FilterBar = ({
       <div className="flex min-w-[135px] flex-1 flex-col gap-1">
         <label
           htmlFor="dashboard-to"
-          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
         >
           {t('dashboard.v2.to', 'Gacha')}
         </label>
@@ -307,7 +344,7 @@ const FilterBar = ({
         <div className="flex min-w-[160px] flex-1 flex-col gap-1">
           <label
             htmlFor="dashboard-branch"
-            className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+            className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
           >
             {t('dashboard.v2.branch', 'Filial')}
           </label>
@@ -336,7 +373,7 @@ const FilterBar = ({
       <div className="flex min-w-[140px] flex-1 flex-col gap-1">
         <label
           htmlFor="dashboard-course"
-          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
         >
           {t('dashboard.v2.course', 'Kurs')}
         </label>
@@ -361,7 +398,7 @@ const FilterBar = ({
       <div className="flex min-w-[120px] flex-1 flex-col gap-1">
         <label
           htmlFor="dashboard-granularity"
-          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
         >
           {t('dashboard.v2.granularity', 'Granulyarlik')}
         </label>
@@ -383,7 +420,9 @@ const FilterBar = ({
         disabled={isFetching}
         aria-label={t('dashboard.v2.refresh', 'Yangilash')}
       >
-        <RefreshCw className={cn('h-4 w-4', isFetching && 'animate-spin')} />
+        <ArrowsClockwise
+          className={cn('h-4 w-4', isFetching && 'animate-spin')}
+        />
       </Button>
     </div>
   );
@@ -533,6 +572,7 @@ const RevenueChart = ({
 const AXIS_PROPS = {
   stroke: 'hsl(var(--muted-foreground))',
   fontSize: 11,
+  fontFamily: 'IBM Plex Mono, ui-monospace, monospace',
   tickLine: false,
   axisLine: false,
 };
@@ -646,10 +686,10 @@ const CompanyRevenueDashboard = () => {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="mb-2 inline-flex items-center gap-2 text-xs font-medium text-primary">
-            <LayoutDashboard className="h-4 w-4" />{' '}
+            <SquaresFour className="h-4 w-4" />{' '}
             {t('dashboard.v2.title', 'Revenue control')}
           </div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight text-balance">
+          <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance md:text-4xl">
             {t('dashboard.greeting_morning', 'Xayrli kun')}
             {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
           </h1>
@@ -682,14 +722,14 @@ const CompanyRevenueDashboard = () => {
       />
 
       <section
-        className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-[1.7fr_1fr_1fr_1fr]"
         aria-label={t('dashboard.v2.kpi_section_label', 'Revenue control KPIs')}
       >
         <KpiCard
           label={t('dashboard.v2.today_revenue', 'Bugungi tushum')}
           value={formatMoney(kpis.revenue.today)}
           meta={t('dashboard.v2.today_meta', 'Asia/Tashkent bo‘yicha')}
-          icon={WalletCards}
+          icon={Wallet}
           tone="primary"
           onClick={() =>
             navigate(
@@ -699,12 +739,13 @@ const CompanyRevenueDashboard = () => {
               }),
             )
           }
+          lead
         />
         <KpiCard
           label={t('dashboard.v2.period_revenue', 'Tanlangan davr tushumi')}
           value={formatMoney(kpis.revenue.period)}
           meta={`${comparisonRange}: ${formatMoney(kpis.revenue.previous_period)}`}
-          icon={CircleDollarSign}
+          icon={CurrencyCircleDollar}
           tone="info"
           delta={kpis.revenue.delta_percent}
           onClick={() => navigate(withContext('/payments'))}
@@ -715,7 +756,7 @@ const CompanyRevenueDashboard = () => {
           meta={t('dashboard.v2.debtors', '{{count}} ta qarzdor student', {
             count: kpis.debt.students_with_debt,
           })}
-          icon={AlertTriangle}
+          icon={Warning}
           tone="warning"
           onClick={() =>
             navigate(
@@ -731,7 +772,7 @@ const CompanyRevenueDashboard = () => {
             '{{paid}} to‘liq · {{partial}} qisman',
             { paid: kpis.collection.paid, partial: kpis.collection.partial },
           )}
-          icon={CheckCircle2}
+          icon={CheckCircle}
           tone="success"
           onClick={() =>
             navigate(withContext('/students', { status: 'active' }))
@@ -758,7 +799,7 @@ const CompanyRevenueDashboard = () => {
               className="text-xs font-semibold text-primary hover:underline"
             >
               {t('dashboard.v2.open_payments', 'To‘lovlar')}{' '}
-              <ExternalLink
+              <ArrowSquareOut
                 className="ml-1 inline h-3 w-3"
                 aria-hidden="true"
               />
@@ -814,10 +855,7 @@ const CompanyRevenueDashboard = () => {
               className="text-xs font-semibold text-primary hover:underline"
             >
               {t('dashboard.v2.manage_branches', 'Filiallar')}{' '}
-              <ChevronRight
-                className="ml-1 inline h-3 w-3"
-                aria-hidden="true"
-              />
+              <CaretRight className="ml-1 inline h-3 w-3" aria-hidden="true" />
             </Link>
           }
         >
@@ -867,7 +905,7 @@ const CompanyRevenueDashboard = () => {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-semibold">{branch.name}</span>
-                      <ChevronRight
+                      <CaretRight
                         className="h-4 w-4 text-muted-foreground"
                         aria-hidden="true"
                       />
@@ -1034,7 +1072,7 @@ const CompanyRevenueDashboard = () => {
               className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-[background-color,transform] duration-150 hover:-translate-y-0.5 hover:bg-muted/60"
             >
               <span className="flex items-center gap-3">
-                <CalendarClock
+                <CalendarDot
                   className="h-5 w-5 text-primary"
                   aria-hidden="true"
                 />
@@ -1047,7 +1085,7 @@ const CompanyRevenueDashboard = () => {
                   </span>
                 </span>
               </span>
-              <ChevronRight
+              <CaretRight
                 className="h-4 w-4 text-muted-foreground motion-safe:transition-transform duration-150 group-hover:translate-x-0.5"
                 aria-hidden="true"
               />
@@ -1057,7 +1095,7 @@ const CompanyRevenueDashboard = () => {
               className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-[background-color,transform] duration-150 hover:-translate-y-0.5 hover:bg-muted/60"
             >
               <span className="flex items-center gap-3">
-                <Clock3 className="h-5 w-5 text-warning" aria-hidden="true" />
+                <Clock className="h-5 w-5 text-warning" aria-hidden="true" />
                 <span>
                   <span className="block text-sm font-semibold">
                     {t('nav.attendance', 'Davomat tekshiruvi')}
@@ -1068,7 +1106,7 @@ const CompanyRevenueDashboard = () => {
                   </span>
                 </span>
               </span>
-              <ChevronRight
+              <CaretRight
                 className="h-4 w-4 text-muted-foreground motion-safe:transition-transform duration-150 group-hover:translate-x-0.5"
                 aria-hidden="true"
               />
@@ -1105,7 +1143,7 @@ const CompanyRevenueDashboard = () => {
           <div className="grid grid-cols-2 gap-2">
             <QuickAction
               to="/payments?action=create"
-              icon={WalletCards}
+              icon={Wallet}
               label={t('payments.add_payment', 'Payment qo‘shish')}
             />
             <QuickAction
@@ -1115,12 +1153,12 @@ const CompanyRevenueDashboard = () => {
             />
             <QuickAction
               to="/schedule?action=create"
-              icon={CalendarClock}
+              icon={CalendarDot}
               label={t('attendance.add_lesson', 'Dars yaratish')}
             />
             <QuickAction
               to="/attendance"
-              icon={Users}
+              icon={UsersThree}
               label={t('nav.attendance', 'Davomat ochish')}
             />
           </div>
@@ -1152,7 +1190,7 @@ const CompanyRevenueDashboard = () => {
               )}
               value={formatMoney(kpis.revenue.period)}
               meta={comparisonRange}
-              icon={TrendingUp}
+              icon={TrendUp}
               tone="primary"
               delta={kpis.revenue.delta_percent}
             />
@@ -1163,7 +1201,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.financial_block.debt_aging_meta',
                 'Qarzdorlik yoshi',
               )}
-              icon={Clock3}
+              icon={Clock}
               tone="info"
             />
             <KpiCard
@@ -1176,7 +1214,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.financial_block.debt_aging_meta',
                 'Qarzdorlik yoshi',
               )}
-              icon={Clock3}
+              icon={Clock}
               tone="info"
             />
             <KpiCard
@@ -1189,7 +1227,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.financial_block.debt_aging_meta',
                 'Qarzdorlik yoshi',
               )}
-              icon={Clock3}
+              icon={Clock}
               tone="info"
             />
             <KpiCard
@@ -1202,7 +1240,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.financial_block.debt_aging_meta_urgent',
                 'Diqqat talab qiladi',
               )}
-              icon={AlertTriangle}
+              icon={Warning}
               tone="warning"
               onClick={() =>
                 navigate(
@@ -1220,7 +1258,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.financial_block.arpu_meta',
                 'Faol talabaga o‘rtacha',
               )}
-              icon={Users}
+              icon={UsersThree}
               tone="primary"
             />
             <KpiCard
@@ -1245,7 +1283,7 @@ const CompanyRevenueDashboard = () => {
                   key={courseType}
                   className="rounded-lg border border-border/60 bg-background/30 p-3"
                 >
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     {t(`students.course.${courseType}`, courseType)}
                   </p>
                   <p className="mt-2 text-lg font-bold tabular-nums">
@@ -1291,7 +1329,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.academic_block.attendance_meta',
                 'Tanlangan davr bo‘yicha',
               )}
-              icon={CheckCircle2}
+              icon={CheckCircle}
               tone={
                 kpis.attendance_rate == null
                   ? 'info'
@@ -1330,7 +1368,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.academic_block.exam_pass_meta',
                 'Birinchi imtihon urinishi',
               )}
-              icon={ClipboardCheck}
+              icon={ClipboardText}
               tone="info"
             />
             <KpiCard
@@ -1359,7 +1397,7 @@ const CompanyRevenueDashboard = () => {
           </div>
           {kpis.enrollment_funnel && (
             <div className="mt-5 space-y-3 rounded-lg border border-border/60 bg-background/30 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                 {t(
                   'dashboard.v2.academic_block.funnel_title',
                   'Ro‘yxatdan bitirishgacha',
@@ -1472,7 +1510,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.staff_block.on_time_attendance_meta',
                 'Dars kuni ichida belgilangan davomatlar ulushi',
               )}
-              icon={Clock3}
+              icon={Clock}
               tone={
                 (kpis.on_time_attendance_marking_rate ?? 0) >= 80
                   ? 'success'
@@ -1523,11 +1561,7 @@ const StatusItem = ({
   tone: 'success' | 'warning' | 'danger';
 }) => {
   const Icon =
-    tone === 'success'
-      ? CheckCircle2
-      : tone === 'warning'
-        ? Clock3
-        : AlertTriangle;
+    tone === 'success' ? CheckCircle : tone === 'warning' ? Clock : Warning;
   return (
     <div className="flex items-center justify-between gap-2">
       <span className="flex items-center gap-2">
@@ -1594,7 +1628,7 @@ const ErrorState = ({ onRetry }: { onRetry: () => void }) => {
   const { t } = useTranslation();
   return (
     <Card className="border-destructive/30 bg-destructive/5 p-8 text-center">
-      <AlertTriangle className="mx-auto h-8 w-8 text-destructive" />
+      <Warning className="mx-auto h-8 w-8 text-destructive" />
       <h1 className="mt-3 text-lg font-semibold">
         {t(
           'dashboard.v2.error_title',

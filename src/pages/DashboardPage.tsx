@@ -35,19 +35,19 @@ import {
   YAxis,
 } from 'recharts';
 import {
-  AlertTriangle,
+  Warning,
   ArrowDownRight,
   ArrowUpRight,
-  BadgeCheck,
+  SealCheck,
   Car,
   GraduationCap,
-  Users,
+  UsersThree,
   Wallet,
-  Pencil,
+  PencilSimple,
   Plus,
-  Trash2,
-  Activity,
-} from 'lucide-react';
+  Trash,
+  Pulse,
+} from '@phosphor-icons/react';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
 import CompanyRevenueDashboard from '@/pages/dashboard/CompanyRevenueDashboard';
@@ -88,11 +88,11 @@ const initialsFor = (name?: string | null) => {
 };
 
 const branchHues = [
-  221, // primary blue
-  38, // warning amber
-  142, // success green
-  262, // violet
-  199, // info cyan
+  35, // amber (primary)
+  199, // cyan (info)
+  145, // green (success)
+  25, // orange
+  220, // steel blue
 ];
 
 // ---------- Shared chart styles ----------
@@ -113,6 +113,7 @@ const CHART_STYLE = {
 const AXIS_PROPS = {
   stroke: 'hsl(var(--muted-foreground))',
   fontSize: 11,
+  fontFamily: 'IBM Plex Mono, ui-monospace, monospace',
   tickLine: false,
   axisLine: false,
 };
@@ -184,6 +185,7 @@ interface KpiCardProps {
   metaRight?: React.ReactNode;
   spark?: number[];
   animationDelayMs?: number;
+  lead?: boolean;
 }
 
 const KpiCard = ({
@@ -197,6 +199,7 @@ const KpiCard = ({
   metaRight,
   spark,
   animationDelayMs = 0,
+  lead = false,
 }: KpiCardProps) => {
   const toneClasses: Record<KpiCardProps['tone'], string> = {
     primary: 'bg-primary/10 text-primary',
@@ -214,7 +217,7 @@ const KpiCard = ({
       style={{ transitionDelay: `${animationDelayMs}ms` }}
     >
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
           {label}
         </p>
         <div
@@ -227,7 +230,12 @@ const KpiCard = ({
           {icon}
         </div>
       </div>
-      <p className="text-[28px] font-bold leading-tight tracking-tight text-foreground tabular-nums">
+      <p
+        className={cn(
+          'font-bold leading-tight tracking-tight text-foreground tabular-nums font-mono',
+          lead ? 'text-4xl' : 'text-[28px]',
+        )}
+      >
         {value}
         {unit && (
           <span className="ml-1 text-sm font-medium text-muted-foreground">
@@ -413,7 +421,7 @@ const LegacyMainDashboard = () => {
     [recentPayments],
   );
 
-  // Activity log entries
+  // Pulse log entries
   const activityList = useMemo(
     () => (auditData?.data ?? []).slice(0, 6),
     [auditData?.data],
@@ -553,7 +561,7 @@ const LegacyMainDashboard = () => {
 
       {/* ===== Hero KPI row ===== */}
       <section
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-[1.7fr_1fr_1fr_1fr]"
         aria-label={t('dashboard.title')}
       >
         <KpiCard
@@ -570,11 +578,12 @@ const LegacyMainDashboard = () => {
           }
           spark={revenueSparkValues}
           animationDelayMs={40}
+          lead
         />
         <KpiCard
           label={t('dashboard.hero_active_students')}
           value={formatNumber(analytics.total_students)}
-          icon={<Users className="h-4 w-4" />}
+          icon={<UsersThree className="h-4 w-4" />}
           tone="info"
           delta={studentsDelta}
           metaLeft={
@@ -591,11 +600,11 @@ const LegacyMainDashboard = () => {
             snapshot?.current_total_debt ?? analytics.total_debt,
           )}
           unit={currency}
-          icon={<AlertTriangle className="h-4 w-4" />}
+          icon={<Warning className="h-4 w-4" />}
           tone="warning"
           metaLeft={
             <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
-              <AlertTriangle className="h-3 w-3" />
+              <Warning className="h-3 w-3" />
               {t('dashboard.hero_students_with_debt', {
                 count:
                   snapshot?.students_with_debt ?? analytics.payment_status.debt,
@@ -614,7 +623,7 @@ const LegacyMainDashboard = () => {
         <KpiCard
           label={t('dashboard.hero_graduates')}
           value={formatNumber(graduates)}
-          icon={<BadgeCheck className="h-4 w-4" />}
+          icon={<SealCheck className="h-4 w-4" />}
           tone="success"
           metaLeft={
             passDenominator > 0 ? (
@@ -746,7 +755,7 @@ const LegacyMainDashboard = () => {
                     <div className="text-2xl font-bold tracking-tight tabular-nums">
                       {formatNumber(totalCourseMix)}
                     </div>
-                    <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <div className="mt-0.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                       {t('dashboard.donut_students')}
                     </div>
                   </div>
@@ -919,7 +928,7 @@ const LegacyMainDashboard = () => {
           )}
         </SectionCard>
 
-        {/* Activity log — viewAudit (owner/dev); backend gates /audit-logs */}
+        {/* Pulse log — viewAudit (owner/dev); backend gates /audit-logs */}
         {canViewAudit && (
           <SectionCard
             staggerDelayMs={360}
@@ -943,10 +952,10 @@ const LegacyMainDashboard = () => {
                     a.action === 'CREATE'
                       ? Plus
                       : a.action === 'UPDATE'
-                        ? Pencil
+                        ? PencilSimple
                         : a.action === 'DELETE'
-                          ? Trash2
-                          : Activity;
+                          ? Trash
+                          : Pulse;
                   const verb =
                     a.action === 'CREATE'
                       ? t('dashboard.activity_action_create')
@@ -1125,12 +1134,13 @@ const TeacherDashboard = () => {
         </p>
       </div>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-[1.7fr_1fr_1fr_1fr]">
         <KpiCard
           label={t('dashboard.cards.active_groups', 'Active Groups')}
           value={formatNumber(analytics.active_groups)}
-          icon={<Users className="h-4 w-4" />}
+          icon={<UsersThree className="h-4 w-4" />}
           tone="info"
+          lead
         />
         <KpiCard
           label={t('dashboard.cards.total_students', 'Total Students')}
@@ -1141,7 +1151,7 @@ const TeacherDashboard = () => {
         <KpiCard
           label={t('dashboard.result_passed')}
           value={formatNumber(analytics.result_stats.topshirdi)}
-          icon={<BadgeCheck className="h-4 w-4" />}
+          icon={<SealCheck className="h-4 w-4" />}
           tone="success"
         />
         <KpiCard

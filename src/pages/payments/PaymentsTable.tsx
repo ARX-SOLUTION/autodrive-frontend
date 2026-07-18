@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { CreditCard, Pencil, Trash2 } from 'lucide-react';
+import { CreditCard, PencilSimple, Trash } from '@phosphor-icons/react';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -107,6 +107,7 @@ export const PaymentsTable = ({
       key: 'total_price',
       header: t('payments.total_price'),
       align: 'right',
+      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
       render: (p) => new Intl.NumberFormat('uz-UZ').format(p.total_price),
     },
     {
@@ -114,7 +115,8 @@ export const PaymentsTable = ({
       header: t('payments.amount_paid'),
       align: 'right',
       sortable: true,
-      cellClassName: 'text-success font-medium',
+      cellClassName:
+        'text-success font-medium whitespace-nowrap tabular-nums font-mono',
       render: (p) => `+${new Intl.NumberFormat('uz-UZ').format(p.amount_paid)}`,
     },
     {
@@ -122,6 +124,7 @@ export const PaymentsTable = ({
       header: t('payments.remaining_debt'),
       align: 'right',
       sortable: true,
+      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
       render: (p) => (
         <span
           className={p.remaining_debt > 0 ? 'text-destructive' : 'text-success'}
@@ -158,7 +161,7 @@ export const PaymentsTable = ({
                   title={t('common.edit')}
                   className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                 >
-                  <Pencil className="h-3.5 w-3.5" />
+                  <PencilSimple className="h-3.5 w-3.5" />
                 </button>
                 <button
                   onClick={(e) => {
@@ -169,7 +172,7 @@ export const PaymentsTable = ({
                   title={t('common.delete')}
                   className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash className="h-3.5 w-3.5" />
                 </button>
               </div>
             ),

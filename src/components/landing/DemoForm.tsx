@@ -91,7 +91,7 @@ const CheckmarkSvg = ({
       cx="32"
       cy="32"
       r="28"
-      stroke="#22D3EE"
+      stroke="hsl(var(--primary))"
       strokeWidth="2.5"
       strokeLinecap="round"
       strokeDasharray="175.93"
@@ -100,7 +100,7 @@ const CheckmarkSvg = ({
     />
     <polyline
       points="20,33 28,41 44,24"
-      stroke="#22D3EE"
+      stroke="hsl(var(--primary))"
       strokeWidth="2.5"
       strokeLinecap="round"
       strokeLinejoin="round"

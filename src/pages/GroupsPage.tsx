@@ -13,7 +13,7 @@ import { useBranches } from '@/services/branchService';
 import { Group } from '@/types/group';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Plus, Layers, Loader2 } from 'lucide-react';
+import { Plus, Stack, CircleNotch } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/errors';
 import { cn } from '@/lib/utils';
@@ -211,7 +211,7 @@ const GroupsPage = () => {
       <div className="relative">
         {isFetching && !isLoading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <CircleNotch className="h-6 w-6 animate-spin text-primary" />
           </div>
         )}
         <div
@@ -253,7 +253,7 @@ const GroupsPage = () => {
           ) : (
             filteredGroups.length === 0 &&
             !isLoading && (
-              <EmptyState icon={Layers} title={t('groups.not_found')} />
+              <EmptyState icon={Stack} title={t('groups.not_found')} />
             )
           )}
         </div>

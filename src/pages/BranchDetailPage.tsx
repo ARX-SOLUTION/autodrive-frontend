@@ -1,6 +1,6 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, MapPin, Phone, ShieldCheck } from 'lucide-react';
+import { Warning, MapPin, Phone, ShieldCheck } from '@phosphor-icons/react';
 import {
   Area,
   AreaChart,
@@ -43,7 +43,7 @@ const BranchDetailPage = () => {
         isLoading={isLoading}
         isError={isError || !branch}
         errorTitle={isError ? t('common.error') : t('common.not_found')}
-        errorIcon={isError ? AlertTriangle : ShieldCheck}
+        errorIcon={isError ? Warning : ShieldCheck}
       />
     );
   }

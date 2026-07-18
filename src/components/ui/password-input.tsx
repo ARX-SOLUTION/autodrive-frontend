@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeSlash } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 
 import { Input } from '@/components/ui/input';
@@ -31,7 +31,11 @@ const PasswordInput = React.forwardRef<
         aria-pressed={visible}
         className="absolute bottom-0 right-0 flex h-10 w-10 items-center justify-center text-muted-foreground transition-transform hover:text-foreground active:scale-[0.96] motion-reduce:transition-none motion-reduce:transform-none disabled:pointer-events-none disabled:opacity-50"
       >
-        {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        {visible ? (
+          <EyeSlash className="h-4 w-4" />
+        ) : (
+          <Eye className="h-4 w-4" />
+        )}
       </button>
     </div>
   );

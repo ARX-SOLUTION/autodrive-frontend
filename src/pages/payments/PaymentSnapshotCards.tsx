@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { SummaryCard } from '@/components/ui/SummaryCard';
 import { formatMoney } from '@/lib/money';
 import type { PaymentSnapshot } from '@/types/payment';
-import { AlertTriangle, Sun, TrendingUp, Users } from 'lucide-react';
+import { Warning, Sun, TrendUp, UsersThree } from '@phosphor-icons/react';
 
 interface PaymentSnapshotCardsProps {
   snapshot: PaymentSnapshot | undefined;
@@ -19,7 +19,7 @@ export const PaymentSnapshotCards = ({
   return (
     <section>
       <div className="flex items-center justify-between mb-3 tabular-nums">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-balance">
+        <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground text-balance">
           {t('payments.current_status')}
         </h2>
         <span className="text-xs text-muted-foreground">
@@ -36,13 +36,13 @@ export const PaymentSnapshotCards = ({
         <SummaryCard
           title={t('payments.stats.month_income')}
           value={formatMoney(snapshot?.this_month_income || 0)}
-          icon={<TrendingUp className="h-5 w-5" />}
+          icon={<TrendUp className="h-5 w-5" />}
           isLoading={isLoading}
         />
         <SummaryCard
           title={t('payments.stats.total_debt')}
           value={formatMoney(snapshot?.current_total_debt || 0)}
-          icon={<AlertTriangle className="h-5 w-5" />}
+          icon={<Warning className="h-5 w-5" />}
           isLoading={isLoading}
         />
         <SummaryCard
@@ -50,7 +50,7 @@ export const PaymentSnapshotCards = ({
           value={`${snapshot?.students_with_debt || 0}${
             t('common.count_unit') ? ` ${t('common.count_unit')}` : ''
           }`}
-          icon={<Users className="h-5 w-5" />}
+          icon={<UsersThree className="h-5 w-5" />}
           isLoading={isLoading}
         />
       </div>

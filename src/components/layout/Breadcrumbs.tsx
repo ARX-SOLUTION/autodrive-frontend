@@ -1,4 +1,4 @@
-import { ChevronRight, Home } from 'lucide-react';
+import { CaretRight, House } from '@phosphor-icons/react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
@@ -50,7 +50,7 @@ export const Breadcrumbs = () => {
   const goTo = useViewTransitionNavigate();
   const segments = pathname.split('/').filter(Boolean);
 
-  if (segments.length === 0 || segments[0] === 'login') return null;
+  if (segments.length < 2 || segments[0] === 'login') return null;
 
   const crumbs = segments.map((segment, idx) => {
     const href = '/' + segments.slice(0, idx + 1).join('/');
@@ -69,13 +69,13 @@ export const Breadcrumbs = () => {
         className="inline-flex items-center text-muted-foreground hover:text-foreground"
         aria-label={t('actions.home')}
       >
-        <Home className="h-3.5 w-3.5" />
+        <House className="h-3.5 w-3.5" />
       </a>
       {crumbs.map((c, i) => {
         const isLast = i === crumbs.length - 1;
         return (
           <span key={c.href} className="inline-flex items-center gap-1">
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+            <CaretRight className="h-3.5 w-3.5 text-muted-foreground/60" />
             {isLast ? (
               <span className="font-medium text-foreground">{c.label}</span>
             ) : (

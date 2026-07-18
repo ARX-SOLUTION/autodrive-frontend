@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Pencil, ShieldCheck } from 'lucide-react';
+import { Warning, PencilSimple, ShieldCheck } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -65,7 +65,7 @@ const GroupDetailPage = () => {
         isLoading={isLoading}
         isError={isError || !group}
         errorTitle={isError ? t('common.error') : t('common.not_found')}
-        errorIcon={isError ? AlertTriangle : ShieldCheck}
+        errorIcon={isError ? Warning : ShieldCheck}
       />
     );
   }
@@ -157,7 +157,7 @@ const GroupDetailPage = () => {
                         setEditStudent(s);
                       }}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <PencilSimple className="h-3.5 w-3.5" />
                     </Button>
                   }
                   fields={[

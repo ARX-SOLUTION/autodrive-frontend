@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import { formatMoney } from '@/lib/money';
 import type { Payment } from '@/types/payment';
-import { CreditCard } from 'lucide-react';
+import { CreditCard } from '@phosphor-icons/react';
 import { courseTypeLabelKey, formatDate } from './paymentFormatters';
 
 interface PaymentsMobileListProps {

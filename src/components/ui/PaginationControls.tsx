@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 
 interface Props {
   currentPage: number;
@@ -43,7 +43,7 @@ const PaginationControls = ({
         disabled={currentPage <= 1}
         className="gap-1 bg-secondary border-border"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <CaretLeft className="h-4 w-4" />
         Oldingi
       </Button>
       {getPageNumbers().map((page, i) =>
@@ -71,7 +71,7 @@ const PaginationControls = ({
         className="gap-1 bg-secondary border-border"
       >
         Keyingi
-        <ChevronRight className="h-4 w-4" />
+        <CaretRight className="h-4 w-4" />
       </Button>
     </div>
   );

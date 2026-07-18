@@ -25,14 +25,14 @@ import {
 import { format } from 'date-fns';
 import PaginationControls from '@/components/ui/PaginationControls';
 import {
-  ChevronUp,
-  ChevronDown,
-  ChevronsUpDown,
-  UserCog,
+  CaretUp,
+  CaretDown,
+  CaretUpDown,
+  UserGear,
   Plus,
-  Search,
-  Loader2,
-} from 'lucide-react';
+  MagnifyingGlass,
+  CircleNotch,
+} from '@phosphor-icons/react';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { cn } from '@/lib/utils';
@@ -217,7 +217,7 @@ const UsersPage = () => {
         </Select>
 
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t('users.search_placeholder')}
             value={search}
@@ -230,7 +230,7 @@ const UsersPage = () => {
       <div className="relative">
         {isFetching && !isLoading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <CircleNotch className="h-6 w-6 animate-spin text-primary" />
           </div>
         )}
         <div
@@ -254,12 +254,12 @@ const UsersPage = () => {
                       Email
                       {sortField === 'email' ? (
                         sortDir === 'asc' ? (
-                          <ChevronUp className="h-3 w-3" />
+                          <CaretUp className="h-3 w-3" />
                         ) : (
-                          <ChevronDown className="h-3 w-3" />
+                          <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
                       )}
                     </button>
                   </th>
@@ -271,12 +271,12 @@ const UsersPage = () => {
                       {t('users.detail.phone')}
                       {sortField === 'phone' ? (
                         sortDir === 'asc' ? (
-                          <ChevronUp className="h-3 w-3" />
+                          <CaretUp className="h-3 w-3" />
                         ) : (
-                          <ChevronDown className="h-3 w-3" />
+                          <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
                       )}
                     </button>
                   </th>
@@ -288,12 +288,12 @@ const UsersPage = () => {
                       {t('users.detail.branch')}
                       {sortField === 'branch_name' ? (
                         sortDir === 'asc' ? (
-                          <ChevronUp className="h-3 w-3" />
+                          <CaretUp className="h-3 w-3" />
                         ) : (
-                          <ChevronDown className="h-3 w-3" />
+                          <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
                       )}
                     </button>
                   </th>
@@ -308,12 +308,12 @@ const UsersPage = () => {
                       {t('users.detail.created')}
                       {sortField === 'created_at' ? (
                         sortDir === 'asc' ? (
-                          <ChevronUp className="h-3 w-3" />
+                          <CaretUp className="h-3 w-3" />
                         ) : (
-                          <ChevronDown className="h-3 w-3" />
+                          <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
                       )}
                     </button>
                   </th>
@@ -380,7 +380,7 @@ const UsersPage = () => {
             ) : (
               users.length === 0 &&
               !isLoading && (
-                <EmptyState icon={UserCog} title={t('users.not_found')} />
+                <EmptyState icon={UserGear} title={t('users.not_found')} />
               )
             )}
           </div>
@@ -397,7 +397,7 @@ const UsersPage = () => {
               action={{ label: t('common.retry'), onClick: () => refetch() }}
             />
           ) : paginatedItems.length === 0 ? (
-            <EmptyState icon={UserCog} title={t('users.not_found')} />
+            <EmptyState icon={UserGear} title={t('users.not_found')} />
           ) : (
             paginatedItems.map((u) => (
               <DataCard

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { AlertTriangle, X } from 'lucide-react';
+import { Warning, X } from '@phosphor-icons/react';
 import {
   isValidUzPhone,
   uzPhoneE164,
@@ -1058,7 +1058,7 @@ const StudentModal = ({
                       <div className="flex items-start justify-between gap-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-sm">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 font-medium text-warning">
-                            <AlertTriangle className="h-4 w-4 shrink-0" />
+                            <Warning className="h-4 w-4 shrink-0" />
                             {t('students.duplicate_warning.title')}
                           </div>
                           <p className="text-muted-foreground">

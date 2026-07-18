@@ -22,7 +22,7 @@ import { useOperators } from '@/services/operatorService';
 import { CourseType, Student, StudentStatus } from '@/types/student';
 import { type CreateStudentPayload } from '@/components/ui/StudentModal';
 import { type AddStudentPayload } from '@/components/ui/AddStudentDialog';
-import { Loader2 } from 'lucide-react';
+import { CircleNotch } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PaginationControls from '@/components/ui/PaginationControls';
@@ -378,7 +378,7 @@ const StudentsPage = () => {
       <div className="relative">
         {isFetching && !isLoading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <CircleNotch className="h-6 w-6 animate-spin text-primary" />
           </div>
         )}
         <div

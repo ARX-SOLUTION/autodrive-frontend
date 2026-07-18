@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { Loader2, Mail } from 'lucide-react';
+import { CircleNotch, EnvelopeSimple } from '@phosphor-icons/react';
 
 import { Button } from './button';
 
@@ -42,7 +42,7 @@ export const Link: Story = { args: { variant: 'link' } };
 export const Small: Story = { args: { size: 'sm' } };
 export const Large: Story = { args: { size: 'lg' } };
 export const Icon: Story = {
-  args: { size: 'icon', children: <Mail aria-hidden /> },
+  args: { size: 'icon', children: <EnvelopeSimple aria-hidden /> },
 };
 
 export const Loading: Story = {
@@ -50,7 +50,7 @@ export const Loading: Story = {
     disabled: true,
     children: (
       <>
-        <Loader2 className="animate-spin" aria-hidden />
+        <CircleNotch className="animate-spin" aria-hidden />
         Saving
       </>
     ),
@@ -77,7 +77,7 @@ export const AllSizes: Story = {
       <Button size="default">Default</Button>
       <Button size="lg">Large</Button>
       <Button size="icon" aria-label="Mail">
-        <Mail aria-hidden />
+        <EnvelopeSimple aria-hidden />
       </Button>
     </div>
   ),

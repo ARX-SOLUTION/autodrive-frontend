@@ -1,6 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, UploadCloud, Loader2 } from 'lucide-react';
+import {
+  Plus,
+  DownloadSimple,
+  CloudArrowUp,
+  CircleNotch,
+} from '@phosphor-icons/react';
 
 interface StudentsPageHeaderProps {
   totalStudents: number;
@@ -39,16 +44,16 @@ export const StudentsPageHeader = ({
           disabled={totalStudents === 0 || isExporting}
         >
           {isExporting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <CircleNotch className="h-4 w-4 animate-spin" />
           ) : (
-            <Download className="h-4 w-4" />
+            <DownloadSimple className="h-4 w-4" />
           )}{' '}
           {t('students.export_excel')}
         </Button>
         {canManageStudents && (
           <>
             <Button variant="outline" className="gap-2" onClick={onImport}>
-              <UploadCloud className="h-4 w-4" />{' '}
+              <CloudArrowUp className="h-4 w-4" />{' '}
               {t('students.import.button_label')}
             </Button>
             <Button className="gap-2" onClick={onCreate}>
