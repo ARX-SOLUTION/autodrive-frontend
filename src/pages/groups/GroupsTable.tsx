@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Pencil, Trash2 } from 'lucide-react';
+import { PencilSimple, Trash } from '@phosphor-icons/react';
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable';
 import { Group } from '@/types/group';
 import { formatDate } from './formatDate';
@@ -107,7 +107,7 @@ const GroupsTable = ({
             }}
             className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
-            <Pencil className="h-3.5 w-3.5" />
+            <PencilSimple className="h-3.5 w-3.5" />
           </button>
           {canManageGroups && (
             <button
@@ -118,7 +118,7 @@ const GroupsTable = ({
               }}
               className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash className="h-3.5 w-3.5" />
             </button>
           )}
         </div>

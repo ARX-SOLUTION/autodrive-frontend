@@ -17,7 +17,11 @@ import {
 import { cn } from '@/lib/utils';
 import type { Branch } from '@/types/branch';
 import { format } from 'date-fns';
-import { CalendarIcon, Search, X } from 'lucide-react';
+import {
+  Calendar as CalendarIcon,
+  MagnifyingGlass,
+  X,
+} from '@phosphor-icons/react';
 import type { DatePreset } from './dateRangePresets';
 
 interface PaymentsFilterBarProps {
@@ -199,7 +203,7 @@ export const PaymentsFilterBar = ({
         </Popover>
 
         <div className="relative flex-1 min-w-[220px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t('payments.search_placeholder')}
             value={search}

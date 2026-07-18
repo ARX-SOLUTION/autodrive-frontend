@@ -2,7 +2,12 @@ import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DataCard } from '@/components/ui/DataCard';
-import { Pencil, Trash2, GraduationCap, AlertTriangle } from 'lucide-react';
+import {
+  PencilSimple,
+  Trash,
+  GraduationCap,
+  Warning,
+} from '@phosphor-icons/react';
 import { formatPhone } from '@/lib/phoneFormater';
 import { formatMoney } from '@/lib/money';
 import type { Student } from '@/types/student';
@@ -42,7 +47,7 @@ export const StudentsMobileList = ({
         ))
       ) : isError ? (
         <EmptyState
-          icon={AlertTriangle}
+          icon={Warning}
           title={t('common.error')}
           action={{ label: t('common.retry'), onClick: onRetry }}
         />
@@ -108,7 +113,7 @@ export const StudentsMobileList = ({
                       title={t('common.edit')}
                       className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <PencilSimple className="h-3.5 w-3.5" />
                     </button>
                   )}
                   {isCrossTenant && (
@@ -121,7 +126,7 @@ export const StudentsMobileList = ({
                       title={t('common.delete')}
                       className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </>

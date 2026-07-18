@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLogin } from '@/services/authService';
+import { Brand } from '@/components/layout/Brand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -72,12 +73,9 @@ const LoginPage = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="glass-card w-full max-w-sm p-8 animate-slide-in">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center ">
-            <img src="/favicon.png" alt="Logo" className="h-full w-full" />
+          <div className="flex justify-center">
+            <Brand size="lg" />
           </div>
-          <h1 className="font-heading text-2xl font-bold text-foreground text-balance">
-            {t('app.title')}
-          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t('login.title')}
           </p>

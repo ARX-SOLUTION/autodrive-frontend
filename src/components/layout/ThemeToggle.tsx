@@ -1,6 +1,6 @@
-import { Moon, Sun } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { useTheme } from "@/hooks/useTheme";
+import { Moon, Sun } from '@phosphor-icons/react';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/hooks/useTheme';
 
 interface ThemeToggleProps {
   collapsed?: boolean;
@@ -9,8 +9,9 @@ interface ThemeToggleProps {
 export const ThemeToggle = ({ collapsed }: ThemeToggleProps) => {
   const { theme, toggle } = useTheme();
   const { t } = useTranslation();
-  const Icon = theme === "dark" ? Sun : Moon;
-  const label = theme === "dark" ? t("actions.theme_light") : t("actions.theme_dark");
+  const Icon = theme === 'dark' ? Sun : Moon;
+  const label =
+    theme === 'dark' ? t('actions.theme_light') : t('actions.theme_dark');
 
   return (
     <button

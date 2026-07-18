@@ -1,9 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable';
-import { Pencil, Trash2, GraduationCap, AlertTriangle } from 'lucide-react';
+import {
+  PencilSimple,
+  Trash,
+  GraduationCap,
+  Warning,
+} from '@phosphor-icons/react';
 import { formatPhone } from '@/lib/phoneFormater';
 import { formatMoney } from '@/lib/money';
+import { cn } from '@/lib/utils';
 import type { CourseType, Student } from '@/types/student';
 import {
   capitalize,
@@ -69,6 +75,26 @@ export const StudentsTable = ({
     </span>
   );
 
+  // ponytail: Record<string,string> (not Record<ResultStatus,string>) per
+  // spec, so the fallback branch below is reachable if an unexpected value
+  // ever shows up.
+  const statusTone: Record<string, string> = {
+    oqimoqda: 'border-info/40 text-info',
+    topshirdi: 'border-success/40 text-success',
+    yiqildi: 'border-destructive/40 text-destructive',
+  };
+
+  const resultCell = (result: Student['result']) => (
+    <span
+      className={cn(
+        'inline-flex items-center rounded border bg-transparent px-2 py-0.5 font-mono text-xs',
+        statusTone[result] || 'border-border text-muted-foreground',
+      )}
+    >
+      {localizedResultLabels[result]}
+    </span>
+  );
+
   const indexColumn: DataTableColumn<Student> = {
     key: 'index',
     header: '#',
@@ -118,7 +144,7 @@ export const StudentsTable = ({
       key: 'result',
       header: t('students.result'),
       align: 'center',
-      render: (s) => localizedResultLabels[s.result],
+      render: (s) => resultCell(s.result),
     },
   ];
 
@@ -183,7 +209,7 @@ export const StudentsTable = ({
       key: 'result',
       header: t('students.result'),
       align: 'center',
-      render: (s) => localizedResultLabels[s.result],
+      render: (s) => resultCell(s.result),
     },
   ];
 
@@ -211,7 +237,7 @@ export const StudentsTable = ({
               title={t('common.edit')}
               className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <PencilSimple className="h-3.5 w-3.5" />
             </button>
           )}
           {isCrossTenant && (
@@ -224,7 +250,7 @@ export const StudentsTable = ({
               title={t('common.delete')}
               className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
@@ -250,7 +276,7 @@ export const StudentsTable = ({
       isError={isError}
       errorState={
         <EmptyState
-          icon={AlertTriangle}
+          icon={Warning}
           title={t('common.error')}
           action={{ label: t('common.retry'), onClick: onRetry }}
         />

@@ -16,7 +16,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { User, Shield, Building2 } from 'lucide-react';
+import { User, Shield, Buildings } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/errors';
 import {
@@ -169,7 +169,7 @@ const ProfilePage = () => {
               </span>
               {user?.branch_name && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-                  <Building2 className="h-3 w-3" />
+                  <Buildings className="h-3 w-3" />
                   {user.branch_name}
                 </span>
               )}

@@ -15,7 +15,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Search, CalendarIcon, X } from 'lucide-react';
+import {
+  MagnifyingGlass,
+  Calendar as CalendarIcon,
+  X,
+} from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
 const today = () => {
@@ -208,7 +212,7 @@ export const AuditFilterBar = ({
         </Popover>
 
         <div className="relative flex-1 min-w-[220px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t('audit.filter_user')}
             value={search}

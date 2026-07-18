@@ -35,19 +35,19 @@ import {
   YAxis,
 } from 'recharts';
 import {
-  AlertTriangle,
+  Warning,
   ArrowDownRight,
   ArrowUpRight,
-  BadgeCheck,
+  SealCheck,
   Car,
   GraduationCap,
-  Users,
+  UsersThree,
   Wallet,
-  Pencil,
+  PencilSimple,
   Plus,
-  Trash2,
-  Activity,
-} from 'lucide-react';
+  Trash,
+  Pulse,
+} from '@phosphor-icons/react';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
 import CompanyRevenueDashboard from '@/pages/dashboard/CompanyRevenueDashboard';
@@ -420,7 +420,7 @@ const LegacyMainDashboard = () => {
     [recentPayments],
   );
 
-  // Activity log entries
+  // Pulse log entries
   const activityList = useMemo(
     () => (auditData?.data ?? []).slice(0, 6),
     [auditData?.data],
@@ -582,7 +582,7 @@ const LegacyMainDashboard = () => {
         <KpiCard
           label={t('dashboard.hero_active_students')}
           value={formatNumber(analytics.total_students)}
-          icon={<Users className="h-4 w-4" />}
+          icon={<UsersThree className="h-4 w-4" />}
           tone="info"
           delta={studentsDelta}
           metaLeft={
@@ -599,11 +599,11 @@ const LegacyMainDashboard = () => {
             snapshot?.current_total_debt ?? analytics.total_debt,
           )}
           unit={currency}
-          icon={<AlertTriangle className="h-4 w-4" />}
+          icon={<Warning className="h-4 w-4" />}
           tone="warning"
           metaLeft={
             <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
-              <AlertTriangle className="h-3 w-3" />
+              <Warning className="h-3 w-3" />
               {t('dashboard.hero_students_with_debt', {
                 count:
                   snapshot?.students_with_debt ?? analytics.payment_status.debt,
@@ -622,7 +622,7 @@ const LegacyMainDashboard = () => {
         <KpiCard
           label={t('dashboard.hero_graduates')}
           value={formatNumber(graduates)}
-          icon={<BadgeCheck className="h-4 w-4" />}
+          icon={<SealCheck className="h-4 w-4" />}
           tone="success"
           metaLeft={
             passDenominator > 0 ? (
@@ -927,7 +927,7 @@ const LegacyMainDashboard = () => {
           )}
         </SectionCard>
 
-        {/* Activity log — viewAudit (owner/dev); backend gates /audit-logs */}
+        {/* Pulse log — viewAudit (owner/dev); backend gates /audit-logs */}
         {canViewAudit && (
           <SectionCard
             staggerDelayMs={360}
@@ -951,10 +951,10 @@ const LegacyMainDashboard = () => {
                     a.action === 'CREATE'
                       ? Plus
                       : a.action === 'UPDATE'
-                        ? Pencil
+                        ? PencilSimple
                         : a.action === 'DELETE'
-                          ? Trash2
-                          : Activity;
+                          ? Trash
+                          : Pulse;
                   const verb =
                     a.action === 'CREATE'
                       ? t('dashboard.activity_action_create')
@@ -1137,7 +1137,7 @@ const TeacherDashboard = () => {
         <KpiCard
           label={t('dashboard.cards.active_groups', 'Active Groups')}
           value={formatNumber(analytics.active_groups)}
-          icon={<Users className="h-4 w-4" />}
+          icon={<UsersThree className="h-4 w-4" />}
           tone="info"
           lead
         />
@@ -1150,7 +1150,7 @@ const TeacherDashboard = () => {
         <KpiCard
           label={t('dashboard.result_passed')}
           value={formatNumber(analytics.result_stats.topshirdi)}
-          icon={<BadgeCheck className="h-4 w-4" />}
+          icon={<SealCheck className="h-4 w-4" />}
           tone="success"
         />
         <KpiCard

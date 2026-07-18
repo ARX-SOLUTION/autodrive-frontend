@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, CaretUpDown } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useStudents } from '@/services/studentService';
@@ -180,7 +180,7 @@ const ReferralFields = ({
                   {selectedStudent
                     ? `${selectedStudent.last_name} ${selectedStudent.first_name}`
                     : t('students.referral.referrer_student_placeholder')}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[--radix-popover-trigger-width] p-0">

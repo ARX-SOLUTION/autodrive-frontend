@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { CaretDown, CaretRight } from '@phosphor-icons/react';
 import { GroupOverview } from '@/types/group';
 
 interface GroupsOverviewSectionProps {
@@ -37,9 +37,9 @@ const GroupsOverviewSection = ({ overview }: GroupsOverviewSectionProps) => {
                 </span>
               </span>
               {expandedBranches[ov.branch_id] ? (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <CaretDown className="h-4 w-4 text-muted-foreground" />
               ) : (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <CaretRight className="h-4 w-4 text-muted-foreground" />
               )}
             </button>
             {expandedBranches[ov.branch_id] && (

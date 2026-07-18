@@ -6,7 +6,13 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import {
+  Warning,
+  PencilSimple,
+  Plus,
+  ShieldCheck,
+  Trash,
+} from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -142,7 +148,7 @@ const StudentDetailPage = () => {
         isLoading={isLoading}
         isError={isError || !student}
         errorTitle={isError ? t('common.error') : t('common.not_found')}
-        errorIcon={isError ? AlertTriangle : ShieldCheck}
+        errorIcon={isError ? Warning : ShieldCheck}
       />
     );
   }
@@ -202,7 +208,7 @@ const StudentDetailPage = () => {
             className="gap-2"
             onClick={() => setEditOpen(true)}
           >
-            <Pencil className="h-4 w-4" /> {t('common.edit')}
+            <PencilSimple className="h-4 w-4" /> {t('common.edit')}
           </Button>
         </div>
       }
@@ -499,7 +505,7 @@ const PaymentsTab = ({
                           title={t('common.edit')}
                           className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          <PencilSimple className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => onDelete(p)}
@@ -507,7 +513,7 @@ const PaymentsTab = ({
                           title={t('common.delete')}
                           className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </td>

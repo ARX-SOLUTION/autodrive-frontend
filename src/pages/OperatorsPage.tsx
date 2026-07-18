@@ -7,15 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Plus,
-  Search,
-  Pencil,
-  Trash2,
-  ChevronUp,
-  ChevronDown,
-  ChevronsUpDown,
+  MagnifyingGlass,
+  PencilSimple,
+  Trash,
+  CaretUp,
+  CaretDown,
+  CaretUpDown,
   Headphones,
-  Loader2,
-} from 'lucide-react';
+  CircleNotch,
+} from '@phosphor-icons/react';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import PaginationControls from '@/components/ui/PaginationControls';
@@ -46,7 +46,7 @@ const SERVER_PAGE_SIZE = 100;
 const OperatorsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  // Search/sort/page live in the URL so reload/back/share preserve them
+  // MagnifyingGlass/sort/page live in the URL so reload/back/share preserve them
   // (autodrive-b85.3 -- mirrors admin-panel's useSearchSortFilters).
   const {
     search,
@@ -76,7 +76,7 @@ const OperatorsPage = () => {
   const updateMut = useUpdateOperator();
   const deleteMut = useDeleteOperator();
 
-  // Search is server-side now (autodrive-b85.3) -- GET /users matches
+  // MagnifyingGlass is server-side now (autodrive-b85.3) -- GET /users matches
   // name/email/phone across the whole company (autodrive-3kl), not just the
   // current page. Sort still applies client-side to the current server page
   // only -- GET /users has no sortBy param.
@@ -189,7 +189,7 @@ const OperatorsPage = () => {
         </Button>
       </div>
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder={t('operators.search_placeholder')}
           value={search}
@@ -200,7 +200,7 @@ const OperatorsPage = () => {
       <div className="relative">
         {isFetching && !isLoading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <CircleNotch className="h-6 w-6 animate-spin text-primary" />
           </div>
         )}
         <div
@@ -224,12 +224,12 @@ const OperatorsPage = () => {
                       {t('operators.first_name')}
                       {sortField === 'name' ? (
                         sortDir === 'asc' ? (
-                          <ChevronUp className="h-3 w-3" />
+                          <CaretUp className="h-3 w-3" />
                         ) : (
-                          <ChevronDown className="h-3 w-3" />
+                          <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
                       )}
                     </button>
                   </th>
@@ -241,12 +241,12 @@ const OperatorsPage = () => {
                       {t('operators.phone')}
                       {sortField === 'phone' ? (
                         sortDir === 'asc' ? (
-                          <ChevronUp className="h-3 w-3" />
+                          <CaretUp className="h-3 w-3" />
                         ) : (
-                          <ChevronDown className="h-3 w-3" />
+                          <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
                       )}
                     </button>
                   </th>
@@ -258,12 +258,12 @@ const OperatorsPage = () => {
                       {t('operators.branch')}
                       {sortField === 'branch_name' ? (
                         sortDir === 'asc' ? (
-                          <ChevronUp className="h-3 w-3" />
+                          <CaretUp className="h-3 w-3" />
                         ) : (
-                          <ChevronDown className="h-3 w-3" />
+                          <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
                       )}
                     </button>
                   </th>
@@ -348,7 +348,7 @@ const OperatorsPage = () => {
                               aria-label={t('common.edit')}
                               className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                             >
-                              <Pencil className="h-3.5 w-3.5" />
+                              <PencilSimple className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={(e) => {
@@ -358,7 +358,7 @@ const OperatorsPage = () => {
                               aria-label={t('common.delete')}
                               className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash className="h-3.5 w-3.5" />
                             </button>
                           </div>
                         </td>
@@ -423,7 +423,7 @@ const OperatorsPage = () => {
                           aria-label={t('common.edit')}
                           className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          <PencilSimple className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={(e) => {
@@ -433,7 +433,7 @@ const OperatorsPage = () => {
                           aria-label={t('common.delete')}
                           className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash className="h-3.5 w-3.5" />
                         </button>
                       </>
                     }

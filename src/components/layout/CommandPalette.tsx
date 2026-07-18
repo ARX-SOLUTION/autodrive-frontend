@@ -4,20 +4,20 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  LayoutDashboard,
-  Building2,
+  SquaresFour,
+  Buildings,
   GraduationCap,
   CreditCard,
   Headphones,
-  Users,
+  UsersThree,
   User,
-  Layers,
-  UserCog,
+  Stack,
+  UserGear,
   ShieldCheck,
   Calendar,
-  ClipboardCheck,
+  ListChecks,
   BookOpen,
-} from 'lucide-react';
+} from '@phosphor-icons/react';
 import {
   CommandDialog,
   CommandEmpty,
@@ -37,21 +37,21 @@ import type { Capability } from '@/lib/permissions';
 type NavEntry = {
   labelKey: string;
   path: string;
-  icon: typeof LayoutDashboard;
+  icon: typeof SquaresFour;
   cap?: Capability;
 };
 
 const NAV_ENTRIES: NavEntry[] = [
-  { labelKey: 'nav.dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { labelKey: 'nav.dashboard', path: '/dashboard', icon: SquaresFour },
   {
     labelKey: 'nav.branches',
     path: '/branches',
-    icon: Building2,
+    icon: Buildings,
     cap: 'manageBranches',
   },
   { labelKey: 'nav.schedule', path: '/schedule', icon: Calendar },
-  { labelKey: 'nav.attendance', path: '/attendance', icon: ClipboardCheck },
-  { labelKey: 'nav.groups', path: '/groups', icon: Layers },
+  { labelKey: 'nav.attendance', path: '/attendance', icon: ListChecks },
+  { labelKey: 'nav.groups', path: '/groups', icon: Stack },
   {
     labelKey: 'nav.courses',
     path: '/courses',
@@ -69,13 +69,13 @@ const NAV_ENTRIES: NavEntry[] = [
   {
     labelKey: 'nav.teachers',
     path: '/teachers',
-    icon: Users,
+    icon: UsersThree,
     cap: 'manageStaff',
   },
   {
     labelKey: 'nav.users',
     path: '/users',
-    icon: UserCog,
+    icon: UserGear,
     cap: 'manageUsers',
   },
   {
@@ -138,14 +138,14 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
     {
       key: 'groups',
       heading: t('nav.groups'),
-      icon: Layers,
+      icon: Stack,
       route: '/groups',
       items: results?.groups ?? [],
     },
     {
       key: 'staff',
       heading: t('actions.search_group_staff', 'Xodimlar') as string,
-      icon: UserCog,
+      icon: UserGear,
       route: '/users',
       items: results?.staff ?? [],
     },

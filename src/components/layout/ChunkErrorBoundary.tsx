@@ -1,5 +1,5 @@
 import { Component, type ReactNode } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { Warning } from '@phosphor-icons/react';
 import { EmptyState } from '@/components/ui/EmptyState';
 import i18n from '@/i18n';
 
@@ -38,7 +38,7 @@ export class ChunkErrorBoundary extends Component<
       return (
         <div className="flex h-[50vh] items-center justify-center">
           <EmptyState
-            icon={AlertTriangle}
+            icon={Warning}
             title={i18n.t('common.error')}
             action={{
               label: i18n.t('common.retry'),

@@ -1,6 +1,6 @@
-import type { LucideIcon } from 'lucide-react';
+import type { Icon as PhosphorIcon } from '@phosphor-icons/react';
 import type { ReactNode } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@phosphor-icons/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -10,7 +10,7 @@ interface EntityDetailShellProps {
   isLoading: boolean;
   isError: boolean;
   errorTitle?: string;
-  errorIcon?: LucideIcon;
+  errorIcon?: PhosphorIcon;
   header?: ReactNode;
   children?: ReactNode;
 }

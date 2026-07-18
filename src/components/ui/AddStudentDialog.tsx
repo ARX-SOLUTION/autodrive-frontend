@@ -41,7 +41,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, ChevronRight, Check, UserPlus } from 'lucide-react';
+import { CaretLeft, CaretRight, Check, UserPlus } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
@@ -1160,7 +1160,7 @@ const AddStudentDialog = ({
                       onClick={handleBack}
                       disabled={loading}
                     >
-                      <ChevronLeft className="w-4 h-4 mr-1" />
+                      <CaretLeft className="w-4 h-4 mr-1" />
                       Oldingi
                     </Button>
                   )}
@@ -1176,7 +1176,7 @@ const AddStudentDialog = ({
                       disabled={loading}
                     >
                       Keyingi
-                      <ChevronRight className="w-4 h-4 ml-1" />
+                      <CaretRight className="w-4 h-4 ml-1" />
                     </Button>
                   ) : (
                     <>

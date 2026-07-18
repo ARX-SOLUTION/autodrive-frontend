@@ -15,23 +15,23 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
 import { useTheme } from '@/hooks/useTheme';
 import {
-  AlertTriangle,
+  Warning,
   ArrowRight,
-  BadgeCheck,
-  Building2,
-  CalendarCheck2,
-  CircleDollarSign,
-  ClipboardList,
+  SealCheck,
+  Buildings,
+  CalendarCheck,
+  CurrencyCircleDollar,
+  ClipboardText,
   Clock,
   Moon,
   Phone,
-  Send,
+  PaperPlaneTilt,
   ShieldCheck,
   Sun,
-  TrendingUp,
-  Users,
+  TrendUp,
+  UsersThree,
   Wallet,
-} from 'lucide-react';
+} from '@phosphor-icons/react';
 
 import { track } from '@/lib/umami';
 import { DemoForm } from '@/components/landing/DemoForm';
@@ -473,7 +473,7 @@ const LandingPage = () => {
   // ── Static data ──────────────────────────────────────────────────────────
   const benefits = [
     {
-      icon: CircleDollarSign,
+      icon: CurrencyCircleDollar,
       titleKey: 'landing.benefit1_title',
       bodyKey: 'landing.benefit1_body',
       gradient: 'from-cyan-400/20 to-cyan-400/0',
@@ -482,7 +482,7 @@ const LandingPage = () => {
       hoverBorder: 'hover:border-cyan-400/30',
     },
     {
-      icon: CalendarCheck2,
+      icon: CalendarCheck,
       titleKey: 'landing.benefit2_title',
       bodyKey: 'landing.benefit2_body',
       gradient: 'from-violet-400/20 to-violet-400/0',
@@ -535,7 +535,7 @@ const LandingPage = () => {
       label: t('landing.mock_students'),
       value: '147',
       unit: '',
-      Icon: Users,
+      Icon: UsersThree,
       tone: 'text-blue-600 dark:text-blue-300',
       iconBg: 'bg-blue-400/10 text-blue-600 dark:text-blue-300',
       delta: '+8 yangi',
@@ -545,7 +545,7 @@ const LandingPage = () => {
       label: t('landing.mock_debt'),
       value: '1 250 000',
       unit: "so'm",
-      Icon: AlertTriangle,
+      Icon: Warning,
       tone: 'text-amber-600 dark:text-amber-300',
       iconBg: 'bg-amber-400/10 text-amber-600 dark:text-amber-300',
       delta: '3 ta talaba',
@@ -555,7 +555,7 @@ const LandingPage = () => {
       label: t('dashboard.hero_graduates'),
       value: '38',
       unit: '',
-      Icon: BadgeCheck,
+      Icon: SealCheck,
       tone: 'text-emerald-600 dark:text-emerald-300',
       iconBg: 'bg-emerald-400/10 text-emerald-600 dark:text-emerald-300',
       delta: "94% o'tish",
@@ -752,7 +752,7 @@ const LandingPage = () => {
                 rel="noopener noreferrer"
                 onClick={() => track('telegram_click')}
               >
-                <Send className="size-4" />
+                <PaperPlaneTilt className="size-4" />
                 {t('landing.cta_free')}
               </a>
             </Button>
@@ -840,7 +840,7 @@ const LandingPage = () => {
                     </p>
                   </div>
                   <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-300">
-                    <TrendingUp className="size-3" />
+                    <TrendUp className="size-3" />
                     +18%
                   </span>
                 </div>
@@ -908,17 +908,17 @@ const LandingPage = () => {
           {(
             [
               {
-                icon: AlertTriangle,
+                icon: Warning,
                 titleKey: 'landing.pain_card1_title',
                 bodyKey: 'landing.pain_card1_body',
               },
               {
-                icon: ClipboardList,
+                icon: ClipboardText,
                 titleKey: 'landing.pain_card2_title',
                 bodyKey: 'landing.pain_card2_body',
               },
               {
-                icon: Building2,
+                icon: Buildings,
                 titleKey: 'landing.pain_card3_title',
                 bodyKey: 'landing.pain_card3_body',
               },
@@ -1131,7 +1131,7 @@ const LandingPage = () => {
           {(
             [
               {
-                icon: TrendingUp,
+                icon: TrendUp,
                 titleKey: 'landing.role_owner_title',
                 bodyKey: 'landing.role_owner_body',
                 iconColor: 'text-cyan-600 dark:text-cyan-300',
@@ -1139,7 +1139,7 @@ const LandingPage = () => {
                 hoverBorder: 'hover:border-cyan-400/30',
               },
               {
-                icon: Users,
+                icon: UsersThree,
                 titleKey: 'landing.role_manager_title',
                 bodyKey: 'landing.role_manager_body',
                 iconColor: 'text-violet-600 dark:text-violet-300',
@@ -1147,7 +1147,7 @@ const LandingPage = () => {
                 hoverBorder: 'hover:border-violet-400/30',
               },
               {
-                icon: CircleDollarSign,
+                icon: CurrencyCircleDollar,
                 titleKey: 'landing.role_operator_title',
                 bodyKey: 'landing.role_operator_body',
                 iconColor: 'text-emerald-600 dark:text-emerald-300',
@@ -1155,7 +1155,7 @@ const LandingPage = () => {
                 hoverBorder: 'hover:border-emerald-400/30',
               },
               {
-                icon: CalendarCheck2,
+                icon: CalendarCheck,
                 titleKey: 'landing.role_teacher_title',
                 bodyKey: 'landing.role_teacher_body',
                 iconColor: 'text-blue-600 dark:text-blue-300',
@@ -1519,7 +1519,7 @@ const LandingPage = () => {
                 rel="noopener noreferrer"
                 onClick={() => track('telegram_cta_click')}
               >
-                <Send className="size-4" />
+                <PaperPlaneTilt className="size-4" />
                 {t('landing.cta_free')}
               </a>
             </Button>

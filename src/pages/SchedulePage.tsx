@@ -35,13 +35,13 @@ import {
 } from '@/components/ui/select';
 import {
   Plus,
-  Trash2,
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  Sparkles,
-} from 'lucide-react';
+  Trash,
+  CalendarBlank,
+  CaretLeft,
+  CaretRight,
+  CircleNotch,
+  Sparkle,
+} from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { useCan } from '@/hooks/useCan';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -290,7 +290,7 @@ const SchedulePage = () => {
           {canEdit && (
             <>
               <Button variant="outline" onClick={() => setGenerateOpen(true)}>
-                <Sparkles className="mr-2 h-4 w-4" />{' '}
+                <Sparkle className="mr-2 h-4 w-4" />{' '}
                 {t('schedule.generate_lessons')}
               </Button>
               <Button onClick={openCreate}>
@@ -323,10 +323,10 @@ const SchedulePage = () => {
                 title={t('schedule.prev_week')}
                 className="h-11 w-11"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <CaretLeft className="h-4 w-4" />
               </Button>
               <Button variant="outline" size="sm" onClick={thisWeek}>
-                <CalendarDays className="mr-2 h-4 w-4" /> {t('schedule.today')}
+                <CalendarBlank className="mr-2 h-4 w-4" /> {t('schedule.today')}
               </Button>
               <Button
                 variant="outline"
@@ -336,7 +336,7 @@ const SchedulePage = () => {
                 title={t('schedule.next_week')}
                 className="h-11 w-11"
               >
-                <ChevronRight className="h-4 w-4" />
+                <CaretRight className="h-4 w-4" />
               </Button>
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -457,7 +457,7 @@ const SchedulePage = () => {
                         title={t('schedule.delete_title')}
                         className="h-11 w-11"
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <Trash className="h-4 w-4 text-red-500" />
                       </Button>
                     )}
                   </div>
@@ -628,7 +628,7 @@ const SchedulePage = () => {
               <Button type="submit" disabled={generateLessons.isPending}>
                 {generateLessons.isPending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
+                    <CircleNotch className="mr-2 h-4 w-4 animate-spin" />{' '}
                     {t('common.creating')}
                   </>
                 ) : (

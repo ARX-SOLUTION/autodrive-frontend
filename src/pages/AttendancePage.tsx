@@ -42,7 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { useCan } from '@/hooks/useCan';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -159,7 +159,7 @@ const LessonCard = ({
             title={t('attendance.delete_title')}
             className="h-11 w-11"
           >
-            <Trash2 className="h-4 w-4 text-red-500" />
+            <Trash className="h-4 w-4 text-red-500" />
           </Button>
         )}
       </div>

@@ -15,10 +15,10 @@ import {
   Calendar,
   Clock,
   Eye,
-  Share2,
+  Share,
   Link as LinkIcon,
-  Send,
-} from 'lucide-react';
+  PaperPlaneTilt,
+} from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -162,14 +162,14 @@ const BlogPostPage = () => {
         <div className="mt-10 border-t border-border pt-6">
           {canNativeShare ? (
             <Button variant="outline" onClick={handleNativeShare}>
-              <Share2 className="mr-2 size-4" />
+              <Share className="mr-2 size-4" />
               {t('blog.share')}
             </Button>
           ) : (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
-                  <Share2 className="mr-2 size-4" />
+                  <Share className="mr-2 size-4" />
                   {t('blog.share')}
                 </Button>
               </DropdownMenuTrigger>
@@ -184,7 +184,7 @@ const BlogPostPage = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Send className="mr-2 size-4" />
+                    <PaperPlaneTilt className="mr-2 size-4" />
                     {t('blog.share_telegram')}
                   </a>
                 </DropdownMenuItem>

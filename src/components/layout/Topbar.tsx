@@ -1,4 +1,10 @@
-import { Menu, Search, Sun, Moon, Languages } from 'lucide-react';
+import {
+  List,
+  MagnifyingGlass,
+  Sun,
+  Moon,
+  Translate,
+} from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 import { SUPPORTED_LANGS } from '@/i18n';
@@ -8,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Brand } from './Brand';
 
 interface TopbarProps {
   onMobileMenuClick: () => void;
@@ -49,10 +56,10 @@ export const Topbar = ({
         onClick={onMobileMenuClick}
         className="-ml-2 inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
       >
-        <Menu className="h-5 w-5" />
+        <List className="h-5 w-5" />
       </button>
-      <span className="font-heading text-base font-semibold text-foreground md:hidden">
-        {t('app.title')}
+      <span className="md:hidden">
+        <Brand size="sm" />
       </span>
       <div className="flex flex-1 items-center justify-end gap-2">
         <button
@@ -61,7 +68,7 @@ export const Topbar = ({
           aria-label={t('actions.search', 'Qidirish') as string}
           className="inline-flex h-9 items-center gap-2 rounded-md border border-border bg-background px-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground sm:px-3"
         >
-          <Search className="h-4 w-4" />
+          <MagnifyingGlass className="h-4 w-4" />
           <span className="hidden sm:inline">
             {t('actions.search', 'Qidirish') as string}
           </span>
@@ -83,7 +90,7 @@ export const Topbar = ({
             aria-label={t('actions.language') as string}
             className={iconButtonClass}
           >
-            <Languages className="h-4 w-4" />
+            <Translate className="h-4 w-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-[8rem]">
             {SUPPORTED_LANGS.map((code) => (

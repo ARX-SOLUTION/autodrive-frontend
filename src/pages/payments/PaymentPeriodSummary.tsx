@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { SummaryCard } from '@/components/ui/SummaryCard';
 import { formatMoney } from '@/lib/money';
 import type { PaymentSummary } from '@/types/payment';
-import { AlertTriangle, Receipt, Wallet } from 'lucide-react';
+import { Warning, Receipt, Wallet } from '@phosphor-icons/react';
 
 interface PaymentPeriodSummaryProps {
   summary: PaymentSummary;
@@ -42,7 +42,7 @@ export const PaymentPeriodSummary = ({
         <SummaryCard
           title={t('payments.stats.debt')}
           value={formatMoney(summary.period_debt)}
-          icon={<AlertTriangle className="h-5 w-5" />}
+          icon={<Warning className="h-5 w-5" />}
         />
       </div>
     </section>

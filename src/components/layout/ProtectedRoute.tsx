@@ -1,6 +1,6 @@
 import { useRestoreSession } from '@/services/authService';
 import { useAuthStore } from '@/store/authStore';
-import { Loader2 } from 'lucide-react';
+import { CircleNotch } from '@phosphor-icons/react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -15,7 +15,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <CircleNotch className="h-8 w-8 animate-spin" />
           <p className="text-sm">Sessiya tekshirilmoqda...</p>
         </div>
       </div>
@@ -27,7 +27,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <CircleNotch className="h-8 w-8 animate-spin" />
           <p className="text-sm">Sessiya tiklanmoqda...</p>
         </div>
       </div>

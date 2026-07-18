@@ -6,7 +6,7 @@ import { toLocalDateStr } from '@/services/studentService';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from '@phosphor-icons/react';
 import { AuditFilterBar } from '@/pages/audit/AuditFilterBar';
 import { AuditTable } from '@/pages/audit/AuditTable';
 import { AuditMobileList } from '@/pages/audit/AuditMobileList';

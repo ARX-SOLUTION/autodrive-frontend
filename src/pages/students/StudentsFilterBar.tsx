@@ -16,7 +16,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { CalendarIcon, Search } from 'lucide-react';
+import {
+  Calendar as CalendarIcon,
+  MagnifyingGlass,
+} from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import type { CourseType } from '@/types/student';
 import type { Branch } from '@/types/branch';
@@ -182,7 +185,7 @@ export const StudentsFilterBar = ({
       )}
 
       <div className="relative flex-1 min-w-[200px]">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder={t('students.search_placeholder')}
           value={search}

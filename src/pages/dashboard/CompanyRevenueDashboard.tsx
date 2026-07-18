@@ -3,28 +3,28 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import {
-  AlertTriangle,
+  Warning,
   ArrowDownRight,
   ArrowUpRight,
-  CalendarClock,
-  CheckCircle2,
-  ChevronRight,
-  CircleDollarSign,
-  ClipboardCheck,
-  Clock3,
-  ExternalLink,
+  CalendarDot,
+  CheckCircle,
+  CaretRight,
+  CurrencyCircleDollar,
+  ClipboardText,
+  Clock,
+  ArrowSquareOut,
   GraduationCap,
   Hourglass,
-  LayoutDashboard,
+  SquaresFour,
   PiggyBank,
-  RefreshCw,
-  TrendingUp,
+  ArrowsClockwise,
+  TrendUp,
   UserCheck,
   UserMinus,
   UserPlus,
-  Users,
-  WalletCards,
-} from 'lucide-react';
+  UsersThree,
+  Wallet,
+} from '@phosphor-icons/react';
 import {
   Area,
   AreaChart,
@@ -150,7 +150,7 @@ export const KpiCard = ({
   label: string;
   value: string;
   meta: string;
-  icon: typeof WalletCards;
+  icon: typeof Wallet;
   tone: 'primary' | 'warning' | 'success' | 'info';
   delta?: number | null;
   onClick?: () => void;
@@ -390,7 +390,9 @@ const FilterBar = ({
         disabled={isFetching}
         aria-label={t('dashboard.v2.refresh', 'Yangilash')}
       >
-        <RefreshCw className={cn('h-4 w-4', isFetching && 'animate-spin')} />
+        <ArrowsClockwise
+          className={cn('h-4 w-4', isFetching && 'animate-spin')}
+        />
       </Button>
     </div>
   );
@@ -653,7 +655,7 @@ const CompanyRevenueDashboard = () => {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="mb-2 inline-flex items-center gap-2 text-xs font-medium text-primary">
-            <LayoutDashboard className="h-4 w-4" />{' '}
+            <SquaresFour className="h-4 w-4" />{' '}
             {t('dashboard.v2.title', 'Revenue control')}
           </div>
           <h1 className="font-heading text-2xl font-bold tracking-tight text-balance">
@@ -696,7 +698,7 @@ const CompanyRevenueDashboard = () => {
           label={t('dashboard.v2.today_revenue', 'Bugungi tushum')}
           value={formatMoney(kpis.revenue.today)}
           meta={t('dashboard.v2.today_meta', 'Asia/Tashkent bo‘yicha')}
-          icon={WalletCards}
+          icon={Wallet}
           tone="primary"
           onClick={() =>
             navigate(
@@ -712,7 +714,7 @@ const CompanyRevenueDashboard = () => {
           label={t('dashboard.v2.period_revenue', 'Tanlangan davr tushumi')}
           value={formatMoney(kpis.revenue.period)}
           meta={`${comparisonRange}: ${formatMoney(kpis.revenue.previous_period)}`}
-          icon={CircleDollarSign}
+          icon={CurrencyCircleDollar}
           tone="info"
           delta={kpis.revenue.delta_percent}
           onClick={() => navigate(withContext('/payments'))}
@@ -723,7 +725,7 @@ const CompanyRevenueDashboard = () => {
           meta={t('dashboard.v2.debtors', '{{count}} ta qarzdor student', {
             count: kpis.debt.students_with_debt,
           })}
-          icon={AlertTriangle}
+          icon={Warning}
           tone="warning"
           onClick={() =>
             navigate(
@@ -739,7 +741,7 @@ const CompanyRevenueDashboard = () => {
             '{{paid}} to‘liq · {{partial}} qisman',
             { paid: kpis.collection.paid, partial: kpis.collection.partial },
           )}
-          icon={CheckCircle2}
+          icon={CheckCircle}
           tone="success"
           onClick={() =>
             navigate(withContext('/students', { status: 'active' }))
@@ -766,7 +768,7 @@ const CompanyRevenueDashboard = () => {
               className="text-xs font-semibold text-primary hover:underline"
             >
               {t('dashboard.v2.open_payments', 'To‘lovlar')}{' '}
-              <ExternalLink
+              <ArrowSquareOut
                 className="ml-1 inline h-3 w-3"
                 aria-hidden="true"
               />
@@ -822,10 +824,7 @@ const CompanyRevenueDashboard = () => {
               className="text-xs font-semibold text-primary hover:underline"
             >
               {t('dashboard.v2.manage_branches', 'Filiallar')}{' '}
-              <ChevronRight
-                className="ml-1 inline h-3 w-3"
-                aria-hidden="true"
-              />
+              <CaretRight className="ml-1 inline h-3 w-3" aria-hidden="true" />
             </Link>
           }
         >
@@ -875,7 +874,7 @@ const CompanyRevenueDashboard = () => {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-semibold">{branch.name}</span>
-                      <ChevronRight
+                      <CaretRight
                         className="h-4 w-4 text-muted-foreground"
                         aria-hidden="true"
                       />
@@ -1042,7 +1041,7 @@ const CompanyRevenueDashboard = () => {
               className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-[background-color,transform] duration-150 hover:-translate-y-0.5 hover:bg-muted/60"
             >
               <span className="flex items-center gap-3">
-                <CalendarClock
+                <CalendarDot
                   className="h-5 w-5 text-primary"
                   aria-hidden="true"
                 />
@@ -1055,7 +1054,7 @@ const CompanyRevenueDashboard = () => {
                   </span>
                 </span>
               </span>
-              <ChevronRight
+              <CaretRight
                 className="h-4 w-4 text-muted-foreground motion-safe:transition-transform duration-150 group-hover:translate-x-0.5"
                 aria-hidden="true"
               />
@@ -1065,7 +1064,7 @@ const CompanyRevenueDashboard = () => {
               className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-[background-color,transform] duration-150 hover:-translate-y-0.5 hover:bg-muted/60"
             >
               <span className="flex items-center gap-3">
-                <Clock3 className="h-5 w-5 text-warning" aria-hidden="true" />
+                <Clock className="h-5 w-5 text-warning" aria-hidden="true" />
                 <span>
                   <span className="block text-sm font-semibold">
                     {t('nav.attendance', 'Davomat tekshiruvi')}
@@ -1076,7 +1075,7 @@ const CompanyRevenueDashboard = () => {
                   </span>
                 </span>
               </span>
-              <ChevronRight
+              <CaretRight
                 className="h-4 w-4 text-muted-foreground motion-safe:transition-transform duration-150 group-hover:translate-x-0.5"
                 aria-hidden="true"
               />
@@ -1113,7 +1112,7 @@ const CompanyRevenueDashboard = () => {
           <div className="grid grid-cols-2 gap-2">
             <QuickAction
               to="/payments?action=create"
-              icon={WalletCards}
+              icon={Wallet}
               label={t('payments.add_payment', 'Payment qo‘shish')}
             />
             <QuickAction
@@ -1123,12 +1122,12 @@ const CompanyRevenueDashboard = () => {
             />
             <QuickAction
               to="/schedule?action=create"
-              icon={CalendarClock}
+              icon={CalendarDot}
               label={t('attendance.add_lesson', 'Dars yaratish')}
             />
             <QuickAction
               to="/attendance"
-              icon={Users}
+              icon={UsersThree}
               label={t('nav.attendance', 'Davomat ochish')}
             />
           </div>
@@ -1160,7 +1159,7 @@ const CompanyRevenueDashboard = () => {
               )}
               value={formatMoney(kpis.revenue.period)}
               meta={comparisonRange}
-              icon={TrendingUp}
+              icon={TrendUp}
               tone="primary"
               delta={kpis.revenue.delta_percent}
             />
@@ -1171,7 +1170,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.financial_block.debt_aging_meta',
                 'Qarzdorlik yoshi',
               )}
-              icon={Clock3}
+              icon={Clock}
               tone="info"
             />
             <KpiCard
@@ -1184,7 +1183,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.financial_block.debt_aging_meta',
                 'Qarzdorlik yoshi',
               )}
-              icon={Clock3}
+              icon={Clock}
               tone="info"
             />
             <KpiCard
@@ -1197,7 +1196,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.financial_block.debt_aging_meta',
                 'Qarzdorlik yoshi',
               )}
-              icon={Clock3}
+              icon={Clock}
               tone="info"
             />
             <KpiCard
@@ -1210,7 +1209,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.financial_block.debt_aging_meta_urgent',
                 'Diqqat talab qiladi',
               )}
-              icon={AlertTriangle}
+              icon={Warning}
               tone="warning"
               onClick={() =>
                 navigate(
@@ -1228,7 +1227,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.financial_block.arpu_meta',
                 'Faol talabaga o‘rtacha',
               )}
-              icon={Users}
+              icon={UsersThree}
               tone="primary"
             />
             <KpiCard
@@ -1299,7 +1298,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.academic_block.attendance_meta',
                 'Tanlangan davr bo‘yicha',
               )}
-              icon={CheckCircle2}
+              icon={CheckCircle}
               tone={
                 kpis.attendance_rate == null
                   ? 'info'
@@ -1338,7 +1337,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.academic_block.exam_pass_meta',
                 'Birinchi imtihon urinishi',
               )}
-              icon={ClipboardCheck}
+              icon={ClipboardText}
               tone="info"
             />
             <KpiCard
@@ -1480,7 +1479,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.staff_block.on_time_attendance_meta',
                 'Dars kuni ichida belgilangan davomatlar ulushi',
               )}
-              icon={Clock3}
+              icon={Clock}
               tone={
                 (kpis.on_time_attendance_marking_rate ?? 0) >= 80
                   ? 'success'
@@ -1531,11 +1530,7 @@ const StatusItem = ({
   tone: 'success' | 'warning' | 'danger';
 }) => {
   const Icon =
-    tone === 'success'
-      ? CheckCircle2
-      : tone === 'warning'
-        ? Clock3
-        : AlertTriangle;
+    tone === 'success' ? CheckCircle : tone === 'warning' ? Clock : Warning;
   return (
     <div className="flex items-center justify-between gap-2">
       <span className="flex items-center gap-2">
@@ -1602,7 +1597,7 @@ const ErrorState = ({ onRetry }: { onRetry: () => void }) => {
   const { t } = useTranslation();
   return (
     <Card className="border-destructive/30 bg-destructive/5 p-8 text-center">
-      <AlertTriangle className="mx-auto h-8 w-8 text-destructive" />
+      <Warning className="mx-auto h-8 w-8 text-destructive" />
       <h1 className="mt-3 text-lg font-semibold">
         {t(
           'dashboard.v2.error_title',

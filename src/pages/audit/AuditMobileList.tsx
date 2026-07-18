@@ -9,7 +9,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from '@phosphor-icons/react';
 
 interface AuditMobileListProps {
   logs: AuditLog[];

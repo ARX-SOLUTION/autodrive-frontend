@@ -24,7 +24,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { ChevronsUpDown, Check, Loader2 } from 'lucide-react';
+import { CaretUpDown, Check, CircleNotch } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { formatMoney, groupDigits } from '@/lib/money';
 import { formatPhone } from '@/lib/phoneFormater';
@@ -286,7 +286,7 @@ const PaymentModal = ({
                                 : t('students.select_student', {
                                     defaultValue: 'Select a student',
                                   })}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
@@ -307,7 +307,7 @@ const PaymentModal = ({
                             <CommandList>
                               {isStudentsFetching ? (
                                 <div className="flex items-center justify-center gap-2 px-3 py-6 text-sm text-muted-foreground">
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <CircleNotch className="h-4 w-4 animate-spin" />
                                   {t('common.loading')}
                                 </div>
                               ) : isStudentsError ? (

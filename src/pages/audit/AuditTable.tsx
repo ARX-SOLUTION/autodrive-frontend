@@ -10,7 +10,7 @@ import {
 } from '@/lib/auditFormat';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
 interface AuditTableProps {

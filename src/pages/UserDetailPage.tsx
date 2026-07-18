@@ -1,6 +1,6 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Warning, ShieldCheck } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -37,7 +37,7 @@ const UserDetailPage = () => {
         isLoading={isLoading}
         isError={isError || !user}
         errorTitle={isError ? t('common.error') : t('common.not_found')}
-        errorIcon={isError ? AlertTriangle : ShieldCheck}
+        errorIcon={isError ? Warning : ShieldCheck}
       />
     );
   }

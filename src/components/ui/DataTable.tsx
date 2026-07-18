@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
+import { CaretDown, CaretUpDown, CaretUp } from '@phosphor-icons/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -58,11 +58,11 @@ const SortIcon = ({
   dir: 'asc' | 'desc';
 }) => {
   if (!active)
-    return <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />;
+    return <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />;
   return dir === 'asc' ? (
-    <ChevronUp className="h-3 w-3" />
+    <CaretUp className="h-3 w-3" />
   ) : (
-    <ChevronDown className="h-3 w-3" />
+    <CaretDown className="h-3 w-3" />
   );
 };
 
