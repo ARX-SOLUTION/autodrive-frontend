@@ -114,7 +114,7 @@ const CHART_STYLE = {
 const AXIS_PROPS = {
   stroke: 'hsl(var(--muted-foreground))',
   fontSize: 11,
-  fontFamily: 'IBM Plex Mono, ui-monospace, monospace',
+  fontFamily: 'JetBrains Mono, ui-monospace, monospace',
   tickLine: false,
   axisLine: false,
 };

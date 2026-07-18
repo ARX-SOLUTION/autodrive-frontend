@@ -102,11 +102,23 @@
   .neon-glow-sm {
     box-shadow: inset 2px 0 0 hsl(var(--primary));
   }
+
+  /* Status chip recipe (mock): solid semantic color text on the same
+     semantic color at ~14% alpha background — e.g.
+     `text-success bg-success/[0.14]`. Apply directly with token utilities;
+     add a `.chip-tone` helper only if duplication across components
+     warrants it. */
 }
 
 @layer utilities {
   .tabular-nums {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Tabular figures for KPI/metric values — mock's `.num` recipe. */
+  .num {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
   }
 
   /* ponytail: content-visibility on below-fold sections; paired with contain-intrinsic-size to prevent scroll jumps */
@@ -128,18 +140,20 @@
 
 /* ─── Custom Scrollbar ─── */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
-  border-radius: 3px;
+  background-color: hsl(var(--border));
+  border: 3px solid transparent;
+  border-radius: 8px;
+  background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
+  background-color: hsl(var(--muted-foreground));
 }
 
 /* ─── Animations ─── */
@@ -235,6 +249,35 @@
     .card-enter {
       opacity: 0;
       translate: 0 12px;
+    }
+  }
+
+  /* Panel entrance — fade + translate-up 8px. Stagger via inline
+     animation-delay (index × 40ms), same convention as .card-enter. Use with
+     Tailwind arbitrary values, e.g. `animate-[rise_0.4s_ease-out_both]`. */
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Live status dot — e.g. `animate-[pulse-dot_2.4s_ease-in-out_infinite]`.
+     Named `pulse-dot`, not `pulse`: Tailwind's built-in `animate-pulse`
+     utility already ships its own `@keyframes pulse` (used by Skeleton and
+     the existing live-status dots) — a same-named keyframe here would
+     silently override it everywhere since @keyframes names aren't scoped. */
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
     }
   }
 }

@@ -26,7 +26,7 @@ export default {
       fontFamily: {
         heading: ['Manrope', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         body: ['Manrope', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono: ['IBM Plex Mono', 'ui-monospace', 'monospace'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       colors: {
         sidebar: {
