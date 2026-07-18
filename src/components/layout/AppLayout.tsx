@@ -6,8 +6,6 @@ import { Breadcrumbs } from './Breadcrumbs';
 import { CommandPalette, useCommandPalette } from './CommandPalette';
 
 export const AppLayout = () => {
-  // Sidebar defaults to the collapsed icon rail; the chevron expands it.
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
   const palette = useCommandPalette();
@@ -19,12 +17,10 @@ export const AppLayout = () => {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar
-        collapsed={sidebarCollapsed}
-        onCollapsedChange={setSidebarCollapsed}
         mobileOpen={mobileSidebarOpen}
         onMobileOpenChange={setMobileSidebarOpen}
       />
-      <div className="flex min-h-screen flex-col md:ml-[96px]">
+      <div className="flex min-h-screen flex-col md:ml-[82px]">
         <Topbar
           onMobileMenuClick={() => setMobileSidebarOpen(true)}
           onCommandPaletteOpen={() => palette.setOpen(true)}

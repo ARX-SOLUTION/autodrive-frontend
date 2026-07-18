@@ -5,6 +5,7 @@
   "nav": {
     "dashboard": "Панель",
     "branches": "Филиалы",
+    "branches_all": "Все филиалы",
     "groups": "Группы",
     "courses": "Курсы",
     "students": "Студенты",
@@ -30,10 +31,12 @@
     "sidebar": "Меню",
     "home": "Главная",
     "search": "Поиск",
+    "search_hint": "Студент, платёж",
     "search_placeholder": "Поиск страницы...",
     "search_empty": "Ничего не найдено",
     "search_pages": "Страницы",
-    "search_group_staff": "Сотрудники"
+    "search_group_staff": "Сотрудники",
+    "quick_payment": "Платёж"
   },
   "roles": {
     "owner": "Владелец",

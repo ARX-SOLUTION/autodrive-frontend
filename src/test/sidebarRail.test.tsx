@@ -4,52 +4,67 @@ import { vi, describe, it, expect, afterEach } from 'vitest';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-// Sidebar rework (exec-dash 2-shell): default state is an icon-only rail
-// (collapsed=true); the chevron expands it to show labels. Icon-only items
-// must stay screen-reader reachable via aria-label since the visible <span>
-// label is removed while collapsed.
+// Sidebar rework (exec-dash 6-rail-and-header): the desktop rail is now
+// fixed — no collapse/expand mode. Every item shows both an icon and an
+// 8.5px micro-label, so aria-label is a defensive accessible-name duplicate
+// rather than the only way to reach the item. Capability-gated items must
+// still be filtered by useCan, and the mobile Sheet keeps its own separate
+// full-label rendering with the original active-pill treatment.
 
-vi.mock('@/hooks/useCan', () => ({ useCan: () => true }));
+let canGate = true;
+
+vi.mock('@/hooks/useCan', () => ({ useCan: () => canGate }));
 vi.mock('@/services/authService', () => ({
   useLogout: () => ({ mutate: vi.fn() }),
 }));
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
-    selector({ user: { role: 'owner', name: 'Test User', branch_name: null } }),
+    selector({
+      user: { role: 'owner', name: 'Test User', branch_name: null },
+    }),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  canGate = true;
+  cleanup();
+});
 
-const renderSidebar = (collapsed: boolean) =>
+const renderSidebar = (mobileOpen = false) =>
   render(
     <MemoryRouter initialEntries={['/dashboard']}>
       <TooltipProvider>
-        <Sidebar
-          collapsed={collapsed}
-          onCollapsedChange={vi.fn()}
-          mobileOpen={false}
-          onMobileOpenChange={vi.fn()}
-        />
+        <Sidebar mobileOpen={mobileOpen} onMobileOpenChange={vi.fn()} />
       </TooltipProvider>
     </MemoryRouter>,
   );
 
 describe('Sidebar rail', () => {
-  it('collapsed: hides visible labels but keeps items reachable via aria-label', () => {
-    renderSidebar(true);
-    expect(screen.queryByText('nav.dashboard')).toBeNull();
+  it('renders items with a visible micro-label and a matching aria-label', () => {
+    renderSidebar();
     expect(screen.getByLabelText('nav.dashboard')).toBeTruthy();
+    expect(screen.getAllByText('nav.dashboard').length).toBeGreaterThan(0);
   });
 
-  it('expanded: shows visible labels', () => {
-    renderSidebar(false);
-    expect(screen.getByText('nav.dashboard')).toBeTruthy();
+  it('hides a capability-gated item when the capability check fails', () => {
+    canGate = false;
+    renderSidebar();
+    expect(screen.queryByLabelText('nav.branches')).toBeNull();
   });
 
   it('marks the active route with the primary pill treatment', () => {
-    renderSidebar(false);
+    renderSidebar();
     expect(screen.getByLabelText('nav.dashboard').className).toContain(
-      'bg-primary/15',
+      'bg-primary',
+    );
+  });
+
+  it('mobile sheet: still renders the full-label list, unchanged active treatment', () => {
+    renderSidebar(true);
+    // One match in the always-rendered desktop rail, one in the open sheet.
+    const items = screen.getAllByLabelText('nav.dashboard');
+    expect(items.length).toBe(2);
+    expect(items.some((el) => el.className.includes('bg-primary/[12%]'))).toBe(
+      true,
     );
   });
 });

@@ -5,6 +5,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "branches": "Branches",
+    "branches_all": "All branches",
     "groups": "Groups",
     "courses": "Courses",
     "students": "Students",
@@ -30,10 +31,12 @@
     "sidebar": "Menu",
     "home": "Home",
     "search": "Search",
+    "search_hint": "Search students, payments",
     "search_placeholder": "Search pages...",
     "search_empty": "Nothing found",
     "search_pages": "Pages",
-    "search_group_staff": "Staff"
+    "search_group_staff": "Staff",
+    "quick_payment": "Payment"
   },
   "roles": {
     "owner": "Owner",

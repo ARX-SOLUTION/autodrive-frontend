@@ -5,6 +5,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "branches": "Filiallar",
+    "branches_all": "Barcha filiallar",
     "groups": "Guruhlar",
     "courses": "Kurslar",
     "students": "Talabalar",
@@ -30,10 +31,12 @@
     "sidebar": "Yon menyu",
     "home": "Bosh sahifa",
     "search": "Qidirish",
+    "search_hint": "Talaba, to'lov qidirish",
     "search_placeholder": "Sahifa qidirish...",
     "search_empty": "Hech narsa topilmadi",
     "search_pages": "Sahifalar",
-    "search_group_staff": "Xodimlar"
+    "search_group_staff": "Xodimlar",
+    "quick_payment": "To'lov"
   },
   "roles": {
     "owner": "Biznes egasi",
