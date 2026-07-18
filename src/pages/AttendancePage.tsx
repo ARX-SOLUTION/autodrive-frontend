@@ -42,7 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Trash } from '@phosphor-icons/react';
+import { ListChecks, Plus, Trash } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { useCan } from '@/hooks/useCan';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -60,10 +60,11 @@ const formatDate = (d: string) => {
 
 // ponytail: mirrors SchedulePage's local typeDotClass. Kept duplicated (2
 // entries) instead of extracted to a shared file, to avoid touching that
-// already-shipped page for a 2-line map.
+// already-shipped page for a 2-line map. exec-dash 8: practice -> info to
+// match the mock's schedule-grid tone (Design.md: teoriya=amber, amaliy=blue).
 const lessonTypeDotClass: Record<LessonType, string> = {
   theory: 'bg-primary',
-  practice: 'bg-success',
+  practice: 'bg-info',
 };
 
 const createLessonSchema = z.object({
@@ -84,11 +85,13 @@ interface LessonCardProps {
   onNavigateGroup: () => void;
 }
 
-// Decluttered lesson card matching SchedulePage's glass-card visual language
-// (autodrive-38m.3 / autodrive-6ef.27): date, group, teacher, lesson-type
-// dot, attendance-status chip. Clicking the card opens the same
-// AttendanceDrawer used by SchedulePage -- one attendance-marking UI across
-// both pages instead of this page's old inline expand-to-table.
+// Decluttered lesson card (autodrive-38m.3 / autodrive-6ef.27): date, group,
+// teacher, lesson-type dot, attendance-status chip. Clicking the card opens
+// the same AttendanceDrawer used by SchedulePage -- one attendance-marking
+// UI across both pages instead of this page's old inline expand-to-table.
+// exec-dash 8: flat mock card (border-border/bg-card, no shadow); native
+// <button> for the open-area instead of a div[role=button] so it gets
+// keyboard activation and the global focus-visible ring for free.
 const LessonCard = ({
   lesson,
   typeLabel,
@@ -104,23 +107,16 @@ const LessonCard = ({
   // this lesson has been marked at least once.
   const marked = lesson.attendance.length > 0;
   return (
-    <div className="glass-card flex flex-col gap-2 p-3 text-sm transition-colors duration-200 hover:border-primary/40">
-      <div
-        role="button"
-        tabIndex={0}
+    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 text-sm motion-safe:transition-colors duration-150 hover:border-primary/[40%]">
+      <button
+        type="button"
         onClick={onOpen}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onOpen();
-          }
-        }}
-        className="flex cursor-pointer flex-col gap-1"
+        className="flex w-full flex-col gap-1 text-left"
       >
-        <span className="font-mono text-xs tabular-nums text-muted-foreground">
+        <span className="num font-mono text-xs text-muted-foreground">
           {formatDate(lesson.date)}
         </span>
-        <span className="font-medium">{lesson.title}</span>
+        <span className="font-semibold">{lesson.title}</span>
         <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
           <span
             className={cn(
@@ -135,13 +131,13 @@ const LessonCard = ({
           className={cn(
             'mt-0.5 w-fit rounded-full px-2 py-0.5 text-[11px] font-medium',
             marked
-              ? 'bg-success/10 text-success'
-              : 'border border-dashed text-muted-foreground',
+              ? 'bg-success/[14%] text-success'
+              : 'border border-dashed border-hair text-muted-foreground',
           )}
         >
           {marked ? t('schedule.status_marked') : t('schedule.status_pending')}
         </span>
-      </div>
+      </button>
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -159,7 +155,7 @@ const LessonCard = ({
             title={t('attendance.delete_title')}
             className="h-11 w-11"
           >
-            <Trash className="h-4 w-4 text-red-500" />
+            <Trash className="h-4 w-4 text-destructive" />
           </Button>
         )}
       </div>
@@ -267,14 +263,22 @@ const AttendancePage = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">{t('attendance.title')}</h1>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="inline-flex items-center gap-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-primary">
+            <ListChecks className="h-3.5 w-3.5" aria-hidden="true" />
+            {t('attendance.title')}
+          </div>
+          <h1 className="mt-1.5 font-heading text-[34px] font-extrabold leading-[1.1] tracking-[-0.02em] text-balance">
+            {t('attendance.title')}
+          </h1>
+        </div>
         {canCreate && (
-          <Button onClick={openCreate}>
+          <Button onClick={openCreate} className="font-bold">
             <Plus className="mr-2 h-4 w-4" /> {t('attendance.add_lesson')}
           </Button>
         )}
-      </div>
+      </header>
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -288,7 +292,10 @@ const AttendancePage = () => {
           description={t('attendance.not_found_desc')}
         />
       ) : (
-        <div className="space-y-4">
+        <div
+          className="space-y-4 motion-safe:animate-[rise_0.4s_ease-out_both]"
+          style={{ animationDelay: '40ms' }}
+        >
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {lessons.map((lesson) => (
               <LessonCard

@@ -36,6 +36,7 @@ import {
 import {
   Plus,
   Trash,
+  Calendar,
   CalendarBlank,
   CaretLeft,
   CaretRight,
@@ -57,9 +58,17 @@ const formatTime = (iso: string) => {
   }
 };
 
-const typeDotClass: Record<LessonType, string> = {
-  theory: 'bg-primary',
-  practice: 'bg-success',
+// exec-dash 8: practice -> info to match the mock's schedule-grid tone
+// (Design.md: teoriya=amber, amaliy=blue). Cell bg/border/tag share the same
+// tone, kept as full static strings (not `bg-${tone}`) since Tailwind's
+// scanner only picks up literal class text.
+const typeCellClass: Record<LessonType, string> = {
+  theory: 'bg-primary/[14%] border-primary/[32%] hover:bg-primary/[20%]',
+  practice: 'bg-info/[14%] border-info/[32%] hover:bg-info/[20%]',
+};
+const typeTagTextClass: Record<LessonType, string> = {
+  theory: 'text-primary',
+  practice: 'text-info',
 };
 
 interface LessonCardProps {
@@ -68,9 +77,11 @@ interface LessonCardProps {
   onOpen: () => void;
 }
 
-// Decluttered lesson card for the week-strip (autodrive-38m.3): time, group,
-// teacher, lesson-type dot, and an attendance-status chip. A native <button>
-// gives Tab/Enter keyboard access for free.
+// Decluttered lesson cell for the week-strip (autodrive-38m.3): type tag,
+// time, group, teacher, attendance-status chip. A native <button> gives
+// Tab/Enter keyboard access for free. exec-dash 8: mock's tinted lesson-cell
+// treatment -- no "room" field in CalendarLesson, so the cell shows teacher
+// only (deviation from the mock's "teacher · room").
 const LessonCard = ({ lesson, typeLabel, onOpen }: LessonCardProps) => {
   const { t } = useTranslation();
   const marked = lesson.total_count > 0;
@@ -78,28 +89,36 @@ const LessonCard = ({ lesson, typeLabel, onOpen }: LessonCardProps) => {
     <button
       type="button"
       onClick={onOpen}
-      className="glass-card flex w-full flex-col gap-1 p-2.5 text-left text-sm transition-colors duration-200 hover:border-primary/40"
+      className={cn(
+        'flex min-h-[80px] w-full flex-col gap-0.5 rounded-[11px] border p-[10px] text-left motion-safe:transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        typeCellClass[lesson.lesson_type],
+      )}
     >
-      <span className="font-mono text-xs tabular-nums text-muted-foreground">
-        {formatTime(lesson.date)}
-      </span>
-      <span className="font-medium">{lesson.group_name}</span>
-      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <span
-          className={cn(
-            'h-1.5 w-1.5 shrink-0 rounded-full',
-            typeDotClass[lesson.lesson_type],
-          )}
-        />
-        {typeLabel}
-        {lesson.teacher_name ? ` · ${lesson.teacher_name}` : ''}
-      </span>
       <span
         className={cn(
-          'mt-0.5 w-fit rounded-full px-2 py-0.5 text-[11px] font-medium',
+          'font-mono text-[9px] font-bold uppercase tracking-[0.08em]',
+          typeTagTextClass[lesson.lesson_type],
+        )}
+      >
+        {typeLabel}
+      </span>
+      <span className="num font-mono text-[11px] text-muted-foreground">
+        {formatTime(lesson.date)}
+      </span>
+      <span className="truncate text-[13.5px] font-bold">
+        {lesson.group_name}
+      </span>
+      {lesson.teacher_name && (
+        <span className="truncate text-[10.5px] text-muted-foreground">
+          {lesson.teacher_name}
+        </span>
+      )}
+      <span
+        className={cn(
+          'mt-auto w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold',
           marked
-            ? 'bg-success/10 text-success'
-            : 'border border-dashed text-muted-foreground',
+            ? 'bg-success/[14%] text-success'
+            : 'border border-dashed border-hair text-muted-foreground',
         )}
       >
         {marked ? t('schedule.status_marked') : t('schedule.status_pending')}
@@ -279,10 +298,16 @@ const SchedulePage = () => {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{t('schedule.title')}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <div className="inline-flex items-center gap-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-primary">
+            <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+            {t('schedule.title')}
+          </div>
+          <h1 className="mt-1.5 font-heading text-[34px] font-extrabold leading-[1.1] tracking-[-0.02em] text-balance">
+            {t('schedule.title')}
+          </h1>
+          <p className="num mt-1.5 font-mono text-[13px] text-muted-foreground">
             {format(weekStart, 'dd.MM.yyyy')} — {format(weekEnd, 'dd.MM.yyyy')}
           </p>
         </div>
@@ -313,7 +338,10 @@ const SchedulePage = () => {
 
         <TabsContent value="calendar" className="space-y-6">
           {/* Calendar navigation */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div
+            className="flex flex-wrap items-center justify-between gap-3 motion-safe:animate-[rise_0.4s_ease-out_both]"
+            style={{ animationDelay: '40ms' }}
+          >
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -339,19 +367,24 @@ const SchedulePage = () => {
                 <CaretRight className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span className="inline-block h-3 w-3 rounded-full bg-primary" />{' '}
+            <div className="flex items-center gap-4 font-mono text-[11px] text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="h-[13px] w-[13px] rounded-[4px] border border-primary/[40%] bg-primary/[16%]" />
                 {t('schedule.legend_theory')}
               </span>
-              <span className="flex items-center gap-1">
-                <span className="inline-block h-3 w-3 rounded-full bg-success" />{' '}
+              <span className="flex items-center gap-1.5">
+                <span className="h-[13px] w-[13px] rounded-[4px] border border-info/[40%] bg-info/[16%]" />
                 {t('schedule.legend_practice')}
               </span>
             </div>
           </div>
 
-          {/* Week strip: one column per day, decluttered lesson cards */}
+          {/* Week strip: one column per day, decluttered lesson cards.
+              exec-dash 8: mock's "grid card" shell -- day-columns already
+              existed, but there's no shared time-row axis in the data model
+              (lessons within a day aren't slotted to hours), so this stays a
+              per-day list of cards inside a scrollable 7-col shell rather
+              than a literal time x day matrix. */}
           {lessonsLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
@@ -359,42 +392,53 @@ const SchedulePage = () => {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
-              {weekDays.map((day) => {
-                const key = format(day, 'yyyy-MM-dd');
-                const dayLessons = lessonsByDay.get(key) || [];
-                const isToday = isSameDay(day, today);
-                return (
-                  <div key={key} className="flex flex-col gap-2">
-                    <div
-                      className={`border-b pb-1 text-xs font-semibold uppercase tracking-wide ${
-                        isToday ? 'text-primary' : 'text-muted-foreground'
-                      }`}
-                    >
-                      {format(day, 'EEE')}{' '}
-                      <span
-                        className={isToday ? 'text-primary' : 'text-foreground'}
+            <div
+              className="overflow-x-auto rounded-xl border border-border bg-card p-[18px] motion-safe:animate-[rise_0.4s_ease-out_both]"
+              style={{ animationDelay: '80ms' }}
+            >
+              <div className="grid min-w-[840px] grid-cols-7 gap-3">
+                {weekDays.map((day) => {
+                  const key = format(day, 'yyyy-MM-dd');
+                  const dayLessons = lessonsByDay.get(key) || [];
+                  const isToday = isSameDay(day, today);
+                  return (
+                    <div key={key} className="flex flex-col gap-2">
+                      <div
+                        className={cn(
+                          'border-b pb-1.5 text-[14px] font-bold uppercase tracking-wide',
+                          isToday
+                            ? 'border-primary/[32%] text-primary'
+                            : 'border-hair text-muted-foreground',
+                        )}
                       >
-                        {format(day, 'd')}
-                      </span>
+                        {format(day, 'EEE')}{' '}
+                        <span
+                          className={cn(
+                            'num font-mono',
+                            isToday ? 'text-primary' : 'text-foreground',
+                          )}
+                        >
+                          {format(day, 'd')}
+                        </span>
+                      </div>
+                      {dayLessons.length === 0 ? (
+                        <div className="flex min-h-[80px] items-center justify-center rounded-[11px] border border-dashed border-hair text-xs text-muted-foreground/[50%]">
+                          —
+                        </div>
+                      ) : (
+                        dayLessons.map((lesson) => (
+                          <LessonCard
+                            key={lesson.id}
+                            lesson={lesson}
+                            typeLabel={lessonTypeLabel[lesson.lesson_type]}
+                            onOpen={() => setSelectedLesson(lesson)}
+                          />
+                        ))
+                      )}
                     </div>
-                    {dayLessons.length === 0 ? (
-                      <p className="py-4 text-center text-xs text-muted-foreground/50">
-                        —
-                      </p>
-                    ) : (
-                      dayLessons.map((lesson) => (
-                        <LessonCard
-                          key={lesson.id}
-                          lesson={lesson}
-                          typeLabel={lessonTypeLabel[lesson.lesson_type]}
-                          onOpen={() => setSelectedLesson(lesson)}
-                        />
-                      ))
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </TabsContent>
@@ -457,7 +501,7 @@ const SchedulePage = () => {
                         title={t('schedule.delete_title')}
                         className="h-11 w-11"
                       >
-                        <Trash className="h-4 w-4 text-red-500" />
+                        <Trash className="h-4 w-4 text-destructive" />
                       </Button>
                     )}
                   </div>
