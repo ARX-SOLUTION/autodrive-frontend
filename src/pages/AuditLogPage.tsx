@@ -147,7 +147,7 @@ const AuditLogPage = () => {
       {/* Table */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-balance">
+          <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground text-balance">
             {t('audit.entries_list')}
           </h2>
           <span className="text-xs text-muted-foreground">

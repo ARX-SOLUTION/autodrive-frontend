@@ -113,6 +113,7 @@ const CHART_STYLE = {
 const AXIS_PROPS = {
   stroke: 'hsl(var(--muted-foreground))',
   fontSize: 11,
+  fontFamily: 'IBM Plex Mono, ui-monospace, monospace',
   tickLine: false,
   axisLine: false,
 };
@@ -216,7 +217,7 @@ const KpiCard = ({
       style={{ transitionDelay: `${animationDelayMs}ms` }}
     >
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
           {label}
         </p>
         <div
@@ -754,7 +755,7 @@ const LegacyMainDashboard = () => {
                     <div className="text-2xl font-bold tracking-tight tabular-nums">
                       {formatNumber(totalCourseMix)}
                     </div>
-                    <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <div className="mt-0.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                       {t('dashboard.donut_students')}
                     </div>
                   </div>

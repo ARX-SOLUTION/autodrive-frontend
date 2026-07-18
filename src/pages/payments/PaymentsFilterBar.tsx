@@ -79,7 +79,7 @@ export const PaymentsFilterBar = ({
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-balance">
+        <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground text-balance">
           {t('payments.filter_title')}
         </h2>
         {hasAnyFilter && (

@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
 import {
   Warning,
   ArrowDownRight,
@@ -49,6 +51,8 @@ import { useCan } from '@/hooks/useCan';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
 import { formatMoney } from '@/lib/money';
+
+gsap.registerPlugin(useGSAP);
 
 const UZ_TIMEZONE = 'Asia/Tashkent';
 
@@ -162,6 +166,31 @@ export const KpiCard = ({
     success: 'bg-success/12 text-success',
     info: 'bg-info/12 text-info',
   };
+  const valueRef = useRef<HTMLParagraphElement>(null);
+
+  // Lead-card count-up, mount-once (empty deps). Non-lead cards no-op.
+  useGSAP(() => {
+    const el = valueRef.current;
+    if (!lead || !el) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // ponytail: strips sign along with non-digits (fine — money/% values here
+    // are non-negative); add sign handling if a lead card ever goes negative.
+    const digits = value.replace(/\D/g, '');
+    const target = Number(digits);
+    if (!digits || !Number.isFinite(target)) return;
+    const lastDigitAt = value.search(/\d(?!.*\d)/);
+    const suffix = lastDigitAt >= 0 ? value.slice(lastDigitAt + 1) : '';
+    const proxy = { v: 0 };
+    gsap.to(proxy, {
+      v: target,
+      duration: 0.9,
+      ease: 'power2.out',
+      onUpdate() {
+        el.textContent = `${Math.round(proxy.v).toLocaleString('uz-UZ')}${suffix}`;
+      },
+    });
+  });
+
   return (
     <Card
       className={cn(
@@ -180,7 +209,7 @@ export const KpiCard = ({
       tabIndex={onClick ? 0 : undefined}
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
           {label}
         </p>
         <span
@@ -194,6 +223,7 @@ export const KpiCard = ({
         </span>
       </div>
       <p
+        ref={valueRef}
         className={cn(
           'mt-4 font-bold tracking-tight tabular-nums font-mono',
           lead ? 'text-4xl' : 'text-2xl',
@@ -258,7 +288,7 @@ const FilterBar = ({
       <div className="flex min-w-[150px] flex-1 flex-col gap-1">
         <label
           htmlFor="dashboard-range"
-          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
         >
           {t('dashboard.v2.period', 'Davr')}
         </label>
@@ -281,7 +311,7 @@ const FilterBar = ({
       <div className="flex min-w-[135px] flex-1 flex-col gap-1">
         <label
           htmlFor="dashboard-from"
-          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
         >
           {t('dashboard.v2.from', 'Dan')}
         </label>
@@ -297,7 +327,7 @@ const FilterBar = ({
       <div className="flex min-w-[135px] flex-1 flex-col gap-1">
         <label
           htmlFor="dashboard-to"
-          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
         >
           {t('dashboard.v2.to', 'Gacha')}
         </label>
@@ -314,7 +344,7 @@ const FilterBar = ({
         <div className="flex min-w-[160px] flex-1 flex-col gap-1">
           <label
             htmlFor="dashboard-branch"
-            className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+            className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
           >
             {t('dashboard.v2.branch', 'Filial')}
           </label>
@@ -343,7 +373,7 @@ const FilterBar = ({
       <div className="flex min-w-[140px] flex-1 flex-col gap-1">
         <label
           htmlFor="dashboard-course"
-          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
         >
           {t('dashboard.v2.course', 'Kurs')}
         </label>
@@ -368,7 +398,7 @@ const FilterBar = ({
       <div className="flex min-w-[120px] flex-1 flex-col gap-1">
         <label
           htmlFor="dashboard-granularity"
-          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
         >
           {t('dashboard.v2.granularity', 'Granulyarlik')}
         </label>
@@ -542,6 +572,7 @@ const RevenueChart = ({
 const AXIS_PROPS = {
   stroke: 'hsl(var(--muted-foreground))',
   fontSize: 11,
+  fontFamily: 'IBM Plex Mono, ui-monospace, monospace',
   tickLine: false,
   axisLine: false,
 };
@@ -658,7 +689,7 @@ const CompanyRevenueDashboard = () => {
             <SquaresFour className="h-4 w-4" />{' '}
             {t('dashboard.v2.title', 'Revenue control')}
           </div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight text-balance">
+          <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance md:text-4xl">
             {t('dashboard.greeting_morning', 'Xayrli kun')}
             {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
           </h1>
@@ -1252,7 +1283,7 @@ const CompanyRevenueDashboard = () => {
                   key={courseType}
                   className="rounded-lg border border-border/60 bg-background/30 p-3"
                 >
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     {t(`students.course.${courseType}`, courseType)}
                   </p>
                   <p className="mt-2 text-lg font-bold tabular-nums">
@@ -1366,7 +1397,7 @@ const CompanyRevenueDashboard = () => {
           </div>
           {kpis.enrollment_funnel && (
             <div className="mt-5 space-y-3 rounded-lg border border-border/60 bg-background/30 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                 {t(
                   'dashboard.v2.academic_block.funnel_title',
                   'Ro‘yxatdan bitirishgacha',
