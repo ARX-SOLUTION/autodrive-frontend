@@ -20,7 +20,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@autodrive/design-tokens": "git+https://github.com/ARX-SOLUTION/autodrive-design-tokens.git#feat/night-console",
+    "@autodrive/design-tokens": "github:ARX-SOLUTION/autodrive-design-tokens#main",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^3.10.0",
     "@phosphor-icons/react": "^2.1.10",
