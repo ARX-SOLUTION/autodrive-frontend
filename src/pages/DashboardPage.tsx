@@ -184,6 +184,7 @@ interface KpiCardProps {
   metaRight?: React.ReactNode;
   spark?: number[];
   animationDelayMs?: number;
+  lead?: boolean;
 }
 
 const KpiCard = ({
@@ -197,6 +198,7 @@ const KpiCard = ({
   metaRight,
   spark,
   animationDelayMs = 0,
+  lead = false,
 }: KpiCardProps) => {
   const toneClasses: Record<KpiCardProps['tone'], string> = {
     primary: 'bg-primary/10 text-primary',
@@ -227,7 +229,12 @@ const KpiCard = ({
           {icon}
         </div>
       </div>
-      <p className="text-[28px] font-bold leading-tight tracking-tight text-foreground tabular-nums">
+      <p
+        className={cn(
+          'font-bold leading-tight tracking-tight text-foreground tabular-nums font-mono',
+          lead ? 'text-4xl' : 'text-[28px]',
+        )}
+      >
         {value}
         {unit && (
           <span className="ml-1 text-sm font-medium text-muted-foreground">
@@ -553,7 +560,7 @@ const LegacyMainDashboard = () => {
 
       {/* ===== Hero KPI row ===== */}
       <section
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-[1.7fr_1fr_1fr_1fr]"
         aria-label={t('dashboard.title')}
       >
         <KpiCard
@@ -570,6 +577,7 @@ const LegacyMainDashboard = () => {
           }
           spark={revenueSparkValues}
           animationDelayMs={40}
+          lead
         />
         <KpiCard
           label={t('dashboard.hero_active_students')}
@@ -1125,12 +1133,13 @@ const TeacherDashboard = () => {
         </p>
       </div>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-[1.7fr_1fr_1fr_1fr]">
         <KpiCard
           label={t('dashboard.cards.active_groups', 'Active Groups')}
           value={formatNumber(analytics.active_groups)}
           icon={<Users className="h-4 w-4" />}
           tone="info"
+          lead
         />
         <KpiCard
           label={t('dashboard.cards.total_students', 'Total Students')}

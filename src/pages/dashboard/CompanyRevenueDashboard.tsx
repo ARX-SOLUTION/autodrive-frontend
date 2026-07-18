@@ -145,6 +145,7 @@ export const KpiCard = ({
   tone,
   delta,
   onClick,
+  lead = false,
 }: {
   label: string;
   value: string;
@@ -153,6 +154,7 @@ export const KpiCard = ({
   tone: 'primary' | 'warning' | 'success' | 'info';
   delta?: number | null;
   onClick?: () => void;
+  lead?: boolean;
 }) => {
   const toneClasses = {
     primary: 'bg-primary/12 text-primary',
@@ -191,7 +193,12 @@ export const KpiCard = ({
           <Icon className="h-4 w-4" />
         </span>
       </div>
-      <p className="mt-4 text-2xl font-bold tracking-tight tabular-nums">
+      <p
+        className={cn(
+          'mt-4 font-bold tracking-tight tabular-nums font-mono',
+          lead ? 'text-4xl' : 'text-2xl',
+        )}
+      >
         {value}
       </p>
       <div className="mt-3 flex min-h-5 items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -682,7 +689,7 @@ const CompanyRevenueDashboard = () => {
       />
 
       <section
-        className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-[1.7fr_1fr_1fr_1fr]"
         aria-label={t('dashboard.v2.kpi_section_label', 'Revenue control KPIs')}
       >
         <KpiCard
@@ -699,6 +706,7 @@ const CompanyRevenueDashboard = () => {
               }),
             )
           }
+          lead
         />
         <KpiCard
           label={t('dashboard.v2.period_revenue', 'Tanlangan davr tushumi')}

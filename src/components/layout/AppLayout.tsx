@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { Sidebar } from "./Sidebar";
-import { Topbar } from "./Topbar";
-import { Breadcrumbs } from "./Breadcrumbs";
-import { CommandPalette, useCommandPalette } from "./CommandPalette";
+import { useEffect, useState } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { Sidebar } from './Sidebar';
+import { Topbar } from './Topbar';
+import { Breadcrumbs } from './Breadcrumbs';
+import { CommandPalette, useCommandPalette } from './CommandPalette';
 
 export const AppLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -24,18 +24,22 @@ export const AppLayout = () => {
         mobileOpen={mobileSidebarOpen}
         onMobileOpenChange={setMobileSidebarOpen}
       />
-      <div className={cn(
-        "flex min-h-screen flex-col transition-all duration-300",
-        sidebarCollapsed ? "md:ml-[68px]" : "md:ml-60"
-      )}>
+      <div
+        className={cn(
+          'flex min-h-screen flex-col transition-all duration-300',
+          sidebarCollapsed ? 'md:ml-[68px]' : 'md:ml-60',
+        )}
+      >
         <Topbar
           onMobileMenuClick={() => setMobileSidebarOpen(true)}
           onCommandPaletteOpen={() => palette.setOpen(true)}
         />
         <main className="flex-1 p-3 sm:p-4 md:p-6">
-          <Breadcrumbs />
-          <div className="animate-in fade-in duration-200">
-            <Outlet />
+          <div className="mx-auto w-full max-w-screen-2xl">
+            <Breadcrumbs />
+            <div className="animate-in fade-in duration-200">
+              <Outlet />
+            </div>
           </div>
         </main>
       </div>

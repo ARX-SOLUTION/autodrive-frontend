@@ -50,7 +50,7 @@ export const Breadcrumbs = () => {
   const goTo = useViewTransitionNavigate();
   const segments = pathname.split('/').filter(Boolean);
 
-  if (segments.length === 0 || segments[0] === 'login') return null;
+  if (segments.length < 2 || segments[0] === 'login') return null;
 
   const crumbs = segments.map((segment, idx) => {
     const href = '/' + segments.slice(0, idx + 1).join('/');

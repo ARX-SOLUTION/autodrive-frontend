@@ -107,6 +107,7 @@ export const PaymentsTable = ({
       key: 'total_price',
       header: t('payments.total_price'),
       align: 'right',
+      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
       render: (p) => new Intl.NumberFormat('uz-UZ').format(p.total_price),
     },
     {
@@ -114,7 +115,8 @@ export const PaymentsTable = ({
       header: t('payments.amount_paid'),
       align: 'right',
       sortable: true,
-      cellClassName: 'text-success font-medium',
+      cellClassName:
+        'text-success font-medium whitespace-nowrap tabular-nums font-mono',
       render: (p) => `+${new Intl.NumberFormat('uz-UZ').format(p.amount_paid)}`,
     },
     {
@@ -122,6 +124,7 @@ export const PaymentsTable = ({
       header: t('payments.remaining_debt'),
       align: 'right',
       sortable: true,
+      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
       render: (p) => (
         <span
           className={p.remaining_debt > 0 ? 'text-destructive' : 'text-success'}

@@ -17,7 +17,7 @@ export const formatDate = (d?: string) => {
 export const formatDateTime = (d: string) => {
   try {
     if (!d) return '—';
-    return format(new Date(d), 'dd.MM.yyyy HH:mm:ss');
+    return format(new Date(d), 'dd.MM.yyyy HH:mm');
   } catch {
     return d;
   }

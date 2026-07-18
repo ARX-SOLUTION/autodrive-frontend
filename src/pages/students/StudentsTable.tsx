@@ -105,6 +105,7 @@ export const StudentsTable = ({
       header: t('students.debt'),
       align: 'right',
       sortable: true,
+      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
       render: (s) => debtCell(s.debt),
     },
     {
@@ -126,21 +127,21 @@ export const StudentsTable = ({
       key: 'initial_payment',
       header: t('students.initial_payment'),
       align: 'right',
-      cellClassName: 'tabular-nums',
+      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
       render: (s) => formatMoney(s.initial_payment || 0),
     },
     {
       key: 'second_payment',
       header: `2-${t('students.payment').toLowerCase()}`,
       align: 'right',
-      cellClassName: 'tabular-nums',
+      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
       render: (s) => formatMoney(s.second_payment || 0),
     },
     {
       key: 'third_payment',
       header: `3-${t('students.payment').toLowerCase()}`,
       align: 'right',
-      cellClassName: 'tabular-nums',
+      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
       render: (s) => formatMoney(s.third_payment || 0),
     },
     {
@@ -148,6 +149,7 @@ export const StudentsTable = ({
       header: t('students.debt'),
       align: 'right',
       sortable: true,
+      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
       render: (s) => debtCell(s.debt),
     },
     {
