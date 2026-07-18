@@ -11,7 +11,6 @@ import {
   CalendarDot,
   CheckCircle,
   CaretRight,
-  CurrencyCircleDollar,
   ClipboardText,
   Clock,
   ArrowSquareOut,
@@ -40,6 +39,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Sparkline } from '@/components/ui/Sparkline';
 import { useBranches } from '@/services/branchService';
 import { useCompanyOverview } from '@/services/dashboardService';
 import type {
@@ -56,6 +56,13 @@ gsap.registerPlugin(useGSAP);
 
 const UZ_TIMEZONE = 'Asia/Tashkent';
 
+// One-time check (per make-interfaces-feel-better: reduced-motion guard for
+// the trend chart's enter animation) — a static read is fine here, same
+// tradeoff the KpiCard count-up below already accepts.
+const prefersReducedMotion = window.matchMedia(
+  '(prefers-reduced-motion: reduce)',
+).matches;
+
 // uz-UZ Intl month:'short' renders as an unresolved skeleton (e.g. "M07 1")
 // in some browsers — build the date-fns dd.MM(.yyyy)(HH:mm) convention
 // instead of Intl.DateTimeFormat's month name.
@@ -70,6 +77,18 @@ const formatDate = (
 };
 const formatShortDate = (value: string | Date) =>
   format(new Date(value), 'dd.MM.yyyy');
+
+// ponytail: local copy, not imported from DashboardPage.tsx — that file
+// already imports CompanyRevenueDashboard, so importing back would create a
+// circular dependency. Spec's offered fallback ("else local copy") applies.
+const initialsFor = (name?: string | null) => {
+  if (!name) return '··';
+  const parts = name.trim().split(/\s+/).slice(0, 2);
+  return parts
+    .map((p) => p[0]?.toUpperCase() ?? '')
+    .join('')
+    .padEnd(2, '·');
+};
 
 // en-CA formatter always renders YYYY-MM-DD — cache it once like
 // moneyFormatter instead of constructing it on every call.
@@ -126,7 +145,7 @@ export const DashboardCard = ({
   >
     <div className="mb-4 flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="text-base font-semibold tracking-tight text-balance">
+        <h2 className="text-lg font-semibold tracking-tight text-balance">
           {title}
         </h2>
         {description && (
@@ -256,6 +275,145 @@ export const KpiCard = ({
   );
 };
 
+const DeltaChip = ({ delta }: { delta: number }) => (
+  <span
+    className={cn(
+      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums',
+      delta < 0
+        ? 'bg-destructive/10 text-destructive'
+        : 'bg-success/10 text-success',
+    )}
+  >
+    {delta < 0 ? (
+      <ArrowDownRight className="h-3 w-3" aria-hidden="true" />
+    ) : (
+      <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+    )}
+    {delta >= 0 ? '+' : ''}
+    {delta}%
+  </span>
+);
+
+// Hero lead metric — label + big count-up value + delta. Click-through
+// preserved (autodrive-ls5 test: today-revenue must still navigate to
+// /payments with an explicit today date, same as the old lead KpiCard did).
+const HeroMetric = ({
+  label,
+  value,
+  delta,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  delta?: number | null;
+  onClick?: () => void;
+}) => {
+  const valueRef = useRef<HTMLParagraphElement>(null);
+
+  // Moved verbatim from KpiCard's lead-branch count-up (see KpiCard above,
+  // now dead there — nothing passes lead=true anymore).
+  useGSAP(() => {
+    const el = valueRef.current;
+    if (!el) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // ponytail: strips sign along with non-digits (fine — money values here
+    // are non-negative); add sign handling if this ever goes negative.
+    const digits = value.replace(/\D/g, '');
+    const target = Number(digits);
+    if (!digits || !Number.isFinite(target)) return;
+    const lastDigitAt = value.search(/\d(?!.*\d)/);
+    const suffix = lastDigitAt >= 0 ? value.slice(lastDigitAt + 1) : '';
+    const proxy = { v: 0 };
+    gsap.to(proxy, {
+      v: target,
+      duration: 0.9,
+      ease: 'power2.out',
+      onUpdate() {
+        el.textContent = `${Math.round(proxy.v).toLocaleString('uz-UZ')}${suffix}`;
+      },
+    });
+  });
+
+  return (
+    <div
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (onClick && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      className={cn(
+        onClick &&
+          'cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+      )}
+    >
+      <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </p>
+      <div className="mt-2 flex flex-wrap items-baseline gap-3">
+        <p
+          ref={valueRef}
+          className="font-mono text-5xl font-bold tracking-tight tabular-nums"
+        >
+          {value}
+        </p>
+        {delta !== undefined && delta !== null && <DeltaChip delta={delta} />}
+      </div>
+    </div>
+  );
+};
+
+// Compact KPI tile — the 3 non-lead top-row metrics (period revenue, debt,
+// coverage). Deliberately icon-less/tone-less (unlike KpiCard below, still
+// used by the financial/academic/staff blocks) per the flatter top-row spec.
+const CompactKpiCard = ({
+  label,
+  value,
+  sub,
+  delta,
+  onClick,
+  spark,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  delta?: number | null;
+  onClick?: () => void;
+  spark?: number[];
+}) => (
+  <div
+    onClick={onClick}
+    onKeyDown={(event) => {
+      if (onClick && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault();
+        onClick();
+      }
+    }}
+    role={onClick ? 'button' : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    className={cn(
+      'relative overflow-hidden rounded-xl border border-border bg-card p-5',
+      onClick &&
+        'cursor-pointer transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+    )}
+  >
+    <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+      {label}
+    </p>
+    <p className="mt-2 font-mono text-3xl font-bold tracking-tight tabular-nums">
+      {value}
+    </p>
+    <div className="mt-2 flex min-h-5 items-center justify-between gap-2">
+      {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
+      {delta !== undefined && delta !== null && <DeltaChip delta={delta} />}
+    </div>
+    {spark && spark.length > 1 && <Sparkline data={spark} tone="primary" />}
+  </div>
+);
+
 const FilterBar = ({
   params,
   canViewAllBranches,
@@ -283,139 +441,94 @@ const FilterBar = ({
       return onChange('range', `${addDays(today, -29)}|${today}`);
     return onChange('range', `${startOfMonthInUz()}|${today}`);
   };
+  const controlClassName =
+    'h-9 rounded-md border border-input bg-background px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
   return (
-    <div className="flex flex-wrap items-end gap-2 rounded-xl border border-border/60 bg-muted/30 p-3">
-      <div className="flex min-w-[150px] flex-1 flex-col gap-1">
-        <label
-          htmlFor="dashboard-range"
-          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
-        >
-          {t('dashboard.v2.period', 'Davr')}
-        </label>
-        <select
-          id="dashboard-range"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          value={`${from}|${to}`}
-          onChange={(event) => preset(event.target.value)}
-        >
-          <option value={`${startOfMonthInUz()}|${today}`}>
-            {t('dashboard.v2.this_month', 'Bu oy')}
-          </option>
-          <option value={`${today}|${today}`}>
-            {t('dashboard.v2.today', 'Bugun')}
-          </option>
-          <option value={`${addDays(today, -6)}|${today}`}>7 kun</option>
-          <option value={`${addDays(today, -29)}|${today}`}>30 kun</option>
-        </select>
-      </div>
-      <div className="flex min-w-[135px] flex-1 flex-col gap-1">
-        <label
-          htmlFor="dashboard-from"
-          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
-        >
-          {t('dashboard.v2.from', 'Dan')}
-        </label>
-        <input
-          id="dashboard-from"
-          type="date"
-          value={from}
-          max={today}
-          onChange={(event) => onChange('from', event.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
-      <div className="flex min-w-[135px] flex-1 flex-col gap-1">
-        <label
-          htmlFor="dashboard-to"
-          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
-        >
-          {t('dashboard.v2.to', 'Gacha')}
-        </label>
-        <input
-          id="dashboard-to"
-          type="date"
-          value={to}
-          max={today}
-          onChange={(event) => onChange('to', event.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2">
+      <select
+        aria-label={t('dashboard.v2.period', 'Davr')}
+        className={controlClassName}
+        value={`${from}|${to}`}
+        onChange={(event) => preset(event.target.value)}
+      >
+        <option value={`${startOfMonthInUz()}|${today}`}>
+          {t('dashboard.v2.this_month', 'Bu oy')}
+        </option>
+        <option value={`${today}|${today}`}>
+          {t('dashboard.v2.today', 'Bugun')}
+        </option>
+        <option value={`${addDays(today, -6)}|${today}`}>7 kun</option>
+        <option value={`${addDays(today, -29)}|${today}`}>30 kun</option>
+      </select>
+      <input
+        type="date"
+        aria-label={t('dashboard.v2.from', 'Dan')}
+        value={from}
+        max={today}
+        onChange={(event) => onChange('from', event.target.value)}
+        className={controlClassName}
+      />
+      <input
+        type="date"
+        aria-label={t('dashboard.v2.to', 'Gacha')}
+        value={to}
+        max={today}
+        onChange={(event) => onChange('to', event.target.value)}
+        className={controlClassName}
+      />
       {canViewAllBranches && (
-        <div className="flex min-w-[160px] flex-1 flex-col gap-1">
-          <label
-            htmlFor="dashboard-branch"
-            className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
-          >
-            {t('dashboard.v2.branch', 'Filial')}
-          </label>
-          <select
-            id="dashboard-branch"
-            value={params.get('branch_id') || 'all'}
-            onChange={(event) =>
-              onChange(
-                'branch_id',
-                event.target.value === 'all' ? undefined : event.target.value,
-              )
-            }
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <option value="all">
-              {t('common.all_branches', 'Barcha filiallar')}
-            </option>
-            {branches.map((branch) => (
-              <option key={branch.id} value={branch.id}>
-                {branch.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-      <div className="flex min-w-[140px] flex-1 flex-col gap-1">
-        <label
-          htmlFor="dashboard-course"
-          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
-        >
-          {t('dashboard.v2.course', 'Kurs')}
-        </label>
         <select
-          id="dashboard-course"
-          value={params.get('course_type') || 'all'}
+          aria-label={t('dashboard.v2.branch', 'Filial')}
+          value={params.get('branch_id') || 'all'}
           onChange={(event) =>
             onChange(
-              'course_type',
+              'branch_id',
               event.target.value === 'all' ? undefined : event.target.value,
             )
           }
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={controlClassName}
         >
-          <option value="all">{t('dashboard.all', 'Barchasi')}</option>
-          <option value="tezkor">{t('dashboard.chart_fast', 'Tezkor')}</option>
-          <option value="avto_maktab">
-            {t('dashboard.chart_school', 'Avto maktab')}
+          <option value="all">
+            {t('common.all_branches', 'Barcha filiallar')}
           </option>
+          {branches.map((branch) => (
+            <option key={branch.id} value={branch.id}>
+              {branch.name}
+            </option>
+          ))}
         </select>
-      </div>
-      <div className="flex min-w-[120px] flex-1 flex-col gap-1">
-        <label
-          htmlFor="dashboard-granularity"
-          className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
-        >
-          {t('dashboard.v2.granularity', 'Granulyarlik')}
-        </label>
-        <select
-          id="dashboard-granularity"
-          value={params.get('granularity') === 'week' ? 'week' : 'day'}
-          onChange={(event) => onChange('granularity', event.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="day">{t('dashboard.v2.daily', 'Kunlik')}</option>
-          <option value="week">{t('dashboard.v2.weekly', 'Haftalik')}</option>
-        </select>
-      </div>
+      )}
+      <select
+        aria-label={t('dashboard.v2.course', 'Kurs')}
+        value={params.get('course_type') || 'all'}
+        onChange={(event) =>
+          onChange(
+            'course_type',
+            event.target.value === 'all' ? undefined : event.target.value,
+          )
+        }
+        className={controlClassName}
+      >
+        <option value="all">{t('dashboard.all', 'Barchasi')}</option>
+        <option value="tezkor">{t('dashboard.chart_fast', 'Tezkor')}</option>
+        <option value="avto_maktab">
+          {t('dashboard.chart_school', 'Avto maktab')}
+        </option>
+      </select>
+      <select
+        aria-label={t('dashboard.v2.granularity', 'Granulyarlik')}
+        value={params.get('granularity') === 'week' ? 'week' : 'day'}
+        onChange={(event) => onChange('granularity', event.target.value)}
+        className={controlClassName}
+      >
+        <option value="day">{t('dashboard.v2.daily', 'Kunlik')}</option>
+        <option value="week">{t('dashboard.v2.weekly', 'Haftalik')}</option>
+      </select>
       <Button
         type="button"
         variant="outline"
         size="icon"
+        className="h-9 w-9"
         onClick={onRefresh}
         disabled={isFetching}
         aria-label={t('dashboard.v2.refresh', 'Yangilash')}
@@ -451,7 +564,7 @@ const RevenueChart = ({
     >
       {data.length ? (
         <>
-          <div className="h-64 w-full">
+          <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={chartData}
@@ -468,20 +581,16 @@ const RevenueChart = ({
                     <stop
                       offset="0%"
                       stopColor="hsl(var(--primary))"
-                      stopOpacity={0.3}
+                      stopOpacity={0.25}
                     />
                     <stop
                       offset="100%"
                       stopColor="hsl(var(--primary))"
-                      stopOpacity={0.02}
+                      stopOpacity={0}
                     />
                   </linearGradient>
                 </defs>
-                <CartesianGrid
-                  stroke="hsl(var(--border))"
-                  strokeDasharray="3 5"
-                  vertical={false}
-                />
+                <CartesianGrid stroke="hsl(var(--border))" vertical={false} />
                 <XAxis
                   dataKey="label"
                   {...AXIS_PROPS}
@@ -511,7 +620,7 @@ const RevenueChart = ({
                   stroke="hsl(var(--primary))"
                   strokeWidth={2}
                   fill="url(#company-revenue-fill)"
-                  isAnimationActive={false}
+                  isAnimationActive={!prefersReducedMotion}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -683,33 +792,66 @@ const CompanyRevenueDashboard = () => {
 
   return (
     <div className="space-y-5 pb-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <div className="mb-2 inline-flex items-center gap-2 text-xs font-medium text-primary">
-            <SquaresFour className="h-4 w-4" />{' '}
-            {t('dashboard.v2.title', 'Revenue control')}
+      <header className="space-y-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="mb-2 inline-flex items-center gap-2 text-xs font-medium text-primary">
+              <SquaresFour className="h-4 w-4" />{' '}
+              {t('dashboard.v2.title', 'Revenue control')}
+            </div>
+            <h1 className="font-heading text-4xl font-semibold tracking-tight text-balance md:text-5xl">
+              {t('dashboard.greeting_morning', 'Xayrli kun')}
+              {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+            </h1>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground text-pretty">
+              {t(
+                'dashboard.v2.subtitle',
+                'Tushum, qarzdorlik va filiallar bo‘yicha bugungi boshqaruv ko‘rinishi.',
+              )}
+            </p>
           </div>
-          <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-            {t('dashboard.greeting_morning', 'Xayrli kun')}
-            {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground text-pretty">
-            {t(
-              'dashboard.v2.subtitle',
-              'Tushum, qarzdorlik va filiallar bo‘yicha bugungi boshqaruv ko‘rinishi.',
-            )}
-          </p>
+          <Badge
+            variant="outline"
+            className="gap-1.5 border-success/30 bg-success/10 text-success"
+          >
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-success"
+              aria-hidden="true"
+            />{' '}
+            {t('dashboard.live_label', 'Jonli')}
+          </Badge>
         </div>
-        <Badge
-          variant="outline"
-          className="gap-1.5 border-success/30 bg-success/10 text-success"
-        >
-          <span
-            className="h-1.5 w-1.5 rounded-full bg-success"
-            aria-hidden="true"
-          />{' '}
-          {t('dashboard.live_label', 'Jonli')}
-        </Badge>
+
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <HeroMetric
+            label={t('dashboard.v2.today_revenue', 'Bugungi tushum')}
+            value={formatMoney(kpis.revenue.today)}
+            delta={kpis.revenue.delta_percent}
+            onClick={() =>
+              navigate(
+                withContext('/payments', {
+                  date_from: todayInUz(),
+                  date_to: todayInUz(),
+                }),
+              )
+            }
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button asChild>
+              <Link to="/payments?action=create">
+                {t('payments.add_payment', "To'lov qo'shish")}
+              </Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link to="/students?action=create">
+                {t('students.add', "Talaba qo'shish")}
+              </Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link to="/attendance">{t('nav.attendance', 'Davomat')}</Link>
+            </Button>
+          </div>
+        </div>
       </header>
 
       <FilterBar
@@ -722,58 +864,37 @@ const CompanyRevenueDashboard = () => {
       />
 
       <section
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-[1.7fr_1fr_1fr_1fr]"
+        className="grid gap-4 sm:grid-cols-3"
         aria-label={t('dashboard.v2.kpi_section_label', 'Revenue control KPIs')}
       >
-        <KpiCard
-          label={t('dashboard.v2.today_revenue', 'Bugungi tushum')}
-          value={formatMoney(kpis.revenue.today)}
-          meta={t('dashboard.v2.today_meta', 'Asia/Tashkent bo‘yicha')}
-          icon={Wallet}
-          tone="primary"
-          onClick={() =>
-            navigate(
-              withContext('/payments', {
-                date_from: todayInUz(),
-                date_to: todayInUz(),
-              }),
-            )
-          }
-          lead
-        />
-        <KpiCard
+        <CompactKpiCard
           label={t('dashboard.v2.period_revenue', 'Tanlangan davr tushumi')}
           value={formatMoney(kpis.revenue.period)}
-          meta={`${comparisonRange}: ${formatMoney(kpis.revenue.previous_period)}`}
-          icon={CurrencyCircleDollar}
-          tone="info"
+          sub={`${comparisonRange}: ${formatMoney(kpis.revenue.previous_period)}`}
           delta={kpis.revenue.delta_percent}
           onClick={() => navigate(withContext('/payments'))}
+          spark={data.revenue_trend.map((item) => item.amount)}
         />
-        <KpiCard
+        <CompactKpiCard
           label={t('dashboard.v2.outstanding_debt', 'Jami qarzdorlik')}
           value={formatMoney(kpis.debt.current_outstanding)}
-          meta={t('dashboard.v2.debtors', '{{count}} ta qarzdor student', {
+          sub={t('dashboard.v2.debtors', '{{count}} ta qarzdor student', {
             count: kpis.debt.students_with_debt,
           })}
-          icon={Warning}
-          tone="warning"
           onClick={() =>
             navigate(
               withContext('/students', { status: 'active', has_debt: 'true' }),
             )
           }
         />
-        <KpiCard
+        <CompactKpiCard
           label={t('dashboard.v2.coverage', 'Payment coverage')}
           value={`${kpis.collection.coverage_rate}%`}
-          meta={t(
+          sub={t(
             'dashboard.v2.coverage_meta',
             '{{paid}} to‘liq · {{partial}} qisman',
             { paid: kpis.collection.paid, partial: kpis.collection.partial },
           )}
-          icon={CheckCircle}
-          tone="success"
           onClick={() =>
             navigate(withContext('/students', { status: 'active' }))
           }
@@ -806,35 +927,68 @@ const CompanyRevenueDashboard = () => {
             </Link>
           }
         >
-          <div className="space-y-2">
+          <div className="space-y-1">
             {data.recovery_queue.length ? (
-              data.recovery_queue.map((student) => (
-                <button
-                  key={student.student_id}
-                  type="button"
-                  onClick={() => navigate(`/students/${student.student_id}`)}
-                  className="flex min-h-12 w-full items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/30 px-3 py-2 text-left motion-safe:transition-[background-color,transform] duration-150 hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold">
-                      {student.student_name}
+              data.recovery_queue.map((student, index) => {
+                // Queue arrives sorted largest-debt-first (see subtitle
+                // above) — the first 3 rendered rows are the priority ones.
+                const isPriority = index < 3;
+                return (
+                  <div
+                    key={student.student_id}
+                    onClick={() => navigate(`/students/${student.student_id}`)}
+                    className="group flex cursor-pointer items-center gap-3 rounded-lg p-3 transition-colors hover:bg-accent"
+                  >
+                    <span
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-muted font-mono text-xs"
+                      aria-hidden="true"
+                    >
+                      {initialsFor(student.student_name)}
                     </span>
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {student.branch_name} · {student.course_type}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">
+                        {student.student_name}
+                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {student.branch_name} · {student.course_type}
+                      </span>
                     </span>
-                  </span>
-                  <span className="shrink-0 text-right">
-                    <span className="block text-sm font-bold tabular-nums text-warning">
-                      {formatMoney(student.debt)}
+                    <span className="flex shrink-0 items-center gap-1.5">
+                      <span
+                        className={cn(
+                          'h-1.5 w-1.5 rounded-full',
+                          isPriority
+                            ? 'bg-destructive'
+                            : 'bg-muted-foreground/40',
+                        )}
+                        aria-hidden="true"
+                      />
+                      {isPriority && (
+                        <span className="sr-only">
+                          {t('dashboard.v2.priority_high', 'Yuqori')}
+                        </span>
+                      )}
+                      <span className="font-mono text-sm font-semibold tabular-nums text-destructive">
+                        {formatMoney(student.debt)}
+                      </span>
                     </span>
-                    <span className="block text-[11px] text-muted-foreground">
-                      {student.last_payment_at
-                        ? formatShortDate(student.last_payment_at)
-                        : t('dashboard.v2.last_payment_none', 'Payment yo‘q')}
+                    <span className="flex shrink-0 items-center">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          navigate(`/students/${student.student_id}`);
+                        }}
+                        aria-label={t('common.view', "Ko'rish")}
+                        title={t('common.view', "Ko'rish")}
+                        className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground opacity-0 transition-opacity duration-150 hover:bg-muted hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <CaretRight className="h-4 w-4" aria-hidden="true" />
+                      </button>
                     </span>
-                  </span>
-                </button>
-              ))
+                  </div>
+                );
+              })
             ) : (
               <EmptyData />
             )}

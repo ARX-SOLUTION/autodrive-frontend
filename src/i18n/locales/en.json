@@ -222,6 +222,7 @@
       "revenue_trend": "Revenue trend",
       "recovery": "Debt recovery queue",
       "recovery_subtitle": "Largest outstanding balances first.",
+      "priority_high": "High",
       "open_payments": "Payments",
       "view_data": "View data",
       "branch_performance": "Branch performance",
