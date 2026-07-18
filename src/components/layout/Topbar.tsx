@@ -49,7 +49,7 @@ export const Topbar = ({
   const themeLabel =
     theme === 'dark' ? t('actions.theme_light') : t('actions.theme_dark');
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/95 backdrop-blur-sm px-3 sm:px-4 md:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-0 bg-transparent backdrop-blur-0 px-3 sm:px-4 md:px-6">
       <button
         type="button"
         aria-label={t('actions.sidebar') as string}

@@ -24,6 +24,11 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Brand } from './Brand';
 
 type NavItem = {
@@ -132,41 +137,67 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
   const roleLabel =
     user?.role === 'owner' ? t('roles.owner') : user?.branch_name;
 
+  const logoutButton = (
+    <button
+      onClick={() => {
+        onNavigate?.();
+        logoutMutation.mutate();
+      }}
+      aria-label={t('actions.logout', 'Chiqish')}
+      className={cn(
+        'flex items-center rounded-lg text-sm text-muted-foreground transition-colors hover:text-destructive',
+        collapsed ? 'h-10 w-10 justify-center' : 'gap-2 px-2 py-2',
+      )}
+    >
+      <SignOut className="h-4 w-4" />
+      {!collapsed && <span>{t('actions.logout')}</span>}
+    </button>
+  );
+
   return (
     <>
       <div className="flex h-16 items-center gap-3 border-b border-border px-4">
         {collapsed ? (
           <span
             aria-hidden
-            className="mx-auto h-6 w-1 rounded-full bg-primary"
+            className="mx-auto h-6 w-1.5 rounded-full bg-primary"
           />
         ) : (
           <Brand size="sm" />
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-2">
         {filteredItems.map((item) => {
           const active = location.pathname === item.path;
-          return (
+          const link = (
             <a
               key={item.path}
               href={item.path}
               onClick={(e) => handleNavClick(e, item.path)}
               aria-label={t(item.labelKey)}
               className={cn(
-                'flex items-center text-sm font-medium transition-colors rounded-lg',
+                'flex items-center rounded-lg text-sm font-medium transition-colors',
                 collapsed
-                  ? 'justify-center mx-auto w-10 h-10'
+                  ? 'mx-auto h-11 w-11 justify-center'
                   : 'gap-3 px-3 py-2.5',
                 active
-                  ? 'bg-primary/10 text-primary neon-glow-sm'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                  ? 'bg-primary/15 text-primary'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
               )}
             >
               <item.icon className="h-[18px] w-[18px] shrink-0" />
               {!collapsed && <span>{t(item.labelKey)}</span>}
             </a>
+          );
+
+          if (!collapsed) return link;
+
+          return (
+            <Tooltip key={item.path}>
+              <TooltipTrigger asChild>{link}</TooltipTrigger>
+              <TooltipContent side="right">{t(item.labelKey)}</TooltipContent>
+            </Tooltip>
           );
         })}
       </nav>
@@ -181,20 +212,16 @@ const SidebarContent = ({ collapsed, onNavigate }: SidebarContentProps) => {
           </div>
         )}
         <div className={cn('flex items-center', collapsed && 'justify-center')}>
-          <button
-            onClick={() => {
-              onNavigate?.();
-              logoutMutation.mutate();
-            }}
-            aria-label={t('actions.logout', 'Chiqish')}
-            className={cn(
-              'flex items-center rounded-lg text-sm text-muted-foreground hover:text-destructive transition-colors',
-              collapsed ? 'justify-center w-10 h-10' : 'gap-2 px-2 py-2',
-            )}
-          >
-            <SignOut className="h-4 w-4" />
-            {!collapsed && <span>{t('actions.logout')}</span>}
-          </button>
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>{logoutButton}</TooltipTrigger>
+              <TooltipContent side="right">
+                {t('actions.logout')}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            logoutButton
+          )}
         </div>
       </div>
     </>
@@ -220,8 +247,10 @@ export const Sidebar = ({
     <>
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-border bg-sidebar transition-all duration-300 md:flex',
-          collapsed ? 'w-[68px]' : 'w-60',
+          'fixed left-3 top-3 bottom-3 z-40 hidden flex-col rounded-2xl border border-border bg-sidebar transition-all duration-300 md:flex',
+          collapsed
+            ? 'w-[72px] shadow-[0_1px_2px_rgba(0,0,0,0.3),0_8px_24px_rgba(0,0,0,0.25)]'
+            : 'w-60 shadow-[0_2px_4px_rgba(0,0,0,0.35),0_16px_48px_rgba(0,0,0,0.35)]',
         )}
       >
         <SidebarContent collapsed={collapsed} />

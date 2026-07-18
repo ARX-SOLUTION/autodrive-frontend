@@ -8,7 +8,7 @@
   /* Repo-specific extensions on top of shared tokens (sidebar). */
   :root {
     /* Sidebar — light mode */
-    --sidebar-background: 40 20% 96%;
+    --sidebar-background: 40 15% 97%;
     --sidebar-foreground: 220 8% 32%;
     --sidebar-primary: 32 95% 44%;
     --sidebar-primary-foreground: 40 15% 99%;
@@ -20,13 +20,13 @@
 
   .dark {
     /* Sidebar — dark mode */
-    --sidebar-background: 220 6% 9%;
+    --sidebar-background: 0 0% 9%;
     --sidebar-foreground: 220 5% 65%;
     --sidebar-primary: 35 95% 55%;
     --sidebar-primary-foreground: 220 10% 8%;
     --sidebar-accent: 220 5% 14%;
     --sidebar-accent-foreground: 40 10% 92%;
-    --sidebar-border: 220 6% 16%;
+    --sidebar-border: 0 0% 16%;
     --sidebar-ring: 35 95% 55%;
   }
 }
@@ -90,9 +90,6 @@
   }
 
   /* Table row styles */
-  .table-row-shabnam:nth-child(even) {
-    background: hsl(var(--muted) / 0.35);
-  }
   .table-row-shabnam:hover {
     background: hsl(var(--muted) / 0.6);
     transition: background 0.15s ease;
