@@ -199,7 +199,10 @@ const AttendancePage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 50;
   const { data: lessonsData, isLoading } = useLessons(currentPage, pageSize);
-  const lessons = lessonsData?.data || [];
+  // Memoised so the reference is stable: the `|| []` fallback would otherwise
+  // allocate a new array every render, re-firing the deep-link effect below on
+  // each one (its ref guard hid the symptom, but the work was still repeated).
+  const lessons = useMemo(() => lessonsData?.data || [], [lessonsData]);
   const totalPages = lessonsData?.total
     ? Math.ceil(lessonsData.total / pageSize)
     : Math.max(1, lessons.length < pageSize ? currentPage : currentPage + 1);
