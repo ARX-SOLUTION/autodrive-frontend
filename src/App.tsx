@@ -53,6 +53,14 @@ const BranchAccessRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const PaymentAccessRoute = ({ children }: { children: React.ReactNode }) => {
+  // recordPayment (OPS) — teacher must never reach the payments surface,
+  // matching the Sidebar nav item's cap (teacher self-service).
+  const canRecordPayment = useCan('recordPayment');
+  if (!canRecordPayment) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -102,7 +110,14 @@ const App = () => (
                 />
                 <Route path="students" element={<StudentsPage />} />
                 <Route path="students/:id" element={<StudentDetailPage />} />
-                <Route path="payments" element={<PaymentsPage />} />
+                <Route
+                  path="payments"
+                  element={
+                    <PaymentAccessRoute>
+                      <PaymentsPage />
+                    </PaymentAccessRoute>
+                  }
+                />
                 <Route
                   path="operators"
                   element={

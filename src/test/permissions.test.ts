@@ -38,6 +38,14 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
     expect(roleCan('teacher', 'manageStudents')).toBe(false);
   });
 
+  // autodrive-vh0.4: manageOwnLesson deliberately excludes operator even
+  // though operator already creates lessons via manageSchedule -- operator
+  // must never get a delete-own-lesson affordance the backend won't honor.
+  it('manageOwnLesson is teacher plus dev/owner/manager, never operator', () => {
+    expect(roleCan('teacher', 'manageOwnLesson')).toBe(true);
+    expect(roleCan('operator', 'manageOwnLesson')).toBe(false);
+  });
+
   it('an absent/unknown role has no capability', () => {
     expect(roleCan(undefined, 'viewDashboard')).toBe(false);
     expect(roleCan(null, 'takeAttendance')).toBe(false);

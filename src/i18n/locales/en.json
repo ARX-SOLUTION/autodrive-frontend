@@ -312,6 +312,18 @@
         "operator_follow_through_label": "Operator payment follow-through",
         "operator_follow_through_meta": "Share of registered students who made a payment"
       }
+    },
+    "teacher": {
+      "kpi_my_groups": "My groups",
+      "kpi_my_students": "My students",
+      "kpi_owing_students": "Owing students",
+      "kpi_today_lessons": "Today's lessons",
+      "upcoming_title": "Upcoming lessons",
+      "upcoming_subtitle": "Soonest first",
+      "upcoming_empty_title": "No upcoming lessons",
+      "upcoming_empty_desc": "You have no lessons scheduled yet.",
+      "no_groups_title": "No groups yet",
+      "no_groups_desc": "You haven't been assigned to a group yet. Contact your manager."
     }
   },
   "branches": {
@@ -368,6 +380,11 @@
     "created": "Created",
     "total_students": "Total: {{count}} students",
     "form_desc": "Enter the group's details",
+    "form": {
+      "teacher_label": "Teacher",
+      "teacher_placeholder": "Select teacher",
+      "teacher_none": "Unassigned"
+    },
     "detail": {
       "title": "Group details",
       "student": "Student",
@@ -840,19 +857,23 @@
     "cancel": "Cancel",
     "delete_title": "Delete lesson",
     "delete_desc": "This lesson and its attendance records will be deleted. Continue?",
+    "edit_title": "Edit lesson",
     "created": "Lesson created",
     "saved": "Attendance saved",
     "deleted": "Lesson deleted",
+    "updated": "Lesson updated",
     "save_error": "Error saving attendance",
     "create_error": "Error creating lesson",
     "delete_error": "Error deleting lesson",
+    "update_error": "Error updating lesson",
     "title_placeholder": "Example: Lesson 1 theory",
     "group_placeholder": "Select group",
     "toggle_present": "Present",
     "toggle_late": "Late",
     "toggle_absent": "Absent",
     "marked_progress": "{{marked}} of {{total}} marked",
-    "add_lesson_desc": "Enter the new lesson's details"
+    "add_lesson_desc": "Enter the new lesson's details",
+    "edit_lesson_desc": "Update the lesson's details"
   },
   "schedule": {
     "title": "Schedule",

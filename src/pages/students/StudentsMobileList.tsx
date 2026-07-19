@@ -12,6 +12,7 @@ import {
 } from '@phosphor-icons/react';
 import { formatPhone } from '@/lib/phoneFormater';
 import { formatMoney } from '@/lib/money';
+import { DebtStatusBadge } from '@/components/ui/DebtStatusBadge';
 import type { Student } from '@/types/student';
 import { capitalize, formatDate, resultLabels } from './studentsFormat';
 
@@ -22,6 +23,8 @@ interface StudentsMobileListProps {
   onRetry: () => void;
   canManageStudents: boolean;
   isCrossTenant: boolean;
+  // Teacher must never see payment amounts (recordPayment cap).
+  canViewPayments: boolean;
   onOpenStudent: (student: Student, el: HTMLElement) => void;
   onEdit: (student: Student) => void;
   onDelete: (id: string) => void;
@@ -35,6 +38,7 @@ export const StudentsMobileList = ({
   onRetry,
   canManageStudents,
   isCrossTenant,
+  canViewPayments,
   onOpenStudent,
   onEdit,
   onDelete,
@@ -73,20 +77,43 @@ export const StudentsMobileList = ({
                   ? t('students.course_fast')
                   : t('students.course_school'),
             },
-            {
-              label: t('students.detail.debt'),
-              value: (
-                <span
-                  className={s.debt > 0 ? 'text-destructive' : 'text-success'}
-                >
-                  {s.debt > 0
-                    ? formatMoney(s.debt)
-                    : s.debt < 0
-                      ? `${t('students.credit_label')}: ${formatMoney(Math.abs(s.debt))}`
-                      : t('common.na')}
-                </span>
-              ),
-            },
+            ...(canViewPayments
+              ? // Guard s.debt itself too (not just canViewPayments): the
+                // backend only guarantees this field for a non-teacher
+                // requester, but the type is honestly optional now -- omit
+                // rather than let a stray undefined reach formatMoney's
+                // silent "0 so'm".
+                s.debt !== undefined
+                ? [
+                    {
+                      label: t('students.detail.debt'),
+                      value: (
+                        <span
+                          className={
+                            s.debt > 0 ? 'text-destructive' : 'text-success'
+                          }
+                        >
+                          {s.debt > 0
+                            ? formatMoney(s.debt)
+                            : s.debt < 0
+                              ? `${t('students.credit_label')}: ${formatMoney(Math.abs(s.debt))}`
+                              : t('common.na')}
+                        </span>
+                      ),
+                    },
+                  ]
+                : []
+              : // Teacher: paid/owing badge instead of an amount
+                // (autodrive-vh0.5). Omit the field entirely rather than
+                // show a label with no value when has_debt is missing.
+                s.has_debt !== undefined
+                ? [
+                    {
+                      label: t('students.detail.debt'),
+                      value: <DebtStatusBadge hasDebt={s.has_debt} />,
+                    },
+                  ]
+                : []),
             {
               label: t('students.detail.status'),
               value: s.result

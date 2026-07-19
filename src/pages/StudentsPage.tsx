@@ -41,6 +41,9 @@ const StudentsPage = () => {
   const isCrossTenant = useIsCrossTenant();
   const canManageStaff = useCan('manageStaff');
   const canManageStudents = useCan('manageStudents');
+  // Teacher must never see payment amounts anywhere (nav ticket vh0.2) —
+  // gates the debt/price columns, mobile field, and Excel export button.
+  const canViewPayments = useCan('recordPayment');
   const user = useAuthStore((s) => s.user);
 
   // Filter state lives in the URL so reload / share / bookmark preserves
@@ -240,8 +243,15 @@ const StudentsPage = () => {
             : t('students.course_school'),
         [t('common.branch')]: s.branch_name ?? t('common.na'),
         [t('students.group')]: s.group_name ?? t('common.na'),
-        [t('students.total_price')]: s.total_price,
-        [t('students.debt')]: s.debt,
+        // Export button is already canViewPayments-gated (StudentsPageHeader)
+        // so a teacher never reaches this, but keep the row builder honest
+        // too rather than lean on the button being hidden as the only guard.
+        ...(canViewPayments
+          ? {
+              [t('students.total_price')]: s.total_price,
+              [t('students.debt')]: s.debt,
+            }
+          : {}),
       }));
       const ws = XLSX.utils.json_to_sheet(rows);
       const wb = XLSX.utils.book_new();
@@ -348,6 +358,7 @@ const StudentsPage = () => {
         isExporting={isExporting}
         onExport={exportToExcel}
         canManageStudents={canManageStudents}
+        canViewPayments={canViewPayments}
         onCreate={openCreate}
       />
 
@@ -398,6 +409,7 @@ const StudentsPage = () => {
             toggleSort={toggleSort}
             canManageStudents={canManageStudents}
             isCrossTenant={isCrossTenant}
+            canViewPayments={canViewPayments}
             onOpenStudent={openStudent}
             onEdit={openEdit}
             onDelete={setDeleteId}
@@ -411,6 +423,7 @@ const StudentsPage = () => {
             onRetry={() => refetchStudents()}
             canManageStudents={canManageStudents}
             isCrossTenant={isCrossTenant}
+            canViewPayments={canViewPayments}
             onOpenStudent={openStudent}
             onEdit={openEdit}
             onDelete={setDeleteId}

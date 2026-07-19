@@ -12,6 +12,7 @@ import {
 import { formatPhone } from '@/lib/phoneFormater';
 import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
+import { DebtStatusBadge } from '@/components/ui/DebtStatusBadge';
 import type { CourseType, Student } from '@/types/student';
 import {
   capitalize,
@@ -33,11 +34,26 @@ interface StudentsTableProps {
   toggleSort: (field: string) => void;
   canManageStudents: boolean;
   isCrossTenant: boolean;
+  // Teacher must never see payment amounts (recordPayment cap) — hides the
+  // initial/second/third-payment columns entirely (no orphan money-only
+  // header left behind) and switches the debt column to a paid/owing badge
+  // (autodrive-vh0.5) instead of dropping it.
+  canViewPayments: boolean;
   onOpenStudent: (student: Student, el: HTMLElement) => void;
   onEdit: (student: Student) => void;
   onDelete: (id: string) => void;
   onCreate: () => void;
 }
+
+// Money columns hidden entirely from any role without recordPayment
+// (teacher). `debt` is NOT in this set -- it stays visible for a teacher but
+// switches from an amount to a paid/owing badge (autodrive-vh0.5), it isn't
+// dropped like the pure-money breakdown columns below.
+const MONEY_COLUMN_KEYS = new Set([
+  'initial_payment',
+  'second_payment',
+  'third_payment',
+]);
 
 export const StudentsTable = ({
   students,
@@ -52,6 +68,7 @@ export const StudentsTable = ({
   toggleSort,
   canManageStudents,
   isCrossTenant,
+  canViewPayments,
   onOpenStudent,
   onEdit,
   onDelete,
@@ -60,24 +77,31 @@ export const StudentsTable = ({
   const { t } = useTranslation();
   const localizedResultLabels = resultLabels(t);
 
-  const debtCell = (debt: number) => (
-    <span
-      className={debt > 0 ? 'text-destructive' : 'text-success'}
-      aria-label={
-        debt > 0
-          ? t('students.debt_status_owed')
+  // debt is optional now (backend omits it for a teacher) -- canViewPayments
+  // is what actually gates whether this renders, but the field itself isn't
+  // guaranteed present, so guard it here too rather than let a stray
+  // undefined reach formatMoney's silent "0 so'm".
+  const debtCell = (debt: number | undefined) => {
+    if (debt === undefined) return <span>{t('common.na')}</span>;
+    return (
+      <span
+        className={debt > 0 ? 'text-destructive' : 'text-success'}
+        aria-label={
+          debt > 0
+            ? t('students.debt_status_owed')
+            : debt < 0
+              ? t('students.debt_status_credit')
+              : t('students.debt_status_paid')
+        }
+      >
+        {debt > 0
+          ? formatMoney(debt)
           : debt < 0
-            ? t('students.debt_status_credit')
-            : t('students.debt_status_paid')
-      }
-    >
-      {debt > 0
-        ? formatMoney(debt)
-        : debt < 0
-          ? `${t('students.credit_label')}: ${formatMoney(Math.abs(debt))}`
-          : t('common.na')}
-    </span>
-  );
+            ? `${t('students.credit_label')}: ${formatMoney(Math.abs(debt))}`
+            : t('common.na')}
+      </span>
+    );
+  };
 
   // ponytail: Record<string,string> (not Record<ResultStatus,string>) per
   // spec, so the fallback branch below is reachable if an unexpected value
@@ -129,15 +153,29 @@ export const StudentsTable = ({
     },
   ];
 
+  // Shared by both course types (was duplicated identically in each) --
+  // switches from the amount to a paid/owing badge for a teacher instead of
+  // being dropped, unlike the pure-money columns below (autodrive-vh0.5).
+  // Sort disabled in the badge form: sorting the full list by the hidden
+  // amount would leak relative debt ranking a teacher shouldn't have.
+  const debtColumn: DataTableColumn<Student> = {
+    key: 'debt',
+    header: t('students.debt'),
+    align: canViewPayments ? 'right' : 'center',
+    sortable: canViewPayments,
+    cellClassName: canViewPayments
+      ? 'whitespace-nowrap tabular-nums font-mono'
+      : undefined,
+    render: (s) =>
+      canViewPayments ? (
+        debtCell(s.debt)
+      ) : (
+        <DebtStatusBadge hasDebt={s.has_debt} />
+      ),
+  };
+
   const tezkorColumns: DataTableColumn<Student>[] = [
-    {
-      key: 'debt',
-      header: t('students.debt'),
-      align: 'right',
-      sortable: true,
-      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
-      render: (s) => debtCell(s.debt),
-    },
+    debtColumn,
     {
       key: 'group',
       header: t('students.group'),
@@ -174,14 +212,7 @@ export const StudentsTable = ({
       cellClassName: 'whitespace-nowrap tabular-nums font-mono',
       render: (s) => formatMoney(s.third_payment || 0),
     },
-    {
-      key: 'debt',
-      header: t('students.debt'),
-      align: 'right',
-      sortable: true,
-      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
-      render: (s) => debtCell(s.debt),
-    },
+    debtColumn,
     {
       key: 'group',
       header: t('students.group'),
@@ -267,7 +298,7 @@ export const StudentsTable = ({
     ...nameColumns,
     ...(courseType === 'tezkor' ? tezkorColumns : avtoMaktabColumns),
     ...tailColumns,
-  ];
+  ].filter((c) => canViewPayments || !MONEY_COLUMN_KEYS.has(c.key));
 
   return (
     <DataTable

@@ -310,8 +310,20 @@
         "on_time_attendance_label": "Vaqtida davomat belgilash",
         "on_time_attendance_meta": "Dars kuni ichida belgilangan davomatlar ulushi",
         "operator_follow_through_label": "Operator to‘lov davomiyligi",
-        "operator_follow_through_meta": "Ro‘yxatdan o‘tgan studentlardan to‘lov qilganlar ulushi"
+        "operator_follow_through_meta": "Ro’yxatdan o’tgan studentlardan to’lov qilganlar ulushi"
       }
+    },
+    "teacher": {
+      "kpi_my_groups": "Mening guruhlarim",
+      "kpi_my_students": "Mening talabalarim",
+      "kpi_owing_students": "Qarzdor talabalar",
+      "kpi_today_lessons": "Bugungi darslar",
+      "upcoming_title": "Yaqin darslar",
+      "upcoming_subtitle": "Avval yaqinlari",
+      "upcoming_empty_title": "Yaqin darslar yo’q",
+      "upcoming_empty_desc": "Hozircha rejalashtirilgan darslaringiz yo’q.",
+      "no_groups_title": "Hali guruh yo’q",
+      "no_groups_desc": "Sizga hali guruh biriktirilmagan. Menejeringizga murojaat qiling."
     }
   },
   "branches": {
@@ -368,6 +380,11 @@
     "created": "Yaratilgan",
     "total_students": "Jami: {{count}} ta talaba",
     "form_desc": "Guruh ma'lumotlarini kiriting",
+    "form": {
+      "teacher_label": "O'qituvchi",
+      "teacher_placeholder": "O'qituvchini tanlang",
+      "teacher_none": "Tayinlanmagan"
+    },
     "detail": {
       "title": "Guruh ma'lumotlari",
       "student": "Talaba",
@@ -840,19 +857,23 @@
     "cancel": "Bekor qilish",
     "delete_title": "Darsni o'chirish",
     "delete_desc": "Bu dars va uning davomat yozuvlari o'chiriladi. Davom etasizmi?",
+    "edit_title": "Darsni tahrirlash",
     "created": "Dars yaratildi",
     "saved": "Davomat saqlandi",
     "deleted": "Dars o'chirildi",
+    "updated": "Dars yangilandi",
     "save_error": "Davomatni saqlashda xatolik",
     "create_error": "Dars yaratishda xatolik",
     "delete_error": "Darsni o'chirishda xatolik",
+    "update_error": "Darsni yangilashda xatolik",
     "title_placeholder": "Masalan: 1-dars teoriya",
     "group_placeholder": "Guruhni tanlang",
     "toggle_present": "Keldi",
     "toggle_late": "Kech",
     "toggle_absent": "Yo'q",
     "marked_progress": "{{marked}}/{{total}} belgilandi",
-    "add_lesson_desc": "Yangi dars ma'lumotlarini kiriting"
+    "add_lesson_desc": "Yangi dars ma'lumotlarini kiriting",
+    "edit_lesson_desc": "Dars ma'lumotlarini yangilang"
   },
   "schedule": {
     "title": "Dars jadvali",

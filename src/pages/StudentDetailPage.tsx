@@ -186,18 +186,20 @@ const StudentDetailPage = () => {
               )}
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
-              {student.debt > 0 ? (
-                <Badge variant="destructive">
-                  {t('students.detail.debt')}: {formatMoney(student.debt)}
-                </Badge>
-              ) : student.debt < 0 ? (
-                <Badge variant="secondary" className="text-success">
-                  {t('students.credit_label')}:{' '}
-                  {formatMoney(Math.abs(student.debt))}
-                </Badge>
-              ) : (
-                <Badge variant="secondary">{t('students.no_debt')}</Badge>
-              )}
+              {canRecordPayment &&
+                student.debt !== undefined &&
+                (student.debt > 0 ? (
+                  <Badge variant="destructive">
+                    {t('students.detail.debt')}: {formatMoney(student.debt)}
+                  </Badge>
+                ) : student.debt < 0 ? (
+                  <Badge variant="secondary" className="text-success">
+                    {t('students.credit_label')}:{' '}
+                    {formatMoney(Math.abs(student.debt))}
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">{t('students.no_debt')}</Badge>
+                ))}
               <Badge variant="outline">
                 {t(`students.course.${student.course_type}`)}
               </Badge>
@@ -249,31 +251,37 @@ const StudentDetailPage = () => {
               label={t('students.detail.course')}
               value={t(`students.course.${student.course_type}`)}
             />
-            <Field
-              label={t('students.detail.total_price')}
-              value={formatMoney(student.total_price)}
-            />
-            <Field
-              label={t('students.detail.debt')}
-              value={
-                student.debt < 0 ? (
-                  <span className="text-success">
-                    {t('students.credit_label')}:{' '}
-                    {formatMoney(Math.abs(student.debt))}
-                  </span>
-                ) : (
-                  formatMoney(student.debt)
-                )
-              }
-            />
-            <Field
-              label={t('students.payment_method')}
-              value={
-                student.payment_method
-                  ? methodLabels[student.payment_method]
-                  : t('common.na')
-              }
-            />
+            {canRecordPayment && student.total_price !== undefined && (
+              <Field
+                label={t('students.detail.total_price')}
+                value={formatMoney(student.total_price)}
+              />
+            )}
+            {canRecordPayment && student.debt !== undefined && (
+              <Field
+                label={t('students.detail.debt')}
+                value={
+                  student.debt < 0 ? (
+                    <span className="text-success">
+                      {t('students.credit_label')}:{' '}
+                      {formatMoney(Math.abs(student.debt))}
+                    </span>
+                  ) : (
+                    formatMoney(student.debt)
+                  )
+                }
+              />
+            )}
+            {canRecordPayment && (
+              <Field
+                label={t('students.payment_method')}
+                value={
+                  student.payment_method
+                    ? methodLabels[student.payment_method]
+                    : t('common.na')
+                }
+              />
+            )}
             <Field
               label={t('students.has_document')}
               value={
@@ -286,10 +294,12 @@ const StudentDetailPage = () => {
                 </span>
               }
             />
-            <Field
-              label={t('students.amount_paid')}
-              value={formatMoney(student.amount_paid)}
-            />
+            {canRecordPayment && (
+              <Field
+                label={t('students.amount_paid')}
+                value={formatMoney(student.amount_paid)}
+              />
+            )}
             <Field
               label={t('students.operator')}
               value={student.registered_by ?? t('common.na')}
@@ -590,12 +600,12 @@ interface GroupChange {
   to: string | null;
 }
 
-// changes is a generic per-entry diff blob (e.g. { groupId: {from,to}, ... }
-// other fields) -- pull out just the groupId sub-key, if present.
+// changes is a generic per-entry diff blob (e.g. { group_id: {from,to}, ... }
+// other fields) -- pull out just the group_id sub-key, if present.
 const getGroupChange = (
   changes: Record<string, unknown> | null,
 ): GroupChange | undefined => {
-  const raw = changes?.groupId;
+  const raw = changes?.['group_id'];
   if (raw == null || typeof raw !== 'object') return undefined;
   const { from, to } = raw as { from?: unknown; to?: unknown };
   return {

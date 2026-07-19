@@ -18,6 +18,7 @@ import {
   useBatchAttendance,
 } from '@/services/attendanceService';
 import { useGroup } from '@/services/groupService';
+import { useCan } from '@/hooks/useCan';
 import { CalendarLesson } from '@/types/schedule';
 import { AttendanceStatus } from '@/types/attendance';
 import { statusTone } from '@/lib/attendanceStatus';
@@ -72,6 +73,11 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
   // too slow for large groups.
   const { data: group } = useGroup(lesson?.group_id);
   const batchAttendance = useBatchAttendance();
+  // Explicit capability gate (was implicitly open to any role) — takeAttendance
+  // includes every role incl. teacher (permissions.ts), so this keeps teacher
+  // self-service working while making the authorization boundary explicit
+  // rather than an accidental absence of a check.
+  const canSave = useCan('takeAttendance');
   const [changes, setChanges] = useState<Record<string, AttendanceStatus>>({});
 
   useEffect(() => {
@@ -240,7 +246,7 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={batchAttendance.isPending}
+              disabled={!canSave || batchAttendance.isPending}
               className="font-bold"
             >
               {batchAttendance.isPending

@@ -8,6 +8,7 @@ import {
   useUpdateGroup,
   useGroups,
 } from '@/services/groupService';
+import { useTeachers } from '@/services/teacherService';
 import { Group } from '@/types/group';
 import { Branch } from '@/types/branch';
 import { Button } from '@/components/ui/button';
@@ -48,10 +49,15 @@ const GroupFormDialog = ({
   const { t } = useTranslation();
   const createMutation = useCreateGroup();
   const updateMutation = useUpdateGroup();
+  const { data: teachers } = useTeachers();
 
   const [formName, setFormName] = useState('');
   const [formBranchId, setFormBranchId] = useState('');
   const [formCourseType, setFormCourseType] = useState<string>('avto_maktab');
+  // '' = unassigned; Radix Select forbids an empty-string item value, so the
+  // <Select> below maps '' <-> the 'none' sentinel (AddStudentDialog group_id
+  // precedent).
+  const [formTeacherId, setFormTeacherId] = useState('');
   // Snapshot taken whenever the dialog opens, compared against current form
   // fields to drive the unsaved-changes guard below (autodrive-6cq.5.15) --
   // this form is plain useState, not react-hook-form, so there's no
@@ -60,6 +66,7 @@ const GroupFormDialog = ({
     name: formName,
     branchId: formBranchId,
     courseType: formCourseType,
+    teacherId: formTeacherId,
   });
 
   useEffect(() => {
@@ -69,18 +76,21 @@ const GroupFormDialog = ({
           name: editGroup.name,
           branchId: editGroup.branch_id,
           courseType: editGroup.course_type as string,
+          teacherId: editGroup.teacher_id || '',
         }
-      : { name: '', branchId: '', courseType: 'avto_maktab' };
+      : { name: '', branchId: '', courseType: 'avto_maktab', teacherId: '' };
     setFormName(init.name);
     setFormBranchId(init.branchId);
     setFormCourseType(init.courseType);
+    setFormTeacherId(init.teacherId);
     initialFormRef.current = init;
   }, [open, editGroup]);
 
   const isFormDirty =
     formName !== initialFormRef.current.name ||
     formBranchId !== initialFormRef.current.branchId ||
-    formCourseType !== initialFormRef.current.courseType;
+    formCourseType !== initialFormRef.current.courseType ||
+    formTeacherId !== initialFormRef.current.teacherId;
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
     useConfirmedClose(
       isFormDirty || createMutation.isPending || updateMutation.isPending,
@@ -118,6 +128,7 @@ const GroupFormDialog = ({
       name: formName,
       branchId: formBranchId,
       courseType: formCourseType,
+      teacherId: formTeacherId || null,
     };
 
     if (editGroup) {
@@ -204,6 +215,35 @@ const GroupFormDialog = ({
                   <SelectItem value="tezkor">
                     {t('groups.course_fast')}
                   </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="group-teacher">
+                {t('groups.form.teacher_label')}
+              </Label>
+              <Select
+                value={formTeacherId || 'none'}
+                onValueChange={(v) => setFormTeacherId(v === 'none' ? '' : v)}
+              >
+                <SelectTrigger
+                  id="group-teacher"
+                  className="bg-secondary border-border"
+                >
+                  <SelectValue
+                    placeholder={t('groups.form.teacher_placeholder')}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Radix SelectItem forbids an empty-string value, so "unassigned" uses a sentinel mapped back to '' above. */}
+                  <SelectItem value="none">
+                    {t('groups.form.teacher_none')}
+                  </SelectItem>
+                  {(teachers || []).map((teacher) => (
+                    <SelectItem key={teacher.id} value={teacher.id}>
+                      {teacher.name || teacher.email}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

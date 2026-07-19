@@ -21,6 +21,7 @@ export type Capability =
   | 'manageGroups'
   | 'manageSchedule'
   | 'takeAttendance'
+  | 'manageOwnLesson'
   | 'viewAudit'
   | 'viewDashboard';
 
@@ -48,6 +49,16 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   manageGroups: OPS,
   manageSchedule: OPS,
   takeAttendance: ALL,
+  // Teacher creates an ad-hoc lesson for their own (server-scoped) group and
+  // edits/deletes only lessons they personally created -- narrower than
+  // manageSchedule (templates/bulk-generate stay OPS-only, unaffected).
+  // Deliberately excludes operator: operator already creates lessons via
+  // manageSchedule, but must not get a delete-own affordance the backend
+  // won't honor (DELETE /lessons/:id stays owner/manager, + the creator only
+  // if teacher). dev/owner/manager included to satisfy dev/owner ⊇ every
+  // capability (permissions.test.ts) -- harmless, since owner/manager already
+  // have unconditional delete via the role check in AttendancePage.
+  manageOwnLesson: ['dev', 'owner', 'manager', 'teacher'],
   viewAudit: OWNERS,
   viewDashboard: ALL,
 };

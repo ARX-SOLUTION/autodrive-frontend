@@ -31,6 +31,11 @@ export interface CreateLessonPayload {
   groupId: string;
 }
 
+// SLICE B (autodrive-vh0.4): mirrors the backend's UpdateLessonDto
+// (PartialType(OmitType(CreateLessonDto, ['groupId']))) -- groupId is
+// deliberately not editable.
+export type UpdateLessonPayload = Partial<Omit<CreateLessonPayload, 'groupId'>>;
+
 export interface BatchAttendancePayload {
   lessonId: string;
   records: {

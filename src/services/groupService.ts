@@ -73,6 +73,7 @@ export const useCreateGroup = () => {
       name: string;
       branchId: string;
       courseType: string;
+      teacherId?: string | null;
     }) => {
       const { data } = await axiosInstance.post('/groups', group);
       return parseItemEnvelope<Group>(data, 'group');
@@ -95,6 +96,7 @@ export const useUpdateGroup = () => {
       name?: string;
       branchId?: string;
       courseType?: string;
+      teacherId?: string | null;
     }) => {
       const { data } = await axiosInstance.patch(`/groups/${id}`, group);
       return parseItemEnvelope<Group>(data, 'group');

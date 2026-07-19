@@ -59,7 +59,12 @@ const navItems: NavItem[] = [
     cap: 'manageStaff',
   },
   { path: '/students', labelKey: 'nav.students', icon: GraduationCap },
-  { path: '/payments', labelKey: 'nav.payments', icon: CreditCard },
+  {
+    path: '/payments',
+    labelKey: 'nav.payments',
+    icon: CreditCard,
+    cap: 'recordPayment',
+  },
   {
     path: '/operators',
     labelKey: 'nav.operators',
@@ -133,6 +138,7 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
     manageStaff: useCan('manageStaff'),
     manageUsers: useCan('manageUsers'),
     viewAudit: useCan('viewAudit'),
+    recordPayment: useCan('recordPayment'),
   };
   const canSee = (item: NavItem) => !item.cap || gate[item.cap] === true;
   const filteredItems = navItems.filter(canSee);

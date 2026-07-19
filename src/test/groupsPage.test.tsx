@@ -49,6 +49,14 @@ vi.mock('@/services/branchService', () => ({
   }),
 }));
 
+// GroupFormDialog (always mounted, just closed) now also calls useTeachers
+// for its teacher selector (autodrive-vh0.1) -- needs stubbing same as
+// groupService/branchService above, or the real hook throws for lack of a
+// QueryClientProvider in this tree.
+vi.mock('@/services/teacherService', () => ({
+  useTeachers: () => ({ data: [] }),
+}));
+
 const GROUPS: Partial<Group>[] = [
   {
     id: 'g1',

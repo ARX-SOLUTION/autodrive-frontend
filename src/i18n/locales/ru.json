@@ -312,6 +312,18 @@
         "operator_follow_through_label": "Доведение до оплаты (оператор)",
         "operator_follow_through_meta": "Доля зарегистрированных студентов, совершивших оплату"
       }
+    },
+    "teacher": {
+      "kpi_my_groups": "Мои группы",
+      "kpi_my_students": "Мои студенты",
+      "kpi_owing_students": "Студенты с долгом",
+      "kpi_today_lessons": "Занятия сегодня",
+      "upcoming_title": "Ближайшие занятия",
+      "upcoming_subtitle": "Сначала ближайшие",
+      "upcoming_empty_title": "Нет предстоящих занятий",
+      "upcoming_empty_desc": "У вас пока нет запланированных занятий.",
+      "no_groups_title": "Пока нет групп",
+      "no_groups_desc": "Вам ещё не назначили группу. Обратитесь к менеджеру."
     }
   },
   "branches": {
@@ -368,6 +380,11 @@
     "created": "Создан",
     "total_students": "Всего: {{count}} студентов",
     "form_desc": "Введите данные группы",
+    "form": {
+      "teacher_label": "Преподаватель",
+      "teacher_placeholder": "Выберите преподавателя",
+      "teacher_none": "Не назначен"
+    },
     "detail": {
       "title": "Информация о группе",
       "student": "Студент",
@@ -840,19 +857,23 @@
     "cancel": "Отмена",
     "delete_title": "Удаление занятия",
     "delete_desc": "Это занятие и записи посещаемости будут удалены. Продолжить?",
+    "edit_title": "Редактирование занятия",
     "created": "Занятие создано",
     "saved": "Посещаемость сохранена",
     "deleted": "Занятие удалено",
+    "updated": "Занятие обновлено",
     "save_error": "Ошибка при сохранении посещаемости",
     "create_error": "Ошибка при создании занятия",
     "delete_error": "Ошибка при удалении занятия",
+    "update_error": "Ошибка при обновлении занятия",
     "title_placeholder": "Например: 1-занятие теория",
     "group_placeholder": "Выберите группу",
     "toggle_present": "Пришёл",
     "toggle_late": "Опоздал",
     "toggle_absent": "Нет",
     "marked_progress": "Отмечено {{marked}} из {{total}}",
-    "add_lesson_desc": "Введите данные нового занятия"
+    "add_lesson_desc": "Введите данные нового занятия",
+    "edit_lesson_desc": "Измените данные занятия"
   },
   "schedule": {
     "title": "Расписание",

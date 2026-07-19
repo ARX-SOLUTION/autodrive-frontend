@@ -5,6 +5,7 @@ import { useIsCrossTenant } from '@/hooks/useCan';
 import {
   Lesson,
   CreateLessonPayload,
+  UpdateLessonPayload,
   BatchAttendancePayload,
   PaginatedLessons,
   AttendanceHistoryRecord,
@@ -72,6 +73,26 @@ export const useCreateLesson = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: lessonKeys.all });
       track('lesson_create');
+    },
+  });
+};
+
+// SLICE B (autodrive-vh0.4): PATCH /lessons/:id, teacher-only on the
+// backend (@Roles(teacher)) -- see AttendancePage's canEditLesson for the
+// matching FE gate. Mirrors useCreateLesson/useDeleteLesson's invalidation.
+export const useUpdateLesson = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      ...payload
+    }: UpdateLessonPayload & { id: string }) => {
+      const { data } = await axiosInstance.patch(`/lessons/${id}`, payload);
+      return parseItemEnvelope<Lesson>(data, 'lesson');
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: lessonKeys.all });
+      track('lesson_update');
     },
   });
 };

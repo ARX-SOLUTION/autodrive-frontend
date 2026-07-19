@@ -51,15 +51,15 @@ export const useRestoreSession = () => {
   });
 
   useEffect(() => {
-    if (query.data) setUser(query.data);
-  }, [query.data, setUser]);
-
-  useEffect(() => {
+    if (query.data) {
+      setUser(query.data);
+      return;
+    }
     if ((query.error as AxiosError)?.response?.status === 401) {
       logout();
       queryClient.clear();
     }
-  }, [query.error, logout, queryClient]);
+  }, [query.data, query.error, setUser, logout, queryClient]);
 
   return query;
 };
