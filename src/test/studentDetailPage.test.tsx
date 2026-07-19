@@ -169,6 +169,40 @@ describe('StudentDetailPage payments-tab gating', () => {
   });
 });
 
+// autodrive-vh0.2: teacher must never see payment amounts anywhere on this
+// page, not just the payments tab -- the header debt badge and the info
+// tab's total_price/debt/payment_method/amount_paid Fields used to render
+// unconditionally regardless of canRecordPayment.
+describe('StudentDetailPage payment-amount gating (autodrive-vh0.2)', () => {
+  it('hides the header debt badge and info-tab money fields for a teacher', () => {
+    auth.role = 'teacher';
+    const { container } = renderPage();
+
+    expect(screen.queryAllByText(/students\.detail\.debt/).length).toBe(0);
+    expect(screen.queryByText('students.detail.total_price')).toBeNull();
+    expect(screen.queryByText('students.payment_method')).toBeNull();
+    expect(screen.queryByText('students.amount_paid')).toBeNull();
+    // Non-money info fields must stay visible for a teacher.
+    const dtTexts = Array.from(container.querySelectorAll('dt')).map(
+      (el) => el.textContent,
+    );
+    expect(dtTexts).toContain('students.detail.branch');
+    expect(dtTexts).toContain('students.detail.group');
+  });
+
+  it('still shows the header debt badge and info-tab money fields for a manager (regression)', () => {
+    auth.role = 'manager';
+    renderPage();
+
+    expect(
+      screen.queryAllByText(/students\.detail\.debt/).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText('students.detail.total_price')).toBeTruthy();
+    expect(screen.getByText('students.payment_method')).toBeTruthy();
+    expect(screen.getByText('students.amount_paid')).toBeTruthy();
+  });
+});
+
 // autodrive-6ef.26: read-only attendance history tab, visible to every role
 // (unlike payments, which is gated on the recordPayment capability).
 describe('StudentDetailPage attendance history tab', () => {

@@ -33,11 +33,23 @@ interface StudentsTableProps {
   toggleSort: (field: string) => void;
   canManageStudents: boolean;
   isCrossTenant: boolean;
+  // Teacher must never see payment amounts (recordPayment cap) — hides the
+  // debt/initial/second/third-payment columns rather than blanking them, so
+  // no orphan money-only column header is left behind.
+  canViewPayments: boolean;
   onOpenStudent: (student: Student, el: HTMLElement) => void;
   onEdit: (student: Student) => void;
   onDelete: (id: string) => void;
   onCreate: () => void;
 }
+
+// Money columns hidden from any role without recordPayment (teacher).
+const MONEY_COLUMN_KEYS = new Set([
+  'debt',
+  'initial_payment',
+  'second_payment',
+  'third_payment',
+]);
 
 export const StudentsTable = ({
   students,
@@ -52,6 +64,7 @@ export const StudentsTable = ({
   toggleSort,
   canManageStudents,
   isCrossTenant,
+  canViewPayments,
   onOpenStudent,
   onEdit,
   onDelete,
@@ -267,7 +280,7 @@ export const StudentsTable = ({
     ...nameColumns,
     ...(courseType === 'tezkor' ? tezkorColumns : avtoMaktabColumns),
     ...tailColumns,
-  ];
+  ].filter((c) => canViewPayments || !MONEY_COLUMN_KEYS.has(c.key));
 
   return (
     <DataTable

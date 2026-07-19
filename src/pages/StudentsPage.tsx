@@ -41,6 +41,9 @@ const StudentsPage = () => {
   const isCrossTenant = useIsCrossTenant();
   const canManageStaff = useCan('manageStaff');
   const canManageStudents = useCan('manageStudents');
+  // Teacher must never see payment amounts anywhere (nav ticket vh0.2) —
+  // gates the debt/price columns, mobile field, and Excel export button.
+  const canViewPayments = useCan('recordPayment');
   const user = useAuthStore((s) => s.user);
 
   // Filter state lives in the URL so reload / share / bookmark preserves
@@ -348,6 +351,7 @@ const StudentsPage = () => {
         isExporting={isExporting}
         onExport={exportToExcel}
         canManageStudents={canManageStudents}
+        canViewPayments={canViewPayments}
         onCreate={openCreate}
       />
 
@@ -398,6 +402,7 @@ const StudentsPage = () => {
             toggleSort={toggleSort}
             canManageStudents={canManageStudents}
             isCrossTenant={isCrossTenant}
+            canViewPayments={canViewPayments}
             onOpenStudent={openStudent}
             onEdit={openEdit}
             onDelete={setDeleteId}
@@ -411,6 +416,7 @@ const StudentsPage = () => {
             onRetry={() => refetchStudents()}
             canManageStudents={canManageStudents}
             isCrossTenant={isCrossTenant}
+            canViewPayments={canViewPayments}
             onOpenStudent={openStudent}
             onEdit={openEdit}
             onDelete={setDeleteId}

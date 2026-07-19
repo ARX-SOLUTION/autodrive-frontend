@@ -22,6 +22,8 @@ interface StudentsMobileListProps {
   onRetry: () => void;
   canManageStudents: boolean;
   isCrossTenant: boolean;
+  // Teacher must never see payment amounts (recordPayment cap).
+  canViewPayments: boolean;
   onOpenStudent: (student: Student, el: HTMLElement) => void;
   onEdit: (student: Student) => void;
   onDelete: (id: string) => void;
@@ -35,6 +37,7 @@ export const StudentsMobileList = ({
   onRetry,
   canManageStudents,
   isCrossTenant,
+  canViewPayments,
   onOpenStudent,
   onEdit,
   onDelete,
@@ -73,20 +76,26 @@ export const StudentsMobileList = ({
                   ? t('students.course_fast')
                   : t('students.course_school'),
             },
-            {
-              label: t('students.detail.debt'),
-              value: (
-                <span
-                  className={s.debt > 0 ? 'text-destructive' : 'text-success'}
-                >
-                  {s.debt > 0
-                    ? formatMoney(s.debt)
-                    : s.debt < 0
-                      ? `${t('students.credit_label')}: ${formatMoney(Math.abs(s.debt))}`
-                      : t('common.na')}
-                </span>
-              ),
-            },
+            ...(canViewPayments
+              ? [
+                  {
+                    label: t('students.detail.debt'),
+                    value: (
+                      <span
+                        className={
+                          s.debt > 0 ? 'text-destructive' : 'text-success'
+                        }
+                      >
+                        {s.debt > 0
+                          ? formatMoney(s.debt)
+                          : s.debt < 0
+                            ? `${t('students.credit_label')}: ${formatMoney(Math.abs(s.debt))}`
+                            : t('common.na')}
+                      </span>
+                    ),
+                  },
+                ]
+              : []),
             {
               label: t('students.detail.status'),
               value: s.result

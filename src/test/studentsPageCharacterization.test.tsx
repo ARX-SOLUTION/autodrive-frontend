@@ -8,7 +8,8 @@ import StudentsPage from '@/pages/StudentsPage';
 //  1. rows/cards render from mocked list data (desktop table + mobile card)
 //  2. URL filter params drive the useStudentsPage fetch args
 //  3. explicit empty state (not a blank table) when the list is empty
-//  4. role gating: teacher sees no add/edit/delete controls
+//  4. role gating: teacher sees no add/edit/delete controls, nor payment
+//     amounts (debt/price columns, Excel export) — autodrive-vh0.2
 // They must pass unmodified before AND after the decomposition.
 
 const h = vi.hoisted(() => ({
@@ -203,9 +204,12 @@ describe('StudentsPage characterization', () => {
     expect(screen.queryByRole('button', { name: 'students.add' })).toBeNull();
     expect(screen.queryAllByLabelText('common.edit').length).toBe(0);
     expect(screen.queryAllByLabelText('common.delete').length).toBe(0);
-    // Export stays available regardless of role.
+    // autodrive-vh0.2: export embeds total_price/debt in every row -- a
+    // teacher (no recordPayment) must not see the button at all.
     expect(
-      screen.getByRole('button', { name: /students\.export_excel/ }),
-    ).toBeInTheDocument();
+      screen.queryByRole('button', { name: /students\.export_excel/ }),
+    ).toBeNull();
+    // ...and the debt column itself is gone from the (still-rendered) table.
+    expect(screen.queryByText('students.debt')).toBeNull();
   });
 });

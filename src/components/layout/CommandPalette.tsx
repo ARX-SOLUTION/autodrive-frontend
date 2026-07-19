@@ -59,7 +59,12 @@ const NAV_ENTRIES: NavEntry[] = [
     cap: 'manageStaff',
   },
   { labelKey: 'nav.students', path: '/students', icon: GraduationCap },
-  { labelKey: 'nav.payments', path: '/payments', icon: CreditCard },
+  {
+    labelKey: 'nav.payments',
+    path: '/payments',
+    icon: CreditCard,
+    cap: 'recordPayment',
+  },
   {
     labelKey: 'nav.operators',
     path: '/operators',
@@ -100,6 +105,7 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
     manageStaff: useCan('manageStaff'),
     manageUsers: useCan('manageUsers'),
     viewAudit: useCan('viewAudit'),
+    recordPayment: useCan('recordPayment'),
   };
 
   const visibleNav = NAV_ENTRIES.filter((n) => !n.cap || gate[n.cap]);

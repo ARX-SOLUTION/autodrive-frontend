@@ -16,6 +16,7 @@ import StudentModal, {
 import { useGroup } from '@/services/groupService';
 import { useUpdateStudent } from '@/services/studentService';
 import { useOperators } from '@/services/operatorService';
+import { useCan } from '@/hooks/useCan';
 import { extractErrorMessage } from '@/lib/errors';
 import { DAY_LABELS } from '@/types/schedule';
 import { formatMoney } from '@/lib/money';
@@ -38,6 +39,12 @@ const GroupDetailPage = () => {
   const { data: operators } = useOperators();
   const updateStudent = useUpdateStudent();
   const [editStudent, setEditStudent] = useState<Student | null>(null);
+  // Teacher must never see payment amounts, and this edit modal also exposes
+  // an editable "extra payment" field for tezkor students — gate both the
+  // debt display and the edit affordance itself (same caps StudentsTable
+  // already uses for its debt column / edit button).
+  const canViewPayments = useCan('recordPayment');
+  const canManageStudents = useCan('manageStudents');
 
   const handleUpdate = (data: CreateStudentPayload) => {
     if (!editStudent) return;
@@ -146,38 +153,46 @@ const GroupDetailPage = () => {
                   subtitle={s.phone}
                   onClick={() => navigate(`/students/${s.id}`)}
                   actions={
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      aria-label={t('common.edit')}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditStudent(s);
-                      }}
-                    >
-                      <PencilSimple className="h-3.5 w-3.5" />
-                    </Button>
+                    canManageStudents ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        aria-label={t('common.edit')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditStudent(s);
+                        }}
+                      >
+                        <PencilSimple className="h-3.5 w-3.5" />
+                      </Button>
+                    ) : undefined
                   }
-                  fields={[
-                    {
-                      label: t('students.detail.debt'),
-                      value:
-                        s.debt > 0 ? (
-                          <span className="text-destructive">
-                            {formatMoney(s.debt)}
-                          </span>
-                        ) : s.debt < 0 ? (
-                          <span className="text-success">
-                            {t('students.credit_label')}:{' '}
-                            {formatMoney(Math.abs(s.debt))}
-                          </span>
-                        ) : (
-                          <span className="text-success">{t('common.na')}</span>
-                        ),
-                    },
-                  ]}
+                  fields={
+                    canViewPayments
+                      ? [
+                          {
+                            label: t('students.detail.debt'),
+                            value:
+                              s.debt > 0 ? (
+                                <span className="text-destructive">
+                                  {formatMoney(s.debt)}
+                                </span>
+                              ) : s.debt < 0 ? (
+                                <span className="text-success">
+                                  {t('students.credit_label')}:{' '}
+                                  {formatMoney(Math.abs(s.debt))}
+                                </span>
+                              ) : (
+                                <span className="text-success">
+                                  {t('common.na')}
+                                </span>
+                              ),
+                          },
+                        ]
+                      : []
+                  }
                 />
               ))}
             </div>
