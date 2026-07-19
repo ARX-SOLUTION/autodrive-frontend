@@ -37,6 +37,7 @@ import { track } from '@/lib/umami';
 import { DemoForm } from '@/components/landing/DemoForm';
 import { useBlogPosts } from '@/services/blogService';
 import { localizedField } from '@/lib/blog';
+import { isRootDomain, rootDomainAppUrl } from '@/lib/domain';
 
 const TELEGRAM_LINK = 'https://t.me/Xamidullo_xudoyberdiyev';
 const PHONE_LINK = 'tel:+998946110066';
@@ -129,9 +130,14 @@ const LandingPage = () => {
   );
 
   useEffect(() => {
-    if (hasHydrated && isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+    if (!hasHydrated || !isAuthenticated) return;
+    if (isRootDomain()) {
+      // automaktab.uz has no app UI of its own -- hand off to app. with a
+      // full navigation so the domain-wide auth cookie rides along.
+      window.location.href = rootDomainAppUrl('/dashboard');
+      return;
     }
+    navigate('/dashboard', { replace: true });
   }, [hasHydrated, isAuthenticated, navigate]);
 
   useGSAP(

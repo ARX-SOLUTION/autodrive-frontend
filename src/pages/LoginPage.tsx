@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLogin } from '@/services/authService';
+import { isRootDomain, rootDomainAppUrl } from '@/lib/domain';
 import { Brand } from '@/components/layout/Brand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,7 +52,14 @@ const LoginPage = () => {
     toast.success(t('login.success'));
     // Return to the page a session-expiry redirect came from, if any.
     const from = (location.state as { from?: string } | null)?.from;
-    navigate(from && from !== '/login' ? from : '/dashboard');
+    const target = from && from !== '/login' ? from : '/dashboard';
+    if (isRootDomain()) {
+      // automaktab.uz has no app UI of its own -- hand off to app. with a
+      // full navigation so the domain-wide auth cookie rides along.
+      window.location.href = rootDomainAppUrl(target);
+      return;
+    }
+    navigate(target);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
