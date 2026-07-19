@@ -312,6 +312,18 @@
         "operator_follow_through_label": "Доведение до оплаты (оператор)",
         "operator_follow_through_meta": "Доля зарегистрированных студентов, совершивших оплату"
       }
+    },
+    "teacher": {
+      "kpi_my_groups": "Мои группы",
+      "kpi_my_students": "Мои студенты",
+      "kpi_owing_students": "Студенты с долгом",
+      "kpi_today_lessons": "Занятия сегодня",
+      "upcoming_title": "Ближайшие занятия",
+      "upcoming_subtitle": "Сначала ближайшие",
+      "upcoming_empty_title": "Нет предстоящих занятий",
+      "upcoming_empty_desc": "У вас пока нет запланированных занятий.",
+      "no_groups_title": "Пока нет групп",
+      "no_groups_desc": "Вам ещё не назначили группу. Обратитесь к менеджеру."
     }
   },
   "branches": {

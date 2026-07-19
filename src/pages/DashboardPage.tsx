@@ -2,14 +2,10 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
-import {
-  useDashboardAnalytics,
-  useTeacherAnalytics,
-} from '@/services/dashboardService';
+import { useDashboardAnalytics } from '@/services/dashboardService';
 import { usePaymentSnapshot, usePayments } from '@/services/paymentService';
 import { useAuditLogs } from '@/services/auditService';
 import { useBranches } from '@/services/branchService';
-import { Card } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -36,11 +32,7 @@ import {
 } from 'recharts';
 import {
   Warning,
-  ArrowDownRight,
-  ArrowUpRight,
   SealCheck,
-  Car,
-  GraduationCap,
   UsersThree,
   Wallet,
   PencilSimple,
@@ -50,13 +42,18 @@ import {
 } from '@phosphor-icons/react';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
-import { Sparkline } from '@/components/ui/Sparkline';
 import CompanyRevenueDashboard from '@/pages/dashboard/CompanyRevenueDashboard';
+import TeacherDashboard from '@/pages/dashboard/TeacherDashboard';
+import {
+  AXIS_PROPS,
+  CHART_STYLE,
+  formatNumber,
+  greetingKey,
+  KpiCard,
+  SectionCard,
+} from '@/pages/dashboard/dashboardCards';
 
 // ---------- Formatting helpers ----------
-
-const formatNumber = (n: number) =>
-  new Intl.NumberFormat('uz-UZ').format(Math.round(n || 0));
 
 const formatCompact = (n: number) => {
   if (!n) return '0';
@@ -70,13 +67,6 @@ const computeDelta = (current: number, previous: number) => {
   if (!previous) return null;
   const pct = ((current - previous) / previous) * 100;
   return { pct: Math.round(pct * 10) / 10, down: pct < 0 };
-};
-
-const greetingKey = () => {
-  const h = new Date().getHours();
-  if (h < 12) return 'dashboard.greeting_morning';
-  if (h < 18) return 'dashboard.greeting_afternoon';
-  return 'dashboard.greeting_evening';
 };
 
 const initialsFor = (name?: string | null) => {
@@ -95,202 +85,6 @@ const branchHues = [
   25, // orange
   220, // steel blue
 ];
-
-// exec-dash 8: teacher hero live caption — day/month in Asia/Tashkent via a
-// reliable numeric Intl formatter + a static Uzbek month-abbreviation table,
-// NOT Intl month:'short': browser testing shows that renders an unresolved
-// skeleton ("M07 18") for both 'uz-UZ' and bare 'uz' locales. Same fix as
-// CompanyRevenueDashboard.tsx's uzDateParts().
-const UZ_TIMEZONE = 'Asia/Tashkent';
-const uzNumericDateFormatter = new Intl.DateTimeFormat('en-CA', {
-  timeZone: UZ_TIMEZONE,
-});
-const UZ_MONTH_ABBR = [
-  'YAN',
-  'FEV',
-  'MAR',
-  'APR',
-  'MAY',
-  'IYUN',
-  'IYUL',
-  'AVG',
-  'SEN',
-  'OKT',
-  'NOY',
-  'DEK',
-];
-const liveDayMonth = () => {
-  const [, month, day] = uzNumericDateFormatter.format(new Date()).split('-');
-  return `${day} ${UZ_MONTH_ABBR[Number(month) - 1]}`;
-};
-
-// ---------- Shared chart styles ----------
-
-const CHART_STYLE = {
-  contentStyle: {
-    backgroundColor: 'hsl(var(--popover))',
-    border: '1px solid hsl(var(--border))',
-    borderRadius: 8,
-    color: 'hsl(var(--popover-foreground))',
-    fontSize: 12,
-  },
-  labelStyle: { color: 'hsl(var(--popover-foreground))' },
-  itemStyle: { color: 'hsl(var(--popover-foreground))' },
-  cursor: { fill: 'hsl(var(--muted))' },
-};
-
-const AXIS_PROPS = {
-  stroke: 'hsl(var(--muted-foreground))',
-  fontSize: 11,
-  fontFamily: 'JetBrains Mono, ui-monospace, monospace',
-  tickLine: false,
-  axisLine: false,
-};
-
-// ---------- KPI card ----------
-
-interface KpiCardProps {
-  label: string;
-  value: string;
-  unit?: string;
-  icon: React.ReactNode;
-  tone: 'primary' | 'info' | 'warning' | 'success';
-  delta?: { pct: number; down: boolean } | null;
-  metaLeft?: React.ReactNode;
-  metaRight?: React.ReactNode;
-  spark?: number[];
-  animationDelayMs?: number;
-  lead?: boolean;
-}
-
-const KpiCard = ({
-  label,
-  value,
-  unit,
-  icon,
-  tone,
-  delta,
-  metaLeft,
-  metaRight,
-  spark,
-  animationDelayMs = 0,
-  lead = false,
-}: KpiCardProps) => {
-  const toneClasses: Record<KpiCardProps['tone'], string> = {
-    primary: 'bg-primary/10 text-primary',
-    info: 'bg-info/10 text-info',
-    warning: 'bg-warning/15 text-warning',
-    success: 'bg-success/10 text-success',
-  };
-  return (
-    <Card
-      className={cn(
-        'relative overflow-hidden p-5',
-        'transition-all duration-150 hover:shadow-md hover:-translate-y-0.5',
-        'card-enter',
-      )}
-      style={{ transitionDelay: `${animationDelayMs}ms` }}
-    >
-      <div className="mb-3 flex items-center justify-between">
-        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          {label}
-        </p>
-        <div
-          className={cn(
-            'grid h-8 w-8 place-items-center rounded-md',
-            toneClasses[tone],
-          )}
-          aria-hidden
-        >
-          {icon}
-        </div>
-      </div>
-      <p
-        className={cn(
-          'num font-bold leading-tight text-foreground font-mono',
-          lead ? 'text-4xl' : 'text-[28px]',
-        )}
-      >
-        {value}
-        {unit && (
-          <span className="ml-1 text-sm font-medium text-muted-foreground">
-            {unit}
-          </span>
-        )}
-      </p>
-      <div className="mt-3 flex items-center justify-between gap-2">
-        {metaLeft ?? (
-          <span className="text-xs text-muted-foreground">&nbsp;</span>
-        )}
-        {delta ? (
-          <span
-            className={cn(
-              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums',
-              delta.down
-                ? 'bg-destructive/10 text-destructive'
-                : 'bg-success/10 text-success',
-            )}
-          >
-            {delta.down ? (
-              <ArrowDownRight className="h-3 w-3" />
-            ) : (
-              <ArrowUpRight className="h-3 w-3" />
-            )}
-            {delta.down ? '' : '+'}
-            {delta.pct}%
-          </span>
-        ) : metaRight ? (
-          <span className="text-xs text-muted-foreground">{metaRight}</span>
-        ) : null}
-      </div>
-      {spark && spark.length > 1 && <Sparkline data={spark} tone={tone} />}
-    </Card>
-  );
-};
-
-// ---------- Section card helper ----------
-
-interface SectionCardProps {
-  title: string;
-  subtitle?: string;
-  action?: React.ReactNode;
-  className?: string;
-  staggerDelayMs?: number;
-  children: React.ReactNode;
-}
-
-const SectionCard = ({
-  title,
-  subtitle,
-  action,
-  className,
-  staggerDelayMs = 0,
-  children,
-}: SectionCardProps) => (
-  <Card
-    className={cn(
-      'p-5 transition-all duration-150 hover:shadow-md hover:-translate-y-0.5',
-      'card-enter',
-      className,
-    )}
-    style={{ transitionDelay: `${staggerDelayMs}ms` }}
-  >
-    <div className="mb-4 flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <h2 className="truncate text-sm font-semibold tracking-tight text-foreground">
-          {title}
-        </h2>
-        {subtitle && (
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {subtitle}
-          </p>
-        )}
-      </div>
-      {action}
-    </div>
-    {children}
-  </Card>
-);
 
 // ---------- Main dashboard ----------
 
@@ -1052,124 +846,6 @@ const LegacyMainDashboard = () => {
           </ResponsiveContainer>
         </SectionCard>
       )}
-    </div>
-  );
-};
-
-// ---------- Teacher dashboard (unchanged but updated to new card pattern) ----------
-
-const RESULT_COLORS = [
-  'hsl(var(--info))',
-  'hsl(var(--success))',
-  'hsl(var(--destructive))',
-];
-
-const TeacherDashboard = () => {
-  const { t } = useTranslation();
-  const user = useAuthStore((s) => s.user);
-  const { data: analytics, isLoading } = useTeacherAnalytics();
-
-  if (isLoading || !analytics) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-48" />
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Skeleton className="h-32 rounded-lg" />
-          <Skeleton className="h-32 rounded-lg" />
-        </div>
-        <Skeleton className="h-72 rounded-lg" />
-      </div>
-    );
-  }
-
-  const resultData = [
-    {
-      name: t('dashboard.result_studying'),
-      value: analytics.result_stats.oqimoqda,
-    },
-    {
-      name: t('dashboard.result_passed'),
-      value: analytics.result_stats.topshirdi,
-    },
-    {
-      name: t('dashboard.result_failed'),
-      value: analytics.result_stats.yiqildi,
-    },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <div className="inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          <span
-            className="h-[7px] w-[7px] shrink-0 rounded-full bg-success shadow-[0_0_0_3px_hsl(var(--success)/0.2)] motion-safe:animate-[pulse-dot_2.4s_ease-in-out_infinite]"
-            aria-hidden="true"
-          />
-          {t('dashboard.live_label')} ·{' '}
-          {t('dashboard.v2.live_caption_tz', 'Asia/Tashkent')} ·{' '}
-          {liveDayMonth()}
-        </div>
-        <h1 className="mt-2 font-heading text-[40px] font-extrabold leading-[1.1] tracking-[-0.025em] text-balance">
-          {t(greetingKey())}
-          {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
-        </h1>
-        <p className="mt-1.5 max-w-2xl text-[15px] text-muted-foreground text-pretty">
-          {t('dashboard.subtitle')}
-        </p>
-      </div>
-
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-[1.7fr_1fr_1fr_1fr]">
-        <KpiCard
-          label={t('dashboard.cards.active_groups', 'Active Groups')}
-          value={formatNumber(analytics.active_groups)}
-          icon={<UsersThree className="h-4 w-4" />}
-          tone="info"
-          lead
-        />
-        <KpiCard
-          label={t('dashboard.cards.total_students', 'Total Students')}
-          value={formatNumber(analytics.total_students)}
-          icon={<GraduationCap className="h-4 w-4" />}
-          tone="primary"
-        />
-        <KpiCard
-          label={t('dashboard.result_passed')}
-          value={formatNumber(analytics.result_stats.topshirdi)}
-          icon={<SealCheck className="h-4 w-4" />}
-          tone="success"
-        />
-        <KpiCard
-          label={t('dashboard.result_studying')}
-          value={formatNumber(analytics.result_stats.oqimoqda)}
-          icon={<Car className="h-4 w-4" />}
-          tone="warning"
-        />
-      </section>
-
-      <SectionCard title={t('dashboard.result_title')} className="cv-auto">
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={resultData} layout="vertical" barSize={24}>
-            <CartesianGrid
-              strokeDasharray="2 4"
-              stroke="hsl(var(--border))"
-              horizontal={false}
-            />
-            <XAxis type="number" {...AXIS_PROPS} allowDecimals={false} />
-            <YAxis type="category" dataKey="name" {...AXIS_PROPS} width={90} />
-            <Tooltip
-              {...CHART_STYLE}
-              formatter={(v: number) => [formatNumber(v), '']}
-            />
-            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-              {resultData.map((_, i) => (
-                <Cell key={i} fill={RESULT_COLORS[i]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </SectionCard>
     </div>
   );
 };

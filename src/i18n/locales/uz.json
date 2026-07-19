@@ -310,8 +310,20 @@
         "on_time_attendance_label": "Vaqtida davomat belgilash",
         "on_time_attendance_meta": "Dars kuni ichida belgilangan davomatlar ulushi",
         "operator_follow_through_label": "Operator to‘lov davomiyligi",
-        "operator_follow_through_meta": "Ro‘yxatdan o‘tgan studentlardan to‘lov qilganlar ulushi"
+        "operator_follow_through_meta": "Ro’yxatdan o’tgan studentlardan to’lov qilganlar ulushi"
       }
+    },
+    "teacher": {
+      "kpi_my_groups": "Mening guruhlarim",
+      "kpi_my_students": "Mening talabalarim",
+      "kpi_owing_students": "Qarzdor talabalar",
+      "kpi_today_lessons": "Bugungi darslar",
+      "upcoming_title": "Yaqin darslar",
+      "upcoming_subtitle": "Avval yaqinlari",
+      "upcoming_empty_title": "Yaqin darslar yo’q",
+      "upcoming_empty_desc": "Hozircha rejalashtirilgan darslaringiz yo’q.",
+      "no_groups_title": "Hali guruh yo’q",
+      "no_groups_desc": "Sizga hali guruh biriktirilmagan. Menejeringizga murojaat qiling."
     }
   },
   "branches": {

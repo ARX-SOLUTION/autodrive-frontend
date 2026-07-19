@@ -312,6 +312,18 @@
         "operator_follow_through_label": "Operator payment follow-through",
         "operator_follow_through_meta": "Share of registered students who made a payment"
       }
+    },
+    "teacher": {
+      "kpi_my_groups": "My groups",
+      "kpi_my_students": "My students",
+      "kpi_owing_students": "Owing students",
+      "kpi_today_lessons": "Today's lessons",
+      "upcoming_title": "Upcoming lessons",
+      "upcoming_subtitle": "Soonest first",
+      "upcoming_empty_title": "No upcoming lessons",
+      "upcoming_empty_desc": "You have no lessons scheduled yet.",
+      "no_groups_title": "No groups yet",
+      "no_groups_desc": "You haven't been assigned to a group yet. Contact your manager."
     }
   },
   "branches": {
