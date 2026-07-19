@@ -368,6 +368,11 @@
     "created": "Yaratilgan",
     "total_students": "Jami: {{count}} ta talaba",
     "form_desc": "Guruh ma'lumotlarini kiriting",
+    "form": {
+      "teacher_label": "O'qituvchi",
+      "teacher_placeholder": "O'qituvchini tanlang",
+      "teacher_none": "Tayinlanmagan"
+    },
     "detail": {
       "title": "Guruh ma'lumotlari",
       "student": "Talaba",

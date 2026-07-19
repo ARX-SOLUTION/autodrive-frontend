@@ -368,6 +368,11 @@
     "created": "Created",
     "total_students": "Total: {{count}} students",
     "form_desc": "Enter the group's details",
+    "form": {
+      "teacher_label": "Teacher",
+      "teacher_placeholder": "Select teacher",
+      "teacher_none": "Unassigned"
+    },
     "detail": {
       "title": "Group details",
       "student": "Student",

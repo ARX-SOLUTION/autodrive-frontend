@@ -368,6 +368,11 @@
     "created": "Создан",
     "total_students": "Всего: {{count}} студентов",
     "form_desc": "Введите данные группы",
+    "form": {
+      "teacher_label": "Преподаватель",
+      "teacher_placeholder": "Выберите преподавателя",
+      "teacher_none": "Не назначен"
+    },
     "detail": {
       "title": "Информация о группе",
       "student": "Студент",
