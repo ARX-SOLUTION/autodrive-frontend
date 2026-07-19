@@ -115,3 +115,13 @@ export const useUpdateUser = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
   });
 };
+
+export const useDeleteUser = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await axiosInstance.delete(`/users/${id}`);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
+  });
+};
