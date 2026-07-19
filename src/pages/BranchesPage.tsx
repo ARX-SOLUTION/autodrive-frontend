@@ -31,7 +31,7 @@ import {
   Buildings,
   Phone,
 } from '@phosphor-icons/react';
-import { formatDate } from '@/pages/StudentsPage';
+import { formatDate } from '@/pages/students/studentsFormat';
 import { extractErrorMessage } from '@/lib/errors';
 import {
   formatUzPhoneInput,
