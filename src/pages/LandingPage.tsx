@@ -512,6 +512,20 @@ const LandingPage = () => {
     { q: 'landing.faq8_q', a: 'landing.faq8_a' },
   ];
 
+  // AEO: FAQPage structured data, built from the same i18n source as the visible
+  // FAQ so it can't drift. Prerendered into the static HTML (uz) — the accordion
+  // answers are collapsed (not in the SSR DOM), so this is what Google rich
+  // results and AI answer-engines actually read and cite.
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: t(faq.q),
+      acceptedAnswer: { '@type': 'Answer', text: t(faq.a) },
+    })),
+  };
+
   const heroTitle = t('landing.hero_title');
   const heroAccent = t('landing.hero_title_accent');
   const accentIdx = heroTitle.lastIndexOf(heroAccent);
@@ -1460,6 +1474,14 @@ const LandingPage = () => {
         <h2 className="font-heading mb-10 text-center text-2xl font-bold sm:text-3xl">
           {t('landing.faq_title')}
         </h2>
+        <script
+          type="application/ld+json"
+          // i18n strings are trusted; escape `<` anyway so a translation can
+          // never break out of the <script> tag.
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(faqJsonLd).replace(/</g, '\\u003c'),
+          }}
+        />
         <Accordion type="single" collapsible className="space-y-2">
           {faqs.map((faq, i) => (
             <AccordionItem

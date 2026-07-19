@@ -1,13 +1,68 @@
-# Auto Maktab CRM
+# Auto Maktab CRM (Avtomaktab CRM)
 
-> Boshqaruv tizimi (CRM) O'zbekistondagi avtomaktablar uchun: talabalar ro'yxati,
-> guruhlar, to'lovlar va qarzdorlik, davomat, dars jadvali va imtihon natijalari —
-> filiallar bo'yicha, uz/ru/en tillarida. CRM для автошкол Узбекистана.
+> O'zbekistondagi avtomaktablar uchun boshqaruv tizimi (CRM): talabalar, guruhlar,
+> to'lovlar va qarzdorlik, davomat, dars jadvali va imtihon natijalari — filiallar
+> bo'yicha, uz/ru/en tillarida. Brauzerda ishlaydi, o'rnatishsiz. Birinchi oy bepul.
+> CRM для автошкол Узбекистана.
 
-Roles: owner (kompaniya egasi), manager (filial), operator (registrator), teacher (o'qituvchi).
+Roles: owner (kompaniya egasi), manager (filial boshlig'i), operator (registrator), teacher (o'qituvchi).
 
-## Links
+## Nima muammoni yechadi
 
-- App: https://automaktab.uz/
-- Demo: login "Demo sifatida kirish" (demo@automaktab.uz) — namuna ma'lumotlar bilan
+Avtomaktablar to'lov, qarzdorlik, davomat va jadvalni ko'pincha qog'oz yoki Excel'da
+yuritadi — ma'lumot tarqoq, xatolar ko'p, kim qarzdorligini bilish qiyin. Avtomaktab
+CRM shularning barchasini bitta panelga yig'adi: real vaqtdagi tushum, qarzdorlar
+ro'yxati, davomat va jadval — filiallar kesimida.
+
+## Asosiy imkoniyatlar
+
+- Talabalar va guruhlar: ro'yxat, hujjatlar, imtihon natijalari; guruhsiz oqim ham.
+- To'lovlar: kunlik tushum, qarzdorlar ro'yxati, to'lov tarixi.
+- Davomat: har bir dars bo'yicha, filial kesimida.
+- Dars jadvali: o'qituvchi va guruh bo'yicha.
+- Ko'p filial: cheksiz filial, har birida alohida hisobot.
+- Tillar: o'zbek, rus, ingliz. Qurilma: iPhone, Android, planshet, kompyuter — brauzerda.
+
+## Ko'p so'raladigan savollar (FAQ)
+
+### Avtomaktab CRM qanday ishlaydi?
+Bu avtomaktablar uchun bulutli CRM: talabalar, guruhlar, davomat, to'lovlar va dars
+jadvalini bitta paneldan boshqarasiz. Hech narsa o'rnatilmaydi — brauzer va telefon
+orqali ishlaydi, ma'lumot real vaqtda yangilanadi va har bir filial bo'yicha alohida
+ko'rinadi. Ishga tushirish uchun maxsus dastur shart emas.
+
+### Narxi qancha, bepulmi?
+Birinchi oy mutlaqo bepul va karta talab qilinmaydi. Sinovdan keyin maktabingiz
+hajmiga (talaba va filial soni) mos tarif belgilanadi. Aniq narx, demo va ulanish
+uchun Telegram orqali bog'laning: https://t.me/Xamidullo_xudoyberdiyev yoki
++998 94 611 00 66.
+
+### Nechta filial ulash mumkin?
+Filiallar soni cheklanmagan. Har bir filialning alohida davomat, to'lov va tushum
+hisoboti yuritiladi, kompaniya egasi esa barcha filiallarni bitta joydan ko'radi,
+solishtiradi va nazorat qiladi. Har bir xodim faqat o'z roli va filialiga tegishli
+ma'lumotni ko'radi.
+
+### Telefonda ishlaydimi, ilova kerakmi?
+Ha, to'liq telefonda ishlaydi va hech qanday ilova o'rnatilmaydi. iPhone, Android,
+planshet yoki kompyuterda oddiy brauzer orqali kirasiz — App Store yoki Play
+Market kerak emas. Internet bo'lsa, istalgan qurilmadan bir xil ma'lumotga ega
+bo'lasiz.
+
+### Ma'lumotlarim xavfsizmi?
+Ha. Har bir maktabning ma'lumoti to'liq izolyatsiyalangan — bir maktab ma'lumoti
+boshqasiga ko'rinmaydi. Ma'lumotlar shifrlangan serverda saqlanadi, kunlik zaxira
+nusxa olinadi va faqat siz hamda siz ruxsat bergan xodimlar kira oladi.
+
+### Guruhsiz talaba qabul qilsa bo'ladimi?
+Ha. Avtomaktab CRM guruhsiz oqimni ham yuritadi: talabani to'g'ridan-to'g'ri
+ro'yxatdan o'tkazib, uning davomati va to'lovini guruhga bog'lamasdan boshqarish
+mumkin. Keyinchalik istagan vaqtda talabani guruhga biriktirish mumkin.
+
+## Havolalar
+
+- Sayt / ilova: https://automaktab.uz/
+- Demo: bosh sahifada "Demo sifatida kirish" (demo@automaktab.uz) — namuna ma'lumotlar bilan
 - API: https://api.automaktab.uz/
+- Telegram (demo va narx): https://t.me/Xamidullo_xudoyberdiyev
+- Telefon: +998 94 611 00 66

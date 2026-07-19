@@ -1,8 +1,13 @@
 // Vercel Routing Middleware — /blog/:slug only, real browsers pass through
-// untouched (see BACKEND_CONTRACT / autodrive-dlb.7.3). Known crawler UAs get
-// a small static HTML doc with per-post OG/JSON-LD so Telegram/social link
-// previews show the real title/image, not the generic homepage preview.
-const BOT_UA = /TelegramBot|facebookexternalhit|Twitterbot|Slackbot|Googlebot/i;
+// untouched (see BACKEND_CONTRACT / autodrive-dlb.7.3). Handles ONLY social
+// link-preview bots: they get a fresh per-post OG/JSON-LD doc so Telegram/social
+// previews show the real title/image — and reflect a brand-new post before the
+// next redeploy. Search + AI crawlers (Googlebot, YandexBot, GPTBot, Perplexity,
+// ClaudeBot, Bingbot) are deliberately NOT matched — they fall through to the
+// build-time prerendered /blog/<slug>/index.html (scripts/prerender.mjs), which
+// carries the full article body + richer meta. Do NOT add a search/AI UA back
+// here, or you downgrade that crawler to this thin preview.
+const BOT_UA = /TelegramBot|facebookexternalhit|Twitterbot|Slackbot/i;
 
 const API_BASE =
   process.env.VITE_API_BASE_URL ??
@@ -66,7 +71,13 @@ export default async function middleware(request: Request) {
 </html>`;
 
     return new Response(html, {
-      headers: { 'content-type': 'text/html; charset=utf-8' },
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        // Defensive: even though the HTML body sets <meta name="robots" content="index, follow">,
+        // emit an explicit allow directive at the HTTP layer so crawler audits (Lighthouse SEO,
+        // Search Console) don't grade us on Cloudflare's challenge HTML if it ever sits in front.
+        'x-robots-tag': 'all',
+      },
     });
   } catch {
     return; // backend hiccup — fall back to normal SPA rather than error
