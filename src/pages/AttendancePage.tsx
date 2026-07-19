@@ -9,6 +9,7 @@ import PaginationControls from '@/components/ui/PaginationControls';
 import {
   useLessons,
   useCreateLesson,
+  useUpdateLesson,
   useDeleteLesson,
 } from '@/services/attendanceService';
 import { useGroups } from '@/services/groupService';
@@ -42,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ListChecks, Plus, Trash } from '@phosphor-icons/react';
+import { ListChecks, Plus, PencilSimple, Trash } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { useCan } from '@/hooks/useCan';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -55,6 +56,17 @@ const formatDate = (d: string) => {
     return format(new Date(d), 'dd.MM.yyyy HH:mm');
   } catch {
     return d;
+  }
+};
+
+// <input type="datetime-local"> value format, in the browser's local time --
+// symmetric with handleSave's `new Date(values.date).toISOString()` (SLICE
+// B, autodrive-vh0.4: pre-fills the edit form from a lesson's ISO date).
+const toDatetimeLocalValue = (iso: string) => {
+  try {
+    return format(new Date(iso), "yyyy-MM-dd'T'HH:mm");
+  } catch {
+    return '';
   }
 };
 
@@ -79,8 +91,10 @@ interface LessonCardProps {
   lesson: Lesson;
   typeLabel: string;
   teacherName?: string | null;
+  canEdit: boolean;
   canDelete: boolean;
   onOpen: () => void;
+  onEdit: () => void;
   onDelete: () => void;
   onNavigateGroup: () => void;
 }
@@ -96,8 +110,10 @@ const LessonCard = ({
   lesson,
   typeLabel,
   teacherName,
+  canEdit,
   canDelete,
   onOpen,
+  onEdit,
   onDelete,
   onNavigateGroup,
 }: LessonCardProps) => {
@@ -138,7 +154,7 @@ const LessonCard = ({
           {marked ? t('schedule.status_marked') : t('schedule.status_pending')}
         </span>
       </button>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-1">
         <button
           type="button"
           onClick={onNavigateGroup}
@@ -146,18 +162,32 @@ const LessonCard = ({
         >
           {lesson.group_name || t('attendance.unknown_group')}
         </button>
-        {canDelete && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDelete}
-            aria-label={t('attendance.delete_title')}
-            title={t('attendance.delete_title')}
-            className="h-11 w-11"
-          >
-            <Trash className="h-4 w-4 text-destructive" />
-          </Button>
-        )}
+        <div className="flex items-center gap-0.5">
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onEdit}
+              aria-label={t('attendance.edit_title')}
+              title={t('attendance.edit_title')}
+              className="h-11 w-11"
+            >
+              <PencilSimple className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDelete}
+              aria-label={t('attendance.delete_title')}
+              title={t('attendance.delete_title')}
+              className="h-11 w-11"
+            >
+              <Trash className="h-4 w-4 text-destructive" />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -175,6 +205,7 @@ const AttendancePage = () => {
     : Math.max(1, lessons.length < pageSize ? currentPage : currentPage + 1);
   const { data: groups } = useGroups();
   const createLesson = useCreateLesson();
+  const updateLesson = useUpdateLesson();
   const deleteLesson = useDeleteLesson();
 
   const lessonTypeLabel: Record<LessonType, string> = {
@@ -201,6 +232,13 @@ const AttendancePage = () => {
   // lesson never shows a delete button the backend would still 403.
   const canDeleteLesson = (lesson: Lesson) =>
     canDeleteAny || (canManageOwnLesson && lesson.created_by_id === userId);
+  // PATCH /lessons/:id is @Roles(teacher) ONLY on the backend -- unlike
+  // manageOwnLesson above (which also grants dev/owner/manager for the
+  // delete-own affordance), edit must gate on role === 'teacher' directly.
+  // Gating on manageOwnLesson here would show owner/manager an edit button
+  // this teacher-only endpoint would 403 on.
+  const canEditLesson = (lesson: Lesson) =>
+    role === 'teacher' && lesson.created_by_id === userId;
   const groupOptions = groups || [];
 
   // Groups already carry teacher_name (fetched for the create-dialog Select
@@ -212,6 +250,10 @@ const AttendancePage = () => {
   }, [groups]);
 
   const [createOpen, setCreateOpen] = useState(false);
+  // SLICE B (autodrive-vh0.4): non-null while the create dialog above is
+  // reused in edit mode -- see openEdit/handleSave. groupId is pre-filled
+  // from the lesson but never user-editable (Select is disabled below).
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<CalendarLesson | null>(
     null,
   );
@@ -223,7 +265,19 @@ const AttendancePage = () => {
   });
 
   const openCreate = () => {
+    setEditingLesson(null);
     form.reset({ title: '', date: '', groupId: '', lessonType: 'theory' });
+    setCreateOpen(true);
+  };
+
+  const openEdit = (lesson: Lesson) => {
+    setEditingLesson(lesson);
+    form.reset({
+      title: lesson.title,
+      date: toDatetimeLocalValue(lesson.date),
+      groupId: lesson.group_id,
+      lessonType: lesson.lesson_type,
+    });
     setCreateOpen(true);
   };
 
@@ -249,18 +303,37 @@ const AttendancePage = () => {
     });
   };
 
-  const handleCreate = form.handleSubmit(async (values) => {
+  const handleSave = form.handleSubmit(async (values) => {
     try {
-      await createLesson.mutateAsync({
-        title: values.title,
-        date: new Date(values.date).toISOString(),
-        lessonType: values.lessonType,
-        groupId: values.groupId,
-      });
-      toast.success(t('attendance.created'));
+      if (editingLesson) {
+        // groupId deliberately omitted -- PATCH /lessons/:id doesn't accept
+        // it (backend: moving a lesson between groups is out of scope).
+        await updateLesson.mutateAsync({
+          id: editingLesson.id,
+          title: values.title,
+          date: new Date(values.date).toISOString(),
+          lessonType: values.lessonType,
+        });
+        toast.success(t('attendance.updated'));
+      } else {
+        await createLesson.mutateAsync({
+          title: values.title,
+          date: new Date(values.date).toISOString(),
+          lessonType: values.lessonType,
+          groupId: values.groupId,
+        });
+        toast.success(t('attendance.created'));
+      }
       setCreateOpen(false);
     } catch (err) {
-      toast.error(extractErrorMessage(err, t('attendance.create_error')));
+      toast.error(
+        extractErrorMessage(
+          err,
+          editingLesson
+            ? t('attendance.update_error')
+            : t('attendance.create_error'),
+        ),
+      );
     }
   });
 
@@ -274,6 +347,11 @@ const AttendancePage = () => {
       toast.error(extractErrorMessage(err, t('attendance.delete_error')));
     }
   };
+
+  const savePending = createLesson.isPending || updateLesson.isPending;
+  const saveLabel = editingLesson
+    ? t(savePending ? 'common.saving' : 'attendance.save')
+    : t(savePending ? 'common.creating' : 'attendance.create');
 
   return (
     <div className="space-y-6 p-6">
@@ -317,8 +395,10 @@ const AttendancePage = () => {
                 lesson={lesson}
                 typeLabel={lessonTypeLabel[lesson.lesson_type]}
                 teacherName={groupTeacherMap.get(lesson.group_id)}
+                canEdit={canEditLesson(lesson)}
                 canDelete={canDeleteLesson(lesson)}
                 onOpen={() => openLesson(lesson)}
+                onEdit={() => openEdit(lesson)}
                 onDelete={() => setDeleteId(lesson.id)}
                 onNavigateGroup={() => navigate(`/groups/${lesson.group_id}`)}
               />
@@ -332,17 +412,24 @@ const AttendancePage = () => {
         </div>
       )}
 
-      {/* Create Lesson Dialog */}
+      {/* Create/Edit Lesson Dialog -- edit mode reuses this same dialog and
+          schema (SLICE B, autodrive-vh0.4), pre-filled via openEdit. */}
       <Dialog open={createOpen} onOpenChange={(o) => !o && attemptClose()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('attendance.add_lesson')}</DialogTitle>
+            <DialogTitle>
+              {editingLesson
+                ? t('attendance.edit_title')
+                : t('attendance.add_lesson')}
+            </DialogTitle>
             <DialogDescription className="sr-only">
-              {t('attendance.add_lesson_desc')}
+              {editingLesson
+                ? t('attendance.edit_lesson_desc')
+                : t('attendance.add_lesson_desc')}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleSave} className="space-y-4">
               <FormField
                 control={form.control}
                 name="title"
@@ -378,7 +465,14 @@ const AttendancePage = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('attendance.lesson_group')}</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    {/* groupId is deliberately not editable in edit mode
+                        (backend: PATCH /lessons/:id rejects it) -- kept
+                        visible, pre-filled, disabled for context. */}
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={!!editingLesson}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue
@@ -427,10 +521,8 @@ const AttendancePage = () => {
                 <Button type="button" variant="outline" onClick={attemptClose}>
                   {t('attendance.cancel')}
                 </Button>
-                <Button type="submit" disabled={createLesson.isPending}>
-                  {createLesson.isPending
-                    ? t('common.creating')
-                    : t('attendance.create')}
+                <Button type="submit" disabled={savePending}>
+                  {saveLabel}
                 </Button>
               </div>
             </form>

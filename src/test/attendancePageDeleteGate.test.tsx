@@ -30,6 +30,7 @@ vi.mock('@/services/attendanceService', () => ({
   useCreateLesson: vi.fn(),
   useBatchAttendance: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeleteLesson: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateLesson: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/services/groupService', () => ({
