@@ -3,6 +3,7 @@ import { vi, describe, it, expect, afterEach } from 'vitest';
 import { StudentsTable } from '@/pages/students/StudentsTable';
 import { StudentsMobileList } from '@/pages/students/StudentsMobileList';
 import { StudentsPageHeader } from '@/pages/students/StudentsPageHeader';
+import { formatMoney } from '@/lib/money';
 import type { Student } from '@/types/student';
 
 // autodrive-vh0.2: teacher must never see payment amounts. These three
@@ -49,7 +50,10 @@ const tableProps = {
 };
 
 describe('StudentsTable payment-column gating (autodrive-vh0.2)', () => {
-  it('hides the debt column (tezkor) when canViewPayments is false', () => {
+  // autodrive-vh0.5: the debt column is no longer dropped for a teacher --
+  // it switches to a paid/owing badge. has_debt is undefined on the base
+  // STUDENT fixture, so neither badge state nor the amount should render.
+  it('keeps the debt column header but renders no amount or badge when has_debt is undefined and canViewPayments is false', () => {
     render(
       <StudentsTable
         {...tableProps}
@@ -57,7 +61,37 @@ describe('StudentsTable payment-column gating (autodrive-vh0.2)', () => {
         canViewPayments={false}
       />,
     );
-    expect(screen.queryByText('students.debt')).toBeNull();
+    expect(screen.getByText('students.debt')).toBeTruthy();
+    expect(screen.queryByText(formatMoney(STUDENT.debt))).toBeNull();
+    expect(screen.queryByText('students.debt_status_owed')).toBeNull();
+    expect(screen.queryByText('students.debt_status_paid')).toBeNull();
+  });
+
+  it('shows the owing badge, never an amount, (tezkor) when canViewPayments is false and has_debt is true', () => {
+    render(
+      <StudentsTable
+        {...tableProps}
+        students={[{ ...STUDENT, has_debt: true }]}
+        courseType="tezkor"
+        canViewPayments={false}
+      />,
+    );
+    expect(screen.getByText('students.debt_status_owed')).toBeTruthy();
+    expect(screen.queryByText('students.debt_status_paid')).toBeNull();
+    expect(screen.queryByText(formatMoney(STUDENT.debt))).toBeNull();
+  });
+
+  it('shows the paid badge (tezkor) when canViewPayments is false and has_debt is false', () => {
+    render(
+      <StudentsTable
+        {...tableProps}
+        students={[{ ...STUDENT, has_debt: false }]}
+        courseType="tezkor"
+        canViewPayments={false}
+      />,
+    );
+    expect(screen.getByText('students.debt_status_paid')).toBeTruthy();
+    expect(screen.queryByText('students.debt_status_owed')).toBeNull();
   });
 
   it('shows the debt column (tezkor) when canViewPayments is true (regression)', () => {
@@ -82,7 +116,10 @@ describe('StudentsTable payment-column gating (autodrive-vh0.2)', () => {
     expect(screen.queryByText('students.initial_payment')).toBeNull();
     expect(screen.queryByText('2-students.payment')).toBeNull();
     expect(screen.queryByText('3-students.payment')).toBeNull();
-    expect(screen.queryByText('students.debt')).toBeNull();
+    // debt column header stays (badge, not amount -- autodrive-vh0.5); no
+    // amount and no badge for this fixture's undefined has_debt.
+    expect(screen.getByText('students.debt')).toBeTruthy();
+    expect(screen.queryByText(formatMoney(STUDENT.debt))).toBeNull();
     // Non-money columns stay.
     expect(screen.getByText('students.last_name')).toBeTruthy();
   });
@@ -124,6 +161,31 @@ describe('StudentsMobileList debt field gating (autodrive-vh0.2)', () => {
   it('shows the debt field when canViewPayments is true (regression)', () => {
     render(<StudentsMobileList {...mobileProps} canViewPayments={true} />);
     expect(screen.getByText('students.detail.debt')).toBeTruthy();
+  });
+
+  // autodrive-vh0.5: paid/owing badge instead of a blank for a teacher.
+  it('shows the owing badge when canViewPayments is false and has_debt is true', () => {
+    render(
+      <StudentsMobileList
+        {...mobileProps}
+        students={[{ ...STUDENT, has_debt: true }]}
+        canViewPayments={false}
+      />,
+    );
+    expect(screen.getByText('students.detail.debt')).toBeTruthy();
+    expect(screen.getByText('students.debt_status_owed')).toBeTruthy();
+  });
+
+  it('shows the paid badge when canViewPayments is false and has_debt is false', () => {
+    render(
+      <StudentsMobileList
+        {...mobileProps}
+        students={[{ ...STUDENT, has_debt: false }]}
+        canViewPayments={false}
+      />,
+    );
+    expect(screen.getByText('students.detail.debt')).toBeTruthy();
+    expect(screen.getByText('students.debt_status_paid')).toBeTruthy();
   });
 });
 

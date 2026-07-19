@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import StudentsPage from '@/pages/StudentsPage';
+import { formatMoney } from '@/lib/money';
 
 // Characterization tests for the StudentsPage decomposition (route file →
 // src/pages/students/* subcomponents). They pin CURRENT observable behavior:
@@ -9,7 +10,8 @@ import StudentsPage from '@/pages/StudentsPage';
 //  2. URL filter params drive the useStudentsPage fetch args
 //  3. explicit empty state (not a blank table) when the list is empty
 //  4. role gating: teacher sees no add/edit/delete controls, nor payment
-//     amounts (debt/price columns, Excel export) — autodrive-vh0.2
+//     amounts (price columns, Excel export) — autodrive-vh0.2. The debt
+//     column becomes a paid/owing badge instead of an amount — autodrive-vh0.5
 // They must pass unmodified before AND after the decomposition.
 
 const h = vi.hoisted(() => ({
@@ -209,7 +211,12 @@ describe('StudentsPage characterization', () => {
     expect(
       screen.queryByRole('button', { name: /students\.export_excel/ }),
     ).toBeNull();
-    // ...and the debt column itself is gone from the (still-rendered) table.
-    expect(screen.queryByText('students.debt')).toBeNull();
+    // autodrive-vh0.5: the debt column header stays (it's now a paid/owing
+    // badge slot, not dropped), but this fixture has no has_debt so neither
+    // badge state renders, and the amount never leaks.
+    expect(screen.getByText('students.debt')).toBeInTheDocument();
+    expect(screen.queryByText('students.debt_status_owed')).toBeNull();
+    expect(screen.queryByText('students.debt_status_paid')).toBeNull();
+    expect(screen.queryByText(formatMoney(500000))).toBeNull();
   });
 });

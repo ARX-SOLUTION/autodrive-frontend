@@ -182,11 +182,25 @@ const AttendancePage = () => {
     practice: t('attendance.type_practice'),
   };
 
-  const canCreate = useCan('manageSchedule');
+  // manageSchedule: existing OPS create-any-group. manageOwnLesson
+  // additionally lets a teacher create for their own (server-scoped) group
+  // (autodrive-vh0.4) without touching SchedulePage's manageSchedule-only
+  // template/generate gates. Both hooks called unconditionally (not `||`
+  // short-circuited) -- react-hooks/rules-of-hooks.
+  const canManageScheduleLessons = useCan('manageSchedule');
+  const canManageOwnLesson = useCan('manageOwnLesson');
+  const canCreate = canManageScheduleLessons || canManageOwnLesson;
   // DELETE /lessons/:id is @Roles(owner, manager) only -- manageSchedule
   // also grants operator, so gate delete separately to match the backend.
   const role = useAuthStore((s) => s.user?.role);
-  const canDelete = role === 'owner' || role === 'manager';
+  const userId = useAuthStore((s) => s.user?.id);
+  const canDeleteAny = role === 'owner' || role === 'manager';
+  // A teacher may additionally delete a lesson they personally created
+  // (backend: owner/manager unconditionally, else the creator if teacher).
+  // manageOwnLesson deliberately excludes operator, so an operator-created
+  // lesson never shows a delete button the backend would still 403.
+  const canDeleteLesson = (lesson: Lesson) =>
+    canDeleteAny || (canManageOwnLesson && lesson.created_by_id === userId);
   const groupOptions = groups || [];
 
   // Groups already carry teacher_name (fetched for the create-dialog Select
@@ -303,7 +317,7 @@ const AttendancePage = () => {
                 lesson={lesson}
                 typeLabel={lessonTypeLabel[lesson.lesson_type]}
                 teacherName={groupTeacherMap.get(lesson.group_id)}
-                canDelete={canDelete}
+                canDelete={canDeleteLesson(lesson)}
                 onOpen={() => openLesson(lesson)}
                 onDelete={() => setDeleteId(lesson.id)}
                 onNavigateGroup={() => navigate(`/groups/${lesson.group_id}`)}

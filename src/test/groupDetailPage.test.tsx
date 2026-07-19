@@ -3,6 +3,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import GroupDetailPage from '@/pages/GroupDetailPage';
+import { formatMoney } from '@/lib/money';
 import type { UserRole } from '@/types/user';
 
 // Controllable per-test fixture for isLoading/isError/data-not-found split
@@ -132,5 +133,56 @@ describe('GroupDetailPage students-tab payment gating (autodrive-vh0.2)', () => 
     openStudentsTab('manager');
     expect(screen.getByText('students.detail.debt')).toBeTruthy();
     expect(screen.getByLabelText('common.edit')).toBeTruthy();
+  });
+});
+
+// autodrive-vh0.5: teacher gets a positive paid/owing signal instead of a
+// blank -- has_debt drives a badge in the same roster spot the amount Field
+// used to occupy for a payment-visible role, never an amount itself.
+describe('GroupDetailPage students-tab debt badge (autodrive-vh0.5)', () => {
+  const openStudentsTabWithStudent = (
+    role: UserRole,
+    student: Record<string, unknown>,
+  ) => {
+    auth.role = role;
+    groupQuery.data = { ...GROUP, students: [student] };
+    renderPage();
+    fireEvent.mouseDown(screen.getByText('students.title'));
+  };
+
+  it('shows the owing badge for a teacher when has_debt is true', () => {
+    openStudentsTabWithStudent('teacher', {
+      id: 's1',
+      last_name: 'Karimov',
+      first_name: 'Aziz',
+      phone: '+998901234567',
+      has_debt: true,
+    });
+    expect(screen.getByText('students.detail.debt')).toBeTruthy();
+    expect(screen.getByText('students.debt_status_owed')).toBeTruthy();
+  });
+
+  it('shows the paid badge for a teacher when has_debt is false', () => {
+    openStudentsTabWithStudent('teacher', {
+      id: 's1',
+      last_name: 'Karimov',
+      first_name: 'Aziz',
+      phone: '+998901234567',
+      has_debt: false,
+    });
+    expect(screen.getByText('students.detail.debt')).toBeTruthy();
+    expect(screen.getByText('students.debt_status_paid')).toBeTruthy();
+  });
+
+  it('never renders a debt amount for a teacher even when has_debt is true', () => {
+    openStudentsTabWithStudent('teacher', {
+      id: 's1',
+      last_name: 'Karimov',
+      first_name: 'Aziz',
+      phone: '+998901234567',
+      has_debt: true,
+      debt: 500000,
+    });
+    expect(screen.queryByText(formatMoney(500000))).toBeNull();
   });
 });

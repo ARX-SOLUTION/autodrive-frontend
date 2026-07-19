@@ -33,6 +33,10 @@ export interface Student {
   branch_name?: string;
   payment_method: PaymentMethod | null;
   debt: number;
+  // Teacher-scoped reads only (autodrive-vh0.5): binary paid/owing signal,
+  // no amount. Absent on every other role's payload -- treat undefined as
+  // "no data", never as a false "paid".
+  has_debt?: boolean;
   has_document: boolean;
   registered_by?: string;
   registered_by_id?: string;

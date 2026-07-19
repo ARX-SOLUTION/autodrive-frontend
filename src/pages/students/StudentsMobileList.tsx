@@ -12,6 +12,7 @@ import {
 } from '@phosphor-icons/react';
 import { formatPhone } from '@/lib/phoneFormater';
 import { formatMoney } from '@/lib/money';
+import { DebtStatusBadge } from '@/components/ui/DebtStatusBadge';
 import type { Student } from '@/types/student';
 import { capitalize, formatDate, resultLabels } from './studentsFormat';
 
@@ -95,7 +96,17 @@ export const StudentsMobileList = ({
                     ),
                   },
                 ]
-              : []),
+              : // Teacher: paid/owing badge instead of an amount
+                // (autodrive-vh0.5). Omit the field entirely rather than
+                // show a label with no value when has_debt is missing.
+                s.has_debt !== undefined
+                ? [
+                    {
+                      label: t('students.detail.debt'),
+                      value: <DebtStatusBadge hasDebt={s.has_debt} />,
+                    },
+                  ]
+                : []),
             {
               label: t('students.detail.status'),
               value: s.result
