@@ -251,7 +251,7 @@ describe('StudentDetailPage payment_method null-safety (autodrive-f9u.12)', () =
 
 // Group history tab: owner + manager only (broader than the standalone
 // AuditLogPage's owner/dev-only OwnerRoute, per this task's decision), and
-// entries are client-filtered down to changes.groupId.
+// entries are client-filtered down to changes.group_id.
 describe('StudentDetailPage group history tab gating', () => {
   it('shows the group history tab for a manager', () => {
     auth.role = 'manager';
@@ -296,7 +296,7 @@ describe('StudentDetailPage group history tab content', () => {
         user_role: 'operator',
         branch_id: 'b1',
         company_id: 'c1',
-        changes: { groupId: { from: null, to: 'g1' } },
+        changes: { group_id: { from: null, to: 'g1' } },
         created_at: '2026-07-10T10:00:00.000Z',
       },
       {
@@ -310,7 +310,7 @@ describe('StudentDetailPage group history tab content', () => {
         branch_id: 'b1',
         company_id: 'c1',
         // g-deleted no longer resolves in the groups fixture (group removed).
-        changes: { groupId: { from: 'g1', to: 'g-deleted' } },
+        changes: { group_id: { from: 'g1', to: 'g-deleted' } },
         created_at: '2026-07-12T10:00:00.000Z',
       },
       {
@@ -323,7 +323,7 @@ describe('StudentDetailPage group history tab content', () => {
         user_role: 'manager',
         branch_id: 'b1',
         company_id: 'c1',
-        // No groupId sub-key -- must be filtered out entirely.
+        // No group_id sub-key -- must be filtered out entirely.
         changes: { notes: { from: 'a', to: 'b' } },
         created_at: '2026-07-13T10:00:00.000Z',
       },

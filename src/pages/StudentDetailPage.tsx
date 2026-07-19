@@ -599,12 +599,12 @@ interface GroupChange {
   to: string | null;
 }
 
-// changes is a generic per-entry diff blob (e.g. { groupId: {from,to}, ... }
-// other fields) -- pull out just the groupId sub-key, if present.
+// changes is a generic per-entry diff blob (e.g. { group_id: {from,to}, ... }
+// other fields) -- pull out just the group_id sub-key, if present.
 const getGroupChange = (
   changes: Record<string, unknown> | null,
 ): GroupChange | undefined => {
-  const raw = changes?.groupId;
+  const raw = changes?.['group_id'];
   if (raw == null || typeof raw !== 'object') return undefined;
   const { from, to } = raw as { from?: unknown; to?: unknown };
   return {
