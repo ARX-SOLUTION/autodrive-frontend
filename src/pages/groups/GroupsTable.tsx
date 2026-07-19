@@ -101,6 +101,7 @@ const GroupsTable = ({
         <div className="flex items-center justify-center gap-1">
           <button
             aria-label={t('common.edit')}
+            title={t('common.edit')}
             onClick={(e) => {
               e.stopPropagation();
               onEdit(g);
@@ -112,6 +113,7 @@ const GroupsTable = ({
           {canManageGroups && (
             <button
               aria-label={t('common.delete')}
+              title={t('common.delete')}
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(g.id);

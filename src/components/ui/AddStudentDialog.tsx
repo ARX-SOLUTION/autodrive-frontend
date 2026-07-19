@@ -457,8 +457,13 @@ const AddStudentDialog = ({
                       onClick={() => isReachable && goToStep(step.id)}
                       disabled={!isReachable}
                       aria-current={isActive ? 'step' : undefined}
+                      // The text label below is `hidden` under `sm` (icon-only
+                      // on mobile) -- an explicit aria-label keeps the step
+                      // name in the accessible name at every viewport instead
+                      // of relying on a label that can disappear.
+                      aria-label={t(step.titleKey)}
                       className={cn(
-                        'group flex items-center gap-2 rounded-md py-1 pr-2 transition-colors',
+                        'group flex min-h-11 items-center gap-2 rounded-md py-1 pr-2 transition-colors',
                         isReachable
                           ? 'cursor-pointer'
                           : 'cursor-default opacity-60',

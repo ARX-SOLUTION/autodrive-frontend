@@ -32,7 +32,7 @@ const langLabels: Record<string, string> = {
 };
 
 const iconButtonClass =
-  'inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground';
+  'inline-flex h-11 w-11 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground';
 
 const isMac =
   typeof navigator !== 'undefined' &&
@@ -68,8 +68,9 @@ export const Topbar = ({
       <button
         type="button"
         aria-label={t('actions.sidebar') as string}
+        title={t('actions.sidebar') as string}
         onClick={onMobileMenuClick}
-        className="-ml-2 inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
+        className="-ml-2 inline-flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
       >
         <List className="h-5 w-5" />
       </button>
@@ -112,6 +113,7 @@ export const Topbar = ({
       <DropdownMenu>
         <DropdownMenuTrigger
           aria-label={t('actions.language') as string}
+          title={t('actions.language') as string}
           className={iconButtonClass}
         >
           <Translate className="h-4 w-4" />

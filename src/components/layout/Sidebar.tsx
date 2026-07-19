@@ -205,7 +205,7 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
               <button
                 onClick={() => logoutMutation.mutate()}
                 aria-label={t('actions.logout', 'Chiqish')}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-destructive"
+                className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-destructive"
               >
                 <SignOut className="h-4 w-4" />
               </button>

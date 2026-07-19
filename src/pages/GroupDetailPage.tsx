@@ -159,8 +159,9 @@ const GroupDetailPage = () => {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7"
+                        className="h-11 w-11"
                         aria-label={t('common.edit')}
+                        title={t('common.edit')}
                         onClick={(e) => {
                           e.stopPropagation();
                           setEditStudent(s);

@@ -276,7 +276,13 @@ const GroupFormDialog = ({
                   type="button"
                   onClick={() => setDupWarningDismissed(true)}
                   aria-label={t('common.close')}
-                  className="text-muted-foreground hover:text-foreground"
+                  // ponytail: visible icon stays 16px (fits the compact
+                  // warning banner) -- after:-inset-3.5 grows the invisible
+                  // hit area to 44x44 (a11y minimum) without changing what's
+                  // drawn. Same after:-inset-N technique as
+                  // CompanyRevenueDashboard's recovery-queue row arrow /
+                  // components/ui/sidebar.tsx.
+                  className="relative text-muted-foreground hover:text-foreground after:absolute after:-inset-3.5"
                 >
                   <X className="h-4 w-4" />
                 </button>
