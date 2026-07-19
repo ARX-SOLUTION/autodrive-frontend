@@ -77,24 +77,31 @@ export const StudentsTable = ({
   const { t } = useTranslation();
   const localizedResultLabels = resultLabels(t);
 
-  const debtCell = (debt: number) => (
-    <span
-      className={debt > 0 ? 'text-destructive' : 'text-success'}
-      aria-label={
-        debt > 0
-          ? t('students.debt_status_owed')
+  // debt is optional now (backend omits it for a teacher) -- canViewPayments
+  // is what actually gates whether this renders, but the field itself isn't
+  // guaranteed present, so guard it here too rather than let a stray
+  // undefined reach formatMoney's silent "0 so'm".
+  const debtCell = (debt: number | undefined) => {
+    if (debt === undefined) return <span>{t('common.na')}</span>;
+    return (
+      <span
+        className={debt > 0 ? 'text-destructive' : 'text-success'}
+        aria-label={
+          debt > 0
+            ? t('students.debt_status_owed')
+            : debt < 0
+              ? t('students.debt_status_credit')
+              : t('students.debt_status_paid')
+        }
+      >
+        {debt > 0
+          ? formatMoney(debt)
           : debt < 0
-            ? t('students.debt_status_credit')
-            : t('students.debt_status_paid')
-      }
-    >
-      {debt > 0
-        ? formatMoney(debt)
-        : debt < 0
-          ? `${t('students.credit_label')}: ${formatMoney(Math.abs(debt))}`
-          : t('common.na')}
-    </span>
-  );
+            ? `${t('students.credit_label')}: ${formatMoney(Math.abs(debt))}`
+            : t('common.na')}
+      </span>
+    );
+  };
 
   // ponytail: Record<string,string> (not Record<ResultStatus,string>) per
   // spec, so the fallback branch below is reachable if an unexpected value

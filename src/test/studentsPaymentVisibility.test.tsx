@@ -31,6 +31,27 @@ const STUDENT: Student = {
   initial_payment: 1000000,
 };
 
+// autodrive-vh0.6: total_price/debt are now honestly optional on Student --
+// the backend actually OMITS them for a teacher requester rather than the FE
+// merely hiding populated numbers. STUDENT above still models a non-teacher
+// payload (real numbers, hidden only by the canViewPayments prop); this
+// fixture models the real teacher shape -- no total_price/debt/
+// initial_payment/second_payment/third_payment keys at all -- so tests using
+// it prove the omission itself is handled safely, not just the prop gate.
+const TEACHER_STUDENT: Student = {
+  id: 's2',
+  last_name: 'Yusupova',
+  first_name: 'Malika',
+  phone: '+998907654321',
+  course_type: 'tezkor',
+  branch_id: 'b1',
+  payment_method: 'naqd',
+  has_document: true,
+  registered_by: 'Nigora',
+  result: 'oqimoqda',
+  created_at: '2026-07-01T00:00:00.000Z',
+};
+
 const tableProps = {
   students: [STUDENT],
   isLoading: false,
@@ -208,5 +229,73 @@ describe('StudentsPageHeader export-button gating (autodrive-vh0.2)', () => {
   it('shows the export button when canViewPayments is true (regression)', () => {
     render(<StudentsPageHeader {...headerProps} canViewPayments={true} />);
     expect(screen.getByText('students.export_excel')).toBeTruthy();
+  });
+});
+
+describe('genuinely payment-less teacher payload: no money string, no misleading 0 (autodrive-vh0.6)', () => {
+  it('StudentsTable (tezkor): owing badge only, no money string anywhere when has_debt is true', () => {
+    render(
+      <StudentsTable
+        {...tableProps}
+        students={[{ ...TEACHER_STUDENT, has_debt: true }]}
+        courseType="tezkor"
+        canViewPayments={false}
+      />,
+    );
+    expect(screen.getByText('students.debt_status_owed')).toBeTruthy();
+    expect(screen.queryAllByText(/so'm/)).toHaveLength(0);
+    expect(screen.queryByText("0 so'm")).toBeNull();
+  });
+
+  it('StudentsTable (tezkor): no badge and no money string when has_debt is absent', () => {
+    render(
+      <StudentsTable
+        {...tableProps}
+        students={[TEACHER_STUDENT]}
+        courseType="tezkor"
+        canViewPayments={false}
+      />,
+    );
+    expect(screen.queryByText('students.debt_status_owed')).toBeNull();
+    expect(screen.queryByText('students.debt_status_paid')).toBeNull();
+    expect(screen.queryAllByText(/so'm/)).toHaveLength(0);
+  });
+
+  it('StudentsTable (avto_maktab): payment columns absent and no money string anywhere', () => {
+    render(
+      <StudentsTable
+        {...tableProps}
+        students={[{ ...TEACHER_STUDENT, has_debt: true }]}
+        courseType="avto_maktab"
+        canViewPayments={false}
+      />,
+    );
+    expect(screen.queryByText('students.initial_payment')).toBeNull();
+    expect(screen.queryByText('2-students.payment')).toBeNull();
+    expect(screen.queryByText('3-students.payment')).toBeNull();
+    expect(screen.getByText('students.debt_status_owed')).toBeTruthy();
+    expect(screen.queryAllByText(/so'm/)).toHaveLength(0);
+  });
+
+  it('StudentsMobileList: owing badge, never a money string or a misleading 0', () => {
+    render(
+      <StudentsMobileList
+        students={[{ ...TEACHER_STUDENT, has_debt: true }]}
+        isLoading={false}
+        isError={false}
+        onRetry={vi.fn()}
+        canManageStudents={true}
+        isCrossTenant={true}
+        canViewPayments={false}
+        onOpenStudent={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCreate={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('students.detail.debt')).toBeTruthy();
+    expect(screen.getByText('students.debt_status_owed')).toBeTruthy();
+    expect(screen.queryAllByText(/so'm/)).toHaveLength(0);
+    expect(screen.queryByText("0 so'm")).toBeNull();
   });
 });

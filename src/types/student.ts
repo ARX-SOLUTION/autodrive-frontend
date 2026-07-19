@@ -25,14 +25,16 @@ export interface Student {
   birth_date?: string;
   gender?: 'male' | 'female';
   address?: string;
-  total_price: number;
+  // Omitted by the backend for a teacher requester (autodrive-vh0.6) — see
+  // has_debt below. Never assume present; always gate on canViewPayments.
+  total_price?: number;
   course_type: CourseType;
   course_id?: string;
   course_name?: string;
   branch_id: string;
   branch_name?: string;
   payment_method: PaymentMethod | null;
-  debt: number;
+  debt?: number;
   // Teacher-scoped reads only (autodrive-vh0.5): binary paid/owing signal,
   // no amount. Absent on every other role's payload -- treat undefined as
   // "no data", never as a false "paid".

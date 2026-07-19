@@ -78,24 +78,31 @@ export const StudentsMobileList = ({
                   : t('students.course_school'),
             },
             ...(canViewPayments
-              ? [
-                  {
-                    label: t('students.detail.debt'),
-                    value: (
-                      <span
-                        className={
-                          s.debt > 0 ? 'text-destructive' : 'text-success'
-                        }
-                      >
-                        {s.debt > 0
-                          ? formatMoney(s.debt)
-                          : s.debt < 0
-                            ? `${t('students.credit_label')}: ${formatMoney(Math.abs(s.debt))}`
-                            : t('common.na')}
-                      </span>
-                    ),
-                  },
-                ]
+              ? // Guard s.debt itself too (not just canViewPayments): the
+                // backend only guarantees this field for a non-teacher
+                // requester, but the type is honestly optional now -- omit
+                // rather than let a stray undefined reach formatMoney's
+                // silent "0 so'm".
+                s.debt !== undefined
+                ? [
+                    {
+                      label: t('students.detail.debt'),
+                      value: (
+                        <span
+                          className={
+                            s.debt > 0 ? 'text-destructive' : 'text-success'
+                          }
+                        >
+                          {s.debt > 0
+                            ? formatMoney(s.debt)
+                            : s.debt < 0
+                              ? `${t('students.credit_label')}: ${formatMoney(Math.abs(s.debt))}`
+                              : t('common.na')}
+                        </span>
+                      ),
+                    },
+                  ]
+                : []
               : // Teacher: paid/owing badge instead of an amount
                 // (autodrive-vh0.5). Omit the field entirely rather than
                 // show a label with no value when has_debt is missing.

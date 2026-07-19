@@ -243,8 +243,15 @@ const StudentsPage = () => {
             : t('students.course_school'),
         [t('common.branch')]: s.branch_name ?? t('common.na'),
         [t('students.group')]: s.group_name ?? t('common.na'),
-        [t('students.total_price')]: s.total_price,
-        [t('students.debt')]: s.debt,
+        // Export button is already canViewPayments-gated (StudentsPageHeader)
+        // so a teacher never reaches this, but keep the row builder honest
+        // too rather than lean on the button being hidden as the only guard.
+        ...(canViewPayments
+          ? {
+              [t('students.total_price')]: s.total_price,
+              [t('students.debt')]: s.debt,
+            }
+          : {}),
       }));
       const ws = XLSX.utils.json_to_sheet(rows);
       const wb = XLSX.utils.book_new();

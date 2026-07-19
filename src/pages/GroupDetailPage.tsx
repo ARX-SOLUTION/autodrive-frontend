@@ -172,26 +172,33 @@ const GroupDetailPage = () => {
                   }
                   fields={
                     canViewPayments
-                      ? [
-                          {
-                            label: t('students.detail.debt'),
-                            value:
-                              s.debt > 0 ? (
-                                <span className="text-destructive">
-                                  {formatMoney(s.debt)}
-                                </span>
-                              ) : s.debt < 0 ? (
-                                <span className="text-success">
-                                  {t('students.credit_label')}:{' '}
-                                  {formatMoney(Math.abs(s.debt))}
-                                </span>
-                              ) : (
-                                <span className="text-success">
-                                  {t('common.na')}
-                                </span>
-                              ),
-                          },
-                        ]
+                      ? // Guard s.debt itself too (not just canViewPayments):
+                        // the backend only guarantees this field for a
+                        // non-teacher requester, but the type is honestly
+                        // optional now -- omit rather than let a stray
+                        // undefined reach formatMoney's silent "0 so'm".
+                        s.debt !== undefined
+                        ? [
+                            {
+                              label: t('students.detail.debt'),
+                              value:
+                                s.debt > 0 ? (
+                                  <span className="text-destructive">
+                                    {formatMoney(s.debt)}
+                                  </span>
+                                ) : s.debt < 0 ? (
+                                  <span className="text-success">
+                                    {t('students.credit_label')}:{' '}
+                                    {formatMoney(Math.abs(s.debt))}
+                                  </span>
+                                ) : (
+                                  <span className="text-success">
+                                    {t('common.na')}
+                                  </span>
+                                ),
+                            },
+                          ]
+                        : []
                       : // Teacher: paid/owing badge instead of an amount
                         // (autodrive-vh0.5). Omit the field entirely rather
                         // than show a label with no value when has_debt is

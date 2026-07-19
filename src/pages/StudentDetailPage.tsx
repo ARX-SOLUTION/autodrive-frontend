@@ -187,6 +187,7 @@ const StudentDetailPage = () => {
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
               {canRecordPayment &&
+                student.debt !== undefined &&
                 (student.debt > 0 ? (
                   <Badge variant="destructive">
                     {t('students.detail.debt')}: {formatMoney(student.debt)}
@@ -250,13 +251,13 @@ const StudentDetailPage = () => {
               label={t('students.detail.course')}
               value={t(`students.course.${student.course_type}`)}
             />
-            {canRecordPayment && (
+            {canRecordPayment && student.total_price !== undefined && (
               <Field
                 label={t('students.detail.total_price')}
                 value={formatMoney(student.total_price)}
               />
             )}
-            {canRecordPayment && (
+            {canRecordPayment && student.debt !== undefined && (
               <Field
                 label={t('students.detail.debt')}
                 value={
