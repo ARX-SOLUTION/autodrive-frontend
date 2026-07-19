@@ -67,6 +67,7 @@ const GroupsMobileList = ({
                 <>
                   <button
                     aria-label={t('common.edit')}
+                    title={t('common.edit')}
                     onClick={(e) => {
                       e.stopPropagation();
                       onEdit(g);
@@ -78,6 +79,7 @@ const GroupsMobileList = ({
                   {canManageGroups && (
                     <button
                       aria-label={t('common.delete')}
+                      title={t('common.delete')}
                       onClick={(e) => {
                         e.stopPropagation();
                         onDelete(g.id);

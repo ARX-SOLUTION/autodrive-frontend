@@ -643,10 +643,11 @@ const FilterBar = ({
         type="button"
         variant="outline"
         size="icon"
-        className="h-10 w-10 rounded-[11px]"
+        className="h-11 w-11 rounded-[11px]"
         onClick={onRefresh}
         disabled={isFetching}
         aria-label={t('dashboard.v2.refresh', 'Yangilash')}
+        title={t('dashboard.v2.refresh', 'Yangilash')}
       >
         <ArrowsClockwise
           className={cn('h-4 w-4', isFetching && 'animate-spin')}
@@ -1371,10 +1372,10 @@ const CompanyRevenueDashboard = () => {
                           },
                         )}
                         // ponytail: visible box is 24px (mock spec) —
-                        // after:-inset-2 grows the invisible hit area to
-                        // 40x40 without changing what's drawn. Same
-                        // after:-inset-N technique as components/ui/sidebar.tsx.
-                        className="relative grid h-6 w-6 place-items-center rounded-[7px] border border-border text-muted-foreground after:absolute after:-inset-2 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        // after:-inset-2.5 grows the invisible hit area to
+                        // 44x44 (a11y minimum) without changing what's drawn.
+                        // Same after:-inset-N technique as components/ui/sidebar.tsx.
+                        className="relative grid h-6 w-6 place-items-center rounded-[7px] border border-border text-muted-foreground after:absolute after:-inset-2.5 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         <CaretRight
                           className="h-3.5 w-3.5"
