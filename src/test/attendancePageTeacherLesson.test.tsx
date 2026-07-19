@@ -74,13 +74,13 @@ vi.mock('@/services/groupService', () => ({
   useGroup: () => ({ data: undefined }),
 }));
 
-function renderAsRole(role: string, id = 'teacher-1') {
+function renderAsRole(role: string, id = 'teacher-1', entry = '/attendance') {
   (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
     (selector: (s: Record<string, unknown>) => unknown) =>
       selector({ user: { role, id, branch_id: 'b1' } }),
   );
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[entry]}>
       <AttendancePage />
     </MemoryRouter>,
   );
@@ -188,5 +188,18 @@ describe('AttendancePage edit-lesson submit (autodrive-vh0.4)', () => {
     expect(payload.id).toBe('l1');
     expect(payload.title).toBe('Updated title');
     expect(payload.lessonType).toBe('practice');
+  });
+
+  // autodrive-vh0.6: the teacher dashboard's upcoming-lessons rows link to
+  // /attendance?lesson=<id>. The page must open THAT lesson's drawer directly
+  // (summary -> detail drilldown), not just land on the list.
+  it('opens the drawer for a lesson deep-linked via ?lesson=<id>', () => {
+    renderAsRole('teacher', 'teacher-1', '/attendance?lesson=l1');
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('opens no drawer when there is no deep-link param', () => {
+    renderAsRole('teacher', 'teacher-1');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

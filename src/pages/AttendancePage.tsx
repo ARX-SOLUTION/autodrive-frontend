@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
@@ -258,6 +258,7 @@ const AttendancePage = () => {
     null,
   );
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const form = useForm<CreateLessonFormValues>({
     resolver: zodResolver(createLessonSchema),
@@ -287,21 +288,40 @@ const AttendancePage = () => {
   // Adapts this page's Lesson (attendanceService) into the CalendarLesson
   // shape AttendanceDrawer expects (built for SchedulePage's calendar
   // query) -- no backend/type change needed, the fields line up.
-  const openLesson = (lesson: Lesson) => {
-    setSelectedLesson({
-      id: lesson.id,
-      title: lesson.title,
-      date: lesson.date,
-      lesson_type: lesson.lesson_type,
-      group_id: lesson.group_id,
-      group_name: lesson.group_name || '',
-      branch_id: lesson.branch_id,
-      teacher_name: groupTeacherMap.get(lesson.group_id) || undefined,
-      present_count: lesson.attendance.filter((a) => a.status === 'present')
-        .length,
-      total_count: lesson.attendance.length,
-    });
-  };
+  const openLesson = useCallback(
+    (lesson: Lesson) => {
+      setSelectedLesson({
+        id: lesson.id,
+        title: lesson.title,
+        date: lesson.date,
+        lesson_type: lesson.lesson_type,
+        group_id: lesson.group_id,
+        group_name: lesson.group_name || '',
+        branch_id: lesson.branch_id,
+        teacher_name: groupTeacherMap.get(lesson.group_id) || undefined,
+        present_count: lesson.attendance.filter((a) => a.status === 'present')
+          .length,
+        total_count: lesson.attendance.length,
+      });
+    },
+    [groupTeacherMap],
+  );
+
+  // autodrive-vh0.6: deep link from the teacher dashboard's upcoming-lessons
+  // list -- ?lesson=<id> opens that lesson's drawer once the list has loaded,
+  // then drops the param so closing the drawer doesn't reopen it. Runs once.
+  const deepLinkedRef = useRef(false);
+  useEffect(() => {
+    if (deepLinkedRef.current) return;
+    const id = searchParams.get('lesson');
+    if (!id || lessons.length === 0) return;
+    deepLinkedRef.current = true;
+    const lesson = lessons.find((l) => l.id === id);
+    if (lesson) openLesson(lesson);
+    const next = new URLSearchParams(searchParams);
+    next.delete('lesson');
+    setSearchParams(next, { replace: true });
+  }, [lessons, searchParams, setSearchParams, openLesson]);
 
   const handleSave = form.handleSubmit(async (values) => {
     try {

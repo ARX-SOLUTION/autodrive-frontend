@@ -289,6 +289,38 @@ describe('TeacherDashboard upcoming lessons (autodrive-vh0.6)', () => {
     fireEvent.click(screen.getByText('Morning theory'));
     expect(screen.getByTestId('destination')).toHaveTextContent('/attendance');
   });
+
+  // autodrive-vh0.6: drilldown -- the row must carry the lesson id so
+  // AttendancePage can open that exact lesson's drawer, not just the list.
+  it('a row deep-links to the specific lesson it shows', () => {
+    state.lessons.data = {
+      data: LESSONS,
+      total: LESSONS.length,
+      page: 1,
+      limit: 100,
+    };
+    state.students.data = STUDENTS;
+    const DestinationProbe = () => {
+      const location = useLocation();
+      return (
+        <output data-testid="destination">
+          {location.pathname + location.search}
+        </output>
+      );
+    };
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Routes>
+          <Route path="/dashboard" element={<TeacherDashboard />} />
+          <Route path="/attendance" element={<DestinationProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByText('Morning theory'));
+    expect(screen.getByTestId('destination')).toHaveTextContent(
+      '/attendance?lesson=l-today-early',
+    );
+  });
 });
 
 describe('TeacherDashboard empty states (autodrive-vh0.6)', () => {

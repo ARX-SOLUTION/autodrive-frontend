@@ -232,7 +232,7 @@ const TeacherDashboard = () => {
                   .map((lesson) => (
                     <li key={lesson.id}>
                       <Link
-                        to="/attendance"
+                        to={`/attendance?lesson=${lesson.id}`}
                         className="group flex items-center gap-3 rounded-lg py-2.5 motion-safe:transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         <span className="w-24 shrink-0 font-mono text-xs font-semibold tabular-nums text-muted-foreground">
