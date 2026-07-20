@@ -41,6 +41,7 @@ import {
 } from '@/lib/phoneFormater';
 import { Branch } from '@/types/branch';
 import { useCan } from '@/hooks/useCan';
+import { branchDeleteDescArgs } from './branchDeleteDescArgs';
 
 interface FormState {
   name: string;
@@ -145,6 +146,12 @@ const BranchesPage = () => {
       onError: (err) => toast.error(extractErrorMessage(err)),
     });
   };
+
+  // autodrive-cg9: active_students already lives on the branch object that
+  // populated the card the user clicked delete on -- no extra fetch.
+  const deleteDescArgs = branchDeleteDescArgs(
+    branches?.find((b) => b.id === deleteId),
+  );
 
   return (
     <div className="space-y-6">
@@ -439,10 +446,8 @@ const BranchesPage = () => {
         onConfirm={handleDelete}
         loading={deleteMut.isPending}
         description={
-          deleteId
-            ? t('branches.confirm_delete_desc', {
-                name: branches?.find((b) => b.id === deleteId)?.name,
-              })
+          deleteDescArgs
+            ? t(deleteDescArgs.key, deleteDescArgs.options)
             : undefined
         }
       />

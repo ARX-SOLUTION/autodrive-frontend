@@ -2,6 +2,7 @@ import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, afterEach, beforeEach } from 'vitest';
 import GroupsPage from '@/pages/GroupsPage';
+import { groupDeleteDescArgs } from '@/pages/groups/groupDeleteDescArgs';
 import type { Group, GroupOverview } from '@/types/group';
 
 // Characterization tests for GroupsPage, written BEFORE decomposing the page
@@ -201,5 +202,65 @@ describe('GroupsPage role gating', () => {
       branchId: 'b1',
       courseType: undefined,
     });
+  });
+});
+
+// autodrive-cg9: delete confirmations used to say nothing about what the
+// deletion affects. Group delete cascades -- groups.service.ts remove()
+// unenrolls (groupId -> null) every student in the group before soft-
+// deleting it -- so active_students (already rendered in the same row/card,
+// see GroupsTable/GroupsMobileList "student_count" column) is a genuine
+// blast-radius count, not decoration.
+//
+// groupDeleteDescArgs is a pure function so the branch is asserted directly
+// -- the suite's react-i18next mock (src/test/setup.ts) stubs t() as
+// `(key) => key`, dropping the interpolation options object entirely, so a
+// rendered "12" is never observable via screen.getByText. Testing the pure
+// function is the only way to actually pin the count value; the render-level
+// tests below cover the (still real) risk of the wrong branch/key firing.
+describe('groupDeleteDescArgs (autodrive-cg9)', () => {
+  it('picks the with-students key and carries the real count for an enrolled group', () => {
+    expect(
+      groupDeleteDescArgs({ name: 'Alpha guruh', active_students: 12 }),
+    ).toEqual({
+      key: 'groups.confirm_delete_desc_with_students',
+      options: { name: 'Alpha guruh', count: 12 },
+    });
+  });
+
+  it('picks the empty-group key with no count for a group with zero students', () => {
+    expect(
+      groupDeleteDescArgs({ name: 'Beta guruh', active_students: 0 }),
+    ).toEqual({
+      key: 'groups.confirm_delete_desc_empty',
+      options: { name: 'Beta guruh' },
+    });
+  });
+
+  it('returns undefined when the group is not (yet) found', () => {
+    expect(groupDeleteDescArgs(undefined)).toBeUndefined();
+  });
+});
+
+describe('GroupsPage delete confirmation blast radius (autodrive-cg9)', () => {
+  it('renders the with-students copy key for a group that has enrolled students', () => {
+    renderPage();
+    // GROUPS[0] (Alpha guruh) has active_students: 12 -- table row renders
+    // before the mobile card list, so index 0 is its desktop delete button.
+    fireEvent.click(screen.getAllByLabelText('common.delete')[0]);
+    expect(
+      screen.getByText('groups.confirm_delete_desc_with_students'),
+    ).toBeTruthy();
+    expect(screen.queryByText('groups.confirm_delete_desc_empty')).toBeNull();
+  });
+
+  it('renders the distinct empty-group copy key for a group with zero students', () => {
+    h.groupsData = [{ ...GROUPS[0], id: 'g3', active_students: 0 }];
+    renderPage();
+    fireEvent.click(screen.getAllByLabelText('common.delete')[0]);
+    expect(screen.getByText('groups.confirm_delete_desc_empty')).toBeTruthy();
+    expect(
+      screen.queryByText('groups.confirm_delete_desc_with_students'),
+    ).toBeNull();
   });
 });

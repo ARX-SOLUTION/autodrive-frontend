@@ -354,7 +354,8 @@
       "top_debtors": "Top debtors",
       "view_all_debtors": "View all"
     },
-    "confirm_delete_desc": "Delete branch \"{{name}}\"? This action cannot be undone."
+    "confirm_delete_desc_empty": "Delete branch \"{{name}}\"? The branch has no students. This action cannot be undone.",
+    "confirm_delete_desc_with_students": "Delete branch \"{{name}}\"? This will also delete {{count}} students. This action cannot be undone."
   },
   "groups": {
     "title": "Groups",
@@ -394,7 +395,8 @@
       "tab_schedule": "Schedule",
       "no_schedule": "No schedule yet"
     },
-    "confirm_delete_desc": "Delete group \"{{name}}\"? This action cannot be undone.",
+    "confirm_delete_desc_empty": "Delete group \"{{name}}\"? The group has no students. This action cannot be undone.",
+    "confirm_delete_desc_with_students": "Delete group \"{{name}}\"? {{count}} students in this group will be left without a group. This action cannot be undone.",
     "duplicate_warning": {
       "title": "Possible duplicate",
       "desc": "A group with this name already exists in this branch:"

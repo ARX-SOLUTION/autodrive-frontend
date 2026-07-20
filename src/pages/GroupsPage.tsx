@@ -25,6 +25,7 @@ import GroupsFilterBar from './groups/GroupsFilterBar';
 import GroupsTable from './groups/GroupsTable';
 import GroupsMobileList from './groups/GroupsMobileList';
 import GroupFormDialog from './groups/GroupFormDialog';
+import { groupDeleteDescArgs } from './groups/groupDeleteDescArgs';
 
 const GroupsPage = () => {
   const { t } = useTranslation();
@@ -177,6 +178,12 @@ const GroupsPage = () => {
   const getBranchName = (branchId: string) =>
     branchList.find((b) => b.id === branchId)?.name || branchId;
 
+  // autodrive-cg9: enrolled-student count already lives on the group object
+  // that populated the row the user clicked delete on -- no extra fetch.
+  const deleteDescArgs = groupDeleteDescArgs(
+    groups?.find((g) => g.id === deleteId),
+  );
+
   const startIndex = (currentPage - 1) * 10;
 
   return (
@@ -278,10 +285,8 @@ const GroupsPage = () => {
         onConfirm={handleDelete}
         loading={deleteMutation.isPending}
         description={
-          deleteId
-            ? t('groups.confirm_delete_desc', {
-                name: groups?.find((g) => g.id === deleteId)?.name,
-              })
+          deleteDescArgs
+            ? t(deleteDescArgs.key, deleteDescArgs.options)
             : undefined
         }
       />
