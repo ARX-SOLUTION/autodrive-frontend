@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import BranchesPage from '@/pages/BranchesPage';
+import { branchDeleteDescArgs } from '@/pages/branchDeleteDescArgs';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Branch } from '@/types/branch';
 
@@ -188,5 +189,80 @@ describe('BranchesPage manage-branches capability (autodrive-f9u.9)', () => {
     auth.role = 'manager';
     renderComponent();
     expect(screen.queryByText('branches.add')).not.toBeInTheDocument();
+  });
+});
+
+// autodrive-cg9: branch delete really does cascade -- branches.service.ts
+// remove() soft-deletes every student (plus staff/groups/schedules/lessons)
+// scoped to the branch in the same transaction -- so active_students
+// (already shown on the same card) is a genuine blast-radius count. Same
+// rationale as groupDeleteDescArgs in groupsPage.test.tsx: the pure function
+// is asserted directly because the suite's react-i18next mock drops
+// interpolation options, so a rendered count is never observable via
+// screen.getByText.
+describe('branchDeleteDescArgs (autodrive-cg9)', () => {
+  it('picks the with-students key and carries the real count for a branch with students', () => {
+    expect(
+      branchDeleteDescArgs({ name: 'Yunusobod', active_students: 7 }),
+    ).toEqual({
+      key: 'branches.confirm_delete_desc_with_students',
+      options: { name: 'Yunusobod', count: 7 },
+    });
+  });
+
+  it('picks the empty-branch key with no count for a branch with zero students', () => {
+    expect(
+      branchDeleteDescArgs({ name: 'Chilonzor', active_students: 0 }),
+    ).toEqual({
+      key: 'branches.confirm_delete_desc_empty',
+      options: { name: 'Chilonzor' },
+    });
+  });
+
+  it('returns undefined when the branch is not (yet) found', () => {
+    expect(branchDeleteDescArgs(undefined)).toBeUndefined();
+  });
+});
+
+describe('BranchesPage delete confirmation blast radius (autodrive-cg9)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    auth.role = 'owner';
+  });
+
+  it('renders the with-students copy key for a branch that has students', () => {
+    mockBranchesData = [
+      {
+        id: 'branch-1',
+        name: 'Test Branch 1',
+        location: 'Test Location 1',
+        active_students: 10,
+        created_at: '2026-06-28T00:00:00Z',
+      },
+    ];
+    renderComponent();
+    fireEvent.click(screen.getAllByLabelText('common.delete')[0]);
+    expect(
+      screen.getByText('branches.confirm_delete_desc_with_students'),
+    ).toBeTruthy();
+    expect(screen.queryByText('branches.confirm_delete_desc_empty')).toBeNull();
+  });
+
+  it('renders the distinct empty-branch copy key for a branch with zero students', () => {
+    mockBranchesData = [
+      {
+        id: 'branch-2',
+        name: 'Empty Branch',
+        location: 'Test Location 2',
+        active_students: 0,
+        created_at: '2026-06-28T00:00:00Z',
+      },
+    ];
+    renderComponent();
+    fireEvent.click(screen.getAllByLabelText('common.delete')[0]);
+    expect(screen.getByText('branches.confirm_delete_desc_empty')).toBeTruthy();
+    expect(
+      screen.queryByText('branches.confirm_delete_desc_with_students'),
+    ).toBeNull();
   });
 });

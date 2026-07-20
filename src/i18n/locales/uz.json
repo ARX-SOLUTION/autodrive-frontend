@@ -354,7 +354,8 @@
       "top_debtors": "Eng katta qarzdorlar",
       "view_all_debtors": "Hammasini ko'rish"
     },
-    "confirm_delete_desc": "\"{{name}}\" filialini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
+    "confirm_delete_desc_empty": "\"{{name}}\" filialini o'chirmoqchimisiz? Filialda talaba yo'q. Bu amalni ortga qaytarib bo'lmaydi.",
+    "confirm_delete_desc_with_students": "\"{{name}}\" filialini o'chirmoqchimisiz? Bunda {{count}} ta talaba ham o'chiriladi. Bu amalni ortga qaytarib bo'lmaydi."
   },
   "groups": {
     "title": "Guruhlar",
@@ -394,7 +395,8 @@
       "tab_schedule": "Jadval",
       "no_schedule": "Dars jadvali yo'q"
     },
-    "confirm_delete_desc": "\"{{name}}\" guruhini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.",
+    "confirm_delete_desc_empty": "\"{{name}}\" guruhini o'chirmoqchimisiz? Guruhda talaba yo'q. Bu amalni ortga qaytarib bo'lmaydi.",
+    "confirm_delete_desc_with_students": "\"{{name}}\" guruhini o'chirmoqchimisiz? Bu guruhdagi {{count}} ta talaba guruhsiz qoladi. Bu amalni ortga qaytarib bo'lmaydi.",
     "duplicate_warning": {
       "title": "Ehtimoliy takrorlanish",
       "desc": "Bu filialda shu nomli guruh allaqachon mavjud:"
