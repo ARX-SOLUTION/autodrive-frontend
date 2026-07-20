@@ -29,6 +29,7 @@ vi.mock('@/services/userService', async (importOriginal) => {
     useCreateManager: () => ({ mutate: vi.fn(), isPending: false }),
     useUpdateUser: () => ({ mutate: vi.fn(), isPending: false }),
     useDeleteUser: () => ({ mutate: vi.fn(), isPending: false }),
+    useRestoreUser: () => ({ mutate: vi.fn(), isPending: false }),
   };
 });
 

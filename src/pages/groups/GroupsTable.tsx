@@ -1,6 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { PencilSimple, Trash } from '@phosphor-icons/react';
+import {
+  PencilSimple,
+  Trash,
+  ArrowCounterClockwise,
+} from '@phosphor-icons/react';
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable';
+import { DeletedBadge } from '@/components/ui/DeletedBadge';
 import { Group } from '@/types/group';
 import { formatDate } from './formatDate';
 
@@ -16,6 +21,10 @@ interface GroupsTableProps {
   onEdit: (g: Group) => void;
   onDelete: (id: string) => void;
   canManageGroups: boolean;
+  // autodrive-cg9: owner-only "show deleted" toggle — a deleted row swaps
+  // edit/delete for a single restore action.
+  canViewDeleted: boolean;
+  onRestore: (id: string) => void;
 }
 
 const GroupsTable = ({
@@ -30,6 +39,8 @@ const GroupsTable = ({
   onEdit,
   onDelete,
   canManageGroups,
+  canViewDeleted,
+  onRestore,
 }: GroupsTableProps) => {
   const { t } = useTranslation();
 
@@ -46,7 +57,12 @@ const GroupsTable = ({
       header: t('groups.name'),
       sortable: true,
       cellClassName: 'font-medium',
-      render: (g) => g.name,
+      render: (g) => (
+        <span className="inline-flex items-center gap-1.5">
+          {g.name}
+          {g.deleted_at && <DeletedBadge />}
+        </span>
+      ),
     },
     {
       key: 'branch',
@@ -97,34 +113,51 @@ const GroupsTable = ({
       key: 'actions',
       header: t('common.actions'),
       align: 'center',
-      render: (g) => (
-        <div className="flex items-center justify-center gap-1">
-          <button
-            aria-label={t('common.edit')}
-            title={t('common.edit')}
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(g);
-            }}
-            className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          >
-            <PencilSimple className="h-3.5 w-3.5" />
-          </button>
-          {canManageGroups && (
+      render: (g) =>
+        g.deleted_at ? (
+          <div className="flex items-center justify-center gap-1">
+            {canViewDeleted && (
+              <button
+                aria-label={t('common.restore')}
+                title={t('common.restore')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRestore(g.id);
+                }}
+                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              >
+                <ArrowCounterClockwise className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-1">
             <button
-              aria-label={t('common.delete')}
-              title={t('common.delete')}
+              aria-label={t('common.edit')}
+              title={t('common.edit')}
               onClick={(e) => {
                 e.stopPropagation();
-                onDelete(g.id);
+                onEdit(g);
               }}
-              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
-              <Trash className="h-3.5 w-3.5" />
+              <PencilSimple className="h-3.5 w-3.5" />
             </button>
-          )}
-        </div>
-      ),
+            {canManageGroups && (
+              <button
+                aria-label={t('common.delete')}
+                title={t('common.delete')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(g.id);
+                }}
+                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              >
+                <Trash className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        ),
     },
   ];
 
@@ -140,6 +173,7 @@ const GroupsTable = ({
       sortDir={sortDir}
       onToggleSort={onToggleSort}
       rowHoverClassName="hover:bg-muted/10"
+      rowClassName={(g) => (g.deleted_at ? 'opacity-60' : undefined)}
     />
   );
 };

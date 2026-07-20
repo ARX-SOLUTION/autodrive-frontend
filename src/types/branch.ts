@@ -12,4 +12,7 @@ export interface Branch {
   today_payment?: number;
   monthly_revenue?: { month: string; amount: number }[];
   top_debtors?: { id: string; name: string; debt: number }[];
+  // autodrive-cg9: present (non-null) only when include_deleted=true was
+  // sent (owner-only) -- distinguishes a soft-deleted row from a live one.
+  deleted_at?: string | null;
 }

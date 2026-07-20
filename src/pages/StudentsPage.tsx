@@ -15,6 +15,7 @@ import {
   useCreateStudentWithPayment,
   useUpdateStudent,
   useDeleteStudent,
+  useRestoreStudent,
   toLocalDateStr,
 } from '@/services/studentService';
 import { useBranches } from '@/services/branchService';
@@ -26,6 +27,7 @@ import { CircleNotch } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PaginationControls from '@/components/ui/PaginationControls';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { extractErrorMessage } from '@/lib/errors';
 import { formatPhone } from '@/lib/phoneFormater';
 import { StudentsPageHeader } from './students/StudentsPageHeader';
@@ -41,6 +43,7 @@ const StudentsPage = () => {
   const isCrossTenant = useIsCrossTenant();
   const canManageStaff = useCan('manageStaff');
   const canManageStudents = useCan('manageStudents');
+  const canViewDeleted = useCan('viewDeleted');
   // Teacher must never see payment amounts anywhere (nav ticket vh0.2) —
   // gates the debt/price columns, mobile field, and Excel export button.
   const canViewPayments = useCan('recordPayment');
@@ -128,6 +131,13 @@ const StudentsPage = () => {
 
   // Local-only state (modal + sort UX — not worth persisting).
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  // autodrive-cg9: owner-only "show deleted" toggle -- local state (not
+  // URL, unlike the filters above) since it's not something worth
+  // bookmarking/sharing, and defaults off so a share/reload never leaks a
+  // stale include_deleted=true onto a session that re-renders before the
+  // owner check settles.
+  const [includeDeleted, setIncludeDeleted] = useState(false);
+  const [restoreId, setRestoreId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   // One add flow, two modes: quick (StudentModal) vs detailed (AddStudentDialog).
@@ -175,6 +185,10 @@ const StudentsPage = () => {
       hasGroup,
       referredByUserId,
       referredByStudentId,
+      // Defensive even though the toggle only renders for an owner: never
+      // let a stray true reach the request for anyone else (403 on the
+      // wire, per the contract).
+      includeDeleted: canViewDeleted && includeDeleted,
     },
   );
 
@@ -198,6 +212,7 @@ const StudentsPage = () => {
     hasGroup,
     referredByUserId,
     referredByStudentId,
+    includeDeleted,
   ]);
 
   const isLoading = isStudentsLoading;
@@ -209,6 +224,7 @@ const StudentsPage = () => {
   const createWithPaymentMutation = useCreateStudentWithPayment();
   const updateMutation = useUpdateStudent();
   const deleteMutation = useDeleteStudent();
+  const restoreMutation = useRestoreStudent();
 
   const toggleSort = (field: string) => {
     if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -270,6 +286,18 @@ const StudentsPage = () => {
       onSuccess: () => {
         toast.success(t('students.deleted'));
         setDeleteId(null);
+      },
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
+    });
+  };
+
+  const handleRestore = () => {
+    if (!restoreId) return;
+    restoreMutation.mutate(restoreId, {
+      onSuccess: () => {
+        toast.success(t('students.restored'));
+        setRestoreId(null);
       },
       onError: (err) =>
         toast.error(extractErrorMessage(err, t('common.error'))),
@@ -381,6 +409,9 @@ const StudentsPage = () => {
         setDateRange={setDateRange}
         search={search}
         setSearch={setSearch}
+        canViewDeleted={canViewDeleted}
+        includeDeleted={includeDeleted}
+        setIncludeDeleted={setIncludeDeleted}
       />
 
       {/* Table */}
@@ -414,6 +445,8 @@ const StudentsPage = () => {
             onEdit={openEdit}
             onDelete={setDeleteId}
             onCreate={openCreate}
+            canViewDeleted={canViewDeleted}
+            onRestore={setRestoreId}
           />
 
           <StudentsMobileList
@@ -428,6 +461,8 @@ const StudentsPage = () => {
             onEdit={openEdit}
             onDelete={setDeleteId}
             onCreate={openCreate}
+            canViewDeleted={canViewDeleted}
+            onRestore={setRestoreId}
           />
         </div>
       </div>
@@ -460,6 +495,22 @@ const StudentsPage = () => {
         onDeleteCancel={() => setDeleteId(null)}
         onDeleteConfirm={handleDelete}
         deleteLoading={deleteMutation.isPending}
+      />
+
+      {/* autodrive-cg9: restore only un-deletes this row -- honesty
+          requirement, see common.confirm_restore_desc. */}
+      <ConfirmDialog
+        open={!!restoreId}
+        onClose={() => setRestoreId(null)}
+        onConfirm={handleRestore}
+        loading={restoreMutation.isPending}
+        title={t('common.confirm_restore_title')}
+        description={t('common.confirm_restore_desc')}
+        confirmLabel={
+          restoreMutation.isPending
+            ? t('common.restoring')
+            : t('common.restore')
+        }
       />
     </div>
   );

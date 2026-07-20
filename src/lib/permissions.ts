@@ -23,7 +23,8 @@ export type Capability =
   | 'takeAttendance'
   | 'manageOwnLesson'
   | 'viewAudit'
-  | 'viewDashboard';
+  | 'viewDashboard'
+  | 'viewDeleted';
 
 // Role groups — named so the matrix reads as intent, not a wall of literals.
 const OWNERS: readonly UserRole[] = ['dev', 'owner'];
@@ -61,6 +62,14 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   manageOwnLesson: ['dev', 'owner', 'manager', 'teacher'],
   viewAudit: OWNERS,
   viewDashboard: ALL,
+  // autodrive-cg9: "show deleted" toggle + restore action on the students/
+  // groups/users/branches list pages. No existing capability means this --
+  // manageBranches/manageUsers/manageStudents/manageGroups are each scoped
+  // to ONE entity's CRUD, and viewAudit/viewAllBranches/assignBranch each
+  // already gate a different, unrelated feature. A dedicated OWNERS-only
+  // capability keeps `useCan('viewDeleted')` self-documenting at each of
+  // the four call sites instead of overloading an unrelated one.
+  viewDeleted: OWNERS,
 };
 
 /** Does this role have the capability? An absent/unknown role has none. */

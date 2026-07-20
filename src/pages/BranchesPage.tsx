@@ -6,15 +6,18 @@ import {
   useCreateBranch,
   useUpdateBranch,
   useDeleteBranch,
+  useRestoreBranch,
 } from '@/services/branchService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { DeletedBadge } from '@/components/ui/DeletedBadge';
 import {
   Dialog,
   DialogContent,
@@ -27,12 +30,14 @@ import {
   Plus,
   PencilSimple,
   Trash,
+  ArrowCounterClockwise,
   MapPin,
   Buildings,
   Phone,
 } from '@phosphor-icons/react';
 import { formatDate } from '@/pages/students/studentsFormat';
 import { extractErrorMessage } from '@/lib/errors';
+import { cn } from '@/lib/utils';
 import {
   formatUzPhoneInput,
   isValidUzPhone,
@@ -59,14 +64,25 @@ const BranchesPage = () => {
   const { t } = useTranslation();
   const goToBranch = useViewTransitionNavigate();
   const canManageBranches = useCan('manageBranches');
-  const { data: branches, isLoading } = useBranches();
+  const canViewDeleted = useCan('viewDeleted');
+  // autodrive-cg9: owner-only "show deleted" toggle -- local state (not
+  // URL), defaults off.
+  const [includeDeleted, setIncludeDeleted] = useState(false);
+  const { data: branches, isLoading } = useBranches(
+    true,
+    // Defensive even though the toggle only renders for an owner: never let
+    // a stray true reach the request for anyone else (403 on the wire).
+    canViewDeleted && includeDeleted,
+  );
   const createMut = useCreateBranch();
   const updateMut = useUpdateBranch();
   const deleteMut = useDeleteBranch();
+  const restoreMut = useRestoreBranch();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<Branch | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [restoreId, setRestoreId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   // Snapshot taken whenever the dialog opens, compared against current form
   // state to drive the unsaved-changes guard below (autodrive-6cq.5.15) --
@@ -147,6 +163,17 @@ const BranchesPage = () => {
     });
   };
 
+  const handleRestore = () => {
+    if (!restoreId) return;
+    restoreMut.mutate(restoreId, {
+      onSuccess: () => {
+        toast.success(t('branches.restored'));
+        setRestoreId(null);
+      },
+      onError: (err) => toast.error(extractErrorMessage(err)),
+    });
+  };
+
   // autodrive-cg9: active_students already lives on the branch object that
   // populated the card the user clicked delete on -- no extra fetch.
   const deleteDescArgs = branchDeleteDescArgs(
@@ -166,11 +193,25 @@ const BranchesPage = () => {
               : t('branches.subtitle_readonly')}
           </p>
         </div>
-        {canManageBranches && (
-          <Button className="gap-2" onClick={openCreate}>
-            <Plus className="h-4 w-4" /> {t('branches.add')}
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          {canViewDeleted && (
+            <div className="flex items-center gap-2">
+              <Label htmlFor="branches-show-deleted">
+                {t('common.show_deleted')}
+              </Label>
+              <Switch
+                id="branches-show-deleted"
+                checked={includeDeleted}
+                onCheckedChange={setIncludeDeleted}
+              />
+            </div>
+          )}
+          {canManageBranches && (
+            <Button className="gap-2" onClick={openCreate}>
+              <Plus className="h-4 w-4" /> {t('branches.add')}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="hidden md:block">
@@ -216,12 +257,18 @@ const BranchesPage = () => {
                       );
                     }
                   }}
-                  className="glass-card p-5 animate-slide-in cursor-pointer hover:border-primary/40 transition-colors"
+                  className={cn(
+                    'glass-card p-5 animate-slide-in cursor-pointer hover:border-primary/40 transition-colors',
+                    b.deleted_at && 'opacity-60',
+                  )}
                 >
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-heading text-lg font-semibold text-balance">
-                        {b.name}
+                        <span className="inline-flex items-center gap-1.5">
+                          {b.name}
+                          {b.deleted_at && <DeletedBadge />}
+                        </span>
                       </h3>
                       <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                         <MapPin className="h-3.5 w-3.5" />
@@ -235,32 +282,46 @@ const BranchesPage = () => {
                       )}
                     </div>
                     <div className="flex gap-1">
-                      {canManageBranches && (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEdit(b);
-                            }}
-                            aria-label={t('common.edit')}
-                            title={t('common.edit')}
-                            className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                          >
-                            <PencilSimple className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteId(b.id);
-                            }}
-                            aria-label={t('common.delete')}
-                            title={t('common.delete')}
-                            className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                          >
-                            <Trash className="h-3.5 w-3.5" />
-                          </button>
-                        </>
-                      )}
+                      {b.deleted_at
+                        ? canViewDeleted && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRestoreId(b.id);
+                              }}
+                              aria-label={t('common.restore')}
+                              title={t('common.restore')}
+                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            >
+                              <ArrowCounterClockwise className="h-3.5 w-3.5" />
+                            </button>
+                          )
+                        : canManageBranches && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEdit(b);
+                                }}
+                                aria-label={t('common.edit')}
+                                title={t('common.edit')}
+                                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                              >
+                                <PencilSimple className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteId(b.id);
+                                }}
+                                aria-label={t('common.delete')}
+                                title={t('common.delete')}
+                                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                              >
+                                <Trash className="h-3.5 w-3.5" />
+                              </button>
+                            </>
+                          )}
                     </div>
                   </div>
                   <div className="mt-4 flex items-center gap-6 text-sm">
@@ -297,7 +358,12 @@ const BranchesPage = () => {
           branches.map((b) => (
             <DataCard
               key={b.id}
-              title={b.name}
+              title={
+                <span className="inline-flex items-center gap-1.5">
+                  {b.name}
+                  {b.deleted_at && <DeletedBadge />}
+                </span>
+              }
               subtitle={b.location}
               onClick={(e) =>
                 goToBranch(
@@ -306,6 +372,7 @@ const BranchesPage = () => {
                   `branch-${b.id}`,
                 )
               }
+              className={b.deleted_at ? 'opacity-60' : undefined}
               fields={[
                 { label: t('branches.students'), value: b.active_students },
                 {
@@ -322,7 +389,21 @@ const BranchesPage = () => {
                 },
               ]}
               actions={
-                canManageBranches ? (
+                b.deleted_at ? (
+                  canViewDeleted && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRestoreId(b.id);
+                      }}
+                      aria-label={t('common.restore')}
+                      title={t('common.restore')}
+                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    >
+                      <ArrowCounterClockwise className="h-3.5 w-3.5" />
+                    </button>
+                  )
+                ) : canManageBranches ? (
                   <>
                     <button
                       onClick={(e) => {
@@ -459,6 +540,20 @@ const BranchesPage = () => {
         title={t('common.discard_changes_title')}
         description={t('common.discard_changes_desc')}
         confirmLabel={t('common.discard')}
+      />
+
+      {/* autodrive-cg9: restore only un-deletes this row -- honesty
+          requirement, see common.confirm_restore_desc. */}
+      <ConfirmDialog
+        open={!!restoreId}
+        onClose={() => setRestoreId(null)}
+        onConfirm={handleRestore}
+        loading={restoreMut.isPending}
+        title={t('common.confirm_restore_title')}
+        description={t('common.confirm_restore_desc')}
+        confirmLabel={
+          restoreMut.isPending ? t('common.restoring') : t('common.restore')
+        }
       />
     </div>
   );

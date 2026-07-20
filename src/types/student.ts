@@ -46,6 +46,9 @@ export interface Student {
   notes?: string;
   created_at: string;
   status?: StudentStatus;
+  // autodrive-cg9: present (non-null) only when include_deleted=true was
+  // sent (owner-only) -- distinguishes a soft-deleted row from a live one.
+  deleted_at?: string | null;
 
   // Tezkor only
   amount_paid?: number;

@@ -30,6 +30,9 @@ interface StudentListOptions {
   status?: StudentStatus;
   referredByUserId?: string;
   referredByStudentId?: string;
+  // autodrive-cg9: owner-only "show deleted" toggle on StudentsPage. Never
+  // sent unless the caller is an owner -- a non-owner sending it gets a 403.
+  includeDeleted?: boolean;
 }
 
 interface StudentListParams extends StudentListOptions {
@@ -56,6 +59,7 @@ const toStudentQueryParams = ({
   status,
   referredByUserId,
   referredByStudentId,
+  includeDeleted,
 }: StudentListParams) => ({
   course_type: courseType,
   branch_id: branchId,
@@ -72,6 +76,7 @@ const toStudentQueryParams = ({
   status,
   referred_by_user_id: referredByUserId,
   referred_by_student_id: referredByStudentId,
+  include_deleted: includeDeleted || undefined,
 });
 
 export const fetchStudentsPage = async (
@@ -220,6 +225,24 @@ export const useDeleteStudent = () => {
       qc.invalidateQueries({ queryKey: paymentKeys.all });
       qc.invalidateQueries({ queryKey: dashboardKeys.all });
       track('student_delete');
+    },
+  });
+};
+
+// autodrive-cg9: owner-only restore, paired with the includeDeleted list
+// toggle above. Un-deletes only this row -- see StudentsPage's restore
+// confirm copy (common.confirm_restore_desc) for the no-cascade caveat.
+export const useRestoreStudent = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await axiosInstance.patch(`/students/${id}/restore`);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: studentKeys.all });
+      qc.invalidateQueries({ queryKey: paymentKeys.all });
+      qc.invalidateQueries({ queryKey: dashboardKeys.all });
+      track('student_restore');
     },
   });
 };

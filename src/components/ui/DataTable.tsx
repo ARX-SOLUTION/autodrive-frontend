@@ -36,6 +36,8 @@ export interface DataTableProps<T> {
   /** Extra classes for the outer wrapper (e.g. "glass-card overflow-hidden"). */
   className?: string;
   rowHoverClassName?: string;
+  /** Extra classes per row (autodrive-cg9: muting a soft-deleted row). */
+  rowClassName?: (row: T) => string | undefined;
 }
 
 const ALIGN_CLASS: Record<DataTableAlign, string> = {
@@ -90,6 +92,7 @@ export function DataTable<T>({
   onToggleSort,
   className,
   rowHoverClassName = 'hover:bg-muted/20 transition-colors',
+  rowClassName,
 }: DataTableProps<T>) {
   const colSpan = columns.length;
 
@@ -163,6 +166,7 @@ export function DataTable<T>({
                   className={cn(
                     'table-row-striped border-b border-border/50',
                     onRowClick && cn('cursor-pointer', rowHoverClassName),
+                    rowClassName?.(row),
                   )}
                   onClick={
                     onRowClick

@@ -51,6 +51,13 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
     expect(roleCan(null, 'takeAttendance')).toBe(false);
   });
 
+  // autodrive-cg9: soft-delete restore is owner-only across all 4 entities.
+  it('viewDeleted is owner/dev only', () => {
+    expect(roleCan('manager', 'viewDeleted')).toBe(false);
+    expect(roleCan('operator', 'viewDeleted')).toBe(false);
+    expect(roleCan('teacher', 'viewDeleted')).toBe(false);
+  });
+
   it('isCrossTenantRole is owner or dev only', () => {
     expect(isCrossTenantRole('owner')).toBe(true);
     expect(isCrossTenantRole('dev')).toBe(true);
