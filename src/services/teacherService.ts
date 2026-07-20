@@ -6,7 +6,7 @@ import { User } from '@/types/user';
 import type { ListResponse } from '@/types/list';
 import { parseListResponse } from '@/lib/listResponse';
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
-import { teacherKeys } from '@/lib/queryKeys';
+import { teacherKeys, userKeys } from '@/lib/queryKeys';
 
 export type Specialization = 'THEORY' | 'PRACTICE';
 
@@ -88,7 +88,14 @@ export const useUpdateTeacher = () => {
       const { data } = await axiosInstance.patch(`/users/${id}`, t);
       return parseItemEnvelope<User>(data, 'teacher');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: teacherKeys.all }),
+    // UserDetailPage (/users/:id) reads via userKeys.detail(id), a root
+    // teacherKeys.all doesn't cover -- an already-open detail tab kept
+    // showing the pre-edit name/phone for up to 30s (autodrive-52v.2).
+    // Same dual-invalidate idiom as paymentService's payment mutations.
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: teacherKeys.all });
+      qc.invalidateQueries({ queryKey: userKeys.all });
+    },
   });
 };
 

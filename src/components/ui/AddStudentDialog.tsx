@@ -100,29 +100,33 @@ const LEAD_SOURCE_VALUES = [
 // zod messages don't affect either.
 const buildSchemas = (t: (key: string) => string) => {
   const step1 = z.object({
-    first_name: z.string().min(1, 'Ism majburiy'),
-    last_name: z.string().min(1, 'Familiya majburiy'),
+    first_name: z.string().min(1, t('students.wizard.first_name_required')),
+    last_name: z.string().min(1, t('students.wizard.last_name_required')),
     middle_name: z.string().optional(),
     phone: z.string().refine(isValidUzPhone, t('students.phone_invalid')),
-    email: z.string().email("Email noto'g'ri").optional().or(z.literal('')),
+    email: z
+      .string()
+      .email(t('students.wizard.email_invalid'))
+      .optional()
+      .or(z.literal('')),
     passport_series: z
       .string()
-      .min(1, 'Pasport seriyasi majburiy')
-      .regex(/^[A-Z]{2}$/, 'Pasport seriyasi: 2 harf (masalan: AA)'),
+      .min(1, t('students.wizard.passport_series_required'))
+      .regex(/^[A-Z]{2}$/, t('students.wizard.passport_series_format')),
     passport_number: z
       .string()
-      .min(1, 'Pasport raqami majburiy')
-      .regex(/^\d{7}$/, 'Pasport raqami: 7 raqam'),
-    birth_date: z.string().min(1, "Tug'ilgan sana majburiy"),
+      .min(1, t('students.wizard.passport_number_required'))
+      .regex(/^\d{7}$/, t('students.wizard.passport_number_format')),
+    birth_date: z.string().min(1, t('students.wizard.birth_date_required')),
     gender: z.enum(['MALE', 'FEMALE']),
-    address: z.string().min(5, 'Manzil juda qisqa'),
+    address: z.string().min(5, t('students.wizard.address_too_short')),
   });
 
   const step2 = z.object({
-    branch_id: z.string().uuid('Filial tanlanmagan'),
-    course_id: z.string().uuid('Kurs tanlanmagan'),
+    branch_id: z.string().uuid(t('students.wizard.branch_required')),
+    course_id: z.string().uuid(t('students.wizard.course_required')),
     group_id: z.string().uuid().optional().or(z.literal('')),
-    start_date: z.string().min(1, 'Boshlanish sana majburiy'),
+    start_date: z.string().min(1, t('students.wizard.start_date_required')),
     completion_date: z.string().optional(),
     lead_source: z.enum(LEAD_SOURCE_VALUES).optional(),
     lead_source_other: z.string().optional(),
@@ -132,12 +136,14 @@ const buildSchemas = (t: (key: string) => string) => {
 
   const step3 = z.object({
     payment_type: z.enum(['FULL', 'PARTIAL', 'INSTALLMENT']),
-    amount: z.number().min(1, "Summa 0 dan katta bo'lishi kerak"),
+    amount: z.number().min(1, t('students.wizard.amount_invalid')),
     payment_method: z.enum(['CASH', 'CARD', 'TRANSFER']),
-    first_payment_date: z.string().min(1, "To'lov sanasi majburiy"),
+    first_payment_date: z
+      .string()
+      .min(1, t('students.wizard.first_payment_date_required')),
     contract_signed: z
       .boolean()
-      .refine((value) => value, 'Shartnoma tasdiqlanishi shart'),
+      .refine((value) => value, t('students.wizard.contract_required')),
   });
 
   return { step1, step2, step3, all: step1.merge(step2).merge(step3) };

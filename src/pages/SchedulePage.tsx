@@ -280,11 +280,19 @@ const SchedulePage = () => {
       return;
     }
     try {
-      await generateLessons.mutateAsync({
+      const result = await generateLessons.mutateAsync({
         weeks,
         ...(genGroupId ? { groupId: genGroupId } : {}),
       });
-      toast.success(t('schedule.lessons_generated'));
+      // Report the real created/skipped counts (autodrive-52v.4) -- the old
+      // fixed "generated" string showed the same success toast even for
+      // "0 created, 12 skipped".
+      toast.success(
+        t('schedule.lessons_generated', {
+          created: result.created,
+          skipped: result.skipped,
+        }),
+      );
       setGenerateOpen(false);
     } catch (err) {
       toast.error(extractErrorMessage(err, t('schedule.generate_error')));

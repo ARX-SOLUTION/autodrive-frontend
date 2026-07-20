@@ -122,7 +122,14 @@ const GroupFormDialog = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim() || !formBranchId) return;
+    if (!formName.trim() || !formBranchId) {
+      // Radix Select has no native HTML5 validation, unlike the required
+      // <Input> above -- without this the dialog just looks frozen on an
+      // empty branch (autodrive-52v.1). Same guard-toast shape as
+      // CoursesPage's handleSubmit.
+      toast.error(t('common.fill_required'));
+      return;
+    }
 
     const payload = {
       name: formName,

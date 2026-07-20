@@ -220,4 +220,22 @@ describe('StudentsPage characterization', () => {
     expect(screen.queryByText('students.debt_status_paid')).toBeNull();
     expect(screen.queryByText(formatMoney(500000))).toBeNull();
   });
+
+  // autodrive-52v.3: deleting the last row of the last page left currentPage
+  // pointing past the new (shrunk) totalPages -- the page silently kept
+  // requesting a page that no longer exists. Same clamp GroupsPage already
+  // had; StudentsPage, PaymentsPage and UsersPage didn't.
+  it('clamps currentPage back to 1 once totalPages shrinks below the URL page', () => {
+    h.useStudentsPage.mockReturnValue({
+      data: { data: [], meta: { total: 0, totalPages: 1 } },
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    renderPage('/students?page=3');
+
+    const last = h.useStudentsPage.mock.calls.at(-1)!;
+    expect(last[2]).toBe(1); // currentPage (3rd positional arg), clamped from 3
+  });
 });

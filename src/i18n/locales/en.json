@@ -481,7 +481,22 @@
       "saving": "Saving...",
       "completion_date_label": "Completion date (estimated)",
       "completion_date_desc": "Calculated automatically from the selected course's duration",
-      "group_optional_label": "Group (optional)"
+      "group_optional_label": "Group (optional)",
+      "first_name_required": "First name is required",
+      "last_name_required": "Last name is required",
+      "email_invalid": "Invalid email",
+      "passport_series_required": "Passport series is required",
+      "passport_series_format": "Passport series: 2 letters (e.g. AA)",
+      "passport_number_required": "Passport number is required",
+      "passport_number_format": "Passport number: 7 digits",
+      "birth_date_required": "Date of birth is required",
+      "address_too_short": "Address is too short",
+      "branch_required": "Branch is not selected",
+      "course_required": "Course is not selected",
+      "start_date_required": "Start date is required",
+      "amount_invalid": "Amount must be greater than 0",
+      "first_payment_date_required": "Payment date is required",
+      "contract_required": "Contract confirmation is required"
     },
     "lead_source": {
       "referral": "Referral",
@@ -611,7 +626,14 @@
     "passed": "Passed",
     "added": "Result added",
     "date_required": "Date is required",
-    "add_desc": "Enter the exam result details"
+    "add_desc": "Enter the exam result details",
+    "history_title": "Exam history",
+    "result": "Result",
+    "score": "Score",
+    "notes": "Notes",
+    "empty": "No exam results yet",
+    "status_passed": "Passed",
+    "status_failed": "Failed"
   },
   "payments": {
     "title": "Payments",
@@ -929,7 +951,7 @@
     "this_week": "This week",
     "template_created": "Template created",
     "template_deleted": "Template deleted",
-    "lessons_generated": "Lessons generated",
+    "lessons_generated": "{{created}} lessons created, {{skipped}} skipped",
     "delete_title": "Delete template",
     "delete_desc": "The template will be deleted. New lessons won't be generated, but existing ones remain.",
     "fill_required": "Fill in all required fields",

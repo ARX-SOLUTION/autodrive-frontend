@@ -194,7 +194,7 @@ const GroupDetailPage = () => {
                                   </span>
                                 ) : (
                                   <span className="text-success">
-                                    {t('common.na')}
+                                    {t('students.debt_status_paid')}
                                   </span>
                                 ),
                             },

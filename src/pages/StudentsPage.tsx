@@ -220,6 +220,13 @@ const StudentsPage = () => {
   const totalStudents = studentsPage?.meta.total ?? sorted.length;
   const serverTotalPages = Math.max(1, studentsPage?.meta.totalPages ?? 1);
 
+  // Deleting the last row of the last page leaves currentPage pointing past
+  // the new totalPages -- clamp back, same fix as GroupsPage (autodrive-52v.3).
+  useEffect(() => {
+    if (currentPage > serverTotalPages) setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverTotalPages]);
+
   const createMutation = useCreateStudent();
   const createWithPaymentMutation = useCreateStudentWithPayment();
   const updateMutation = useUpdateStudent();

@@ -1,11 +1,29 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect } from 'vitest';
+import { toast } from 'sonner';
 import SchedulePage from '@/pages/SchedulePage';
 import { useGenerateLessons } from '@/services/scheduleService';
 import { useBatchAttendance } from '@/services/attendanceService';
 import { ScheduleTemplate, CalendarLesson } from '@/types/schedule';
 import { Group } from '@/types/group';
+
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+
+// The global react-i18next mock (src/test/setup.ts) returns the raw key and
+// ignores interpolation args, which can't distinguish "real counts passed"
+// from "no counts passed" -- both render as the bare key. Override with a
+// spy that still returns just the key (so every existing getByText(key)
+// assertion below is unaffected) but also records call args, so the new
+// autodrive-52v.4 test can assert the exact {created, skipped} passed in.
+const tSpy = vi.hoisted(() => vi.fn((key: string) => key));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: tSpy,
+    i18n: { changeLanguage: () => new Promise(() => {}) },
+  }),
+  initReactI18next: { type: '3rdParty', init: () => {} },
+}));
 
 const mockTemplates: ScheduleTemplate[] = [
   {
@@ -106,6 +124,39 @@ describe('SchedulePage', () => {
     fireEvent.click(screen.getByText('common.create'));
 
     expect(mutateAsync).not.toHaveBeenCalled();
+  });
+
+  // autodrive-52v.4: the success toast used to be a fixed "Lessons
+  // generated" string no matter how many lessons were actually created vs
+  // skipped. It must now report the real counts from the mutation result.
+  it('reports the real created/skipped counts in the success toast', async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({
+      created: 5,
+      skipped: 2,
+      message: 'ok',
+    });
+    vi.mocked(useGenerateLessons).mockReturnValue({
+      mutateAsync,
+      isPending: false,
+    } as unknown as ReturnType<typeof useGenerateLessons>);
+
+    render(
+      <MemoryRouter>
+        <SchedulePage />
+      </MemoryRouter>,
+    );
+
+    // genWeeks defaults to '4' -- submit as-is, no need to touch the field.
+    fireEvent.click(screen.getByText('schedule.generate_lessons'));
+    fireEvent.click(screen.getByText('common.create'));
+
+    await waitFor(() =>
+      expect(tSpy).toHaveBeenCalledWith('schedule.lessons_generated', {
+        created: 5,
+        skipped: 2,
+      }),
+    );
+    expect(toast.success).toHaveBeenCalledWith('schedule.lessons_generated');
   });
 
   // autodrive-38m.3: clicking a week-strip lesson card opens the

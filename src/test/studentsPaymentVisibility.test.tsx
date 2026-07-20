@@ -162,6 +162,26 @@ describe('StudentsTable payment-column gating (autodrive-vh0.2)', () => {
     expect(screen.getByText('3-students.payment')).toBeTruthy();
     expect(screen.getByText('students.debt')).toBeTruthy();
   });
+
+  // autodrive-52v.6: debt === 0 (a real, good "fully paid" state) rendered
+  // as an ambiguous "N/A" -- indistinguishable from "amount unknown". The
+  // aria-label on this cell already said "paid"; the visible text now
+  // matches it instead of contradicting it.
+  it('shows "paid", not N/A, when debt is exactly 0 and canViewPayments is true (autodrive-52v.6)', () => {
+    render(
+      <StudentsTable
+        {...tableProps}
+        students={[{ ...STUDENT, debt: 0 }]}
+        courseType="tezkor"
+        canViewPayments={true}
+      />,
+    );
+    // Scoped to the debt cell itself (via its own aria-label) rather than
+    // asserting "no common.na anywhere" -- this fixture's group_name is
+    // unset, which legitimately renders an unrelated common.na elsewhere.
+    const debtCell = screen.getByText('students.debt_status_paid');
+    expect(debtCell).toHaveAttribute('aria-label', 'students.debt_status_paid');
+  });
 });
 
 describe('StudentsMobileList debt field gating (autodrive-vh0.2)', () => {
@@ -214,6 +234,22 @@ describe('StudentsMobileList debt field gating (autodrive-vh0.2)', () => {
       />,
     );
     expect(screen.getByText('students.detail.debt')).toBeTruthy();
+    expect(screen.getByText('students.debt_status_paid')).toBeTruthy();
+  });
+
+  // autodrive-52v.6: same N/A-vs-paid ambiguity as StudentsTable, duplicated
+  // in this mobile-card variant of the same debt cell logic. (No negative
+  // "common.na is absent" assertion here -- this fixture's group_name/
+  // branch_name are unset, which legitimately render unrelated common.na
+  // fields elsewhere on the same card.)
+  it('shows "paid", not N/A, when debt is exactly 0 and canViewPayments is true (autodrive-52v.6)', () => {
+    render(
+      <StudentsMobileList
+        {...mobileProps}
+        students={[{ ...STUDENT, debt: 0 }]}
+        canViewPayments={true}
+      />,
+    );
     expect(screen.getByText('students.debt_status_paid')).toBeTruthy();
   });
 });
