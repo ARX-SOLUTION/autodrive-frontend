@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import {
   PencilSimple,
   Trash,
+  ArrowCounterClockwise,
   GraduationCap,
   Warning,
   Plus,
@@ -13,6 +14,7 @@ import { formatPhone } from '@/lib/phoneFormater';
 import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import { DebtStatusBadge } from '@/components/ui/DebtStatusBadge';
+import { DeletedBadge } from '@/components/ui/DeletedBadge';
 import type { CourseType, Student } from '@/types/student';
 import {
   capitalize,
@@ -43,6 +45,10 @@ interface StudentsTableProps {
   onEdit: (student: Student) => void;
   onDelete: (id: string) => void;
   onCreate: () => void;
+  // autodrive-cg9: owner-only "show deleted" toggle — a deleted row swaps
+  // edit/delete for a single restore action.
+  canViewDeleted: boolean;
+  onRestore: (id: string) => void;
 }
 
 // Money columns hidden entirely from any role without recordPayment
@@ -73,6 +79,8 @@ export const StudentsTable = ({
   onEdit,
   onDelete,
   onCreate,
+  canViewDeleted,
+  onRestore,
 }: StudentsTableProps) => {
   const { t } = useTranslation();
   const localizedResultLabels = resultLabels(t);
@@ -137,7 +145,12 @@ export const StudentsTable = ({
       header: t('students.last_name'),
       sortable: true,
       cellClassName: 'font-medium',
-      render: (s) => capitalize(s.last_name),
+      render: (s) => (
+        <span className="inline-flex items-center gap-1.5">
+          {capitalize(s.last_name)}
+          {s.deleted_at && <DeletedBadge />}
+        </span>
+      ),
     },
     {
       key: 'first_name',
@@ -260,36 +273,53 @@ export const StudentsTable = ({
       key: 'actions',
       header: t('common.actions'),
       align: 'center',
-      render: (s) => (
-        <div className="flex items-center justify-center gap-1">
-          {canManageStudents && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(s);
-              }}
-              aria-label={t('common.edit')}
-              title={t('common.edit')}
-              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-            >
-              <PencilSimple className="h-3.5 w-3.5" />
-            </button>
-          )}
-          {isCrossTenant && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(s.id);
-              }}
-              aria-label={t('common.delete')}
-              title={t('common.delete')}
-              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-            >
-              <Trash className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
-      ),
+      render: (s) =>
+        s.deleted_at ? (
+          <div className="flex items-center justify-center gap-1">
+            {canViewDeleted && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRestore(s.id);
+                }}
+                aria-label={t('common.restore')}
+                title={t('common.restore')}
+                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              >
+                <ArrowCounterClockwise className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-1">
+            {canManageStudents && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(s);
+                }}
+                aria-label={t('common.edit')}
+                title={t('common.edit')}
+                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              >
+                <PencilSimple className="h-3.5 w-3.5" />
+              </button>
+            )}
+            {isCrossTenant && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(s.id);
+                }}
+                aria-label={t('common.delete')}
+                title={t('common.delete')}
+                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              >
+                <Trash className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        ),
     },
   ];
 
@@ -335,6 +365,7 @@ export const StudentsTable = ({
       sortField={sortField}
       sortDir={sortDir}
       onToggleSort={toggleSort}
+      rowClassName={(s) => (s.deleted_at ? 'opacity-60' : undefined)}
     />
   );
 };

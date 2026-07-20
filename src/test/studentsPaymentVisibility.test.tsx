@@ -68,6 +68,10 @@ const tableProps = {
   onEdit: vi.fn(),
   onDelete: vi.fn(),
   onCreate: vi.fn(),
+  // autodrive-cg9: unrelated to this file's payment-visibility gating --
+  // just satisfying the now-required restore props.
+  canViewDeleted: false,
+  onRestore: vi.fn(),
 };
 
 describe('StudentsTable payment-column gating (autodrive-vh0.2)', () => {
@@ -172,6 +176,10 @@ describe('StudentsMobileList debt field gating (autodrive-vh0.2)', () => {
     onEdit: vi.fn(),
     onDelete: vi.fn(),
     onCreate: vi.fn(),
+    // autodrive-cg9: unrelated to this file's payment-visibility gating --
+    // just satisfying the now-required restore props.
+    canViewDeleted: false,
+    onRestore: vi.fn(),
   };
 
   it('hides the debt field when canViewPayments is false', () => {
@@ -291,6 +299,8 @@ describe('genuinely payment-less teacher payload: no money string, no misleading
         onEdit={vi.fn()}
         onDelete={vi.fn()}
         onCreate={vi.fn()}
+        canViewDeleted={false}
+        onRestore={vi.fn()}
       />,
     );
     expect(screen.getByText('students.detail.debt')).toBeTruthy();

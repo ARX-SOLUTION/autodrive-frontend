@@ -22,6 +22,9 @@ export interface Group {
   teacher_name: string | null;
   schedule: GroupScheduleEntry[];
   students: Student[];
+  // autodrive-cg9: present (non-null) only when include_deleted=true was
+  // sent (owner-only) -- distinguishes a soft-deleted row from a live one.
+  deleted_at?: string | null;
 }
 
 export interface GroupOverview {

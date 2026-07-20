@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { MagnifyingGlass } from '@phosphor-icons/react';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -19,6 +21,10 @@ interface GroupsFilterBarProps {
   branchId: string | undefined;
   onBranchChange: (v: string | undefined) => void;
   branches: Branch[];
+  // autodrive-cg9: owner-only "show deleted" toggle.
+  canViewDeleted: boolean;
+  includeDeleted: boolean;
+  setIncludeDeleted: (v: boolean) => void;
 }
 
 const GroupsFilterBar = ({
@@ -30,6 +36,9 @@ const GroupsFilterBar = ({
   branchId,
   onBranchChange,
   branches,
+  canViewDeleted,
+  includeDeleted,
+  setIncludeDeleted,
 }: GroupsFilterBarProps) => {
   const { t } = useTranslation();
 
@@ -73,6 +82,19 @@ const GroupsFilterBar = ({
             ))}
           </SelectContent>
         </Select>
+      )}
+
+      {canViewDeleted && (
+        <div className="flex items-center gap-2">
+          <Label htmlFor="groups-show-deleted">
+            {t('common.show_deleted')}
+          </Label>
+          <Switch
+            id="groups-show-deleted"
+            checked={includeDeleted}
+            onCheckedChange={setIncludeDeleted}
+          />
+        </div>
       )}
     </div>
   );

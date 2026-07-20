@@ -37,6 +37,10 @@ vi.mock('@/services/branchService', () => {
       mutate: mockMutate,
       isPending: false,
     }),
+    useRestoreBranch: () => ({
+      mutate: mockMutate,
+      isPending: false,
+    }),
   };
 });
 

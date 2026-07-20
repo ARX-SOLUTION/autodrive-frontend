@@ -38,6 +38,7 @@ vi.mock('@/services/studentService', async (importOriginal) => {
     }),
     useUpdateStudent: () => ({ mutate: vi.fn(), isPending: false }),
     useDeleteStudent: () => ({ mutate: vi.fn(), isPending: false }),
+    useRestoreStudent: () => ({ mutate: vi.fn(), isPending: false }),
   };
 });
 

@@ -7,15 +7,18 @@ import {
   useCreateManager,
   useUpdateUser,
   useDeleteUser,
+  useRestoreUser,
 } from '@/services/userService';
 import { useBranches } from '@/services/branchService';
 import { RoleGate } from '@/components/RoleGate';
-import { useIsCrossTenant } from '@/hooks/useCan';
+import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { extractErrorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import PersonModal, {
   type PersonFormPayload,
@@ -39,10 +42,12 @@ import {
   MagnifyingGlass,
   PencilSimple,
   Trash,
+  ArrowCounterClockwise,
   CircleNotch,
 } from '@phosphor-icons/react';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { DeletedBadge } from '@/components/ui/DeletedBadge';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types/user';
 
@@ -65,6 +70,7 @@ const UsersPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isCrossTenant = useIsCrossTenant();
+  const canViewDeleted = useCan('viewDeleted');
 
   // Filter state lives in the URL (autodrive-b85.2), same pattern as
   // StudentsPage's searchParams/setParam.
@@ -85,6 +91,10 @@ const UsersPage = () => {
 
   const debouncedSearch = useDebounce(search, 300);
 
+  // autodrive-cg9: owner-only "show deleted" toggle -- local state (not
+  // URL), defaults off.
+  const [includeDeleted, setIncludeDeleted] = useState(false);
+
   // Page in the URL too (like every other filter here) so refresh/share
   // preserves it instead of silently resetting to page 1.
   const currentPage = Number(searchParams.get('page')) || 1;
@@ -96,7 +106,7 @@ const UsersPage = () => {
   useEffect(() => {
     setCurrentPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, branchId, isActive]);
+  }, [debouncedSearch, branchId, isActive, includeDeleted]);
 
   const {
     data: usersPage,
@@ -108,6 +118,9 @@ const UsersPage = () => {
     search: debouncedSearch,
     branchId,
     isActive,
+    // Defensive even though the toggle only renders for an owner: never let
+    // a stray true reach the request for anyone else (403 on the wire).
+    includeDeleted: canViewDeleted && includeDeleted,
   });
   const users = useMemo(() => usersPage?.data ?? [], [usersPage]);
   const totalPages = Math.max(1, usersPage?.meta.totalPages ?? 1);
@@ -115,11 +128,13 @@ const UsersPage = () => {
   const createMut = useCreateManager();
   const updateMut = useUpdateUser();
   const deleteMut = useDeleteUser();
+  const restoreMut = useRestoreUser();
   const [sortField, setSortField] = useState('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [restoreId, setRestoreId] = useState<string | null>(null);
 
   const openCreate = () => {
     setEditItem(null);
@@ -175,6 +190,18 @@ const UsersPage = () => {
       onSuccess: () => {
         toast.success(t('users.deleted'));
         setDeleteId(null);
+      },
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
+    });
+  };
+
+  const handleRestore = () => {
+    if (!restoreId) return;
+    restoreMut.mutate(restoreId, {
+      onSuccess: () => {
+        toast.success(t('users.restored'));
+        setRestoreId(null);
       },
       onError: (err) =>
         toast.error(extractErrorMessage(err, t('common.error'))),
@@ -277,6 +304,19 @@ const UsersPage = () => {
             className="pl-9 bg-secondary border-border"
           />
         </div>
+
+        {canViewDeleted && (
+          <div className="flex items-center gap-2">
+            <Label htmlFor="users-show-deleted">
+              {t('common.show_deleted')}
+            </Label>
+            <Switch
+              id="users-show-deleted"
+              checked={includeDeleted}
+              onCheckedChange={setIncludeDeleted}
+            />
+          </div>
+        )}
       </div>
 
       <div className="relative">
@@ -386,7 +426,10 @@ const UsersPage = () => {
                   : paginatedItems.map((u, idx) => (
                       <tr
                         key={u.id}
-                        className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
+                        className={cn(
+                          'table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors',
+                          u.deleted_at && 'opacity-60',
+                        )}
                         onClick={() => {
                           if (window.getSelection()?.toString()) return;
                           navigate(`/users/${u.id}`);
@@ -404,7 +447,12 @@ const UsersPage = () => {
                         <td className="px-4 py-3 text-center text-muted-foreground">
                           {startIndex + idx + 1}
                         </td>
-                        <td className="px-4 py-3 font-medium">{u.email}</td>
+                        <td className="px-4 py-3 font-medium">
+                          <span className="inline-flex items-center gap-1.5">
+                            {u.email}
+                            {u.deleted_at && <DeletedBadge />}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {u.phone || t('common.na')}
                         </td>
@@ -424,30 +472,48 @@ const UsersPage = () => {
                           {formatDate(u.created_at)}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEdit(u);
-                              }}
-                              aria-label={t('common.edit')}
-                              title={t('common.edit')}
-                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                            >
-                              <PencilSimple className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteId(u.id);
-                              }}
-                              aria-label={t('common.delete')}
-                              title={t('common.delete')}
-                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                            >
-                              <Trash className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
+                          {u.deleted_at ? (
+                            <div className="flex items-center justify-center gap-1">
+                              {canViewDeleted && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setRestoreId(u.id);
+                                  }}
+                                  aria-label={t('common.restore')}
+                                  title={t('common.restore')}
+                                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                                >
+                                  <ArrowCounterClockwise className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center gap-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEdit(u);
+                                }}
+                                aria-label={t('common.edit')}
+                                title={t('common.edit')}
+                                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                              >
+                                <PencilSimple className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteId(u.id);
+                                }}
+                                aria-label={t('common.delete')}
+                                title={t('common.delete')}
+                                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                              >
+                                <Trash className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -483,9 +549,15 @@ const UsersPage = () => {
             paginatedItems.map((u) => (
               <DataCard
                 key={u.id}
-                title={u.name || u.email}
+                title={
+                  <span className="inline-flex items-center gap-1.5">
+                    {u.name || u.email}
+                    {u.deleted_at && <DeletedBadge />}
+                  </span>
+                }
                 subtitle={u.email}
                 onClick={() => navigate(`/users/${u.id}`)}
+                className={u.deleted_at ? 'opacity-60' : undefined}
                 fields={[
                   {
                     label: t('users.detail.branch'),
@@ -501,30 +573,46 @@ const UsersPage = () => {
                   },
                 ]}
                 actions={
-                  <>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEdit(u);
-                      }}
-                      aria-label={t('common.edit')}
-                      title={t('common.edit')}
-                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                    >
-                      <PencilSimple className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteId(u.id);
-                      }}
-                      aria-label={t('common.delete')}
-                      title={t('common.delete')}
-                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                    >
-                      <Trash className="h-3.5 w-3.5" />
-                    </button>
-                  </>
+                  u.deleted_at ? (
+                    canViewDeleted && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRestoreId(u.id);
+                        }}
+                        aria-label={t('common.restore')}
+                        title={t('common.restore')}
+                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                      >
+                        <ArrowCounterClockwise className="h-3.5 w-3.5" />
+                      </button>
+                    )
+                  ) : (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEdit(u);
+                        }}
+                        aria-label={t('common.edit')}
+                        title={t('common.edit')}
+                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                      >
+                        <PencilSimple className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(u.id);
+                        }}
+                        aria-label={t('common.delete')}
+                        title={t('common.delete')}
+                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                      >
+                        <Trash className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  )
                 }
               />
             ))
@@ -560,6 +648,20 @@ const UsersPage = () => {
                 name: users.find((u) => u.id === deleteId)?.name,
               })
             : undefined
+        }
+      />
+
+      {/* autodrive-cg9: restore only un-deletes this row -- honesty
+          requirement, see common.confirm_restore_desc. */}
+      <ConfirmDialog
+        open={!!restoreId}
+        onClose={() => setRestoreId(null)}
+        onConfirm={handleRestore}
+        loading={restoreMut.isPending}
+        title={t('common.confirm_restore_title')}
+        description={t('common.confirm_restore_desc')}
+        confirmLabel={
+          restoreMut.isPending ? t('common.restoring') : t('common.restore')
         }
       />
     </div>

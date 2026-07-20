@@ -11,6 +11,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Popover,
   PopoverContent,
@@ -44,6 +46,10 @@ interface StudentsFilterBarProps {
   setDateRange: (from: Date | undefined, to: Date | undefined) => void;
   search: string;
   setSearch: (v: string) => void;
+  // autodrive-cg9: owner-only "show deleted" toggle.
+  canViewDeleted: boolean;
+  includeDeleted: boolean;
+  setIncludeDeleted: (v: boolean) => void;
 }
 
 export const StudentsFilterBar = ({
@@ -65,6 +71,9 @@ export const StudentsFilterBar = ({
   setDateRange,
   search,
   setSearch,
+  canViewDeleted,
+  includeDeleted,
+  setIncludeDeleted,
 }: StudentsFilterBarProps) => {
   const { t } = useTranslation();
 
@@ -193,6 +202,19 @@ export const StudentsFilterBar = ({
           className="pl-9 bg-secondary border-border"
         />
       </div>
+
+      {canViewDeleted && (
+        <div className="flex items-center gap-2">
+          <Label htmlFor="students-show-deleted">
+            {t('common.show_deleted')}
+          </Label>
+          <Switch
+            id="students-show-deleted"
+            checked={includeDeleted}
+            onCheckedChange={setIncludeDeleted}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -38,6 +38,7 @@ vi.mock('@/services/groupService', () => ({
   useCreateGroup: () => ({ mutate: vi.fn(), isPending: false }),
   useUpdateGroup: () => ({ mutate: vi.fn(), isPending: false }),
   useDeleteGroup: () => ({ mutate: vi.fn(), isPending: false }),
+  useRestoreGroup: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/services/branchService', () => ({
@@ -146,6 +147,7 @@ describe('GroupsPage URL filter params', () => {
       search: 'alpha',
       branchId: 'b2',
       courseType: 'tezkor',
+      includeDeleted: false,
     });
     // Search input is hydrated from the URL too.
     expect(
@@ -163,6 +165,7 @@ describe('GroupsPage URL filter params', () => {
       search: '',
       branchId: undefined,
       courseType: undefined,
+      includeDeleted: false,
     });
   });
 });
@@ -201,6 +204,7 @@ describe('GroupsPage role gating', () => {
       search: '',
       branchId: 'b1',
       courseType: undefined,
+      includeDeleted: false,
     });
   });
 });

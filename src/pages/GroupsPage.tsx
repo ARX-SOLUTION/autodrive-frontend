@@ -8,6 +8,7 @@ import {
   useGroups,
   useGroupsOverview,
   useDeleteGroup,
+  useRestoreGroup,
 } from '@/services/groupService';
 import { useBranches } from '@/services/branchService';
 import { Group } from '@/types/group';
@@ -67,6 +68,11 @@ const GroupsPage = () => {
   const setCurrentPage = (p: number) =>
     setParam('page', p > 1 ? String(p) : undefined);
 
+  const canViewDeleted = useCan('viewDeleted');
+  // autodrive-cg9: owner-only "show deleted" toggle -- local state (not
+  // URL), defaults off.
+  const [includeDeleted, setIncludeDeleted] = useState(false);
+
   // search/course_type/branch now filtered server-side (autodrive-b85.5) --
   // GET /groups gained these params, so we stop refetching-then-filtering.
   const {
@@ -79,15 +85,20 @@ const GroupsPage = () => {
     search: debouncedSearch,
     branchId,
     courseType: courseTypeFilter === 'all' ? undefined : courseTypeFilter,
+    // Defensive even though the toggle only renders for an owner: never let
+    // a stray true reach the request for anyone else (403 on the wire).
+    includeDeleted: canViewDeleted && includeDeleted,
   });
   const { data: overview } = useGroupsOverview();
   const { data: branches } = useBranches();
   const deleteMutation = useDeleteGroup();
+  const restoreMutation = useRestoreGroup();
   const canManageGroups = useCan('manageGroups');
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editGroup, setEditGroup] = useState<Group | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [restoreId, setRestoreId] = useState<string | null>(null);
 
   const branchList = branches || [];
 
@@ -137,7 +148,7 @@ const GroupsPage = () => {
     }
     setCurrentPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, courseTypeFilter, branchId, sortField, sortDir]);
+  }, [search, courseTypeFilter, branchId, sortField, sortDir, includeDeleted]);
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(1);
@@ -169,6 +180,18 @@ const GroupsPage = () => {
       onSuccess: () => {
         toast.success(t('groups.deleted'));
         setDeleteId(null);
+      },
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
+    });
+  };
+
+  const handleRestore = () => {
+    if (!restoreId) return;
+    restoreMutation.mutate(restoreId, {
+      onSuccess: () => {
+        toast.success(t('groups.restored'));
+        setRestoreId(null);
       },
       onError: (err) =>
         toast.error(extractErrorMessage(err, t('common.error'))),
@@ -213,6 +236,9 @@ const GroupsPage = () => {
         branchId={branchId}
         onBranchChange={setBranchId}
         branches={branchList}
+        canViewDeleted={canViewDeleted}
+        includeDeleted={includeDeleted}
+        setIncludeDeleted={setIncludeDeleted}
       />
 
       <div className="relative">
@@ -239,6 +265,8 @@ const GroupsPage = () => {
             onEdit={openEdit}
             onDelete={setDeleteId}
             canManageGroups={canManageGroups}
+            canViewDeleted={canViewDeleted}
+            onRestore={setRestoreId}
           />
           <GroupsMobileList
             groups={filtered}
@@ -248,6 +276,8 @@ const GroupsPage = () => {
             onEdit={openEdit}
             onDelete={setDeleteId}
             canManageGroups={canManageGroups}
+            canViewDeleted={canViewDeleted}
+            onRestore={setRestoreId}
           />
           {isGroupsError ? (
             <EmptyState
@@ -288,6 +318,22 @@ const GroupsPage = () => {
           deleteDescArgs
             ? t(deleteDescArgs.key, deleteDescArgs.options)
             : undefined
+        }
+      />
+
+      {/* autodrive-cg9: restore only un-deletes this row -- honesty
+          requirement, see common.confirm_restore_desc. */}
+      <ConfirmDialog
+        open={!!restoreId}
+        onClose={() => setRestoreId(null)}
+        onConfirm={handleRestore}
+        loading={restoreMutation.isPending}
+        title={t('common.confirm_restore_title')}
+        description={t('common.confirm_restore_desc')}
+        confirmLabel={
+          restoreMutation.isPending
+            ? t('common.restoring')
+            : t('common.restore')
         }
       />
     </div>

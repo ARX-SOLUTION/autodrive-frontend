@@ -34,7 +34,15 @@ export const useUsersPage = (
   role: string,
   page: number,
   limit: number,
-  filters?: { search?: string; branchId?: string; isActive?: boolean },
+  filters?: {
+    search?: string;
+    branchId?: string;
+    isActive?: boolean;
+    // autodrive-cg9: owner-only "show deleted" toggle on UsersPage. Never
+    // sent unless the caller is an owner -- a non-owner sending it gets a
+    // 403.
+    includeDeleted?: boolean;
+  },
 ) => {
   const userBranchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
@@ -55,6 +63,7 @@ export const useUsersPage = (
           search: filters?.search || undefined,
           branchId: filters?.branchId,
           isActive: filters?.isActive,
+          include_deleted: filters?.includeDeleted || undefined,
         },
         signal,
       });
@@ -121,6 +130,19 @@ export const useDeleteUser = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       await axiosInstance.delete(`/users/${id}`);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
+  });
+};
+
+// autodrive-cg9: owner-only restore, paired with the includeDeleted list
+// toggle above. Un-deletes only this row -- see UsersPage's restore confirm
+// copy (common.confirm_restore_desc) for the no-cascade caveat.
+export const useRestoreUser = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await axiosInstance.patch(`/users/${id}/restore`);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
   });

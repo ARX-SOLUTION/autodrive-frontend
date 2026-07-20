@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import {
   PencilSimple,
   Trash,
+  ArrowCounterClockwise,
   GraduationCap,
   Warning,
   Plus,
@@ -13,6 +14,7 @@ import {
 import { formatPhone } from '@/lib/phoneFormater';
 import { formatMoney } from '@/lib/money';
 import { DebtStatusBadge } from '@/components/ui/DebtStatusBadge';
+import { DeletedBadge } from '@/components/ui/DeletedBadge';
 import type { Student } from '@/types/student';
 import { capitalize, formatDate, resultLabels } from './studentsFormat';
 
@@ -29,6 +31,10 @@ interface StudentsMobileListProps {
   onEdit: (student: Student) => void;
   onDelete: (id: string) => void;
   onCreate: () => void;
+  // autodrive-cg9: owner-only "show deleted" toggle — a deleted card swaps
+  // edit/delete for a single restore action.
+  canViewDeleted: boolean;
+  onRestore: (id: string) => void;
 }
 
 export const StudentsMobileList = ({
@@ -43,6 +49,8 @@ export const StudentsMobileList = ({
   onEdit,
   onDelete,
   onCreate,
+  canViewDeleted,
+  onRestore,
 }: StudentsMobileListProps) => {
   const { t } = useTranslation();
   const localizedResultLabels = resultLabels(t);
@@ -128,39 +136,61 @@ export const StudentsMobileList = ({
           return (
             <DataCard
               key={s.id}
-              title={`${capitalize(s.first_name)} ${capitalize(s.last_name)}`}
+              title={
+                <span className="inline-flex items-center gap-1.5">
+                  {capitalize(s.first_name)} {capitalize(s.last_name)}
+                  {s.deleted_at && <DeletedBadge />}
+                </span>
+              }
               subtitle={formatPhone(s.phone)}
               fields={fields}
               onClick={(e) => onOpenStudent(s, e.currentTarget)}
+              className={s.deleted_at ? 'opacity-60' : undefined}
               actions={
-                <>
-                  {canManageStudents && (
+                s.deleted_at ? (
+                  canViewDeleted && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onEdit(s);
+                        onRestore(s.id);
                       }}
-                      aria-label={t('common.edit')}
-                      title={t('common.edit')}
+                      aria-label={t('common.restore')}
+                      title={t('common.restore')}
                       className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                     >
-                      <PencilSimple className="h-3.5 w-3.5" />
+                      <ArrowCounterClockwise className="h-3.5 w-3.5" />
                     </button>
-                  )}
-                  {isCrossTenant && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(s.id);
-                      }}
-                      aria-label={t('common.delete')}
-                      title={t('common.delete')}
-                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                    >
-                      <Trash className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </>
+                  )
+                ) : (
+                  <>
+                    {canManageStudents && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(s);
+                        }}
+                        aria-label={t('common.edit')}
+                        title={t('common.edit')}
+                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                      >
+                        <PencilSimple className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    {isCrossTenant && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(s.id);
+                        }}
+                        aria-label={t('common.delete')}
+                        title={t('common.delete')}
+                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                      >
+                        <Trash className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </>
+                )
               }
             />
           );

@@ -11,6 +11,9 @@ export interface GroupListParams {
   search?: string;
   branchId?: string;
   courseType?: string;
+  // autodrive-cg9: owner-only "show deleted" toggle on GroupsPage. Never
+  // sent unless the caller is an owner -- a non-owner sending it gets a 403.
+  includeDeleted?: boolean;
 }
 
 // Callers that don't pass params (StudentModal, SchedulePage, AttendancePage)
@@ -18,11 +21,17 @@ export interface GroupListParams {
 // search/branchId/courseType so GET /groups filters server-side instead of
 // the page re-filtering the full list client-side (autodrive-b85.5).
 export const useGroups = (params: GroupListParams = {}) => {
-  const { search, branchId, courseType } = params;
+  const { search, branchId, courseType, includeDeleted } = params;
   const authBranchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<Group[]>({
-    queryKey: groupKeys.list({ authBranchId, branchId, search, courseType }),
+    queryKey: groupKeys.list({
+      authBranchId,
+      branchId,
+      search,
+      courseType,
+      includeDeleted,
+    }),
     // autodrive-6ef.17: group list is org structure, rarely changes -- longer
     // than the 30s global default (matches blogService's precedent).
     staleTime: 5 * 60_000,
@@ -32,6 +41,7 @@ export const useGroups = (params: GroupListParams = {}) => {
           search: search || undefined,
           branch_id: branchId || undefined,
           course_type: courseType || undefined,
+          include_deleted: includeDeleted || undefined,
         },
         signal,
       });
@@ -104,6 +114,24 @@ export const useUpdateGroup = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: groupKeys.all });
       qc.invalidateQueries({ queryKey: studentKeys.all });
+    },
+  });
+};
+
+// autodrive-cg9: owner-only restore, paired with the includeDeleted list
+// toggle above. Deliberately does NOT invalidate studentKeys (unlike
+// useDeleteGroup below) -- restore does not un-null the groupId that delete
+// cleared on each enrolled student (see GroupsPage's restore confirm copy,
+// common.confirm_restore_desc), so there is nothing student-side to refetch.
+export const useRestoreGroup = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await axiosInstance.patch(`/groups/${id}/restore`);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: groupKeys.all });
+      track('group_restore');
     },
   });
 };
