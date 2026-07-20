@@ -2,7 +2,12 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { useUsersPage, useCreateManager } from '@/services/userService';
+import {
+  useUsersPage,
+  useCreateManager,
+  useUpdateUser,
+  useDeleteUser,
+} from '@/services/userService';
 import { useBranches } from '@/services/branchService';
 import { RoleGate } from '@/components/RoleGate';
 import { useIsCrossTenant } from '@/hooks/useCan';
@@ -15,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import PersonModal, {
   type PersonFormPayload,
 } from '@/components/ui/PersonModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import {
   Select,
   SelectContent,
@@ -31,11 +37,14 @@ import {
   UserGear,
   Plus,
   MagnifyingGlass,
+  PencilSimple,
+  Trash,
   CircleNotch,
 } from '@phosphor-icons/react';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { cn } from '@/lib/utils';
+import type { User } from '@/types/user';
 
 const formatDate = (d?: string) => {
   if (!d) return '—';
@@ -104,29 +113,72 @@ const UsersPage = () => {
   const totalPages = Math.max(1, usersPage?.meta.totalPages ?? 1);
   const { data: branches } = useBranches();
   const createMut = useCreateManager();
+  const updateMut = useUpdateUser();
+  const deleteMut = useDeleteUser();
   const [sortField, setSortField] = useState('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [modalOpen, setModalOpen] = useState(false);
+  const [editItem, setEditItem] = useState<User | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const openCreate = () => setModalOpen(true);
+  const openCreate = () => {
+    setEditItem(null);
+    setModalOpen(true);
+  };
 
-  const handleCreate = (data: PersonFormPayload) => {
-    createMut.mutate(
-      {
-        fullName: data.fullName,
-        email: data.email!,
-        password: data.password!,
-        phone: data.phone,
-        branchId: data.branchId!,
-      },
-      {
-        onSuccess: () => {
-          toast.success(t('users.added'));
-          setModalOpen(false);
+  const openEdit = (u: User) => {
+    setEditItem(u);
+    setModalOpen(true);
+  };
+
+  const handleSubmit = (data: PersonFormPayload) => {
+    if (editItem) {
+      updateMut.mutate(
+        {
+          id: editItem.id,
+          fullName: data.fullName,
+          phone: data.phone,
+          branchId: data.branchId,
         },
-        onError: (err) => toast.error(extractErrorMessage(err)),
+        {
+          onSuccess: () => {
+            toast.success(t('users.updated'));
+            setModalOpen(false);
+          },
+          onError: (err) =>
+            toast.error(extractErrorMessage(err, t('common.error'))),
+        },
+      );
+    } else {
+      createMut.mutate(
+        {
+          fullName: data.fullName,
+          email: data.email!,
+          password: data.password!,
+          phone: data.phone,
+          branchId: data.branchId!,
+        },
+        {
+          onSuccess: () => {
+            toast.success(t('users.added'));
+            setModalOpen(false);
+          },
+          onError: (err) => toast.error(extractErrorMessage(err)),
+        },
+      );
+    }
+  };
+
+  const handleDelete = () => {
+    if (!deleteId) return;
+    deleteMut.mutate(deleteId, {
+      onSuccess: () => {
+        toast.success(t('users.deleted'));
+        setDeleteId(null);
       },
-    );
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
+    });
   };
 
   const toggleSort = (field: string) => {
@@ -317,13 +369,16 @@ const UsersPage = () => {
                       )}
                     </button>
                   </th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
+                    {t('common.actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading
                   ? [...Array(3)].map((_, i) => (
                       <tr key={i} className="border-b border-border/50">
-                        <td colSpan={6} className="p-4">
+                        <td colSpan={7} className="p-4">
                           <Skeleton className="h-5 w-full" />
                         </td>
                       </tr>
@@ -367,6 +422,32 @@ const UsersPage = () => {
                         </td>
                         <td className="px-4 py-3 text-muted-foreground tabular-nums">
                           {formatDate(u.created_at)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEdit(u);
+                              }}
+                              aria-label={t('common.edit')}
+                              title={t('common.edit')}
+                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            >
+                              <PencilSimple className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteId(u.id);
+                              }}
+                              aria-label={t('common.delete')}
+                              title={t('common.delete')}
+                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                            >
+                              <Trash className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -419,6 +500,32 @@ const UsersPage = () => {
                     value: formatDate(u.created_at),
                   },
                 ]}
+                actions={
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEdit(u);
+                      }}
+                      aria-label={t('common.edit')}
+                      title={t('common.edit')}
+                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    >
+                      <PencilSimple className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteId(u.id);
+                      }}
+                      aria-label={t('common.delete')}
+                      title={t('common.delete')}
+                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                    >
+                      <Trash className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                }
               />
             ))
           )}
@@ -434,11 +541,26 @@ const UsersPage = () => {
       <PersonModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSubmit={handleCreate}
-        loading={createMut.isPending}
+        onSubmit={handleSubmit}
+        loading={createMut.isPending || updateMut.isPending}
         role="manager"
-        title={t('users.add_title')}
+        person={editItem}
+        title={editItem ? t('users.edit') : t('users.add_title')}
         description={t('users.add_desc')}
+      />
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        loading={deleteMut.isPending}
+        description={
+          deleteId
+            ? t('users.confirm_delete_desc', {
+                name: users.find((u) => u.id === deleteId)?.name,
+              })
+            : undefined
+        }
       />
     </div>
   );

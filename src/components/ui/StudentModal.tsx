@@ -296,6 +296,15 @@ const StudentModal = ({
     yiqildi: t('students.status_failed'),
   };
 
+  // autodrive-rz3.1: Student.status (enrollment lifecycle) is separate from
+  // `result` (exam outcome) above -- distinct field, distinct label set.
+  const localizedStudentStatusLabels: Record<StudentStatus, string> = {
+    active: t('students.status_active'),
+    completed: t('students.status_completed'),
+    dropped: t('students.status_dropped'),
+    suspended: t('students.status_suspended'),
+  };
+
   useEffect(() => {
     if (open) {
       // A group created elsewhere (e.g. GroupsPage) otherwise wouldn't show
@@ -1011,6 +1020,42 @@ const StudentModal = ({
                         </FormItem>
                       )}
                     />
+                    {/* autodrive-rz3.1: edit-only -- a brand-new student is
+                        always 'active' (defaultFormValues), so create mode
+                        has nothing useful to pick here. */}
+                    {student && (
+                      <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('students.status')}</FormLabel>
+                            <Select
+                              value={field.value || 'active'}
+                              onValueChange={(v) =>
+                                field.onChange(v as StudentStatus)
+                              }
+                            >
+                              <FormControl>
+                                <SelectTrigger className="bg-secondary border-border">
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {Object.entries(
+                                  localizedStudentStatusLabels,
+                                ).map(([k, v]) => (
+                                  <SelectItem key={k} value={k}>
+                                    {v}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                   </div>
 
                   <FormField
