@@ -77,8 +77,8 @@ const payment = (over: Partial<Payment> = {}): Payment => ({
   ...over,
 });
 
-const pageOf = (payments: Payment[]) => ({
-  data: { data: payments, meta: { total: payments.length, totalPages: 1 } },
+const pageOf = (payments: Payment[], totalPages = 1) => ({
+  data: { data: payments, meta: { total: payments.length, totalPages } },
   isLoading: false,
   isFetching: false,
 });
@@ -125,6 +125,10 @@ describe('PaymentsPage characterization', () => {
   });
 
   it('feeds URL filter params into the payments query', () => {
+    // totalPages: 2 -- page=2 in the URL below must be a legitimate page,
+    // otherwise the autodrive-52v.3 clamp (currentPage > totalPages) fires
+    // and rewrites it back to 1 before this assertion ever reads it.
+    usePaymentsPageMock.mockReturnValue(pageOf([payment()], 2));
     renderPage(
       '/payments?branch_id=b9&status=paid&method=karta&course_type=tezkor' +
         '&q=aziz&sort_by=amount_paid&sort_dir=asc&page=2' +
@@ -189,5 +193,21 @@ describe('PaymentsPage characterization', () => {
 
     expect(screen.queryByText('payments.export_excel')).not.toBeInTheDocument();
     expect(screen.queryByText('payments.add_payment')).not.toBeInTheDocument();
+  });
+
+  // autodrive-52v.3: deleting the last row of the last page left currentPage
+  // pointing past the new (shrunk) totalPages -- the page silently kept
+  // requesting a page that no longer exists. Same clamp GroupsPage already
+  // had; StudentsPage, PaymentsPage and UsersPage didn't.
+  it('clamps currentPage back to 1 once totalPages shrinks below the URL page', () => {
+    usePaymentsPageMock.mockReturnValue({
+      data: { data: [], meta: { total: 0, totalPages: 1 } },
+      isLoading: false,
+      isFetching: false,
+    });
+    renderPage('/payments?page=3');
+
+    const call = usePaymentsPageMock.mock.calls.at(-1)!;
+    expect(call[4]).toBe(1); // effectivePage (5th positional arg), clamped from 3
   });
 });

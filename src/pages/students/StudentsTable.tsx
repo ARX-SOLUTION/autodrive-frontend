@@ -106,7 +106,7 @@ export const StudentsTable = ({
           ? formatMoney(debt)
           : debt < 0
             ? `${t('students.credit_label')}: ${formatMoney(Math.abs(debt))}`
-            : t('common.na')}
+            : t('students.debt_status_paid')}
       </span>
     );
   };

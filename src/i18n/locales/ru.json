@@ -481,7 +481,22 @@
       "saving": "Сохранение...",
       "completion_date_label": "Дата окончания (примерно)",
       "completion_date_desc": "Рассчитывается автоматически по длительности выбранного курса",
-      "group_optional_label": "Группа (необязательно)"
+      "group_optional_label": "Группа (необязательно)",
+      "first_name_required": "Имя обязательно",
+      "last_name_required": "Фамилия обязательна",
+      "email_invalid": "Неверный email",
+      "passport_series_required": "Серия паспорта обязательна",
+      "passport_series_format": "Серия паспорта: 2 буквы (например: AA)",
+      "passport_number_required": "Номер паспорта обязателен",
+      "passport_number_format": "Номер паспорта: 7 цифр",
+      "birth_date_required": "Дата рождения обязательна",
+      "address_too_short": "Адрес слишком короткий",
+      "branch_required": "Филиал не выбран",
+      "course_required": "Курс не выбран",
+      "start_date_required": "Дата начала обязательна",
+      "amount_invalid": "Сумма должна быть больше 0",
+      "first_payment_date_required": "Дата оплаты обязательна",
+      "contract_required": "Необходимо подтверждение договора"
     },
     "lead_source": {
       "referral": "Рекомендация",
@@ -611,7 +626,14 @@
     "passed": "Сдал (Passed)",
     "added": "Результат добавлен",
     "date_required": "Дата обязательна",
-    "add_desc": "Введите данные результата экзамена"
+    "add_desc": "Введите данные результата экзамена",
+    "history_title": "История экзаменов",
+    "result": "Результат",
+    "score": "Балл",
+    "notes": "Комментарий",
+    "empty": "Пока нет результатов экзаменов",
+    "status_passed": "Сдал",
+    "status_failed": "Не сдал"
   },
   "payments": {
     "title": "Платежи",
@@ -929,7 +951,7 @@
     "this_week": "Эта неделя",
     "template_created": "Шаблон создан",
     "template_deleted": "Шаблон удалён",
-    "lessons_generated": "Занятия созданы",
+    "lessons_generated": "Создано занятий: {{created}}, пропущено: {{skipped}}",
     "delete_title": "Удаление шаблона",
     "delete_desc": "Шаблон будет удалён. Новые занятия не будут создаваться, но существующие останутся.",
     "fill_required": "Заполните все поля",

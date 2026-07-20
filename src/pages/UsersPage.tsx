@@ -124,6 +124,14 @@ const UsersPage = () => {
   });
   const users = useMemo(() => usersPage?.data ?? [], [usersPage]);
   const totalPages = Math.max(1, usersPage?.meta.totalPages ?? 1);
+
+  // Deleting the last row of the last page leaves currentPage pointing past
+  // the new totalPages -- clamp back, same fix as GroupsPage (autodrive-52v.3).
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalPages]);
+
   const { data: branches } = useBranches();
   const createMut = useCreateManager();
   const updateMut = useUpdateUser();

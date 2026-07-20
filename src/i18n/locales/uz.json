@@ -482,7 +482,22 @@
       "saving": "Saqlanmoqda...",
       "completion_date_label": "Bitirish sanasi (taxminiy)",
       "completion_date_desc": "Tanlangan kurs davomiyligidan avtomatik hisoblanadi",
-      "group_optional_label": "Guruh (ixtiyoriy)"
+      "group_optional_label": "Guruh (ixtiyoriy)",
+      "first_name_required": "Ism majburiy",
+      "last_name_required": "Familiya majburiy",
+      "email_invalid": "Email noto'g'ri",
+      "passport_series_required": "Pasport seriyasi majburiy",
+      "passport_series_format": "Pasport seriyasi: 2 harf (masalan: AA)",
+      "passport_number_required": "Pasport raqami majburiy",
+      "passport_number_format": "Pasport raqami: 7 raqam",
+      "birth_date_required": "Tug'ilgan sana majburiy",
+      "address_too_short": "Manzil juda qisqa",
+      "branch_required": "Filial tanlanmagan",
+      "course_required": "Kurs tanlanmagan",
+      "start_date_required": "Boshlanish sana majburiy",
+      "amount_invalid": "Summa 0 dan katta bo'lishi kerak",
+      "first_payment_date_required": "To'lov sanasi majburiy",
+      "contract_required": "Shartnoma tasdiqlanishi shart"
     },
     "lead_source": {
       "referral": "Tavsiya (tanish)",
@@ -611,7 +626,14 @@
     "passed": "O'tdi (Passed)",
     "added": "Natija qo'shildi",
     "date_required": "Sana talab qilinadi",
-    "add_desc": "Imtihon natijasi ma'lumotlarini kiriting"
+    "add_desc": "Imtihon natijasi ma'lumotlarini kiriting",
+    "history_title": "Imtihonlar tarixi",
+    "result": "Natija",
+    "score": "Ball",
+    "notes": "Izoh",
+    "empty": "Hali imtihon natijalari yo'q",
+    "status_passed": "O'tdi",
+    "status_failed": "Yiqildi"
   },
   "payments": {
     "title": "To'lovlar",
@@ -929,7 +951,7 @@
     "this_week": "Shu hafta",
     "template_created": "Template yaratildi",
     "template_deleted": "Template o'chirildi",
-    "lessons_generated": "Darslar yaratildi",
+    "lessons_generated": "{{created}} ta dars yaratildi, {{skipped}} ta o'tkazib yuborildi",
     "delete_title": "Template'ni o'chirish",
     "delete_desc": "Bu template o'chiriladi. Yangi darslar yaratilmaydi, lekin mavjud darslar qoladi.",
     "fill_required": "Barcha maydonlarni to'ldiring",

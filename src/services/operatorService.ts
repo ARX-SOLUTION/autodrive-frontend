@@ -6,7 +6,7 @@ import { User } from '@/types/user';
 import type { ListResponse } from '@/types/list';
 import { parseListResponse } from '@/lib/listResponse';
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
-import { operatorKeys } from '@/lib/queryKeys';
+import { operatorKeys, userKeys } from '@/lib/queryKeys';
 
 export const useOperators = () => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
@@ -90,7 +90,14 @@ export const useUpdateOperator = () => {
       const { data } = await axiosInstance.patch(`/users/${id}`, op);
       return parseItemEnvelope<User>(data, 'operator');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: operatorKeys.all }),
+    // UserDetailPage (/users/:id) reads via userKeys.detail(id), a root
+    // operatorKeys.all doesn't cover -- an already-open detail tab kept
+    // showing the pre-edit name/phone for up to 30s (autodrive-52v.2).
+    // Same dual-invalidate idiom as paymentService's payment mutations.
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: operatorKeys.all });
+      qc.invalidateQueries({ queryKey: userKeys.all });
+    },
   });
 };
 

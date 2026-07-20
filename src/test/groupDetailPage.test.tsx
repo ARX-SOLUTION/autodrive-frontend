@@ -186,3 +186,30 @@ describe('GroupDetailPage students-tab debt badge (autodrive-vh0.5)', () => {
     expect(screen.queryByText(formatMoney(500000))).toBeNull();
   });
 });
+
+// autodrive-52v.6: debt === 0 (a real, good "fully paid" state) rendered as
+// an ambiguous "N/A" in the manager/owner (canViewPayments) amount view --
+// indistinguishable from "amount unknown". Distinct from the has_debt-driven
+// badge above, which was already correct.
+describe('GroupDetailPage students-tab debt amount at exactly 0 (autodrive-52v.6)', () => {
+  it('shows "paid", not N/A, for a manager when debt is exactly 0', () => {
+    auth.role = 'manager';
+    groupQuery.data = {
+      ...GROUP,
+      students: [
+        {
+          id: 's1',
+          last_name: 'Karimov',
+          first_name: 'Aziz',
+          phone: '+998901234567',
+          debt: 0,
+        },
+      ],
+    };
+    renderPage();
+    fireEvent.mouseDown(screen.getByText('students.title'));
+
+    expect(screen.getByText('students.debt_status_paid')).toBeTruthy();
+    expect(screen.queryByText('common.na')).toBeNull();
+  });
+});

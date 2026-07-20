@@ -204,6 +204,13 @@ const PaymentsPage = () => {
   const totalPayments = paymentsPage?.meta.total ?? visiblePayments.length;
   const totalPages = Math.max(1, paymentsPage?.meta.totalPages ?? 1);
 
+  // Deleting the last row of the last page leaves currentPage pointing past
+  // the new totalPages -- clamp back, same fix as GroupsPage (autodrive-52v.3).
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalPages]);
+
   const displayedSummary = summary ?? {
     period_collected: 0,
     period_payments_count: 0,

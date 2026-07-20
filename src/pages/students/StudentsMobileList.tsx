@@ -105,7 +105,7 @@ export const StudentsMobileList = ({
                             ? formatMoney(s.debt)
                             : s.debt < 0
                               ? `${t('students.credit_label')}: ${formatMoney(Math.abs(s.debt))}`
-                              : t('common.na')}
+                              : t('students.debt_status_paid')}
                         </span>
                       ),
                     },

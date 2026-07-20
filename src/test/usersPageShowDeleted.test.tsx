@@ -186,3 +186,24 @@ describe('UsersPage restore action (autodrive-cg9)', () => {
     );
   });
 });
+
+// autodrive-52v.3: deleting the last row of the last page left currentPage
+// pointing past the new (shrunk) totalPages -- the page silently kept
+// requesting a page that no longer exists. Same clamp GroupsPage already
+// had; StudentsPage, PaymentsPage and UsersPage didn't.
+describe('UsersPage pagination clamp (autodrive-52v.3)', () => {
+  it('clamps currentPage back to 1 once totalPages shrinks below the URL page', () => {
+    role = 'owner';
+    // emptyResult.data.meta.totalPages is already 1 -- URL page=3 below is
+    // the "shrunk after delete" case this clamp exists for.
+    h.useUsersPage.mockReturnValue(emptyResult);
+    render(
+      <MemoryRouter initialEntries={['/users?page=3']}>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    const lastCall = h.useUsersPage.mock.calls.at(-1)!;
+    expect(lastCall[1]).toBe(1); // page (2nd positional arg), clamped from 3
+  });
+});

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStudentExams } from '@/services/examService';
 import { Button } from '@/components/ui/button';
 import { RecordExamModal } from './RecordExamModal';
@@ -8,6 +9,7 @@ import { Plus } from '@phosphor-icons/react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const StudentExamsTab = ({ student }: { student: Student }) => {
+  const { t } = useTranslation();
   const { data: exams, isLoading } = useStudentExams(student.id);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -15,10 +17,10 @@ export const StudentExamsTab = ({ student }: { student: Student }) => {
     <div className="space-y-4 pt-4">
       <div className="flex justify-between items-center">
         <h3 className="font-heading text-lg font-semibold">
-          Imtihonlar tarixi
+          {t('exams.history_title')}
         </h3>
         <Button onClick={() => setModalOpen(true)} size="sm" className="gap-2">
-          <Plus className="h-4 w-4" /> Yangi natija qo'shish
+          <Plus className="h-4 w-4" /> {t('exams.add_title')}
         </Button>
       </div>
 
@@ -27,19 +29,19 @@ export const StudentExamsTab = ({ student }: { student: Student }) => {
           <thead>
             <tr className="border-b border-border bg-muted/30">
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                Sana
+                {t('common.date')}
               </th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                Turi
+                {t('exams.exam_type')}
               </th>
               <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                Natija
+                {t('exams.result')}
               </th>
               <th className="px-4 py-3 text-right font-medium text-muted-foreground">
-                Ball
+                {t('exams.score')}
               </th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                Izoh
+                {t('exams.notes')}
               </th>
             </tr>
           </thead>
@@ -56,7 +58,7 @@ export const StudentExamsTab = ({ student }: { student: Student }) => {
                   colSpan={5}
                   className="p-8 text-center text-muted-foreground"
                 >
-                  Hali imtihon natijalari yo'q
+                  {t('exams.empty')}
                 </td>
               </tr>
             ) : (
@@ -69,8 +71,8 @@ export const StudentExamsTab = ({ student }: { student: Student }) => {
                   </td>
                   <td className="px-4 py-3">
                     {exam.exam_type === 'THEORY' || exam.examType === 'THEORY'
-                      ? 'Nazariy'
-                      : 'Amaliy'}
+                      ? t('exams.theory')
+                      : t('exams.practice')}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span
@@ -80,7 +82,9 @@ export const StudentExamsTab = ({ student }: { student: Student }) => {
                           : 'text-destructive font-medium'
                       }
                     >
-                      {exam.passed ? "O'tdi" : 'Yiqildi'}
+                      {exam.passed
+                        ? t('exams.status_passed')
+                        : t('exams.status_failed')}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">{exam.score ?? '—'}</td>

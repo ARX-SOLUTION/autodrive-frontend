@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 
@@ -12,6 +13,7 @@ const PaginationControls = ({
   totalPages,
   onPageChange,
 }: Props) => {
+  const { t } = useTranslation();
   if (totalPages <= 1) return null;
 
   const getPageNumbers = () => {
@@ -44,7 +46,7 @@ const PaginationControls = ({
         className="gap-1 bg-secondary border-border"
       >
         <CaretLeft className="h-4 w-4" />
-        Oldingi
+        {t('common.previous')}
       </Button>
       {getPageNumbers().map((page, i) =>
         page === '...' ? (
@@ -70,7 +72,7 @@ const PaginationControls = ({
         disabled={currentPage >= totalPages}
         className="gap-1 bg-secondary border-border"
       >
-        Keyingi
+        {t('common.next')}
         <CaretRight className="h-4 w-4" />
       </Button>
     </div>
