@@ -33,6 +33,10 @@ interface StudentListOptions {
   // autodrive-cg9: owner-only "show deleted" toggle on StudentsPage. Never
   // sent unless the caller is an owner -- a non-owner sending it gets a 403.
   includeDeleted?: boolean;
+  // CourseDetailPage's Talabalar roster tab (GET /students?course_id=<uuid>) --
+  // rides in `options` like the other filters so it lands in the query key
+  // and caches separately per course.
+  courseId?: string;
 }
 
 interface StudentListParams extends StudentListOptions {
@@ -60,6 +64,7 @@ const toStudentQueryParams = ({
   referredByUserId,
   referredByStudentId,
   includeDeleted,
+  courseId,
 }: StudentListParams) => ({
   course_type: courseType,
   branch_id: branchId,
@@ -77,6 +82,7 @@ const toStudentQueryParams = ({
   referred_by_user_id: referredByUserId,
   referred_by_student_id: referredByStudentId,
   include_deleted: includeDeleted || undefined,
+  course_id: courseId,
 });
 
 export const fetchStudentsPage = async (

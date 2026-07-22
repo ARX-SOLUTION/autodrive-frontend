@@ -1,35 +1,14 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  useCourses,
-  useCreateCourse,
-  useUpdateCourse,
-  useDeleteCourse,
-} from '@/services/courseService';
+import { useNavigate } from 'react-router-dom';
+import { useCourses, useDeleteCourse } from '@/services/courseService';
 import { useBranches } from '@/services/branchService';
 import { Course } from '@/types/course';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
   Plus,
@@ -39,103 +18,29 @@ import {
   CircleNotch,
 } from '@phosphor-icons/react';
 import { extractErrorMessage } from '@/lib/errors';
-import { formatMoney, groupDigits } from '@/lib/money';
+import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
-
-interface FormState {
-  name: string;
-  branch_id: string;
-  course_type: 'tezkor' | 'avto_maktab';
-  price: string;
-  duration_days: string;
-}
-
-const EMPTY_FORM: FormState = {
-  name: '',
-  branch_id: '',
-  course_type: 'avto_maktab',
-  price: '',
-  duration_days: '',
-};
+import CourseFormDialog from './courses/CourseFormDialog';
 
 const CoursesPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: courses, isLoading, isFetching } = useCourses();
   const { data: branches } = useBranches();
-  const createMut = useCreateCourse();
-  const updateMut = useUpdateCourse();
   const deleteMut = useDeleteCourse();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<Course | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const initialFormRef = useRef(form);
 
   const openCreate = () => {
     setEditItem(null);
-    setForm(EMPTY_FORM);
-    initialFormRef.current = EMPTY_FORM;
     setModalOpen(true);
   };
 
   const openEdit = (c: Course) => {
     setEditItem(c);
-    const initial: FormState = {
-      name: c.name,
-      branch_id: c.branch_id,
-      course_type: c.course_type,
-      price: groupDigits(String(c.price)),
-      duration_days: String(c.duration_days),
-    };
-    setForm(initial);
-    initialFormRef.current = initial;
     setModalOpen(true);
-  };
-
-  const isFormDirty =
-    JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
-  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
-    useConfirmedClose(
-      isFormDirty || createMut.isPending || updateMut.isPending,
-      () => setModalOpen(false),
-    );
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const price = Number(form.price.replace(/\D/g, ''));
-    const durationDays = Number(form.duration_days);
-    if (!form.name.trim() || !form.branch_id || !price || !durationDays) {
-      toast.error(t('common.fill_required'));
-      return;
-    }
-    const payload = {
-      name: form.name.trim(),
-      branch_id: form.branch_id,
-      course_type: form.course_type,
-      price,
-      duration_days: durationDays,
-    };
-    if (editItem) {
-      updateMut.mutate(
-        { id: editItem.id, ...payload },
-        {
-          onSuccess: () => {
-            toast.success(t('courses.updated'));
-            setModalOpen(false);
-          },
-          onError: (err) => toast.error(extractErrorMessage(err)),
-        },
-      );
-    } else {
-      createMut.mutate(payload, {
-        onSuccess: () => {
-          toast.success(t('courses.added'));
-          setModalOpen(false);
-        },
-        onError: (err) => toast.error(extractErrorMessage(err)),
-      });
-    }
   };
 
   const handleDelete = () => {
@@ -236,7 +141,20 @@ const CoursesPage = () => {
                   (courses || []).map((c) => (
                     <tr
                       key={c.id}
-                      className="table-row-striped border-b border-border/50"
+                      className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
+                      onClick={() => {
+                        if (window.getSelection()?.toString()) return;
+                        navigate(`/courses/${c.id}`);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') navigate(`/courses/${c.id}`);
+                        if (e.key === ' ') {
+                          e.preventDefault();
+                          navigate(`/courses/${c.id}`);
+                        }
+                      }}
                     >
                       <td className="px-4 py-3 font-medium">{c.name}</td>
                       <td className="px-4 py-3 text-muted-foreground">
@@ -267,7 +185,10 @@ const CoursesPage = () => {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
                           <button
-                            onClick={() => openEdit(c)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEdit(c);
+                            }}
                             aria-label={t('common.edit')}
                             title={t('common.edit')}
                             className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
@@ -275,7 +196,10 @@ const CoursesPage = () => {
                             <PencilSimple className="h-3.5 w-3.5" />
                           </button>
                           <button
-                            onClick={() => setDeleteId(c.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(c.id);
+                            }}
                             aria-label={t('common.delete')}
                             title={t('common.delete')}
                             className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
@@ -303,6 +227,7 @@ const CoursesPage = () => {
                 key={c.id}
                 title={c.name}
                 subtitle={c.branch_name}
+                onClick={() => navigate(`/courses/${c.id}`)}
                 fields={[
                   {
                     label: t('courses.type'),
@@ -325,7 +250,10 @@ const CoursesPage = () => {
                 actions={
                   <>
                     <button
-                      onClick={() => openEdit(c)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEdit(c);
+                      }}
                       aria-label={t('common.edit')}
                       title={t('common.edit')}
                       className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
@@ -333,7 +261,10 @@ const CoursesPage = () => {
                       <PencilSimple className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={() => setDeleteId(c.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteId(c.id);
+                      }}
                       aria-label={t('common.delete')}
                       title={t('common.delete')}
                       className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
@@ -355,117 +286,12 @@ const CoursesPage = () => {
         </div>
       </div>
 
-      <Dialog open={modalOpen} onOpenChange={(o) => !o && attemptClose()}>
-        <DialogContent className="max-w-md bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="font-heading">
-              {editItem ? t('courses.edit') : t('courses.add')}
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              {t('courses.form_desc')}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label>{t('courses.name')} *</Label>
-              <Input
-                value={form.name}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, name: e.target.value }))
-                }
-                required
-                className="bg-secondary border-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('common.branch')} *</Label>
-              <Select
-                value={form.branch_id}
-                onValueChange={(v) => setForm((f) => ({ ...f, branch_id: v }))}
-              >
-                <SelectTrigger className="bg-secondary border-border">
-                  <SelectValue placeholder={t('common.select_placeholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {(branches || []).map((b) => (
-                    <SelectItem key={b.id} value={b.id}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t('courses.type')} *</Label>
-              <Select
-                value={form.course_type}
-                onValueChange={(v) =>
-                  setForm((f) => ({
-                    ...f,
-                    course_type: v as FormState['course_type'],
-                  }))
-                }
-              >
-                <SelectTrigger className="bg-secondary border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tezkor">
-                    {t('courses.type_tezkor')}
-                  </SelectItem>
-                  <SelectItem value="avto_maktab">
-                    {t('courses.type_avto_maktab')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t('courses.price')} *</Label>
-                <Input
-                  inputMode="numeric"
-                  value={form.price}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      price: groupDigits(e.target.value),
-                    }))
-                  }
-                  required
-                  className="bg-secondary border-border"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('courses.duration')} *</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  value={form.duration_days}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, duration_days: e.target.value }))
-                  }
-                  required
-                  className="bg-secondary border-border"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={attemptClose}>
-                {t('common.cancel')}
-              </Button>
-              <Button
-                type="submit"
-                disabled={createMut.isPending || updateMut.isPending}
-              >
-                {createMut.isPending || updateMut.isPending
-                  ? t('common.saving')
-                  : t('common.save')}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <CourseFormDialog
+        open={modalOpen}
+        editCourse={editItem}
+        branches={branches || []}
+        onClose={() => setModalOpen(false)}
+      />
 
       <ConfirmDialog
         open={!!deleteId}
@@ -479,15 +305,6 @@ const CoursesPage = () => {
               })
             : undefined
         }
-      />
-
-      <ConfirmDialog
-        open={confirmOpen}
-        onClose={cancelDiscard}
-        onConfirm={confirmDiscard}
-        title={t('common.discard_changes_title')}
-        description={t('common.discard_changes_desc')}
-        confirmLabel={t('common.discard')}
       />
     </div>
   );

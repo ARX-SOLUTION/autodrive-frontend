@@ -27,6 +27,7 @@ const BranchesPage = lazy(() => import('./pages/BranchesPage'));
 const BranchDetailPage = lazy(() => import('./pages/BranchDetailPage'));
 const GroupsPage = lazy(() => import('./pages/GroupsPage'));
 const CoursesPage = lazy(() => import('./pages/CoursesPage'));
+const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage'));
 const GroupDetailPage = lazy(() => import('./pages/GroupDetailPage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const UserDetailPage = lazy(() => import('./pages/UserDetailPage'));
@@ -105,6 +106,14 @@ const App = () => (
                   element={
                     <BranchAccessRoute>
                       <CoursesPage />
+                    </BranchAccessRoute>
+                  }
+                />
+                <Route
+                  path="courses/:id"
+                  element={
+                    <BranchAccessRoute>
+                      <CourseDetailPage />
                     </BranchAccessRoute>
                   }
                 />
