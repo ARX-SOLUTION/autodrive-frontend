@@ -60,13 +60,13 @@ describe('Sidebar rail', () => {
     );
   });
 
-  it('mobile sheet: still renders the full-label list, unchanged active treatment', () => {
+  it('mobile sheet: renders the full-label list with the solid active treatment', () => {
     renderSidebar(true);
     // One match in the always-rendered desktop rail, one in the open sheet.
     const items = screen.getAllByLabelText('nav.dashboard');
     expect(items.length).toBe(2);
-    expect(items.some((el) => el.className.includes('bg-primary/[12%]'))).toBe(
-      true,
-    );
+    // Both rail and sheet mark the active route with the solid primary pill
+    // (a11y contrast fix — the mobile tint was a failing 2.6:1).
+    expect(items.every((el) => el.className.includes('bg-primary'))).toBe(true);
   });
 });

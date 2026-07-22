@@ -24,7 +24,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import {
   Tooltip,
   TooltipContent,
@@ -223,6 +223,8 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
           side="left"
           className="w-72 bg-sidebar p-0 [&>button]:text-sidebar-foreground"
         >
+          {/* Radix Dialog requires a title for screen readers; visually hidden. */}
+          <SheetTitle className="sr-only">{t('actions.sidebar')}</SheetTitle>
           <div className="flex h-full flex-col">
             <div className="flex h-16 items-center gap-3 border-b border-border px-4">
               <Brand size="sm" />
@@ -242,10 +244,11 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
                       )
                     }
                     aria-label={label}
+                    aria-current={active ? 'page' : undefined}
                     className={cn(
                       'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
                       active
-                        ? 'bg-primary/[12%] text-primary'
+                        ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground',
                     )}
                   >
