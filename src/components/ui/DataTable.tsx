@@ -116,6 +116,7 @@ export function DataTable<T>({
                   >
                     {col.sortable ? (
                       <button
+                        type="button"
                         onClick={() => onToggleSort?.(sortKey)}
                         className={cn(
                           'flex items-center gap-1 hover:text-foreground transition-colors',
