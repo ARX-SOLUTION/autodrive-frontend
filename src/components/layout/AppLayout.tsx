@@ -20,7 +20,7 @@ export const AppLayout = () => {
         mobileOpen={mobileSidebarOpen}
         onMobileOpenChange={setMobileSidebarOpen}
       />
-      <div className="flex min-h-screen flex-col md:ml-[82px]">
+      <div className="flex min-h-screen flex-col md:ml-[72px]">
         <Topbar
           onMobileMenuClick={() => setMobileSidebarOpen(true)}
           onCommandPaletteOpen={() => palette.setOpen(true)}

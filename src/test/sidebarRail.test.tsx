@@ -4,11 +4,10 @@ import { vi, describe, it, expect, afterEach } from 'vitest';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-// Sidebar rework (exec-dash 6-rail-and-header): the desktop rail is now
-// fixed — no collapse/expand mode. Every item shows both an icon and an
-// 8.5px micro-label, so aria-label is a defensive accessible-name duplicate
-// rather than the only way to reach the item. Capability-gated items must
-// still be filtered by useCan, and the mobile Sheet keeps its own separate
+// Sidebar rework: the desktop rail is now icon-only — each item shows just
+// its icon; the label lives in a hover Tooltip and on aria-label (the
+// accessible name / discoverability path). Capability-gated items must still
+// be filtered by useCan, and the mobile Sheet keeps its own separate
 // full-label rendering with the original active-pill treatment.
 
 let canGate = true;
@@ -39,10 +38,13 @@ const renderSidebar = (mobileOpen = false) =>
   );
 
 describe('Sidebar rail', () => {
-  it('renders items with a visible micro-label and a matching aria-label', () => {
+  it('renders items icon-only: aria-label present, no visible text label', () => {
     renderSidebar();
+    // reachable by accessible name (aria-label + hover tooltip)...
     expect(screen.getByLabelText('nav.dashboard')).toBeTruthy();
-    expect(screen.getAllByText('nav.dashboard').length).toBeGreaterThan(0);
+    // ...but the label is not rendered as visible text in the icon-only rail
+    // (the closed tooltip contributes no text node).
+    expect(screen.queryByText('nav.dashboard')).toBeNull();
   });
 
   it('hides a capability-gated item when the capability check fails', () => {
