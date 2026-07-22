@@ -103,11 +103,15 @@ const LegacyMainDashboard = () => {
   );
   const { data: snapshot } = usePaymentSnapshot(branchId);
   const { data: recentPayments } = usePayments(branchId, courseType);
-  const { data: auditData } = useAuditLogs({ page: 1, limit: 6 });
+  const canViewAudit = useCan('viewAudit');
+  const { data: auditData } = useAuditLogs({
+    page: 1,
+    limit: 6,
+    enabled: canViewAudit,
+  });
   const { data: branches } = useBranches();
 
   const canViewAllBranches = useCan('viewAllBranches');
-  const canViewAudit = useCan('viewAudit');
 
   // ---- Derived values ----
   const revenueSeries = useMemo(

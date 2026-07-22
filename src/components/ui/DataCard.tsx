@@ -73,7 +73,7 @@ export const DataCard = ({
             </div>
           )}
         </div>
-        {actions && <div className="flex items-center gap-1">{actions}</div>}
+        {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
       {fields && fields.length > 0 && (
         <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">

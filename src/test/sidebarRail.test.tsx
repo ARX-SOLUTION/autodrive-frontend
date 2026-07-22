@@ -4,11 +4,10 @@ import { vi, describe, it, expect, afterEach } from 'vitest';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-// Sidebar rework (exec-dash 6-rail-and-header): the desktop rail is now
-// fixed — no collapse/expand mode. Every item shows both an icon and an
-// 8.5px micro-label, so aria-label is a defensive accessible-name duplicate
-// rather than the only way to reach the item. Capability-gated items must
-// still be filtered by useCan, and the mobile Sheet keeps its own separate
+// Sidebar rework: the desktop rail is now icon-only — each item shows just
+// its icon; the label lives in a hover Tooltip and on aria-label (the
+// accessible name / discoverability path). Capability-gated items must still
+// be filtered by useCan, and the mobile Sheet keeps its own separate
 // full-label rendering with the original active-pill treatment.
 
 let canGate = true;
@@ -39,10 +38,13 @@ const renderSidebar = (mobileOpen = false) =>
   );
 
 describe('Sidebar rail', () => {
-  it('renders items with a visible micro-label and a matching aria-label', () => {
+  it('renders items icon-only: aria-label present, no visible text label', () => {
     renderSidebar();
+    // reachable by accessible name (aria-label + hover tooltip)...
     expect(screen.getByLabelText('nav.dashboard')).toBeTruthy();
-    expect(screen.getAllByText('nav.dashboard').length).toBeGreaterThan(0);
+    // ...but the label is not rendered as visible text in the icon-only rail
+    // (the closed tooltip contributes no text node).
+    expect(screen.queryByText('nav.dashboard')).toBeNull();
   });
 
   it('hides a capability-gated item when the capability check fails', () => {
@@ -58,13 +60,13 @@ describe('Sidebar rail', () => {
     );
   });
 
-  it('mobile sheet: still renders the full-label list, unchanged active treatment', () => {
+  it('mobile sheet: renders the full-label list with the solid active treatment', () => {
     renderSidebar(true);
     // One match in the always-rendered desktop rail, one in the open sheet.
     const items = screen.getAllByLabelText('nav.dashboard');
     expect(items.length).toBe(2);
-    expect(items.some((el) => el.className.includes('bg-primary/[12%]'))).toBe(
-      true,
-    );
+    // Both rail and sheet mark the active route with the solid primary pill
+    // (a11y contrast fix — the mobile tint was a failing 2.6:1).
+    expect(items.every((el) => el.className.includes('bg-primary'))).toBe(true);
   });
 });

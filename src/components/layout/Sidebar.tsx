@@ -24,7 +24,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import {
   Tooltip,
   TooltipContent,
@@ -156,9 +156,9 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
 
   return (
     <>
-      {/* Desktop rail — fixed 82px, always expanded: labels are 8.5px
-          micro-labels under each icon, not a hover-only tooltip. */}
-      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[82px] flex-col border-r border-hair bg-surface md:flex">
+      {/* Desktop rail — icon-only: the label is a hover tooltip (side=right)
+          and stays on aria-label for screen readers / discoverability. */}
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[72px] flex-col border-r border-hair bg-surface md:flex">
         <div className="flex flex-col items-center pt-5">
           <div className="mb-[22px] flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-[0_4px_14px] shadow-primary/45">
             <ArrowRight
@@ -168,28 +168,30 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
           </div>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2.5">
+        <nav className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-2.5">
           {filteredItems.map((item) => {
             const active = location.pathname === item.path;
             const label = t(item.labelKey);
             return (
-              <a
-                key={item.path}
-                href={item.path}
-                onClick={(e) => handleNavClick(e, item.path)}
-                aria-label={label}
-                className={cn(
-                  'flex w-full flex-col items-center justify-center gap-1 rounded-xl py-2 transition-colors',
-                  active
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground',
-                )}
-              >
-                <item.icon className="h-[19px] w-[19px] shrink-0" />
-                <span className="text-center text-[8.5px] font-semibold leading-[1.05]">
-                  {label}
-                </span>
-              </a>
+              <Tooltip key={item.path}>
+                <TooltipTrigger asChild>
+                  <a
+                    href={item.path}
+                    onClick={(e) => handleNavClick(e, item.path)}
+                    aria-label={label}
+                    aria-current={active ? 'page' : undefined}
+                    className={cn(
+                      'flex h-11 w-full items-center justify-center rounded-xl transition-colors',
+                      active
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground',
+                    )}
+                  >
+                    <item.icon className="h-[21px] w-[21px] shrink-0" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent side="right">{label}</TooltipContent>
+              </Tooltip>
             );
           })}
         </nav>
@@ -221,6 +223,8 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
           side="left"
           className="w-72 bg-sidebar p-0 [&>button]:text-sidebar-foreground"
         >
+          {/* Radix Dialog requires a title for screen readers; visually hidden. */}
+          <SheetTitle className="sr-only">{t('actions.sidebar')}</SheetTitle>
           <div className="flex h-full flex-col">
             <div className="flex h-16 items-center gap-3 border-b border-border px-4">
               <Brand size="sm" />
@@ -240,10 +244,11 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
                       )
                     }
                     aria-label={label}
+                    aria-current={active ? 'page' : undefined}
                     className={cn(
                       'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
                       active
-                        ? 'bg-primary/[12%] text-primary'
+                        ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground',
                     )}
                   >

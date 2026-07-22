@@ -30,7 +30,7 @@ const AttendanceStatusToggle = ({
   };
 
   return (
-    <div className={cn('flex gap-1.5', className)}>
+    <div className={cn('flex gap-2', className)}>
       {TOGGLE_STATUSES.map((status) => (
         <button
           key={status}
@@ -38,7 +38,7 @@ const AttendanceStatusToggle = ({
           onClick={() => onChange(status)}
           aria-pressed={value === status}
           className={cn(
-            'min-h-10 flex-1 rounded-[9px] px-2.5 text-xs font-semibold motion-safe:transition-colors duration-[120ms]',
+            'min-h-11 flex-1 rounded-[9px] px-2.5 text-xs font-semibold motion-safe:transition-colors duration-[120ms]',
             value === status
               ? statusTone[status].solid
               : 'border border-border bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground',

@@ -165,7 +165,8 @@ const ProfilePage = () => {
             <div className="flex items-center gap-2 mt-0.5">
               <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                 <Shield className="h-3 w-3" />
-                {user?.role === 'owner' ? 'Biznes egasi' : 'Filial menejeri'}
+                {user?.role &&
+                  t(`roles.${user.role}`, { defaultValue: user.role })}
               </span>
               {user?.branch_name && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
