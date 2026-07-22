@@ -8,7 +8,10 @@ import { auditLogKeys } from '@/lib/queryKeys';
 const toLocalDateStr = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-export const useAuditLogs = (params: {
+export const useAuditLogs = ({
+  enabled: enabledOpt,
+  ...params
+}: {
   entity?: string;
   entityId?: string;
   action?: string;
@@ -17,6 +20,7 @@ export const useAuditLogs = (params: {
   endDate?: Date;
   page?: number;
   limit?: number;
+  enabled?: boolean;
 }) => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const role = useAuthStore((s) => s.user?.role);
@@ -24,7 +28,9 @@ export const useAuditLogs = (params: {
   const canViewAudit = role === 'owner' || role === 'manager' || role === 'dev';
   return useQuery<AuditLogsResponse>({
     queryKey: auditLogKeys.page({ ...params, branchId }),
-    enabled: canViewAudit,
+    // autodrive-bpf: callers can gate firing beyond the role check — the
+    // dashboard only wants this for OWNERS (viewAudit), narrower than manager.
+    enabled: canViewAudit && (enabledOpt ?? true),
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/audit-logs', {
         params: {
