@@ -151,8 +151,11 @@ const CourseFormDialog = ({
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>{t('courses.name')} *</Label>
+              <Label htmlFor="course-name">
+                {t('courses.name')} <span aria-hidden="true">*</span>
+              </Label>
               <Input
+                id="course-name"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 required
@@ -160,9 +163,15 @@ const CourseFormDialog = ({
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('common.branch')} *</Label>
+              <Label htmlFor="course-branch">
+                {t('common.branch')} <span aria-hidden="true">*</span>
+              </Label>
               <Select value={formBranchId} onValueChange={setFormBranchId}>
-                <SelectTrigger className="bg-secondary border-border">
+                <SelectTrigger
+                  id="course-branch"
+                  aria-required="true"
+                  className="bg-secondary border-border"
+                >
                   <SelectValue placeholder={t('common.select_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -175,14 +184,20 @@ const CourseFormDialog = ({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{t('courses.type')} *</Label>
+              <Label htmlFor="course-type">
+                {t('courses.type')} <span aria-hidden="true">*</span>
+              </Label>
               <Select
                 value={formCourseType}
                 onValueChange={(v) =>
                   setFormCourseType(v as 'tezkor' | 'avto_maktab')
                 }
               >
-                <SelectTrigger className="bg-secondary border-border">
+                <SelectTrigger
+                  id="course-type"
+                  aria-required="true"
+                  className="bg-secondary border-border"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -197,8 +212,11 @@ const CourseFormDialog = ({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{t('courses.price')} *</Label>
+                <Label htmlFor="course-price">
+                  {t('courses.price')} <span aria-hidden="true">*</span>
+                </Label>
                 <Input
+                  id="course-price"
                   inputMode="numeric"
                   value={formPrice}
                   onChange={(e) => setFormPrice(groupDigits(e.target.value))}
@@ -207,8 +225,11 @@ const CourseFormDialog = ({
                 />
               </div>
               <div className="space-y-2">
-                <Label>{t('courses.duration')} *</Label>
+                <Label htmlFor="course-duration">
+                  {t('courses.duration')} <span aria-hidden="true">*</span>
+                </Label>
                 <Input
+                  id="course-duration"
                   type="number"
                   min={1}
                   inputMode="numeric"
