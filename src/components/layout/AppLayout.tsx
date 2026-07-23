@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { Breadcrumbs } from './Breadcrumbs';
 import { CommandPalette, useCommandPalette } from './CommandPalette';
+import { prefetchIdle } from '@/lib/routePrefetch';
 
 export const AppLayout = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -13,6 +14,11 @@ export const AppLayout = () => {
   useEffect(() => {
     setMobileSidebarOpen(false);
   }, [location.pathname]);
+
+  // Warm the highest-traffic routes during idle time (covers click-before-hover).
+  useEffect(() => {
+    prefetchIdle(['/students', '/payments', '/dashboard']);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">

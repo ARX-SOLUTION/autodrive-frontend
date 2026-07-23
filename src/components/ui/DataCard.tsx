@@ -48,7 +48,7 @@ export const DataCard = ({
           }
         : {})}
       className={cn(
-        'relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm transition-colors',
+        'relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm transition-colors [contain-intrinsic-size:auto_180px] [content-visibility:auto]',
         accent && 'pl-5',
         interactive &&
           'cursor-pointer hover:border-primary/40 hover:bg-accent/30',
