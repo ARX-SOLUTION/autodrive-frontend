@@ -36,18 +36,22 @@ const renderDashboardPage = () =>
   );
 
 describe('DashboardPage role routing (autodrive-vh0.6 regression)', () => {
-  it('routes a teacher to TeacherDashboard', () => {
+  // The sub-dashboards are now React.lazy, so the marker appears after the
+  // Suspense boundary resolves — findBy* awaits that.
+  it('routes a teacher to TeacherDashboard', async () => {
     user = { name: 'Teacher', role: 'teacher' };
     renderDashboardPage();
-    expect(screen.getByTestId('teacher-dashboard-marker')).toBeInTheDocument();
+    expect(
+      await screen.findByTestId('teacher-dashboard-marker'),
+    ).toBeInTheDocument();
     expect(screen.queryByTestId('company-revenue-dashboard-marker')).toBeNull();
   });
 
-  it('routes a non-teacher role to CompanyRevenueDashboard, not TeacherDashboard', () => {
+  it('routes a non-teacher role to CompanyRevenueDashboard, not TeacherDashboard', async () => {
     user = { name: 'Owner', role: 'owner' };
     renderDashboardPage();
     expect(
-      screen.getByTestId('company-revenue-dashboard-marker'),
+      await screen.findByTestId('company-revenue-dashboard-marker'),
     ).toBeInTheDocument();
     expect(screen.queryByTestId('teacher-dashboard-marker')).toBeNull();
   });

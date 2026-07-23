@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
@@ -42,8 +42,14 @@ import {
 } from '@phosphor-icons/react';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
-import CompanyRevenueDashboard from '@/pages/dashboard/CompanyRevenueDashboard';
-import TeacherDashboard from '@/pages/dashboard/TeacherDashboard';
+// Lazy so a user only downloads their own role's dashboard (and defers the
+// heavy recharts bundle) instead of all three shipping in one chunk.
+const CompanyRevenueDashboard = lazy(
+  () => import('@/pages/dashboard/CompanyRevenueDashboard'),
+);
+const TeacherDashboard = lazy(
+  () => import('@/pages/dashboard/TeacherDashboard'),
+);
 import {
   AXIS_PROPS,
   CHART_STYLE,
@@ -856,11 +862,21 @@ const LegacyMainDashboard = () => {
 
 const DashboardPage = () => {
   const user = useAuthStore((s) => s.user);
-  if (user?.role === 'teacher') return <TeacherDashboard />;
+  const fallback = <Skeleton className="h-96 w-full rounded-lg" />;
+  if (user?.role === 'teacher')
+    return (
+      <Suspense fallback={fallback}>
+        <TeacherDashboard />
+      </Suspense>
+    );
   if (user?.company_features?.company_dashboard_v2 === false) {
     return <LegacyMainDashboard />;
   }
-  return <CompanyRevenueDashboard />;
+  return (
+    <Suspense fallback={fallback}>
+      <CompanyRevenueDashboard />
+    </Suspense>
+  );
 };
 
 export default DashboardPage;
