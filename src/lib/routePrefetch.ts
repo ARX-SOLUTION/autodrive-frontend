@@ -35,3 +35,16 @@ export function prefetchRoute(
   warmed.add(path);
   void importer().catch(() => warmed.delete(path));
 }
+
+/**
+ * Warm the highest-traffic routes during browser idle time, so they're ready
+ * even for users who click before hovering. Runs once, off the critical path.
+ */
+export function prefetchIdle(paths: string[]): void {
+  const run = () => paths.forEach((p) => prefetchRoute(p));
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(run, { timeout: 3000 });
+  } else {
+    setTimeout(run, 2000);
+  }
+}
