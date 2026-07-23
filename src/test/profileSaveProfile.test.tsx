@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+  waitFor,
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import ProfilePage from '@/pages/ProfilePage';
@@ -52,7 +58,7 @@ function renderProfile() {
 afterEach(cleanup);
 
 describe('ProfilePage Save button — owner/manager/dev', () => {
-  it('is wired to useUpdateUser and updates the store on success', () => {
+  it('is wired to useUpdateUser and updates the store on success', async () => {
     auth.role = 'owner';
     const mutate = vi.fn((_vars, opts) =>
       opts?.onSuccess?.({ id: 'u1', name: 'New Name' }),
@@ -69,9 +75,14 @@ describe('ProfilePage Save button — owner/manager/dev', () => {
 
     fireEvent.click(screen.getByText('profile.save'));
 
-    expect(mutate).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'u1', fullName: 'New Name' }),
-      expect.anything(),
+    // zodResolver validates async (react-hook-form always awaits the
+    // resolver, even with no failing rules) -- mirrors
+    // recordExamModalScore.test.tsx's post-submit waitFor convention.
+    await waitFor(() =>
+      expect(mutate).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'u1', fullName: 'New Name' }),
+        expect.anything(),
+      ),
     );
     expect(setUser).toHaveBeenCalled();
   });

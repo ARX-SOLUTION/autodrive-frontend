@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  cleanup,
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import LoginPage from '@/pages/LoginPage';
@@ -63,23 +69,31 @@ describe('LoginPage root-domain redirect (autodrive-dtj.2)', () => {
     cleanup();
   });
 
-  it('full-navigates to app.<domain> with the preserved `from` path on the root domain', () => {
+  it('full-navigates to app.<domain> with the preserved `from` path on the root domain', async () => {
     setHostname('automaktab.uz');
     renderLogin('/students/42');
 
     submitLogin();
 
-    expect(window.location.href).toBe('https://app.automaktab.uz/students/42');
+    // react-hook-form's handleSubmit resolves the zod schema asynchronously,
+    // so the mutate() call (and thus the redirect) lands a tick after click.
+    await waitFor(() =>
+      expect(window.location.href).toBe(
+        'https://app.automaktab.uz/students/42',
+      ),
+    );
     expect(navigateMock).not.toHaveBeenCalled();
   });
 
-  it('keeps the plain navigate() on non-root hosts', () => {
+  it('keeps the plain navigate() on non-root hosts', async () => {
     setHostname('app.automaktab.uz');
     renderLogin('/students/42');
 
     submitLogin();
 
-    expect(navigateMock).toHaveBeenCalledWith('/students/42');
+    await waitFor(() =>
+      expect(navigateMock).toHaveBeenCalledWith('/students/42'),
+    );
     expect(window.location.href).toBe('');
   });
 });

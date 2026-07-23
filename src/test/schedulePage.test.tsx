@@ -103,7 +103,7 @@ describe('SchedulePage', () => {
   // Regression for autodrive-6cq.5.53: parseInt('') is NaN, and NaN<1 /
   // NaN>12 are both false, so the guard used to let a cleared weeks field
   // through and call generateLessons with weeks: NaN.
-  it('rejects a cleared weeks field instead of sending NaN', () => {
+  it('rejects a cleared weeks field instead of sending NaN', async () => {
     const mutateAsync = vi.fn();
     vi.mocked(useGenerateLessons).mockReturnValue({
       mutateAsync,
@@ -117,12 +117,18 @@ describe('SchedulePage', () => {
     );
 
     fireEvent.click(screen.getByText('schedule.generate_lessons'));
-    // No htmlFor/id ties the <Label> to the <Input> here, so target the
-    // one type="number" field in the dialog by role instead.
-    const weeksInput = screen.getByRole('spinbutton');
+    // FormLabel's htmlFor ties to the Input's id (rhf + shadcn Form), so the
+    // weeks field is queryable by its label now.
+    const weeksInput = screen.getByLabelText('schedule.weeks_label');
     fireEvent.change(weeksInput, { target: { value: '' } });
     fireEvent.click(screen.getByText('common.create'));
 
+    // zodResolver always validates async, so wait for the inline range error
+    // to surface first -- only then is "mutation not called" meaningful. A
+    // bare sync assertion would pass before validation ever runs.
+    await waitFor(() =>
+      expect(screen.getByText('schedule.weeks_error')).toBeInTheDocument(),
+    );
     expect(mutateAsync).not.toHaveBeenCalled();
   });
 

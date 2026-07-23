@@ -1,25 +1,46 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useLogin } from '@/services/authService';
 import { isRootDomain, rootDomainAppUrl } from '@/lib/domain';
 import { Brand } from '@/components/layout/Brand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
-import { Label } from '@/components/ui/label';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 
+const makeLoginFormSchema = (t: (key: string) => string) =>
+  z.object({
+    email: z.string().min(1, t('common.required')),
+    password: z.string().min(1, t('common.required')),
+  });
+
+type LoginFormValues = z.infer<ReturnType<typeof makeLoginFormSchema>>;
+
 const LoginPage = () => {
   const { t } = useTranslation();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const login = useLogin();
   const logout = useAuthStore((s) => s.logout);
+
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(makeLoginFormSchema(t)),
+    defaultValues: { email: '', password: '' },
+  });
 
   useEffect(() => {
     // Always start a direct /login visit from a clean auth state so stale
@@ -62,10 +83,9 @@ const LoginPage = () => {
     navigate(target);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onValid = (values: LoginFormValues) => {
     login.mutate(
-      { email, password: password.trim() },
+      { email: values.email, password: values.password.trim() },
       { onSuccess, onError: handleError },
     );
   };
@@ -89,61 +109,77 @@ const LoginPage = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="email">{t('login.email_label')}</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setFormError(null);
-              }}
-              placeholder={t('login.email_placeholder')}
-              className="mt-1.5 bg-secondary border-border"
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onValid)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('login.email_label')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="email"
+                      autoComplete="email"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setFormError(null);
+                      }}
+                      placeholder={t('login.email_placeholder')}
+                      className="mt-1.5 bg-secondary border-border"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div>
-            <Label htmlFor="password">{t('login.password_label')}</Label>
-            <PasswordInput
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setFormError(null);
-              }}
-              placeholder={t('login.password_placeholder')}
-              className="mt-1.5 bg-secondary border-border"
-              required
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('login.password_label')}</FormLabel>
+                  <FormControl>
+                    <PasswordInput
+                      {...field}
+                      autoComplete="current-password"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setFormError(null);
+                      }}
+                      placeholder={t('login.password_placeholder')}
+                      className="mt-1.5 bg-secondary border-border"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          {formError && (
-            <p role="alert" className="text-sm text-destructive">
-              {formError}
-            </p>
-          )}
-          <Button type="submit" className="w-full" disabled={login.isPending}>
-            {login.isPending ? t('login.submitting') : t('login.submit')}
-          </Button>
-          <div className="pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={handleDemoLogin}
-              disabled={login.isPending}
-            >
-              {t('login.demo')}
+            {formError && (
+              <p role="alert" className="text-sm text-destructive">
+                {formError}
+              </p>
+            )}
+            <Button type="submit" className="w-full" disabled={login.isPending}>
+              {login.isPending ? t('login.submitting') : t('login.submit')}
             </Button>
-            <p className="mt-1.5 text-center text-xs text-muted-foreground">
-              {t('login.demo_hint')}
-            </p>
-          </div>
-        </form>
+            <div className="pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleDemoLogin}
+                disabled={login.isPending}
+              >
+                {t('login.demo')}
+              </Button>
+              <p className="mt-1.5 text-center text-xs text-muted-foreground">
+                {t('login.demo_hint')}
+              </p>
+            </div>
+          </form>
+        </Form>
       </div>
     </div>
   );

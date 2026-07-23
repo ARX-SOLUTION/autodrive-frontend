@@ -2,6 +2,7 @@ import {
   render,
   screen,
   fireEvent,
+  waitFor,
   cleanup,
   within,
 } from '@testing-library/react';
@@ -87,39 +88,45 @@ describe('GroupFormDialog teacher assignment', () => {
     h.updateMutate.mockClear();
   });
 
-  it('includes teacher_id in the create payload when a teacher is selected', () => {
+  it('includes teacher_id in the create payload when a teacher is selected', async () => {
     renderDialog();
     fillRequiredFields();
     pickSelectOption(/groups\.form\.teacher_label/, 'Aziz Karimov');
 
     fireEvent.click(screen.getByRole('button', { name: 'common.add' }));
 
-    expect(h.createMutate).toHaveBeenCalledWith(
-      expect.objectContaining({ teacherId: 't1' }),
-      expect.anything(),
+    await waitFor(() =>
+      expect(h.createMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ teacherId: 't1' }),
+        expect.anything(),
+      ),
     );
   });
 
-  it('sends teacher_id: null when "unassigned" (the default) is submitted', () => {
+  it('sends teacher_id: null when "unassigned" (the default) is submitted', async () => {
     renderDialog();
     fillRequiredFields();
 
     fireEvent.click(screen.getByRole('button', { name: 'common.add' }));
 
-    expect(h.createMutate).toHaveBeenCalledWith(
-      expect.objectContaining({ teacherId: null }),
-      expect.anything(),
+    await waitFor(() =>
+      expect(h.createMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ teacherId: null }),
+        expect.anything(),
+      ),
     );
   });
 
-  it("defaults to the group's current teacher on edit and preserves it on submit", () => {
+  it("defaults to the group's current teacher on edit and preserves it on submit", async () => {
     renderDialog(GROUP);
 
     fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
 
-    expect(h.updateMutate).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'g1', teacherId: 't1' }),
-      expect.anything(),
+    await waitFor(() =>
+      expect(h.updateMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'g1', teacherId: 't1' }),
+        expect.anything(),
+      ),
     );
   });
 });
