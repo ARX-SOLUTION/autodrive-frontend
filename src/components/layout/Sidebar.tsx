@@ -23,6 +23,7 @@ import {
   BookOpen,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import { prefetchRoute } from '@/lib/routePrefetch';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import {
@@ -178,6 +179,8 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
                   <a
                     href={item.path}
                     onClick={(e) => handleNavClick(e, item.path)}
+                    onMouseEnter={() => prefetchRoute(item.path)}
+                    onFocus={() => prefetchRoute(item.path)}
                     aria-label={label}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
@@ -243,6 +246,8 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
                         onMobileOpenChange(false),
                       )
                     }
+                    onMouseEnter={() => prefetchRoute(item.path)}
+                    onFocus={() => prefetchRoute(item.path)}
                     aria-label={label}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
