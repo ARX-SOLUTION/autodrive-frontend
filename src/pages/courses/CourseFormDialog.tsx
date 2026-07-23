@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { toast } from 'sonner';
 import { useCreateCourse, useUpdateCourse } from '@/services/courseService';
 import { Course } from '@/types/course';
 import { Branch } from '@/types/branch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import {
@@ -23,6 +25,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { extractErrorMessage } from '@/lib/errors';
 import { groupDigits } from '@/lib/money';
 
@@ -32,6 +42,21 @@ interface CourseFormDialogProps {
   branches: Branch[];
   onClose: () => void;
 }
+
+// Factory so field messages can be localized via t(), matching PersonModal's
+// makePersonFormSchema convention (src/components/ui/PersonModal.tsx).
+const makeCourseFormSchema = (t: (key: string) => string) =>
+  z.object({
+    name: z.string().trim().min(1, t('common.required')),
+    branchId: z.string().trim().min(1, t('common.required')),
+    courseType: z.enum(['tezkor', 'avto_maktab']),
+    price: z
+      .string()
+      .refine((v) => Number(v.replace(/\D/g, '')) > 0, t('common.required')),
+    durationDays: z.string().refine((v) => Number(v) > 0, t('common.required')),
+  });
+
+type CourseFormValues = z.infer<ReturnType<typeof makeCourseFormSchema>>;
 
 // Extracted out of CoursesPage (was inline) so CourseDetailPage's edit
 // affordance can launch the same create/edit modal the list uses --
@@ -47,73 +72,50 @@ const CourseFormDialog = ({
   const createMutation = useCreateCourse();
   const updateMutation = useUpdateCourse();
 
-  const [formName, setFormName] = useState('');
-  const [formBranchId, setFormBranchId] = useState('');
-  const [formCourseType, setFormCourseType] = useState<
-    'tezkor' | 'avto_maktab'
-  >('avto_maktab');
-  const [formPrice, setFormPrice] = useState('');
-  const [formDurationDays, setFormDurationDays] = useState('');
+  const defaultFormValues = (): CourseFormValues => ({
+    name: '',
+    branchId: '',
+    courseType: 'avto_maktab',
+    price: '',
+    durationDays: '',
+  });
 
-  const initialFormRef = useRef({
-    name: formName,
-    branchId: formBranchId,
-    courseType: formCourseType,
-    price: formPrice,
-    durationDays: formDurationDays,
+  const form = useForm<CourseFormValues>({
+    resolver: zodResolver(makeCourseFormSchema(t)),
+    defaultValues: defaultFormValues(),
   });
 
   useEffect(() => {
     if (!open) return;
-    const init = editCourse
-      ? {
-          name: editCourse.name,
-          branchId: editCourse.branch_id,
-          courseType: editCourse.course_type,
-          price: groupDigits(String(editCourse.price)),
-          durationDays: String(editCourse.duration_days),
-        }
-      : {
-          name: '',
-          branchId: '',
-          courseType: 'avto_maktab' as const,
-          price: '',
-          durationDays: '',
-        };
-    setFormName(init.name);
-    setFormBranchId(init.branchId);
-    setFormCourseType(init.courseType);
-    setFormPrice(init.price);
-    setFormDurationDays(init.durationDays);
-    initialFormRef.current = init;
+    form.reset(
+      editCourse
+        ? {
+            name: editCourse.name,
+            branchId: editCourse.branch_id,
+            courseType: editCourse.course_type,
+            price: groupDigits(String(editCourse.price)),
+            durationDays: String(editCourse.duration_days),
+          }
+        : defaultFormValues(),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editCourse]);
 
-  const isFormDirty =
-    formName !== initialFormRef.current.name ||
-    formBranchId !== initialFormRef.current.branchId ||
-    formCourseType !== initialFormRef.current.courseType ||
-    formPrice !== initialFormRef.current.price ||
-    formDurationDays !== initialFormRef.current.durationDays;
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
     useConfirmedClose(
-      isFormDirty || createMutation.isPending || updateMutation.isPending,
+      form.formState.isDirty ||
+        createMutation.isPending ||
+        updateMutation.isPending,
       onClose,
     );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const price = Number(formPrice.replace(/\D/g, ''));
-    const durationDays = Number(formDurationDays);
-    if (!formName.trim() || !formBranchId || !price || !durationDays) {
-      toast.error(t('common.fill_required'));
-      return;
-    }
+  const onValid = (values: CourseFormValues) => {
     const payload = {
-      name: formName.trim(),
-      branch_id: formBranchId,
-      course_type: formCourseType,
-      price,
-      duration_days: durationDays,
+      name: values.name,
+      branch_id: values.branchId,
+      course_type: values.courseType,
+      price: Number(values.price.replace(/\D/g, '')),
+      duration_days: Number(values.durationDays),
     };
     if (editCourse) {
       updateMutation.mutate(
@@ -149,111 +151,134 @@ const CourseFormDialog = ({
               {t('courses.form_desc')}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="course-name">
-                {t('courses.name')} <span aria-hidden="true">*</span>
-              </Label>
-              <Input
-                id="course-name"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                required
-                className="bg-secondary border-border"
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onValid)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('courses.name')} *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        className="bg-secondary border-border"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="course-branch">
-                {t('common.branch')} <span aria-hidden="true">*</span>
-              </Label>
-              <Select value={formBranchId} onValueChange={setFormBranchId}>
-                <SelectTrigger
-                  id="course-branch"
-                  aria-required="true"
-                  className="bg-secondary border-border"
-                >
-                  <SelectValue placeholder={t('common.select_placeholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {branches.map((b) => (
-                    <SelectItem key={b.id} value={b.id}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="course-type">
-                {t('courses.type')} <span aria-hidden="true">*</span>
-              </Label>
-              <Select
-                value={formCourseType}
-                onValueChange={(v) =>
-                  setFormCourseType(v as 'tezkor' | 'avto_maktab')
-                }
-              >
-                <SelectTrigger
-                  id="course-type"
-                  aria-required="true"
-                  className="bg-secondary border-border"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tezkor">
-                    {t('courses.type_tezkor')}
-                  </SelectItem>
-                  <SelectItem value="avto_maktab">
-                    {t('courses.type_avto_maktab')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="course-price">
-                  {t('courses.price')} <span aria-hidden="true">*</span>
-                </Label>
-                <Input
-                  id="course-price"
-                  inputMode="numeric"
-                  value={formPrice}
-                  onChange={(e) => setFormPrice(groupDigits(e.target.value))}
-                  required
-                  className="bg-secondary border-border"
+              <FormField
+                control={form.control}
+                name="branchId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('common.branch')} *</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger className="bg-secondary border-border">
+                          <SelectValue
+                            placeholder={t('common.select_placeholder')}
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {branches.map((b) => (
+                          <SelectItem key={b.id} value={b.id}>
+                            {b.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="courseType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('courses.type')} *</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger className="bg-secondary border-border">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="tezkor">
+                          {t('courses.type_tezkor')}
+                        </SelectItem>
+                        <SelectItem value="avto_maktab">
+                          {t('courses.type_avto_maktab')}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('courses.price')} *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          inputMode="numeric"
+                          value={field.value}
+                          onChange={(e) =>
+                            field.onChange(groupDigits(e.target.value))
+                          }
+                          className="bg-secondary border-border"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="durationDays"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('courses.duration')} *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          min={1}
+                          inputMode="numeric"
+                          className="bg-secondary border-border"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="course-duration">
-                  {t('courses.duration')} <span aria-hidden="true">*</span>
-                </Label>
-                <Input
-                  id="course-duration"
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  value={formDurationDays}
-                  onChange={(e) => setFormDurationDays(e.target.value)}
-                  required
-                  className="bg-secondary border-border"
-                />
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={attemptClose}>
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending
+                  }
+                >
+                  {createMutation.isPending || updateMutation.isPending
+                    ? t('common.saving')
+                    : t('common.save')}
+                </Button>
               </div>
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={attemptClose}>
-                {t('common.cancel')}
-              </Button>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending || updateMutation.isPending}
-              >
-                {createMutation.isPending || updateMutation.isPending
-                  ? t('common.saving')
-                  : t('common.save')}
-              </Button>
-            </div>
-          </form>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 

@@ -1,7 +1,10 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addDays, startOfWeek, format, parseISO, isSameDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   useScheduleTemplates,
   useCreateTemplate,
@@ -14,7 +17,6 @@ import { DAY_LABELS, CalendarLesson } from '@/types/schedule';
 import { LessonType } from '@/types/attendance';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -26,6 +28,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import {
   Select,
   SelectContent,
@@ -127,6 +137,29 @@ const LessonCard = ({ lesson, typeLabel, onOpen }: LessonCardProps) => {
   );
 };
 
+// Two independent RHF forms on this page: create-template (dirty-guarded)
+// and generate-lessons (no dirty guard, matching the original plain-state
+// behavior -- autodrive-6cq.5.15 only ever guarded the template form).
+const makeTemplateFormSchema = (t: (key: string) => string) =>
+  z.object({
+    groupId: z.string().trim().min(1, t('common.required')),
+    dayOfWeek: z.string(),
+    startTime: z.string().min(1, t('common.required')),
+    endTime: z.string().min(1, t('common.required')),
+    lessonType: z.enum(['theory', 'practice']),
+  });
+type TemplateFormValues = z.infer<ReturnType<typeof makeTemplateFormSchema>>;
+
+const makeGenerateFormSchema = (t: (key: string) => string) =>
+  z.object({
+    weeks: z.string().refine((v) => {
+      const n = parseInt(v);
+      return !Number.isNaN(n) && n >= 1 && n <= 12;
+    }, t('schedule.weeks_error')),
+    groupId: z.string(),
+  });
+type GenerateFormValues = z.infer<ReturnType<typeof makeGenerateFormSchema>>;
+
 const SchedulePage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -166,26 +199,22 @@ const SchedulePage = () => {
   );
 
   // Create template form
-  const [formGroupId, setFormGroupId] = useState('');
-  const [formDayOfWeek, setFormDayOfWeek] = useState('1');
-  const [formStartTime, setFormStartTime] = useState('09:00');
-  const [formEndTime, setFormEndTime] = useState('11:00');
-  const [formLessonType, setFormLessonType] = useState<LessonType>('theory');
-  // Snapshot taken whenever the create-template dialog opens, compared
-  // against current fields to drive the unsaved-changes guard below
-  // (autodrive-6cq.5.15) -- this form is plain useState, not
-  // react-hook-form, so there's no formState.isDirty to read.
-  const initialTemplateFormRef = useRef({
-    groupId: formGroupId,
-    dayOfWeek: formDayOfWeek,
-    startTime: formStartTime,
-    endTime: formEndTime,
-    lessonType: formLessonType,
+  const templateForm = useForm<TemplateFormValues>({
+    resolver: zodResolver(makeTemplateFormSchema(t)),
+    defaultValues: {
+      groupId: '',
+      dayOfWeek: '1',
+      startTime: '09:00',
+      endTime: '11:00',
+      lessonType: 'theory',
+    },
   });
 
-  // Generate form
-  const [genWeeks, setGenWeeks] = useState('4');
-  const [genGroupId, setGenGroupId] = useState('');
+  // Generate form -- no dirty guard, matches the original plain-state page.
+  const generateForm = useForm<GenerateFormValues>({
+    resolver: zodResolver(makeGenerateFormSchema(t)),
+    defaultValues: { weeks: '4', groupId: '' },
+  });
 
   // Build week days array
   const weekDays = useMemo(() => {
@@ -212,47 +241,33 @@ const SchedulePage = () => {
   }, [lessons, weekDays]);
 
   const openCreate = () => {
-    setFormGroupId('');
-    setFormDayOfWeek('1');
-    setFormStartTime('09:00');
-    setFormEndTime('11:00');
-    setFormLessonType('theory');
-    initialTemplateFormRef.current = {
+    templateForm.reset({
       groupId: '',
       dayOfWeek: '1',
       startTime: '09:00',
       endTime: '11:00',
       lessonType: 'theory',
-    };
+    });
     setCreateOpen(true);
   };
 
-  const isTemplateFormDirty =
-    formGroupId !== initialTemplateFormRef.current.groupId ||
-    formDayOfWeek !== initialTemplateFormRef.current.dayOfWeek ||
-    formStartTime !== initialTemplateFormRef.current.startTime ||
-    formEndTime !== initialTemplateFormRef.current.endTime ||
-    formLessonType !== initialTemplateFormRef.current.lessonType;
   const {
     attemptClose: attemptCloseCreate,
     confirmOpen: createConfirmOpen,
     confirmDiscard: confirmDiscardCreate,
     cancelDiscard: cancelDiscardCreate,
-  } = useConfirmedClose(isTemplateFormDirty, () => setCreateOpen(false));
+  } = useConfirmedClose(templateForm.formState.isDirty, () =>
+    setCreateOpen(false),
+  );
 
-  const handleCreateTemplate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formGroupId || !formStartTime || !formEndTime) {
-      toast.error(t('schedule.fill_required'));
-      return;
-    }
+  const handleCreateTemplate = async (values: TemplateFormValues) => {
     try {
       await createTemplate.mutateAsync({
-        groupId: formGroupId,
-        dayOfWeek: Number(formDayOfWeek),
-        startTime: formStartTime,
-        endTime: formEndTime,
-        lessonType: formLessonType,
+        groupId: values.groupId,
+        dayOfWeek: Number(values.dayOfWeek),
+        startTime: values.startTime,
+        endTime: values.endTime,
+        lessonType: values.lessonType,
       });
       toast.success(t('schedule.template_created'));
       setCreateOpen(false);
@@ -272,17 +287,11 @@ const SchedulePage = () => {
     }
   };
 
-  const handleGenerate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const weeks = parseInt(genWeeks);
-    if (Number.isNaN(weeks) || weeks < 1 || weeks > 12) {
-      toast.error(t('schedule.weeks_error'));
-      return;
-    }
+  const handleGenerate = async (values: GenerateFormValues) => {
     try {
       const result = await generateLessons.mutateAsync({
-        weeks,
-        ...(genGroupId ? { groupId: genGroupId } : {}),
+        weeks: parseInt(values.weeks),
+        ...(values.groupId ? { groupId: values.groupId } : {}),
       });
       // Report the real created/skipped counts (autodrive-52v.4) -- the old
       // fixed "generated" string showed the same success toast even for
@@ -532,91 +541,130 @@ const SchedulePage = () => {
               {t('schedule.template_desc')}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleCreateTemplate} className="space-y-4">
-            <div>
-              <Label htmlFor="tpl-group">{t('schedule.group_label')}</Label>
-              <Select value={formGroupId} onValueChange={setFormGroupId}>
-                <SelectTrigger id="tpl-group">
-                  <SelectValue placeholder={t('schedule.group_placeholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {(groups || []).map((g) => (
-                    <SelectItem key={g.id} value={g.id}>
-                      {g.name} {g.branch_name ? `(${g.branch_name})` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="tpl-day">{t('schedule.day_label')}</Label>
-              <Select value={formDayOfWeek} onValueChange={setFormDayOfWeek}>
-                <SelectTrigger id="tpl-day">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(DAY_LABELS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="tpl-start">{t('schedule.start_time')}</Label>
-                <Input
-                  id="tpl-start"
-                  type="time"
-                  value={formStartTime}
-                  onChange={(e) => setFormStartTime(e.target.value)}
+          <Form {...templateForm}>
+            <form
+              onSubmit={templateForm.handleSubmit(handleCreateTemplate)}
+              className="space-y-4"
+            >
+              <FormField
+                control={templateForm.control}
+                name="groupId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('schedule.group_label')}</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={t('schedule.group_placeholder')}
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(groups || []).map((g) => (
+                          <SelectItem key={g.id} value={g.id}>
+                            {g.name} {g.branch_name ? `(${g.branch_name})` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={templateForm.control}
+                name="dayOfWeek"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('schedule.day_label')}</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.entries(DAY_LABELS).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={templateForm.control}
+                  name="startTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('schedule.start_time')}</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={templateForm.control}
+                  name="endTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('schedule.end_time')}</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-              <div>
-                <Label htmlFor="tpl-end">{t('schedule.end_time')}</Label>
-                <Input
-                  id="tpl-end"
-                  type="time"
-                  value={formEndTime}
-                  onChange={(e) => setFormEndTime(e.target.value)}
-                />
+              <FormField
+                control={templateForm.control}
+                name="lessonType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('schedule.template_type')}</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="theory">
+                          {t('schedule.type_theory')}
+                        </SelectItem>
+                        <SelectItem value="practice">
+                          {t('schedule.type_practice')}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={attemptCloseCreate}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button type="submit" disabled={createTemplate.isPending}>
+                  {createTemplate.isPending
+                    ? t('common.creating')
+                    : t('common.create')}
+                </Button>
               </div>
-            </div>
-            <div>
-              <Label htmlFor="tpl-type">{t('schedule.template_type')}</Label>
-              <Select
-                value={formLessonType}
-                onValueChange={(v: LessonType) => setFormLessonType(v)}
-              >
-                <SelectTrigger id="tpl-type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="theory">
-                    {t('schedule.type_theory')}
-                  </SelectItem>
-                  <SelectItem value="practice">
-                    {t('schedule.type_practice')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={attemptCloseCreate}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button type="submit" disabled={createTemplate.isPending}>
-                {createTemplate.isPending
-                  ? t('common.creating')
-                  : t('common.create')}
-              </Button>
-            </div>
-          </form>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 
@@ -636,62 +684,80 @@ const SchedulePage = () => {
             <DialogTitle>{t('schedule.generate_lessons')}</DialogTitle>
             <DialogDescription>{t('schedule.generate_desc')}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleGenerate} className="space-y-4">
-            <div>
-              <Label htmlFor="gen-weeks">{t('schedule.weeks_label')}</Label>
-              <Input
-                id="gen-weeks"
-                type="number"
-                min={1}
-                max={12}
-                value={genWeeks}
-                onChange={(e) => setGenWeeks(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                {t('schedule.weeks_hint')}
-              </p>
-            </div>
-            <div>
-              <Label htmlFor="gen-group">{t('schedule.group_optional')}</Label>
-              <Select
-                value={genGroupId || 'all'}
-                onValueChange={(v) => setGenGroupId(v === 'all' ? '' : v)}
-              >
-                <SelectTrigger id="gen-group">
-                  <SelectValue placeholder={t('schedule.all_groups')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    {t('schedule.all_groups')}
-                  </SelectItem>
-                  {(groups || []).map((g) => (
-                    <SelectItem key={g.id} value={g.id}>
-                      {g.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setGenerateOpen(false)}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button type="submit" disabled={generateLessons.isPending}>
-                {generateLessons.isPending ? (
-                  <>
-                    <CircleNotch className="mr-2 h-4 w-4 animate-spin" />{' '}
-                    {t('common.creating')}
-                  </>
-                ) : (
-                  t('common.create')
+          <Form {...generateForm}>
+            <form
+              onSubmit={generateForm.handleSubmit(handleGenerate)}
+              className="space-y-4"
+            >
+              <FormField
+                control={generateForm.control}
+                name="weeks"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('schedule.weeks_label')}</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={1} max={12} {...field} />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t('schedule.weeks_hint')}
+                    </p>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </Button>
-            </div>
-          </form>
+              />
+              <FormField
+                control={generateForm.control}
+                name="groupId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('schedule.group_optional')}</FormLabel>
+                    <Select
+                      value={field.value || 'all'}
+                      onValueChange={(v) =>
+                        field.onChange(v === 'all' ? '' : v)
+                      }
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('schedule.all_groups')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="all">
+                          {t('schedule.all_groups')}
+                        </SelectItem>
+                        {(groups || []).map((g) => (
+                          <SelectItem key={g.id} value={g.id}>
+                            {g.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setGenerateOpen(false)}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button type="submit" disabled={generateLessons.isPending}>
+                  {generateLessons.isPending ? (
+                    <>
+                      <CircleNotch className="mr-2 h-4 w-4 animate-spin" />{' '}
+                      {t('common.creating')}
+                    </>
+                  ) : (
+                    t('common.create')
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 

@@ -1,5 +1,8 @@
-import { useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import {
   useBranches,
@@ -25,6 +28,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { toast } from 'sonner';
 import {
   Plus,
@@ -48,13 +59,28 @@ import { Branch } from '@/types/branch';
 import { useCan } from '@/hooks/useCan';
 import { branchDeleteDescArgs } from './branchDeleteDescArgs';
 
-interface FormState {
-  name: string;
-  location: string;
-  phone: string;
-}
+// Factory so field messages can be localized via t(), matching
+// PersonModal's makePersonFormSchema convention.
+const makeBranchFormSchema = (t: (key: string) => string) =>
+  z
+    .object({
+      name: z.string().trim().min(1, t('common.required')),
+      location: z.string().trim().min(1, t('common.required')),
+      phone: z.string(),
+    })
+    .superRefine((data, ctx) => {
+      if (uzLocalDigits(data.phone).length > 0 && !isValidUzPhone(data.phone)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['phone'],
+          message: t('common.invalid_phone'),
+        });
+      }
+    });
 
-const EMPTY_FORM: FormState = {
+type BranchFormValues = z.infer<ReturnType<typeof makeBranchFormSchema>>;
+
+const EMPTY_FORM: BranchFormValues = {
   name: '',
   location: '',
   phone: formatUzPhoneInput(''),
@@ -83,52 +109,50 @@ const BranchesPage = () => {
   const [editItem, setEditItem] = useState<Branch | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [restoreId, setRestoreId] = useState<string | null>(null);
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  // Snapshot taken whenever the dialog opens, compared against current form
-  // state to drive the unsaved-changes guard below (autodrive-6cq.5.15) --
-  // this form is plain useState, not react-hook-form, so there's no
-  // formState.isDirty to read.
-  const initialFormRef = useRef(form);
+
+  const form = useForm<BranchFormValues>({
+    resolver: zodResolver(makeBranchFormSchema(t)),
+    defaultValues: EMPTY_FORM,
+  });
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    if (editItem) {
+      form.reset({
+        name: editItem.name,
+        location: editItem.location,
+        phone: formatUzPhoneInput(editItem.phone),
+      });
+    } else {
+      form.reset(EMPTY_FORM);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalOpen, editItem]);
 
   const openCreate = () => {
     setEditItem(null);
-    setForm(EMPTY_FORM);
-    initialFormRef.current = EMPTY_FORM;
     setModalOpen(true);
   };
 
   const openEdit = (b: Branch) => {
     setEditItem(b);
-    const initial = {
-      name: b.name,
-      location: b.location,
-      phone: formatUzPhoneInput(b.phone),
-    };
-    setForm(initial);
-    initialFormRef.current = initial;
     setModalOpen(true);
   };
 
-  const isFormDirty =
-    JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
     useConfirmedClose(
-      isFormDirty || createMut.isPending || updateMut.isPending,
+      form.formState.isDirty || createMut.isPending || updateMut.isPending,
       () => setModalOpen(false),
     );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name.trim() || !form.location.trim()) return;
-    const phoneHasDigits = uzLocalDigits(form.phone).length > 0;
-    if (phoneHasDigits && !isValidUzPhone(form.phone)) {
-      toast.error(t('common.invalid_phone'));
-      return;
-    }
+  const onValid = (values: BranchFormValues) => {
     const payload = {
-      name: form.name.trim(),
-      location: form.location.trim(),
-      phone: phoneHasDigits ? uzPhoneE164(form.phone) : undefined,
+      name: values.name,
+      location: values.location,
+      phone:
+        uzLocalDigits(values.phone).length > 0
+          ? uzPhoneE164(values.phone)
+          : undefined,
     };
     if (editItem) {
       updateMut.mutate(
@@ -456,75 +480,81 @@ const BranchesPage = () => {
               {t('branches.form_desc')}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="branch-name">
-                {t('branches.name')} <span aria-hidden="true">*</span>
-              </Label>
-              <Input
-                id="branch-name"
-                value={form.name}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, name: e.target.value }))
-                }
-                required
-                autoComplete="organization"
-                className="bg-secondary border-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="branch-address">
-                {t('branches.address')} <span aria-hidden="true">*</span>
-              </Label>
-              <Input
-                id="branch-address"
-                value={form.location}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, location: e.target.value }))
-                }
-                required
-                placeholder={t('branches.address')}
-                className="bg-secondary border-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="branch-phone">{t('common.phone')}</Label>
-              <Input
-                id="branch-phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                value={form.phone}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    phone: formatUzPhoneInput(e.target.value),
-                  }))
-                }
-                placeholder="+998 90 123 45 67"
-                className="bg-secondary border-border"
-              />
-              {uzLocalDigits(form.phone).length > 0 &&
-                !isValidUzPhone(form.phone) && (
-                  <p className="text-xs text-destructive">
-                    {t('common.invalid_phone')}
-                  </p>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onValid)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('branches.name')} *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        autoComplete="organization"
+                        className="bg-secondary border-border"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={attemptClose}>
-                {t('common.cancel')}
-              </Button>
-              <Button
-                type="submit"
-                disabled={createMut.isPending || updateMut.isPending}
-              >
-                {createMut.isPending || updateMut.isPending
-                  ? t('common.saving')
-                  : t('common.save')}
-              </Button>
-            </div>
-          </form>
+              />
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('branches.address')} *</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder={t('branches.address')}
+                        className="bg-secondary border-border"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('common.phone')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        placeholder="+998 90 123 45 67"
+                        className="bg-secondary border-border"
+                        value={formatUzPhoneInput(field.value)}
+                        onChange={(e) =>
+                          field.onChange(formatUzPhoneInput(e.target.value))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={attemptClose}>
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createMut.isPending || updateMut.isPending}
+                >
+                  {createMut.isPending || updateMut.isPending
+                    ? t('common.saving')
+                    : t('common.save')}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 

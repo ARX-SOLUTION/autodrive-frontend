@@ -88,6 +88,7 @@
     "fill_required": "Fill in all required fields",
     "invalid_phone": "Invalid phone number",
     "invalid_name": "Please enter a valid name",
+    "required": "Required",
     "this_week": "This week",
     "today": "Today",
     "this_month": "This month",

@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useAuthStore } from '@/store/authStore';
 import { useChangePassword } from '@/services/authService';
 import { useUpdateUser } from '@/services/userService';
@@ -15,6 +18,14 @@ import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { User, Shield, Buildings } from '@phosphor-icons/react';
 import { toast } from 'sonner';
@@ -26,6 +37,37 @@ import {
   uzPhoneE164,
 } from '@/lib/phoneFormater';
 
+// Factory so the phone message can be localized via t() -- name has no
+// validation rules today (not required), matching the page's existing
+// behavior. Mirrors BranchesPage's phone superRefine (optional, valid only
+// if digits are present).
+const makeProfileFormSchema = (t: (key: string) => string) =>
+  z
+    .object({
+      name: z.string(),
+      phone: z.string(),
+    })
+    .superRefine((data, ctx) => {
+      if (uzLocalDigits(data.phone).length > 0 && !isValidUzPhone(data.phone)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['phone'],
+          message: t('common.invalid_phone'),
+        });
+      }
+    });
+
+type ProfileFormValues = z.infer<ReturnType<typeof makeProfileFormSchema>>;
+
+// No client validation today -- kept exactly as-is (passwords are
+// unchecked); only the form plumbing moves to the standard pattern.
+const pwFormSchema = z.object({
+  currentPassword: z.string(),
+  newPassword: z.string(),
+});
+
+type PwFormValues = z.infer<typeof pwFormSchema>;
+
 const ProfilePage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -33,27 +75,30 @@ const ProfilePage = () => {
   const setUser = useAuthStore((s) => s.setUser);
   const changePasswordMut = useChangePassword();
   const updateProfileMut = useUpdateUser();
-  const [pwForm, setPwForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-  });
-  const [name, setName] = useState(user?.name ?? '');
-  // Masked, controlled phone (defaults to +998).
-  const [phone, setPhone] = useState(formatUzPhoneInput(user?.phone));
   // Matches PATCH /users/:id's class-level @Roles(owner, manager, dev) guard
   // -- operator/teacher would 403, so their fields stay read-only rather
   // than showing a Save button that silently fails.
   const canEditProfile =
     user?.role === 'owner' || user?.role === 'manager' || user?.role === 'dev';
-  const phoneValid = uzLocalDigits(phone).length === 0 || isValidUzPhone(phone);
 
-  const handleSaveProfile = () => {
-    if (!user || !canEditProfile || !phoneValid) return;
+  const profileForm = useForm<ProfileFormValues>({
+    resolver: zodResolver(makeProfileFormSchema(t)),
+    defaultValues: {
+      name: user?.name ?? '',
+      phone: formatUzPhoneInput(user?.phone),
+    },
+  });
+
+  const onSaveValid = (values: ProfileFormValues) => {
+    if (!user || !canEditProfile) return;
     updateProfileMut.mutate(
       {
         id: user.id,
-        fullName: name.trim(),
-        phone: uzLocalDigits(phone).length > 0 ? uzPhoneE164(phone) : undefined,
+        fullName: values.name.trim(),
+        phone:
+          uzLocalDigits(values.phone).length > 0
+            ? uzPhoneE164(values.phone)
+            : undefined,
       },
       {
         onSuccess: (updated) => {
@@ -65,6 +110,11 @@ const ProfilePage = () => {
       },
     );
   };
+
+  const pwForm = useForm<PwFormValues>({
+    resolver: zodResolver(pwFormSchema),
+    defaultValues: { currentPassword: '', newPassword: '' },
+  });
 
   const { data: linkStatus, refetch: refetchLinkStatus } =
     useTelegramLinkStatus();
@@ -116,20 +166,19 @@ const ProfilePage = () => {
     });
   };
 
-  const handleChangePassword = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onPwValid = (values: PwFormValues) => {
     // Captured before the mutation: onSuccess replaces the user in the store
     // (must_change_password becomes false), so read the flag now.
     const wasForced = !!user?.must_change_password;
     changePasswordMut.mutate(
       {
-        currentPassword: pwForm.currentPassword.trim(),
-        newPassword: pwForm.newPassword.trim(),
+        currentPassword: values.currentPassword.trim(),
+        newPassword: values.newPassword.trim(),
       },
       {
         onSuccess: () => {
           toast.success(t('profile.update_password_success'));
-          setPwForm({ currentPassword: '', newPassword: '' });
+          pwForm.reset({ currentPassword: '', newPassword: '' });
           if (wasForced) navigate('/dashboard');
         },
         onError: (error) =>
@@ -179,63 +228,81 @@ const ProfilePage = () => {
         </div>
 
         {/* Info */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="profile-name">{t('profile.name')}</Label>
-            <Input
-              id="profile-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
-              disabled={!canEditProfile}
-              className="mt-1.5 bg-secondary border-border"
-            />
-          </div>
-          <div>
-            <Label htmlFor="profile-email">Email</Label>
-            <Input
-              id="profile-email"
-              type="email"
-              autoComplete="email"
-              defaultValue={user?.email}
-              disabled
-              className="mt-1.5 bg-secondary border-border"
-            />
-          </div>
-          <div>
-            <Label htmlFor="profile-phone">{t('profile.phone')}</Label>
-            <Input
-              id="profile-phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              value={phone}
-              onChange={(e) => setPhone(formatUzPhoneInput(e.target.value))}
-              disabled={!canEditProfile}
-              className="mt-1.5 bg-secondary border-border"
-            />
-            {uzLocalDigits(phone).length > 0 && !isValidUzPhone(phone) && (
-              <p className="mt-1.5 text-xs text-destructive">
-                {t('common.invalid_phone')}
+        <Form {...profileForm}>
+          <form
+            onSubmit={profileForm.handleSubmit(onSaveValid)}
+            className="space-y-6"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={profileForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('profile.name')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        autoComplete="name"
+                        disabled={!canEditProfile}
+                        className="bg-secondary border-border"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div>
+                <Label htmlFor="profile-email">Email</Label>
+                <Input
+                  id="profile-email"
+                  type="email"
+                  autoComplete="email"
+                  defaultValue={user?.email}
+                  disabled
+                  className="mt-1.5 bg-secondary border-border"
+                />
+              </div>
+              <FormField
+                control={profileForm.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('profile.phone')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        disabled={!canEditProfile}
+                        className="bg-secondary border-border"
+                        value={formatUzPhoneInput(field.value)}
+                        onChange={(e) =>
+                          field.onChange(formatUzPhoneInput(e.target.value))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {!canEditProfile && (
+              <p className="text-xs text-muted-foreground">
+                {t('profile.readonly_note')}
               </p>
             )}
-          </div>
-        </div>
 
-        {!canEditProfile && (
-          <p className="text-xs text-muted-foreground">
-            {t('profile.readonly_note')}
-          </p>
-        )}
-
-        <Button
-          onClick={handleSaveProfile}
-          disabled={
-            !canEditProfile || !phoneValid || updateProfileMut.isPending
-          }
-        >
-          {t('profile.save')}
-        </Button>
+            <Button
+              type="submit"
+              disabled={!canEditProfile || updateProfileMut.isPending}
+            >
+              {t('profile.save')}
+            </Button>
+          </form>
+        </Form>
       </div>
 
       {/* Telegram */}
@@ -301,50 +368,58 @@ const ProfilePage = () => {
       />
 
       {/* Change password */}
-      <form onSubmit={handleChangePassword}>
-        <div className="glass-card p-6 space-y-4">
-          <h3 className="font-heading font-semibold text-balance">
-            {t('profile.change_password')}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="profile-current-password">
-                {t('profile.current_password')}
-              </Label>
-              <PasswordInput
-                id="profile-current-password"
-                autoComplete="current-password"
-                className="mt-1.5 bg-secondary border-border"
-                value={pwForm.currentPassword}
-                onChange={(e) =>
-                  setPwForm((p) => ({ ...p, currentPassword: e.target.value }))
-                }
+      <Form {...pwForm}>
+        <form onSubmit={pwForm.handleSubmit(onPwValid)}>
+          <div className="glass-card p-6 space-y-4">
+            <h3 className="font-heading font-semibold text-balance">
+              {t('profile.change_password')}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={pwForm.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('profile.current_password')}</FormLabel>
+                    <FormControl>
+                      <PasswordInput
+                        {...field}
+                        autoComplete="current-password"
+                        className="bg-secondary border-border"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={pwForm.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('profile.new_password')}</FormLabel>
+                    <FormControl>
+                      <PasswordInput
+                        {...field}
+                        autoComplete="new-password"
+                        className="bg-secondary border-border"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-            <div>
-              <Label htmlFor="profile-new-password">
-                {t('profile.new_password')}
-              </Label>
-              <PasswordInput
-                id="profile-new-password"
-                autoComplete="new-password"
-                className="mt-1.5 bg-secondary border-border"
-                value={pwForm.newPassword}
-                onChange={(e) =>
-                  setPwForm((p) => ({ ...p, newPassword: e.target.value }))
-                }
-              />
-            </div>
+            <Button
+              type="submit"
+              variant="outline"
+              disabled={changePasswordMut.isPending}
+            >
+              {t('profile.update_password')}
+            </Button>
           </div>
-          <Button
-            type="submit"
-            variant="outline"
-            disabled={changePasswordMut.isPending}
-          >
-            {t('profile.update_password')}
-          </Button>
-        </div>
-      </form>
+        </form>
+      </Form>
     </div>
   );
 };

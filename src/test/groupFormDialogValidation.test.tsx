@@ -2,6 +2,7 @@ import {
   render,
   screen,
   fireEvent,
+  waitFor,
   cleanup,
   within,
 } from '@testing-library/react';
@@ -13,9 +14,8 @@ import type { Branch } from '@/types/branch';
 
 // autodrive-52v.1: submitting with the required branch <Select> left unset
 // used to just `return` with no toast/inline error -- the dialog looked
-// frozen. Regression: it must now surface the same fill_required toast
-// CoursesPage already uses for this exact situation, and must not call the
-// mutation.
+// frozen. Regression: it must now surface an inline <FormMessage> (zod
+// `common.required`) on the branch field, and must not call the mutation.
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
@@ -54,7 +54,7 @@ describe('GroupFormDialog validation feedback', () => {
     vi.mocked(toast.error).mockClear();
   });
 
-  it('shows a fill_required toast and does not submit when branch is left unset', () => {
+  it('shows an inline required error and does not submit when branch is left unset', async () => {
     renderDialog();
     fireEvent.change(screen.getByLabelText(/groups\.name/), {
       target: { value: '11-guruh' },
@@ -63,11 +63,13 @@ describe('GroupFormDialog validation feedback', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'common.add' }));
 
-    expect(toast.error).toHaveBeenCalledWith('common.fill_required');
+    await waitFor(() =>
+      expect(screen.getByText('common.required')).toBeInTheDocument(),
+    );
     expect(h.createMutate).not.toHaveBeenCalled();
   });
 
-  it('submits once name and branch are both filled', () => {
+  it('submits once name and branch are both filled', async () => {
     renderDialog();
     fireEvent.change(screen.getByLabelText(/groups\.name/), {
       target: { value: '11-guruh' },
@@ -77,10 +79,12 @@ describe('GroupFormDialog validation feedback', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'common.add' }));
 
-    expect(toast.error).not.toHaveBeenCalled();
-    expect(h.createMutate).toHaveBeenCalledWith(
-      expect.objectContaining({ name: '11-guruh', branchId: 'b1' }),
-      expect.anything(),
+    await waitFor(() =>
+      expect(h.createMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ name: '11-guruh', branchId: 'b1' }),
+        expect.anything(),
+      ),
     );
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });
