@@ -19,7 +19,7 @@ import {
 import { toLocalDateStr } from '@/services/studentService';
 import { useAuthStore } from '@/store/authStore';
 import { CircleNotch } from '@phosphor-icons/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { presetRange, type DatePreset } from './payments/dateRangePresets';
 import { exportPaymentsToExcel } from './payments/exportPayments';
@@ -90,8 +90,10 @@ const PaymentsPage = () => {
     });
 
   const currentPage = Number(searchParams.get('page')) || 1;
-  const setCurrentPage = (p: number) =>
-    setParam('page', p > 1 ? String(p) : undefined);
+  const setCurrentPage = useCallback(
+    (p: number) => setParam('page', p > 1 ? String(p) : undefined),
+    [setParam],
+  );
 
   const [isExporting, setIsExporting] = useState(false);
 
@@ -119,8 +121,8 @@ const PaymentsPage = () => {
       return;
     }
     setCurrentPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    setCurrentPage,
     branchId,
     activeCourseType,
     dateFromTime,
