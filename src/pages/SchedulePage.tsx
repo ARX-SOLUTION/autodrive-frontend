@@ -534,9 +534,9 @@ const SchedulePage = () => {
           </DialogHeader>
           <form onSubmit={handleCreateTemplate} className="space-y-4">
             <div>
-              <Label>{t('schedule.group_label')}</Label>
+              <Label htmlFor="tpl-group">{t('schedule.group_label')}</Label>
               <Select value={formGroupId} onValueChange={setFormGroupId}>
-                <SelectTrigger>
+                <SelectTrigger id="tpl-group">
                   <SelectValue placeholder={t('schedule.group_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -549,9 +549,9 @@ const SchedulePage = () => {
               </Select>
             </div>
             <div>
-              <Label>{t('schedule.day_label')}</Label>
+              <Label htmlFor="tpl-day">{t('schedule.day_label')}</Label>
               <Select value={formDayOfWeek} onValueChange={setFormDayOfWeek}>
-                <SelectTrigger>
+                <SelectTrigger id="tpl-day">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -565,16 +565,18 @@ const SchedulePage = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>{t('schedule.start_time')}</Label>
+                <Label htmlFor="tpl-start">{t('schedule.start_time')}</Label>
                 <Input
+                  id="tpl-start"
                   type="time"
                   value={formStartTime}
                   onChange={(e) => setFormStartTime(e.target.value)}
                 />
               </div>
               <div>
-                <Label>{t('schedule.end_time')}</Label>
+                <Label htmlFor="tpl-end">{t('schedule.end_time')}</Label>
                 <Input
+                  id="tpl-end"
                   type="time"
                   value={formEndTime}
                   onChange={(e) => setFormEndTime(e.target.value)}
@@ -582,12 +584,12 @@ const SchedulePage = () => {
               </div>
             </div>
             <div>
-              <Label>{t('schedule.template_type')}</Label>
+              <Label htmlFor="tpl-type">{t('schedule.template_type')}</Label>
               <Select
                 value={formLessonType}
                 onValueChange={(v: LessonType) => setFormLessonType(v)}
               >
-                <SelectTrigger>
+                <SelectTrigger id="tpl-type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -636,8 +638,9 @@ const SchedulePage = () => {
           </DialogHeader>
           <form onSubmit={handleGenerate} className="space-y-4">
             <div>
-              <Label>{t('schedule.weeks_label')}</Label>
+              <Label htmlFor="gen-weeks">{t('schedule.weeks_label')}</Label>
               <Input
+                id="gen-weeks"
                 type="number"
                 min={1}
                 max={12}
@@ -649,12 +652,12 @@ const SchedulePage = () => {
               </p>
             </div>
             <div>
-              <Label>{t('schedule.group_optional')}</Label>
+              <Label htmlFor="gen-group">{t('schedule.group_optional')}</Label>
               <Select
                 value={genGroupId || 'all'}
                 onValueChange={(v) => setGenGroupId(v === 'all' ? '' : v)}
               >
-                <SelectTrigger>
+                <SelectTrigger id="gen-group">
                   <SelectValue placeholder={t('schedule.all_groups')} />
                 </SelectTrigger>
                 <SelectContent>

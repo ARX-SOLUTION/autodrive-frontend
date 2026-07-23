@@ -458,8 +458,11 @@ const BranchesPage = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>{t('branches.name')} *</Label>
+              <Label htmlFor="branch-name">
+                {t('branches.name')} <span aria-hidden="true">*</span>
+              </Label>
               <Input
+                id="branch-name"
                 value={form.name}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, name: e.target.value }))
@@ -470,8 +473,11 @@ const BranchesPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('branches.address')} *</Label>
+              <Label htmlFor="branch-address">
+                {t('branches.address')} <span aria-hidden="true">*</span>
+              </Label>
               <Input
+                id="branch-address"
                 value={form.location}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, location: e.target.value }))
@@ -482,8 +488,9 @@ const BranchesPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('common.phone')}</Label>
+              <Label htmlFor="branch-phone">{t('common.phone')}</Label>
               <Input
+                id="branch-phone"
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"

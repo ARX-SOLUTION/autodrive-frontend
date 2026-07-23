@@ -723,12 +723,13 @@ const StudentModal = ({
                           )}
                         />
                         <div className="space-y-2">
-                          <Label>
+                          <Label htmlFor="student-debt">
                             {student
                               ? t('students.current_debt')
                               : t('students.debt')}
                           </Label>
                           <Input
+                            id="student-debt"
                             value={
                               debt < 0
                                 ? `${t('students.credit_label')}: ${formatMoney(Math.abs(debt))}`
@@ -811,12 +812,13 @@ const StudentModal = ({
                           )}
                         />
                         <div className="space-y-2">
-                          <Label>
+                          <Label htmlFor="student-debt">
                             {student
                               ? t('students.current_debt')
                               : t('students.debt')}
                           </Label>
                           <Input
+                            id="student-debt"
                             value={
                               debt < 0
                                 ? `${t('students.credit_label')}: ${formatMoney(Math.abs(debt))}`
