@@ -3,8 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "pnpm@11.17.0",
   "engines": {
-    "node": "22.x"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "vite",
@@ -20,7 +21,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@autodrive/design-tokens": "git+https://github.com/ARX-SOLUTION/autodrive-design-tokens.git#feat/executive-neutrals",
+    "@autodrive/design-tokens": "git+https://github.com/ARX-SOLUTION/autodrive-design-tokens.git#b8210edfadb1abc720108389c793161cc8382013",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^3.10.0",
     "@phosphor-icons/react": "^2.1.10",
@@ -96,9 +97,10 @@
     "@storybook/react-vite": "8.6.18",
     "@storybook/test": "8.6.18",
     "@tailwindcss/typography": "^0.5.16",
+    "@tanstack/query-core": "5.83.0",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.0.0",
-    "@types/node": "^22.16.5",
+    "@types/node": "^24.13.3",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react-swc": "^3.11.0",
@@ -111,6 +113,8 @@
     "jsdom": "^20.0.3",
     "lint-staged": "^17.0.8",
     "lovable-tagger": "^1.1.13",
+    "micromark": "^4.0.2",
+    "micromark-extension-gfm": "^3.0.0",
     "postcss": "^8.5.6",
     "prettier": "^3.8.4",
     "rollup-plugin-visualizer": "^7.0.1",
@@ -120,6 +124,7 @@
     "typescript-eslint": "^8.38.0",
     "vite": "^5.4.19",
     "vite-plugin-pwa": "^1.2.0",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "workbox-window": "^7.4.1"
   }
 }
