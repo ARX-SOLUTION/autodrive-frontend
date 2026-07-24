@@ -1,4 +1,7 @@
 {
+  "a11y": {
+    "skip_to_content": "Asosiy kontentga o'tish"
+  },
   "app": {
     "title": "Auto Maktab"
   },
@@ -616,6 +619,12 @@
     "duplicate_warning": {
       "title": "Ehtimoliy takrorlanish",
       "desc": "Mos kelishi mumkin bo'lgan talabalar topildi:"
+    },
+    "sections": {
+      "identity": "Shaxsiy ma'lumotlar",
+      "course": "Kurs",
+      "payment": "To'lov",
+      "other": "Qo'shimcha"
     }
   },
   "exams": {

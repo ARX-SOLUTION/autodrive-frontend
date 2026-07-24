@@ -1,4 +1,7 @@
 {
+  "a11y": {
+    "skip_to_content": "Skip to main content"
+  },
   "app": {
     "title": "Auto Maktab"
   },
@@ -616,6 +619,12 @@
     "duplicate_warning": {
       "title": "Possible duplicate",
       "desc": "Found existing students that may match:"
+    },
+    "sections": {
+      "identity": "Personal details",
+      "course": "Course",
+      "payment": "Payment",
+      "other": "Additional info"
     }
   },
   "exams": {

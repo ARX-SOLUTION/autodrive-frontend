@@ -162,7 +162,8 @@ const BranchesPage = () => {
             toast.success(t('branches.updated'));
             setModalOpen(false);
           },
-          onError: (err) => toast.error(extractErrorMessage(err)),
+          onError: (err) =>
+            toast.error(extractErrorMessage(err, t('common.error'))),
         },
       );
     } else {
@@ -171,7 +172,8 @@ const BranchesPage = () => {
           toast.success(t('branches.added'));
           setModalOpen(false);
         },
-        onError: (err) => toast.error(extractErrorMessage(err)),
+        onError: (err) =>
+          toast.error(extractErrorMessage(err, t('common.error'))),
       });
     }
   };
@@ -183,7 +185,8 @@ const BranchesPage = () => {
         toast.success(t('branches.deleted'));
         setDeleteId(null);
       },
-      onError: (err) => toast.error(extractErrorMessage(err)),
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
     });
   };
 
@@ -194,7 +197,8 @@ const BranchesPage = () => {
         toast.success(t('branches.restored'));
         setRestoreId(null);
       },
-      onError: (err) => toast.error(extractErrorMessage(err)),
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
     });
   };
 

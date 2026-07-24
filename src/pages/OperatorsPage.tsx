@@ -35,7 +35,7 @@ import { useBranches } from '@/services/branchService';
 import { toast } from 'sonner';
 import { User } from '@/types/user';
 import { formatPhone } from '@/lib/phoneFormater';
-import { extractErrorMessage } from '@/lib/errors';
+import { mutationErrorToast } from '@/lib/mutationErrorToast';
 
 // Backend GetUsersQueryDto caps limit at 100 -- large enough that a single
 // branch/company's operator list never needs a second server page in
@@ -135,7 +135,9 @@ const OperatorsPage = () => {
             setModalOpen(false);
           },
           onError: (err) =>
-            toast.error(extractErrorMessage(err, t('common.error'))),
+            mutationErrorToast(err, t, () =>
+              updateMut.mutate({ id: editItem.id, ...payload }),
+            ),
         },
       );
     } else {
@@ -145,7 +147,7 @@ const OperatorsPage = () => {
           setModalOpen(false);
         },
         onError: (err) =>
-          toast.error(extractErrorMessage(err, t('common.error'))),
+          mutationErrorToast(err, t, () => createMut.mutate(payload)),
       });
     }
   };
@@ -158,7 +160,7 @@ const OperatorsPage = () => {
         setDeleteId(null);
       },
       onError: (err) =>
-        toast.error(extractErrorMessage(err, t('common.error'))),
+        mutationErrorToast(err, t, () => deleteMut.mutate(deleteId)),
     });
   };
 
@@ -229,7 +231,7 @@ const OperatorsPage = () => {
                           <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
                       )}
                     </button>
                   </th>
@@ -246,7 +248,7 @@ const OperatorsPage = () => {
                           <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
                       )}
                     </button>
                   </th>
@@ -263,7 +265,7 @@ const OperatorsPage = () => {
                           <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
                       )}
                     </button>
                   </th>

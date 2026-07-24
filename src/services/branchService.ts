@@ -49,7 +49,9 @@ export const useCreateBranch = () => {
       const { data } = await axiosInstance.post('/branches', b);
       return parseItemEnvelope<Branch>(data, 'branch');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: branchKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: branchKeys.all });
+    },
   });
 };
 
@@ -68,7 +70,9 @@ export const useUpdateBranch = () => {
       const { data } = await axiosInstance.patch(`/branches/${id}`, b);
       return parseItemEnvelope<Branch>(data, 'branch');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: branchKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: branchKeys.all });
+    },
   });
 };
 
@@ -78,7 +82,9 @@ export const useDeleteBranch = () => {
     mutationFn: async (id: string) => {
       await axiosInstance.delete(`/branches/${id}`);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: branchKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: branchKeys.all });
+    },
   });
 };
 
@@ -93,6 +99,8 @@ export const useRestoreBranch = () => {
     mutationFn: async (id: string) => {
       await axiosInstance.patch(`/branches/${id}/restore`);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: branchKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: branchKeys.all });
+    },
   });
 };

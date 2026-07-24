@@ -9,7 +9,7 @@ import PaymentModal from '@/components/ui/PaymentModal';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import { useCan } from '@/hooks/useCan';
 import { useDeletePayment, useUpdatePayment } from '@/services/paymentService';
-import { extractErrorMessage } from '@/lib/errors';
+import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { formatMoney } from '@/lib/money';
 import type { Payment } from '@/types/payment';
 import { courseTypeLabelKey, formatDate } from './paymentFormatters';
@@ -50,7 +50,7 @@ export const PaymentsTable = ({
         setDeleteTarget(null);
       },
       onError: (err) =>
-        toast.error(extractErrorMessage(err, t('common.error'))),
+        mutationErrorToast(err, t, () => deletePayment.mutate(deleteTarget.id)),
     });
   };
 
@@ -59,21 +59,19 @@ export const PaymentsTable = ({
     payment_method: string;
   }) => {
     if (!editTarget) return;
-    updatePayment.mutate(
-      {
-        id: editTarget.id,
-        amount: data.amount,
-        payment_method: data.payment_method,
+    const payload = {
+      id: editTarget.id,
+      amount: data.amount,
+      payment_method: data.payment_method,
+    };
+    updatePayment.mutate(payload, {
+      onSuccess: () => {
+        toast.success(t('payments.updated'));
+        setEditTarget(null);
       },
-      {
-        onSuccess: () => {
-          toast.success(t('payments.updated'));
-          setEditTarget(null);
-        },
-        onError: (err) =>
-          toast.error(extractErrorMessage(err, t('common.error'))),
-      },
-    );
+      onError: (err) =>
+        mutationErrorToast(err, t, () => updatePayment.mutate(payload)),
+    });
   };
 
   const columns: DataTableColumn<Payment>[] = [

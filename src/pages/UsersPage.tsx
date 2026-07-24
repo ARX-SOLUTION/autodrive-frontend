@@ -15,6 +15,7 @@ import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { extractErrorMessage } from '@/lib/errors';
+import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -169,7 +170,14 @@ const UsersPage = () => {
             setModalOpen(false);
           },
           onError: (err) =>
-            toast.error(extractErrorMessage(err, t('common.error'))),
+            mutationErrorToast(err, t, () =>
+              updateMut.mutate({
+                id: editItem.id,
+                fullName: data.fullName,
+                phone: data.phone,
+                branchId: data.branchId,
+              }),
+            ),
         },
       );
     } else {
@@ -186,7 +194,8 @@ const UsersPage = () => {
             toast.success(t('users.added'));
             setModalOpen(false);
           },
-          onError: (err) => toast.error(extractErrorMessage(err)),
+          onError: (err) =>
+            toast.error(extractErrorMessage(err, t('common.error'))),
         },
       );
     }
@@ -200,7 +209,7 @@ const UsersPage = () => {
         setDeleteId(null);
       },
       onError: (err) =>
-        toast.error(extractErrorMessage(err, t('common.error'))),
+        mutationErrorToast(err, t, () => deleteMut.mutate(deleteId)),
     });
   };
 
@@ -212,7 +221,7 @@ const UsersPage = () => {
         setRestoreId(null);
       },
       onError: (err) =>
-        toast.error(extractErrorMessage(err, t('common.error'))),
+        mutationErrorToast(err, t, () => restoreMut.mutate(restoreId)),
     });
   };
 
@@ -359,7 +368,7 @@ const UsersPage = () => {
                           <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
                       )}
                     </button>
                   </th>
@@ -376,7 +385,7 @@ const UsersPage = () => {
                           <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
                       )}
                     </button>
                   </th>
@@ -393,7 +402,7 @@ const UsersPage = () => {
                           <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
                       )}
                     </button>
                   </th>
@@ -413,7 +422,7 @@ const UsersPage = () => {
                           <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
                       )}
                     </button>
                   </th>

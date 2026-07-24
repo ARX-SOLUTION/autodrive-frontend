@@ -68,7 +68,9 @@ export const useCreateTeacher = () => {
       });
       return parseItemEnvelope<User>(data, 'teacher');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: teacherKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: teacherKeys.all });
+    },
   });
 };
 
@@ -105,6 +107,8 @@ export const useDeleteTeacher = () => {
     mutationFn: async (id: string) => {
       await axiosInstance.delete(`/users/${id}`);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: teacherKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: teacherKeys.all });
+    },
   });
 };

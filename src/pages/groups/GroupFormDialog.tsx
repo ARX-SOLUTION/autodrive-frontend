@@ -41,7 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { extractErrorMessage } from '@/lib/errors';
+import { mutationErrorToast } from '@/lib/mutationErrorToast';
 
 interface GroupFormDialogProps {
   open: boolean;
@@ -150,7 +150,9 @@ const GroupFormDialog = ({
             onClose();
           },
           onError: (err) =>
-            toast.error(extractErrorMessage(err, t('common.error'))),
+            mutationErrorToast(err, t, () =>
+              updateMutation.mutate({ id: editGroup.id, ...payload }),
+            ),
         },
       );
     } else {
@@ -160,7 +162,7 @@ const GroupFormDialog = ({
           onClose();
         },
         onError: (err) =>
-          toast.error(extractErrorMessage(err, t('common.error'))),
+          mutationErrorToast(err, t, () => createMutation.mutate(payload)),
       });
     }
   };

@@ -71,7 +71,9 @@ export const useCreateOperator = () => {
       });
       return parseItemEnvelope<User>(data, 'operator');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: operatorKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: operatorKeys.all });
+    },
   });
 };
 
@@ -107,6 +109,8 @@ export const useDeleteOperator = () => {
     mutationFn: async (id: string) => {
       await axiosInstance.delete(`/users/${id}`);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: operatorKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: operatorKeys.all });
+    },
   });
 };

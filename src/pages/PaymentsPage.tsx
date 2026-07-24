@@ -7,7 +7,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { cn } from '@/lib/utils';
-import { extractErrorMessage } from '@/lib/errors';
+import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useBranches } from '@/services/branchService';
 import {
@@ -231,7 +231,7 @@ const PaymentsPage = () => {
         setModalOpen(false);
       },
       onError: (err) =>
-        toast.error(extractErrorMessage(err, t('common.error'))),
+        mutationErrorToast(err, t, () => createPayment.mutate(data)),
     });
   };
 
@@ -240,7 +240,7 @@ const PaymentsPage = () => {
     try {
       await exportPaymentsToExcel(paymentQueryFilters, t);
     } catch (err) {
-      toast.error(extractErrorMessage(err, t('common.error')));
+      mutationErrorToast(err, t, () => exportToExcel());
     } finally {
       setIsExporting(false);
     }
