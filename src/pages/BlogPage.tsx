@@ -50,17 +50,21 @@ const BlogPage = () => {
   // afterwards just shows/hides cards instantly (no ScrollTrigger rebuild).
   useGSAP(
     () => {
-      ScrollTrigger.batch('.blog-card', {
-        onEnter: (els) =>
-          gsap.from(els, {
-            y: 40,
-            opacity: 0,
-            stagger: 0.1,
-            duration: 0.6,
-            ease: 'power3.out',
-          }),
-        start: 'top 90%',
-        once: true,
+      // a11y: honor prefers-reduced-motion like the other gsap consumers —
+      // reduced-motion users get the cards immediately, no reveal animation.
+      gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
+        ScrollTrigger.batch('.blog-card', {
+          onEnter: (els) =>
+            gsap.from(els, {
+              y: 40,
+              opacity: 0,
+              stagger: 0.1,
+              duration: 0.6,
+              ease: 'power3.out',
+            }),
+          start: 'top 90%',
+          once: true,
+        });
       });
     },
     { scope: gridRef, dependencies: [posts?.length ?? 0] },
@@ -134,7 +138,7 @@ const BlogPage = () => {
                 <Link
                   key={post.slug}
                   to={`/blog/${post.slug}`}
-                  className="blog-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 transition-colors duration-300 hover:border-primary/30 dark:border-white/8 dark:bg-white/[0.03]"
+                  className="blog-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 transition-colors duration-300 hover:border-primary/30 dark:border-white/[8%] dark:bg-white/[0.03]"
                 >
                   {post.cover_image_url && (
                     <div className="aspect-video w-full overflow-hidden bg-muted">

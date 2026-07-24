@@ -35,7 +35,7 @@ import {
 import { useBranches } from '@/services/branchService';
 import { toast } from 'sonner';
 import { User } from '@/types/user';
-import { extractErrorMessage } from '@/lib/errors';
+import { mutationErrorToast } from '@/lib/mutationErrorToast';
 
 // Backend GetUsersQueryDto caps limit at 100 -- large enough that a single
 // branch/company's teacher list never needs a second server page in
@@ -131,40 +131,36 @@ const TeachersPage = () => {
 
   const handleSubmit = (data: PersonFormPayload) => {
     if (editItem) {
-      updateMut.mutate(
-        {
-          id: editItem.id,
-          fullName: data.fullName,
-          phone: data.phone,
-          branchId: data.branchId,
-          specialization: data.specialization,
+      const payload = {
+        id: editItem.id,
+        fullName: data.fullName,
+        phone: data.phone,
+        branchId: data.branchId,
+        specialization: data.specialization,
+      };
+      updateMut.mutate(payload, {
+        onSuccess: () => {
+          toast.success(t('teachers.updated'));
+          setModalOpen(false);
         },
-        {
-          onSuccess: () => {
-            toast.success(t('teachers.updated'));
-            setModalOpen(false);
-          },
-          onError: (err) =>
-            toast.error(extractErrorMessage(err, t('common.error'))),
-        },
-      );
+        onError: (err) =>
+          mutationErrorToast(err, t, () => updateMut.mutate(payload)),
+      });
     } else {
-      createMut.mutate(
-        {
-          fullName: data.fullName,
-          phone: data.phone!,
-          branchId: data.branchId,
-          specialization: data.specialization!,
+      const payload = {
+        fullName: data.fullName,
+        phone: data.phone!,
+        branchId: data.branchId,
+        specialization: data.specialization!,
+      };
+      createMut.mutate(payload, {
+        onSuccess: () => {
+          toast.success(t('teachers.added'));
+          setModalOpen(false);
         },
-        {
-          onSuccess: () => {
-            toast.success(t('teachers.added'));
-            setModalOpen(false);
-          },
-          onError: (err) =>
-            toast.error(extractErrorMessage(err, t('common.error'))),
-        },
-      );
+        onError: (err) =>
+          mutationErrorToast(err, t, () => createMut.mutate(payload)),
+      });
     }
   };
 
@@ -176,7 +172,7 @@ const TeachersPage = () => {
         setDeleteId(null);
       },
       onError: (err) =>
-        toast.error(extractErrorMessage(err, t('common.error'))),
+        mutationErrorToast(err, t, () => deleteMut.mutate(deleteId)),
     });
   };
 
@@ -243,7 +239,7 @@ const TeachersPage = () => {
                           <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
                       )}
                     </button>
                   </th>
@@ -260,7 +256,7 @@ const TeachersPage = () => {
                           <CaretDown className="h-3 w-3" />
                         )
                       ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/50" />
+                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
                       )}
                     </button>
                   </th>

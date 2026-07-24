@@ -209,7 +209,7 @@ const AddStudentDialog = ({
   const canAssignBranch = useCan('assignBranch');
   const user = useAuthStore((s) => s.user);
   const { data: branches } = useBranches();
-  const { data: groups, refetch: refetchGroups } = useGroups();
+  const { data: groups } = useGroups();
   const { data: courses } = useCourses();
 
   const allFormSchema = useMemo(() => buildSchemas(t).all, [t]);
@@ -394,7 +394,6 @@ const AddStudentDialog = ({
 
   useEffect(() => {
     if (open) {
-      refetchGroups();
       setActiveStep(1);
       setStepValidated({});
       if (!defaultBranchId && !canAssignBranch && user?.branch_id) {
@@ -410,7 +409,6 @@ const AddStudentDialog = ({
     defaultCourseId,
     canAssignBranch,
     user?.branch_id,
-    refetchGroups,
     form,
   ]);
 

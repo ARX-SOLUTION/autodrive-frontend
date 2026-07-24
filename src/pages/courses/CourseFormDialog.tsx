@@ -125,7 +125,8 @@ const CourseFormDialog = ({
             toast.success(t('courses.updated'));
             onClose();
           },
-          onError: (err) => toast.error(extractErrorMessage(err)),
+          onError: (err) =>
+            toast.error(extractErrorMessage(err, t('common.error'))),
         },
       );
     } else {
@@ -134,7 +135,8 @@ const CourseFormDialog = ({
           toast.success(t('courses.added'));
           onClose();
         },
-        onError: (err) => toast.error(extractErrorMessage(err)),
+        onError: (err) =>
+          toast.error(extractErrorMessage(err, t('common.error'))),
       });
     }
   };
@@ -158,10 +160,11 @@ const CourseFormDialog = ({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('courses.name')} *</FormLabel>
+                    <FormLabel required>{t('courses.name')}</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
+                        aria-required="true"
                         className="bg-secondary border-border"
                       />
                     </FormControl>
@@ -174,10 +177,13 @@ const CourseFormDialog = ({
                 name="branchId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('common.branch')} *</FormLabel>
+                    <FormLabel required>{t('common.branch')}</FormLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
-                        <SelectTrigger className="bg-secondary border-border">
+                        <SelectTrigger
+                          className="bg-secondary border-border"
+                          aria-required="true"
+                        >
                           <SelectValue
                             placeholder={t('common.select_placeholder')}
                           />
@@ -200,10 +206,13 @@ const CourseFormDialog = ({
                 name="courseType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('courses.type')} *</FormLabel>
+                    <FormLabel required>{t('courses.type')}</FormLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
-                        <SelectTrigger className="bg-secondary border-border">
+                        <SelectTrigger
+                          className="bg-secondary border-border"
+                          aria-required="true"
+                        >
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -226,7 +235,7 @@ const CourseFormDialog = ({
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('courses.price')} *</FormLabel>
+                      <FormLabel required>{t('courses.price')}</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -235,6 +244,7 @@ const CourseFormDialog = ({
                           onChange={(e) =>
                             field.onChange(groupDigits(e.target.value))
                           }
+                          aria-required="true"
                           className="bg-secondary border-border"
                         />
                       </FormControl>
@@ -247,13 +257,14 @@ const CourseFormDialog = ({
                   name="durationDays"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('courses.duration')} *</FormLabel>
+                      <FormLabel required>{t('courses.duration')}</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="number"
                           min={1}
                           inputMode="numeric"
+                          aria-required="true"
                           className="bg-secondary border-border"
                         />
                       </FormControl>

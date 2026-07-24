@@ -34,7 +34,9 @@ export const useCreateTemplate = () => {
       const { data } = await axiosInstance.post('/schedule/templates', payload);
       return parseItemEnvelope<ScheduleTemplate>(data, 'schedule-template');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: scheduleKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: scheduleKeys.templates() });
+    },
   });
 };
 
@@ -44,7 +46,9 @@ export const useDeleteTemplate = () => {
     mutationFn: async (id: string) => {
       await axiosInstance.delete(`/schedule/templates/${id}`);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: scheduleKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: scheduleKeys.templates() });
+    },
   });
 };
 

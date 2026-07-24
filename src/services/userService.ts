@@ -101,7 +101,9 @@ export const useCreateManager = () => {
       });
       return parseItemEnvelope<User>(data, 'user');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: userKeys.all });
+    },
   });
 };
 
@@ -121,7 +123,9 @@ export const useUpdateUser = () => {
       const { data } = await axiosInstance.patch(`/users/${id}`, op);
       return parseItemEnvelope<User>(data, 'user');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: userKeys.all });
+    },
   });
 };
 
@@ -131,7 +135,9 @@ export const useDeleteUser = () => {
     mutationFn: async (id: string) => {
       await axiosInstance.delete(`/users/${id}`);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: userKeys.all });
+    },
   });
 };
 
@@ -144,6 +150,8 @@ export const useRestoreUser = () => {
     mutationFn: async (id: string) => {
       await axiosInstance.patch(`/users/${id}/restore`);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: userKeys.all });
+    },
   });
 };

@@ -24,7 +24,7 @@ export const LanguageSwitcher = ({
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={t('actions.language')}
-        className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors"
+        className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground transition-colors"
       >
         <Translate className="h-4 w-4" />
         {!collapsed && <span className="uppercase">{current}</span>}

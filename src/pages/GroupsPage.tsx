@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Plus, Stack, CircleNotch } from '@phosphor-icons/react';
 import { toast } from 'sonner';
-import { extractErrorMessage } from '@/lib/errors';
+import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { cn } from '@/lib/utils';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
@@ -182,7 +182,7 @@ const GroupsPage = () => {
         setDeleteId(null);
       },
       onError: (err) =>
-        toast.error(extractErrorMessage(err, t('common.error'))),
+        mutationErrorToast(err, t, () => deleteMutation.mutate(deleteId)),
     });
   };
 
@@ -194,7 +194,7 @@ const GroupsPage = () => {
         setRestoreId(null);
       },
       onError: (err) =>
-        toast.error(extractErrorMessage(err, t('common.error'))),
+        mutationErrorToast(err, t, () => restoreMutation.mutate(restoreId)),
     });
   };
 

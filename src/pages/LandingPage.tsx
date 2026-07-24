@@ -763,7 +763,7 @@ const LandingPage = () => {
             <Button
               size="lg"
               variant="outline"
-              className="active:scale-[0.96] h-12 gap-2 border-slate-300 bg-slate-100 px-8 text-slate-700 transition-all hover:bg-slate-200 hover:text-slate-900 dark:border-white/12 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:hover:text-white"
+              className="active:scale-[0.96] h-12 gap-2 border-slate-300 bg-slate-100 px-8 text-slate-700 transition-all hover:bg-slate-200 hover:text-slate-900 dark:border-white/[12%] dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:hover:text-white"
               asChild
             >
               <a
@@ -784,7 +784,7 @@ const LandingPage = () => {
       <section className="hero-mock-section relative z-10 mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
         <div className="hero-mock-wrapper will-change-transform overflow-hidden rounded-[24px] border border-slate-200 bg-white/90 shadow-[0_40px_100px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-[0_40px_100px_rgba(0,0,0,0.55)]">
           {/* Browser chrome */}
-          <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-5 py-3 dark:border-white/8 dark:bg-white/[0.015]">
+          <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-5 py-3 dark:border-white/[8%] dark:bg-white/[0.015]">
             <span className="h-2.5 w-2.5 rounded-full bg-rose-400/40" />
             <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/40" />
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/40" />
@@ -815,7 +815,7 @@ const LandingPage = () => {
               {kpiCards.map((card) => (
                 <div
                   key={card.label}
-                  className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/8 dark:bg-white/[0.035]"
+                  className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/[8%] dark:bg-white/[0.035]"
                 >
                   <div className="mb-2 flex items-center justify-between">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-white/35">
@@ -849,7 +849,7 @@ const LandingPage = () => {
             {/* Revenue trend + debtors */}
             <div className="grid gap-3 sm:grid-cols-5">
               {/* Mini area chart */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[0.02] sm:col-span-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/[8%] dark:bg-white/[0.02] sm:col-span-3">
                 <div className="mb-3 flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-slate-600 dark:text-white/65">
@@ -874,7 +874,7 @@ const LandingPage = () => {
               </div>
 
               {/* Debtors list */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[0.02] sm:col-span-2">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/[8%] dark:bg-white/[0.02] sm:col-span-2">
                 <div className="mb-3 flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-600 dark:text-white/65">
                     {t('landing.mock_debtors_title')}
@@ -948,7 +948,7 @@ const LandingPage = () => {
             return (
               <div
                 key={p.titleKey}
-                className="pain-card relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-white/8 dark:bg-white/[0.03]"
+                className="pain-card relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-white/[8%] dark:bg-white/[0.03]"
               >
                 <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-rose-400/20 bg-rose-400/10">
                   <Icon className="size-5 text-rose-600 dark:text-rose-300" />
@@ -970,7 +970,7 @@ const LandingPage = () => {
 
       {/* ── Capability facts (honest — true regardless of customer count) ─ */}
       <section className="relative z-10 mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 dark:divide-white/8 dark:border-white/8 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <div className="grid grid-cols-1 divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 dark:divide-white/[8%] dark:border-white/[8%] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {(
             [
               { value: '∞', labelKey: 'landing.stats_schools_label' },
@@ -1051,7 +1051,7 @@ const LandingPage = () => {
           ).map((s) => (
             <div
               key={s.step}
-              className="howit-step relative rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-white/8 dark:bg-white/[0.025]"
+              className="howit-step relative rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-white/[8%] dark:bg-white/[0.025]"
             >
               <div
                 className={`mb-4 flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold ${s.bg} ${s.color}`}
@@ -1093,7 +1093,7 @@ const LandingPage = () => {
             return (
               <div
                 key={b.titleKey}
-                className={`benefit-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-6 transition-colors duration-300 dark:border-white/8 dark:bg-white/[0.03] ${b.hoverBorder}`}
+                className={`benefit-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-6 transition-colors duration-300 dark:border-white/[8%] dark:bg-white/[0.03] ${b.hoverBorder}`}
                 onMouseMove={(e) => {
                   const r = e.currentTarget.getBoundingClientRect();
                   e.currentTarget.style.setProperty(
@@ -1188,7 +1188,7 @@ const LandingPage = () => {
             return (
               <div
                 key={r.titleKey}
-                className={`role-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-colors duration-300 dark:border-white/8 dark:bg-white/[0.03] ${r.hoverBorder}`}
+                className={`role-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-colors duration-300 dark:border-white/[8%] dark:bg-white/[0.03] ${r.hoverBorder}`}
               >
                 <div
                   className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl border ${r.iconBg}`}
@@ -1233,7 +1233,7 @@ const LandingPage = () => {
               </p>
             </div>
             {/* Debt vignette — mirrors StudentsPage table patterns */}
-            <div className="vignette-right rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[0.02] sm:p-5">
+            <div className="vignette-right rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/[8%] dark:bg-white/[0.02] sm:p-5">
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-600 dark:text-white/60">
                   {t('landing.mock_debtors_title')}
@@ -1248,7 +1248,7 @@ const LandingPage = () => {
                     key={row.name}
                     className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 dark:border-white/5 dark:bg-white/[0.02]"
                   >
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-500 dark:bg-white/8 dark:text-white/50">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-500 dark:bg-white/[8%] dark:text-white/50">
                       {row.name[0]}
                     </div>
                     <div>
@@ -1285,7 +1285,7 @@ const LandingPage = () => {
           <div className="feature-row grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
             <div className="order-last lg:order-first">
               {/* Attendance vignette — mirrors AttendancePage patterns */}
-              <div className="vignette-left rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[0.02] sm:p-5">
+              <div className="vignette-left rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/[8%] dark:bg-white/[0.02] sm:p-5">
                 <div className="mb-3 flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-slate-600 dark:text-white/65">
@@ -1309,7 +1309,7 @@ const LandingPage = () => {
                       className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/5 dark:bg-white/[0.02]"
                     >
                       <div className="flex items-center gap-2.5">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-500 dark:bg-white/8 dark:text-white/50">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-500 dark:bg-white/[8%] dark:text-white/50">
                           {s.name[0]}
                         </div>
                         <span className="text-xs text-slate-600 dark:text-white/70">
@@ -1353,7 +1353,7 @@ const LandingPage = () => {
               </p>
             </div>
             {/* Schedule vignette — mirrors SchedulePage week calendar */}
-            <div className="vignette-right rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[0.02] sm:p-5">
+            <div className="vignette-right rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/[8%] dark:bg-white/[0.02] sm:p-5">
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-600 dark:text-white/65">
                   Haftalik jadval
@@ -1426,7 +1426,7 @@ const LandingPage = () => {
                 <Link
                   key={post.slug}
                   to={`/blog/${post.slug}`}
-                  className="blog-teaser-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 transition-colors duration-300 hover:border-cyan-400/30 dark:border-white/8 dark:bg-white/[0.03]"
+                  className="blog-teaser-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 transition-colors duration-300 hover:border-cyan-400/30 dark:border-white/[8%] dark:bg-white/[0.03]"
                 >
                   {post.cover_image_url && (
                     <div className="aspect-video w-full overflow-hidden bg-muted">
@@ -1493,7 +1493,7 @@ const LandingPage = () => {
             <AccordionItem
               key={faq.q}
               value={`faq-${i}`}
-              className="faq-item overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 px-5 dark:border-white/8 dark:bg-white/[0.025]"
+              className="faq-item overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 px-5 dark:border-white/[8%] dark:bg-white/[0.025]"
             >
               <AccordionTrigger className="py-4 text-left text-sm font-semibold text-slate-700 hover:no-underline dark:text-white/80 sm:text-base [&>svg]:shrink-0 [&>svg]:text-slate-400 dark:[&>svg]:text-white/30">
                 {t(faq.q)}
@@ -1554,7 +1554,7 @@ const LandingPage = () => {
             <Button
               size="lg"
               variant="outline"
-              className="active:scale-[0.96] h-12 gap-2 border-slate-300 bg-slate-100 px-8 text-slate-700 transition-all hover:bg-slate-200 hover:text-slate-900 dark:border-white/12 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:hover:text-white"
+              className="active:scale-[0.96] h-12 gap-2 border-slate-300 bg-slate-100 px-8 text-slate-700 transition-all hover:bg-slate-200 hover:text-slate-900 dark:border-white/[12%] dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:hover:text-white"
               asChild
             >
               <a href={PHONE_LINK} onClick={() => track('phone_cta_click')}>
@@ -1570,7 +1570,7 @@ const LandingPage = () => {
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────────── */}
-      <footer className="relative z-10 border-t border-slate-200 dark:border-white/8">
+      <footer className="relative z-10 border-t border-slate-200 dark:border-white/[8%]">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-slate-400 dark:text-white/30 sm:flex-row sm:px-6 lg:px-8">
           <div className="flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-300/10">

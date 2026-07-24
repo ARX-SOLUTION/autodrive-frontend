@@ -169,7 +169,10 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
           </div>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-2.5">
+        <nav
+          aria-label={t('actions.sidebar')}
+          className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-2.5"
+        >
           {filteredItems.map((item) => {
             const active = location.pathname === item.path;
             const label = t(item.labelKey);
@@ -233,7 +236,10 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
               <Brand size="sm" />
             </div>
 
-            <nav className="flex-1 space-y-1 overflow-y-auto p-2">
+            <nav
+              aria-label={t('actions.sidebar')}
+              className="flex-1 space-y-1 overflow-y-auto p-2"
+            >
               {filteredItems.map((item) => {
                 const active = location.pathname === item.path;
                 const label = t(item.labelKey);

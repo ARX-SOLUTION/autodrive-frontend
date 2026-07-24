@@ -29,7 +29,7 @@ import {
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { User, Shield, Buildings } from '@phosphor-icons/react';
 import { toast } from 'sonner';
-import { extractErrorMessage } from '@/lib/errors';
+import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import {
   formatUzPhoneInput,
   isValidUzPhone,
@@ -91,24 +91,22 @@ const ProfilePage = () => {
 
   const onSaveValid = (values: ProfileFormValues) => {
     if (!user || !canEditProfile) return;
-    updateProfileMut.mutate(
-      {
-        id: user.id,
-        fullName: values.name.trim(),
-        phone:
-          uzLocalDigits(values.phone).length > 0
-            ? uzPhoneE164(values.phone)
-            : undefined,
+    const payload = {
+      id: user.id,
+      fullName: values.name.trim(),
+      phone:
+        uzLocalDigits(values.phone).length > 0
+          ? uzPhoneE164(values.phone)
+          : undefined,
+    };
+    updateProfileMut.mutate(payload, {
+      onSuccess: (updated) => {
+        setUser({ ...user, ...updated });
+        toast.success(t('profile.update_success'));
       },
-      {
-        onSuccess: (updated) => {
-          setUser({ ...user, ...updated });
-          toast.success(t('profile.update_success'));
-        },
-        onError: (error) =>
-          toast.error(extractErrorMessage(error, t('common.error'))),
-      },
-    );
+      onError: (error) =>
+        mutationErrorToast(error, t, () => updateProfileMut.mutate(payload)),
+    });
   };
 
   const pwForm = useForm<PwFormValues>({
@@ -136,7 +134,7 @@ const ProfilePage = () => {
         toast.success(t('profile.telegram.link_opened'));
       },
       onError: (err) =>
-        toast.error(extractErrorMessage(err, t('common.error'))),
+        mutationErrorToast(err, t, () => linkTokenMut.mutate(undefined)),
     });
   };
 
@@ -147,7 +145,7 @@ const ProfilePage = () => {
         setUnlinkConfirmOpen(false);
       },
       onError: (err) =>
-        toast.error(extractErrorMessage(err, t('common.error'))),
+        mutationErrorToast(err, t, () => unlinkMut.mutate(undefined)),
     });
   };
 
@@ -162,7 +160,7 @@ const ProfilePage = () => {
           ),
         ),
       onError: (err) =>
-        toast.error(extractErrorMessage(err, t('common.error'))),
+        mutationErrorToast(err, t, () => dailyReportMut.mutate(enabled)),
     });
   };
 
@@ -170,21 +168,19 @@ const ProfilePage = () => {
     // Captured before the mutation: onSuccess replaces the user in the store
     // (must_change_password becomes false), so read the flag now.
     const wasForced = !!user?.must_change_password;
-    changePasswordMut.mutate(
-      {
-        currentPassword: values.currentPassword.trim(),
-        newPassword: values.newPassword.trim(),
+    const payload = {
+      currentPassword: values.currentPassword.trim(),
+      newPassword: values.newPassword.trim(),
+    };
+    changePasswordMut.mutate(payload, {
+      onSuccess: () => {
+        toast.success(t('profile.update_password_success'));
+        pwForm.reset({ currentPassword: '', newPassword: '' });
+        if (wasForced) navigate('/dashboard');
       },
-      {
-        onSuccess: () => {
-          toast.success(t('profile.update_password_success'));
-          pwForm.reset({ currentPassword: '', newPassword: '' });
-          if (wasForced) navigate('/dashboard');
-        },
-        onError: (error) =>
-          toast.error(extractErrorMessage(error, t('common.error'))),
-      },
-    );
+      onError: (error) =>
+        mutationErrorToast(error, t, () => changePasswordMut.mutate(payload)),
+    });
   };
 
   return (
