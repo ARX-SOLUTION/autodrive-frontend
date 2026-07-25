@@ -10,13 +10,13 @@ React 18 + Vite + TS · shadcn/ui + Tailwind · Zustand (auth only) + TanStack Q
 
 ## Advisor first — plan before code
 
-**Advisor = Fable 5 / Opus 4.8 (plans) · Executor = Sonnet 5 (implements; subagents `model: sonnet`).** Complex task → explicit Advisor plan first (files, interfaces/signatures, error handling, edge cases, pass/fail validation criteria); the Executor implements it exactly. Trivial edits skip the Advisor. Executor hits ambiguity → flag back, never resolve silently. Unclear requirement → ask ONE specific question with grep evidence; simpler way exists → push back before coding. Full routing: root `CLAUDE.md`.
+**Advisor = Fable 5 / Opus 5 (plans) · Executor = Sonnet 5 (implements; subagents `model: sonnet`).** Complex task → explicit Advisor plan first (files, interfaces/signatures, error handling, edge cases, pass/fail validation criteria); the Executor implements it exactly. Trivial edits skip the Advisor. Executor hits ambiguity → flag back, never resolve silently. Unclear requirement → ask ONE specific question with grep evidence; simpler way exists → push back before coding. Full routing: root `CLAUDE.md`.
 
 ## Verification — every significant change
 
-`npm run typecheck && npm run lint && npm test -- --run && npm run build`
+`pnpm run typecheck && pnpm run lint && pnpm test -- --run && pnpm run build`
 
-⚠️ NEVER bare `npx tsc --noEmit`: root tsconfig uses project references (`files: []`) — a bare run checks nothing and exits 0. Always the npm script.
+⚠️ NEVER bare `npx tsc --noEmit`: root tsconfig uses project references (`files: []`) — a bare run checks nothing and exits 0. Always the pnpm script.
 
 ## i18n — uz/ru/en MANDATORY (this repo only; admin panel is uz-only)
 

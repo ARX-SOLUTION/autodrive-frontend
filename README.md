@@ -9,8 +9,8 @@ Storybook hosts visual stories for the shadcn primitives this app uses, plus a
 `@autodrive/design-tokens` (so what you see is what ships).
 
 ```bash
-npm run storybook        # dev server on http://localhost:6006
-npm run build-storybook  # outputs to ./storybook-static (gitignored)
+pnpm run storybook        # dev server on http://localhost:6006
+pnpm run build-storybook  # outputs to ./storybook-static (gitignored)
 ```
 
 Stories included:
