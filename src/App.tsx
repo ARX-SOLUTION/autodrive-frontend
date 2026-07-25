@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { initUmami } from '@/lib/umami';
 
 initUmami(); // ponytail: module-load — runs once, no-op if env vars absent
+import { ThemeProvider } from 'next-themes';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster as Sonner } from '@/components/ui/sonner';
@@ -63,129 +64,137 @@ const PaymentAccessRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Sonner />
-      <OfflineBanner />
-      <BrowserRouter>
-        <ChunkErrorBoundary>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/blog" element={<BlogPage />} />
-              <Route path="/blog/:slug" element={<BlogPostPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <AppLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="dashboard" element={<DashboardPage />} />
+  <ThemeProvider
+    attribute="class"
+    storageKey="theme"
+    defaultTheme="dark"
+    enableSystem={false}
+    disableTransitionOnChange
+  >
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Sonner />
+        <OfflineBanner />
+        <BrowserRouter>
+          <ChunkErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/blog" element={<BlogPage />} />
+                <Route path="/blog/:slug" element={<BlogPostPage />} />
+                <Route path="/login" element={<LoginPage />} />
                 <Route
-                  path="branches"
                   element={
-                    <OwnerRoute>
-                      <BranchesPage />
-                    </OwnerRoute>
+                    <ProtectedRoute>
+                      <AppLayout />
+                    </ProtectedRoute>
                   }
-                />
-                <Route
-                  path="branches/:id"
-                  element={
-                    <OwnerRoute>
-                      <BranchDetailPage />
-                    </OwnerRoute>
-                  }
-                />
-                <Route path="groups" element={<GroupsPage />} />
-                <Route path="groups/:id" element={<GroupDetailPage />} />
-                <Route
-                  path="courses"
-                  element={
-                    <BranchAccessRoute>
-                      <CoursesPage />
-                    </BranchAccessRoute>
-                  }
-                />
-                <Route
-                  path="courses/:id"
-                  element={
-                    <BranchAccessRoute>
-                      <CourseDetailPage />
-                    </BranchAccessRoute>
-                  }
-                />
-                <Route path="students" element={<StudentsPage />} />
-                <Route path="students/:id" element={<StudentDetailPage />} />
-                <Route
-                  path="payments"
-                  element={
-                    <PaymentAccessRoute>
-                      <PaymentsPage />
-                    </PaymentAccessRoute>
-                  }
-                />
-                <Route
-                  path="operators"
-                  element={
-                    <BranchAccessRoute>
-                      <OperatorsPage />
-                    </BranchAccessRoute>
-                  }
-                />
-                <Route
-                  path="teachers"
-                  element={
-                    <BranchAccessRoute>
-                      <TeachersPage />
-                    </BranchAccessRoute>
-                  }
-                />
-                <Route
-                  path="users"
-                  element={
-                    <OwnerRoute>
-                      <UsersPage />
-                    </OwnerRoute>
-                  }
-                />
-                <Route
-                  path="users/:id"
-                  element={
-                    <BranchAccessRoute>
-                      <UserDetailPage />
-                    </BranchAccessRoute>
-                  }
-                />
-                <Route
-                  path="audit"
-                  element={
-                    <OwnerRoute>
-                      <AuditLogPage />
-                    </OwnerRoute>
-                  }
-                />
-                <Route
-                  path="audit/:id"
-                  element={
-                    <OwnerRoute>
-                      <AuditDetailPage />
-                    </OwnerRoute>
-                  }
-                />
-                <Route path="schedule" element={<SchedulePage />} />
-                <Route path="attendance" element={<AttendancePage />} />
-                <Route path="profile" element={<ProfilePage />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </ChunkErrorBoundary>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+                >
+                  <Route path="dashboard" element={<DashboardPage />} />
+                  <Route
+                    path="branches"
+                    element={
+                      <OwnerRoute>
+                        <BranchesPage />
+                      </OwnerRoute>
+                    }
+                  />
+                  <Route
+                    path="branches/:id"
+                    element={
+                      <OwnerRoute>
+                        <BranchDetailPage />
+                      </OwnerRoute>
+                    }
+                  />
+                  <Route path="groups" element={<GroupsPage />} />
+                  <Route path="groups/:id" element={<GroupDetailPage />} />
+                  <Route
+                    path="courses"
+                    element={
+                      <BranchAccessRoute>
+                        <CoursesPage />
+                      </BranchAccessRoute>
+                    }
+                  />
+                  <Route
+                    path="courses/:id"
+                    element={
+                      <BranchAccessRoute>
+                        <CourseDetailPage />
+                      </BranchAccessRoute>
+                    }
+                  />
+                  <Route path="students" element={<StudentsPage />} />
+                  <Route path="students/:id" element={<StudentDetailPage />} />
+                  <Route
+                    path="payments"
+                    element={
+                      <PaymentAccessRoute>
+                        <PaymentsPage />
+                      </PaymentAccessRoute>
+                    }
+                  />
+                  <Route
+                    path="operators"
+                    element={
+                      <BranchAccessRoute>
+                        <OperatorsPage />
+                      </BranchAccessRoute>
+                    }
+                  />
+                  <Route
+                    path="teachers"
+                    element={
+                      <BranchAccessRoute>
+                        <TeachersPage />
+                      </BranchAccessRoute>
+                    }
+                  />
+                  <Route
+                    path="users"
+                    element={
+                      <OwnerRoute>
+                        <UsersPage />
+                      </OwnerRoute>
+                    }
+                  />
+                  <Route
+                    path="users/:id"
+                    element={
+                      <BranchAccessRoute>
+                        <UserDetailPage />
+                      </BranchAccessRoute>
+                    }
+                  />
+                  <Route
+                    path="audit"
+                    element={
+                      <OwnerRoute>
+                        <AuditLogPage />
+                      </OwnerRoute>
+                    }
+                  />
+                  <Route
+                    path="audit/:id"
+                    element={
+                      <OwnerRoute>
+                        <AuditDetailPage />
+                      </OwnerRoute>
+                    }
+                  />
+                  <Route path="schedule" element={<SchedulePage />} />
+                  <Route path="attendance" element={<AttendancePage />} />
+                  <Route path="profile" element={<ProfilePage />} />
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </ChunkErrorBoundary>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;
