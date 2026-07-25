@@ -69,7 +69,7 @@ type DemoFormValues = z.infer<typeof demoSchema>;
 const CheckmarkSvg = ({
   drawRef,
 }: {
-  drawRef: React.RefObject<SVGCircleElement>;
+  drawRef: React.RefObject<SVGCircleElement | null>;
 }) => (
   <svg
     width="64"
