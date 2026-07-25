@@ -195,7 +195,7 @@ export const PaymentsFilterBar = ({
                 else onDateRangeChange(range.from, range.to ?? range.from);
               }}
               numberOfMonths={2}
-              initialFocus
+              autoFocus
               disabled={{ after: new Date() }}
               className={cn('p-3 pointer-events-auto')}
             />
