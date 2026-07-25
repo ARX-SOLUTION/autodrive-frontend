@@ -1,13 +1,64 @@
 @import '@autodrive/design-tokens/tokens.css';
+@import 'tailwindcss';
+@plugin "@tailwindcss/typography";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-surface: hsl(var(--surface));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+  --color-border: hsl(var(--border));
+  --color-hair: hsl(var(--hair));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  --font-heading: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-slide-in: slide-in 0.3s ease-out;
+  --animate-fade-in: fade-in 0.25s ease-out;
+  --animate-float: float 3s ease-in-out infinite;
+  --animate-scale-in: scale-in 0.2s ease-out;
+}
 
 @layer base {
-  /* Repo-specific extensions on top of shared tokens (sidebar). */
   :root {
-    /* Sidebar — light mode */
     --sidebar-background: 40 15% 97%;
     --sidebar-foreground: 220 8% 32%;
     --sidebar-primary: 32 95% 44%;
@@ -17,10 +68,6 @@
     --sidebar-border: 40 10% 85%;
     --sidebar-ring: 32 95% 44%;
 
-    /* exec-dash 7: chart accents (dot/donut/bar fills) — distinct from the
-       solid --success/--warning/--destructive/--info text colors. Light mode
-       has no mock spec, so alias the existing (already-tuned) semantic
-       tokens rather than invent unverified hex. */
     --chart-success: var(--success);
     --chart-warning: var(--warning);
     --chart-danger: var(--destructive);
@@ -28,7 +75,6 @@
   }
 
   .dark {
-    /* Sidebar — dark mode */
     --sidebar-background: 0 0% 9%;
     --sidebar-foreground: 220 5% 65%;
     --sidebar-primary: 35 95% 55%;
@@ -38,7 +84,6 @@
     --sidebar-border: 0 0% 16%;
     --sidebar-ring: 35 95% 55%;
 
-    /* exec-dash 7: Design.md chart hexes — #7BD79A / #E0A93B / #E5674B / #7BA7D9 */
     --chart-success: 140 53% 66%;
     --chart-warning: 40 73% 55%;
     --chart-danger: 11 75% 60%;
@@ -50,11 +95,6 @@
   * {
     @apply border-border;
   }
-  /* Fallback for hand-rolled <button>/<a> controls (row actions, topbar
-     icons, etc.) that don't go through the shared Button component and so
-     don't get its focus-visible:ring-2 utility. Keyboard-tabbing through
-     these previously fell back to the browser default outline. Harmless
-     no-op on elements that already set their own focus-visible ring. */
   button:focus-visible,
   a:focus-visible {
     outline: none;
@@ -67,8 +107,6 @@
     background-color: hsl(var(--background));
     -webkit-font-smoothing: antialiased;
   }
-  /* Ultra-low grain overlay — night-console texture, sits above the solid
-     background but below all real content. */
   body::before {
     content: '';
     position: fixed;
@@ -89,7 +127,6 @@
 }
 
 @layer components {
-  /* legacy names, night-console panels */
   .glass,
   .glass-sm,
   .glass-lg {
@@ -97,55 +134,57 @@
     border: 1px solid hsl(var(--border));
   }
   .glass-card {
-    @apply glass rounded-lg transition-[background-color,border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:transform-none;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    transition:
+      background-color,
+      border-color,
+      box-shadow,
+      transform 0.3s;
+  }
+  .glass-card:hover {
+    translate: 0 -2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .glass-card {
+      transition: none;
+      translate: none;
+    }
+    .glass-card:hover {
+      translate: none;
+    }
   }
   .glass-card:hover {
     border-color: hsl(var(--muted-foreground) / 0.35);
     box-shadow: 0 4px 24px hsl(var(--primary) / 0.07);
   }
-
-  /* Table row styles */
   .table-row-shabnam:hover {
     background: hsl(var(--muted) / 0.6);
     transition: background 0.15s ease;
   }
-
-  /* Amber rail tick for active/selected elements */
   .neon-glow {
     box-shadow: inset 2px 0 0 hsl(var(--primary));
   }
   .neon-glow-sm {
     box-shadow: inset 2px 0 0 hsl(var(--primary));
   }
-
-  /* Status chip recipe (mock): solid semantic color text on the same
-     semantic color at ~14% alpha background — e.g.
-     `text-success bg-success/[0.14]`. Apply directly with token utilities;
-     add a `.chip-tone` helper only if duplication across components
-     warrants it. */
 }
 
 @layer utilities {
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
-
-  /* Tabular figures for KPI/metric values — mock's `.num` recipe. */
   .num {
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
   }
-
-  /* ponytail: content-visibility on below-fold sections; paired with contain-intrinsic-size to prevent scroll jumps */
   .cv-auto {
     content-visibility: auto;
-    /* inline (width): no override — container already constrains width
-       block (height): 320px fallback until painted */
     contain-intrinsic-size: auto none auto 320px;
   }
 }
 
-/* ─── Landing nav: gains glass on scroll (toggled by GSAP) ─── */
 .nav-scrolled {
   border-bottom: 1px solid hsl(var(--border) / 0.6);
   background: hsl(var(--background) / 0.9);
@@ -153,7 +192,6 @@
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* ─── Custom Scrollbar ─── */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -171,7 +209,6 @@
   background-color: hsl(var(--muted-foreground));
 }
 
-/* ─── Animations ─── */
 @keyframes float {
   0%,
   100% {
@@ -217,8 +254,33 @@
     transform: scale(1);
   }
 }
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
 
-/* ─── View Transitions ─── */
 @media (prefers-reduced-motion: no-preference) {
   ::view-transition-old(root),
   ::view-transition-new(root) {
@@ -251,8 +313,6 @@
     }
   }
 
-  /* @starting-style entry transition for KPI cards and section cards.
-     Stagger via inline transition-delay (index × 40ms, capped at 200ms). */
   .card-enter {
     opacity: 1;
     translate: 0 0;
@@ -267,9 +327,6 @@
     }
   }
 
-  /* Panel entrance — fade + translate-up 8px. Stagger via inline
-     animation-delay (index × 40ms), same convention as .card-enter. Use with
-     Tailwind arbitrary values, e.g. `animate-[rise_0.4s_ease-out_both]`. */
   @keyframes rise {
     from {
       opacity: 0;
@@ -281,11 +338,6 @@
     }
   }
 
-  /* Live status dot — e.g. `animate-[pulse-dot_2.4s_ease-in-out_infinite]`.
-     Named `pulse-dot`, not `pulse`: Tailwind's built-in `animate-pulse`
-     utility already ships its own `@keyframes pulse` (used by Skeleton and
-     the existing live-status dots) — a same-named keyframe here would
-     silently override it everywhere since @keyframes names aren't scoped. */
   @keyframes pulse-dot {
     0%,
     100% {
