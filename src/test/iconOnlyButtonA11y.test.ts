@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -133,12 +134,10 @@ function hasTextLikeContent(children: readonly ts.JsxChild[]): boolean {
         for (const branch of [expr.whenTrue, expr.whenFalse]) {
           if (ts.isJsxElement(branch) || ts.isJsxSelfClosingElement(branch)) {
             if (hasTextLikeContent([branch])) return true;
-          } else if (
-            !(
-              branch.kind === ts.SyntaxKind.NullKeyword ||
-              (ts.isIdentifier(branch) && branch.text === 'undefined')
-            )
-          ) {
+          } else if (!(
+            branch.kind === ts.SyntaxKind.NullKeyword ||
+            (ts.isIdentifier(branch) && branch.text === 'undefined')
+          )) {
             return true; // string/call/etc in a branch -- assume text
           }
         }
