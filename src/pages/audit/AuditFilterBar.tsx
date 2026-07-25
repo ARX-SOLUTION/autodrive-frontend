@@ -204,7 +204,7 @@ export const AuditFilterBar = ({
                 }
               }}
               numberOfMonths={2}
-              initialFocus
+              autoFocus
               disabled={{ after: new Date() }}
               className={cn('p-3 pointer-events-auto')}
             />
