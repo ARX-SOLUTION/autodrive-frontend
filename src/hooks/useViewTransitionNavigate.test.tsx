@@ -37,8 +37,14 @@ describe('useViewTransitionNavigate', () => {
     act(() => result.current('/students/1', el, 'student-1'));
 
     expect(navigateMock).toHaveBeenCalledWith('/students/1');
-    // fallback path never touches the element's style at all
-    expect(el.style.viewTransitionName).toBeUndefined();
+    // fallback path never touches the element's style at all. jsdom's
+    // pre-29 CSSOM didn't recognize `viewTransitionName` as a style
+    // property at all, so an untouched read fell through to `undefined`;
+    // the v29 CSSOM rewrite (Changelog v29.0.0) now recognizes it and
+    // reports the spec-correct "" for an unset-but-known property, same
+    // as this file's own "cleared" case below (line ~81) and real
+    // browsers. Same assertion, different jsdom representation.
+    expect(el.style.viewTransitionName).toBe('');
   });
 
   it('falls back to a plain navigate when prefers-reduced-motion matches', () => {
