@@ -63,17 +63,36 @@ const Carousel = React.forwardRef<
       },
       plugins,
     );
-    const [canScrollPrev, setCanScrollPrev] = React.useState(false);
-    const [canScrollNext, setCanScrollNext] = React.useState(false);
 
-    const onSelect = React.useCallback((api: CarouselApi) => {
-      if (!api) {
-        return;
-      }
-
-      setCanScrollPrev(api.canScrollPrev());
-      setCanScrollNext(api.canScrollNext());
-    }, []);
+    // Was two useState mirrors set from an effect that also imperatively
+    // called onSelect(api) on setup (react-hooks/set-state-in-effect).
+    // Subscribing to embla's own 'select'/'reInit' events via
+    // useSyncExternalStore removes the manual mirror entirely: canScrollPrev/
+    // canScrollNext are read straight from the api on every render and
+    // re-read whenever embla notifies, instead of being pushed into state
+    // from inside the effect body.
+    const subscribe = React.useCallback(
+      (callback: () => void) => {
+        if (!api) return () => {};
+        api.on('reInit', callback);
+        api.on('select', callback);
+        return () => {
+          api.off('select', callback);
+          api.off('reInit', callback);
+        };
+      },
+      [api],
+    );
+    const canScrollPrev = React.useSyncExternalStore(
+      subscribe,
+      () => api?.canScrollPrev() ?? false,
+      () => false,
+    );
+    const canScrollNext = React.useSyncExternalStore(
+      subscribe,
+      () => api?.canScrollNext() ?? false,
+      () => false,
+    );
 
     const scrollPrev = React.useCallback(() => {
       api?.scrollPrev();
@@ -103,20 +122,6 @@ const Carousel = React.forwardRef<
 
       setApi(api);
     }, [api, setApi]);
-
-    React.useEffect(() => {
-      if (!api) {
-        return;
-      }
-
-      onSelect(api);
-      api.on('reInit', onSelect);
-      api.on('select', onSelect);
-
-      return () => {
-        api?.off('select', onSelect);
-      };
-    }, [api, onSelect]);
 
     return (
       <CarouselContext.Provider

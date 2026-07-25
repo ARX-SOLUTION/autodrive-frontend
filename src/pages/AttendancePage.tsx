@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
@@ -311,20 +311,29 @@ const AttendancePage = () => {
   );
 
   // autodrive-vh0.6: deep link from the teacher dashboard's upcoming-lessons
-  // list -- ?lesson=<id> opens that lesson's drawer once the list has loaded,
-  // then drops the param so closing the drawer doesn't reopen it. Runs once.
-  const deepLinkedRef = useRef(false);
-  useEffect(() => {
-    if (deepLinkedRef.current) return;
-    const id = searchParams.get('lesson');
-    if (!id || lessons.length === 0) return;
-    deepLinkedRef.current = true;
-    const lesson = lessons.find((l) => l.id === id);
+  // list -- ?lesson=<id> opens that lesson's drawer once the list has
+  // loaded, then drops the param so closing the drawer doesn't reopen it.
+  // openLesson(...) (which calls setSelectedLesson) can no longer live
+  // directly in an effect body (react-hooks/set-state-in-effect) -- moved to
+  // a render-phase guarded call (React's "adjust state when a value
+  // changes" pattern). Same one-shot guard as the ref it replaces: fires
+  // exactly once, the moment `lessons` first has data while the param is
+  // present, match-or-not. Stripping the URL param is a real side effect on
+  // the browser history API, so it stays in an effect, gated on the same
+  // one-shot flag.
+  const [deepLinkOpened, setDeepLinkOpened] = useState(false);
+  const deepLinkId = searchParams.get('lesson');
+  if (!deepLinkOpened && deepLinkId && lessons.length > 0) {
+    setDeepLinkOpened(true);
+    const lesson = lessons.find((l) => l.id === deepLinkId);
     if (lesson) openLesson(lesson);
+  }
+  useEffect(() => {
+    if (!deepLinkOpened || !searchParams.get('lesson')) return;
     const next = new URLSearchParams(searchParams);
     next.delete('lesson');
     setSearchParams(next, { replace: true });
-  }, [lessons, searchParams, setSearchParams, openLesson]);
+  }, [deepLinkOpened, searchParams, setSearchParams]);
 
   const handleSave = form.handleSubmit(async (values) => {
     try {

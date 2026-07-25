@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -176,8 +176,6 @@ const PaymentModal = ({
         amount: payment?.amount_paid ?? 0,
         payment_method: payment?.payment_method ?? 'naqd',
       });
-      setStudentSearch('');
-      setSelectedStudentCache(undefined);
       idempotencyKeyRef.current = crypto.randomUUID();
     }
     // `payment` is captured once by the caller at "open edit" time (same
@@ -187,7 +185,34 @@ const PaymentModal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, form, lockedStudentId, payment]);
 
-  const studentId = form.watch('student_id');
+  // react-hooks/set-state-in-effect (surfaced once the incompatible-library
+  // fix above let the compiler analyze further into this component):
+  // setStudentSearch/setSelectedStudentCache used to reset inside the
+  // effect above. Split out to its own render-phase "reset state when a
+  // value changes" guard (same pattern used across this upgrade batch)
+  // instead of folding into the effect above, which still legitimately owns
+  // form.reset()/the ref (neither is flagged) and already has its own
+  // pre-existing exhaustive-deps exception -- keeping this independent
+  // means it needs no dep array, and no new eslint-disable, at all.
+  const [pickerResetKey, setPickerResetKey] = useState({
+    open,
+    lockedStudentId,
+    payment,
+  });
+  if (
+    open &&
+    (pickerResetKey.open !== open ||
+      pickerResetKey.lockedStudentId !== lockedStudentId ||
+      pickerResetKey.payment !== payment)
+  ) {
+    setPickerResetKey({ open, lockedStudentId, payment });
+    setStudentSearch('');
+    setSelectedStudentCache(undefined);
+  }
+
+  // react-hooks/incompatible-library: form.watch() during render isn't
+  // compiler-safe; useWatch({ control }) is RHF's own drop-in replacement.
+  const studentId = useWatch({ control: form.control, name: 'student_id' });
   const studentOptions = studentPage?.data ?? students;
   const selectedStudent =
     studentOptions.find((s) => s.id === studentId) ?? selectedStudentCache;
@@ -206,14 +231,26 @@ const PaymentModal = ({
     onSubmit({ ...values, idempotency_key: idempotencyKeyRef.current });
   };
 
-  const handleSubmit = form.handleSubmit((values) => {
-    if (effectiveDebt !== undefined && values.amount > effectiveDebt) {
-      setPendingValues(values);
-      setExceedsDebtOpen(true);
-      return;
-    }
-    doSubmit(values);
-  });
+  // react-hooks/refs (surfaced once the incompatible-library fix above let
+  // the compiler analyze further into this component): form.handleSubmit()
+  // was called directly in the render body, and doSubmit() (called from
+  // its callback) reads idempotencyKeyRef.current -- the compiler can't
+  // prove form.handleSubmit's argument isn't invoked synchronously during
+  // render, so it flags the ref read as reachable from render. Deferring
+  // the form.handleSubmit(...) call itself into a plain event-handler
+  // function (only ever actually invoked by the real submit event, never
+  // during render) resolves that without changing anything about when
+  // validation or submission happens.
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    form.handleSubmit((values) => {
+      if (effectiveDebt !== undefined && values.amount > effectiveDebt) {
+        setPendingValues(values);
+        setExceedsDebtOpen(true);
+        return;
+      }
+      doSubmit(values);
+    })(event);
+  };
 
   const confirmExceedsDebt = () => {
     if (pendingValues) doSubmit(pendingValues);
@@ -249,7 +286,7 @@ const PaymentModal = ({
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleFormSubmit} className="space-y-4">
               <FormField
                 control={form.control}
                 name="student_id"

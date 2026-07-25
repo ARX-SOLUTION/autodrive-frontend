@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
@@ -119,6 +119,20 @@ const LegacyMainDashboard = () => {
 
   const canViewAllBranches = useCan('viewAllBranches');
 
+  // react-hooks/purity: formatRelative's "Xm/Xh/Xd ago" labels need the
+  // real current time, which Date.now() can't provide directly during
+  // render (impure). A one-time useState(() => Date.now()) would freeze
+  // "now" at mount and let the labels drift stale the longer this
+  // (explicitly "Live") page stays open, so it's refreshed via a 60s
+  // interval instead -- matches the finest granularity formatRelative
+  // already rounds to (whole minutes), so it can only make the label more
+  // accurate, never wrong, versus the old recompute-on-any-render behavior.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   // ---- Derived values ----
   const revenueSeries = useMemo(
     () =>
@@ -145,7 +159,16 @@ const LegacyMainDashboard = () => {
         return v;
       })
       .reverse();
-  }, [analytics?.monthly_enrollment, analytics?.total_students]);
+    // react-hooks/preserve-manual-memoization: the compiler's own inference
+    // landed on the whole `analytics` object (both fields read here are
+    // direct children of it), broader than these two hand-picked leaves, so
+    // it refused to trust the narrower manual deps and bailed out of
+    // optimizing this component entirely. `analytics` is one query's
+    // `.data` -- every field on it (including these two) gets a new
+    // reference together on every refetch, so widening to `[analytics]`
+    // recomputes on the exact same renders as before for how this query is
+    // actually used here.
+  }, [analytics]);
 
   const studentsDelta = analytics
     ? computeDelta(analytics.new_this_month, analytics.new_last_month)
@@ -263,7 +286,7 @@ const LegacyMainDashboard = () => {
   const formatRelative = (iso?: string) => {
     if (!iso) return '';
     const d = new Date(iso);
-    const diffMs = Date.now() - d.getTime();
+    const diffMs = now - d.getTime();
     const m = Math.round(diffMs / 60000);
     if (m < 1) return 'now';
     if (m < 60) return `${m}m`;

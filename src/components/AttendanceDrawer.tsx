@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -80,9 +80,15 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
   const canSave = useCan('takeAttendance');
   const [changes, setChanges] = useState<Record<string, AttendanceStatus>>({});
 
-  useEffect(() => {
+  // Was `useEffect(() => setChanges({}), [lesson?.id])`
+  // (react-hooks/set-state-in-effect). React's documented render-phase
+  // "reset state when a prop changes" pattern: same reset, same trigger
+  // (lesson?.id changing), one render sooner.
+  const [changesForLessonId, setChangesForLessonId] = useState(lesson?.id);
+  if (lesson?.id !== changesForLessonId) {
+    setChangesForLessonId(lesson?.id);
     setChanges({});
-  }, [lesson?.id]);
+  }
 
   const roster = useMemo<RosterRow[]>(() => {
     const records = detail?.attendance ?? [];

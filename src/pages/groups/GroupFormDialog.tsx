@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Warning, X } from '@phosphor-icons/react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -113,13 +113,24 @@ const GroupFormDialog = ({
   // branch_id rides along in the same GET /groups?search= call (backend
   // already intersects search + branch_id). "Close match" = normalized
   // (trim + case-insensitive) equality, not just substring contains.
-  const nameValue = form.watch('name');
-  const branchIdValue = form.watch('branchId');
+  // react-hooks/incompatible-library: form.watch() called during render
+  // can't be memoized safely; useWatch({ control }) is RHF's own
+  // compiler-safe replacement -- same live value, same re-render-on-change
+  // semantics, called unconditionally like any other hook.
+  const nameValue = useWatch({ control: form.control, name: 'name' });
+  const branchIdValue = useWatch({ control: form.control, name: 'branchId' });
   const debouncedName = useDebounce(nameValue, 300);
   const [dupWarningDismissed, setDupWarningDismissed] = useState(false);
-  useEffect(() => {
+  // react-hooks/set-state-in-effect (surfaced once the incompatible-library
+  // fix above let the compiler analyze further into this component): same
+  // render-phase "reset state when a value changes" pattern used throughout
+  // this upgrade batch instead of a post-commit effect -- same reset, same
+  // trigger (debouncedName changing), one render sooner.
+  const [nameForDismissal, setNameForDismissal] = useState(debouncedName);
+  if (debouncedName !== nameForDismissal) {
+    setNameForDismissal(debouncedName);
     setDupWarningDismissed(false);
-  }, [debouncedName]);
+  }
 
   const { data: branchGroups } = useGroups({
     search: debouncedName.trim() || undefined,

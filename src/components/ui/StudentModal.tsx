@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Warning, X } from '@phosphor-icons/react';
@@ -205,17 +205,22 @@ const StudentModal = ({
     form.setFocus('last_name');
   };
 
-  const [debt, setDebt] = useState(0);
-
-  const watchedTotalPrice = form.watch('total_price');
-  const watchedAmountPaid = form.watch('amount_paid');
-  const watchedInitialPayment = form.watch('initial_payment');
-  const watchedBranchId = form.watch('branch_id');
-  const watchedGroupId = form.watch('group_id');
-  const watchedCourseId = form.watch('course_id');
-  const watchedRegisteredBy = form.watch('registered_by');
-  const watchedLastName = form.watch('last_name');
-  const watchedPhone = form.watch('phone');
+  // react-hooks/incompatible-library: form.watch() during render isn't
+  // compiler-safe; useWatch({ control }) is RHF's own drop-in replacement
+  // (same live value, same re-render-on-change semantics).
+  const { control } = form;
+  const watchedTotalPrice = useWatch({ control, name: 'total_price' });
+  const watchedAmountPaid = useWatch({ control, name: 'amount_paid' });
+  const watchedInitialPayment = useWatch({
+    control,
+    name: 'initial_payment',
+  });
+  const watchedBranchId = useWatch({ control, name: 'branch_id' });
+  const watchedGroupId = useWatch({ control, name: 'group_id' });
+  const watchedCourseId = useWatch({ control, name: 'course_id' });
+  const watchedRegisteredBy = useWatch({ control, name: 'registered_by' });
+  const watchedLastName = useWatch({ control, name: 'last_name' });
+  const watchedPhone = useWatch({ control, name: 'phone' });
 
   // autodrive-553: create-time duplicate check -- phone primarily (once
   // enough digits are typed), last name secondarily. Debounced like
@@ -233,9 +238,18 @@ const StudentModal = ({
   const debouncedDupQuery = useDebounce(dupSearchQuery, 300);
   const [dupWarningDismissed, setDupWarningDismissed] = useState(false);
 
-  useEffect(() => {
+  // react-hooks/set-state-in-effect (surfaced once the incompatible-library
+  // fix above let the compiler analyze further into this component): same
+  // render-phase "reset state when a value changes" pattern used throughout
+  // this upgrade batch (e.g. AttendanceDrawer/GroupFormDialog) instead of a
+  // post-commit effect -- same reset, same trigger (debouncedDupQuery
+  // changing), one render sooner.
+  const [dupQueryForDismissal, setDupQueryForDismissal] =
+    useState(debouncedDupQuery);
+  if (debouncedDupQuery !== dupQueryForDismissal) {
+    setDupQueryForDismissal(debouncedDupQuery);
     setDupWarningDismissed(false);
-  }, [debouncedDupQuery]);
+  }
 
   const { data: dupMatchesPage } = useStudentsPage(
     undefined,
@@ -346,27 +360,24 @@ const StudentModal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [student, courseType, open]);
 
-  useEffect(() => {
-    if (student) {
-      // Both course types: amount_paid in edit mode = additional new payment
-      // (backend adds it). Advance payments (autodrive-6cq.11.6) are allowed,
-      // so this can go negative (credit) — do not clamp to 0.
-      setDebt((student.debt || 0) - (Number(watchedAmountPaid) || 0));
-    } else {
-      const total = Number(watchedTotalPrice) || 0;
-      const paid =
-        courseType === 'tezkor'
-          ? Number(watchedAmountPaid) || 0
-          : Number(watchedInitialPayment) || 0;
-      setDebt(total - paid);
-    }
-  }, [
-    watchedTotalPrice,
-    watchedAmountPaid,
-    watchedInitialPayment,
-    courseType,
-    student,
-  ]);
+  // react-hooks/set-state-in-effect (surfaced once the incompatible-library
+  // fix above let the compiler analyze further into this component): `debt`
+  // was redundant state synced from these same watched fields via an
+  // effect -- a pure function of already-available inputs needs no
+  // useState/useEffect pair at all, per React's "you don't need an effect"
+  // docs. Deriving it directly during render is strictly more correct than
+  // before: the old effect-computed value lagged one render behind an
+  // amount/price keystroke (a visible stale-then-corrected flash); this
+  // shows the right number in the same render as the keystroke.
+  const debt = student
+    ? // Both course types: amount_paid in edit mode = additional new payment
+      // (backend adds it). Advance payments (autodrive-6cq.11.6) are
+      // allowed, so this can go negative (credit) — do not clamp to 0.
+      (student.debt || 0) - (Number(watchedAmountPaid) || 0)
+    : (Number(watchedTotalPrice) || 0) -
+      (courseType === 'tezkor'
+        ? Number(watchedAmountPaid) || 0
+        : Number(watchedInitialPayment) || 0);
 
   useEffect(() => {
     if (watchedGroupId && !groupList.some((g) => g.id === watchedGroupId)) {
@@ -422,7 +433,18 @@ const StudentModal = ({
     }
   };
 
-  const handleSubmit = form.handleSubmit(onFormValid);
+  // react-hooks/refs (surfaced once the incompatible-library fix above let
+  // the compiler analyze further into this component): form.handleSubmit()
+  // was called directly in the render body, and onFormValid reads
+  // submitModeRef.current -- the compiler can't prove form.handleSubmit's
+  // argument isn't invoked synchronously during render, so it flags the
+  // ref read as reachable from render. Deferring the form.handleSubmit(...)
+  // call itself into a plain event-handler function (only ever actually
+  // invoked by the real submit event, never during render) resolves that
+  // without changing anything about when validation or submission happens.
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    form.handleSubmit(onFormValid)(event);
+  };
 
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
     useConfirmedClose(form.formState.isDirty || !!loading, onClose);
@@ -471,7 +493,7 @@ const StudentModal = ({
             )}
             <TabsContent value="info" className="m-0">
               <Form {...form}>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleFormSubmit} className="space-y-4">
                   {/* Identity: who the student is + which branch they belong to. */}
                   <div className="space-y-4">
                     <div>
