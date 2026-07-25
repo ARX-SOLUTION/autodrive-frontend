@@ -17,8 +17,25 @@ export const AppLayout = () => {
   const mainRef = useRef<HTMLElement>(null);
   const palette = useCommandPalette();
 
-  useEffect(() => {
+  // Was the first line of the effect below (`setMobileSidebarOpen(false)`),
+  // unconditionally on every commit where pathname OR navigationType
+  // changed (react-hooks/set-state-in-effect). Moved to React's documented
+  // render-phase "reset state when a value changes" pattern -- same trigger
+  // condition (tracks both values, exactly mirroring the old effect's dep
+  // array), same unconditional close, just one render sooner.
+  const [committedNav, setCommittedNav] = useState(() => ({
+    pathname: location.pathname,
+    navigationType,
+  }));
+  if (
+    location.pathname !== committedNav.pathname ||
+    navigationType !== committedNav.navigationType
+  ) {
+    setCommittedNav({ pathname: location.pathname, navigationType });
     setMobileSidebarOpen(false);
+  }
+
+  useEffect(() => {
     // Scroll to top only on a real PATH change via forward/replace nav (link
     // clicks). Skip POP (back/forward) so the browser restores the previous
     // scroll position; skip same-path REPLACE updates — search/filter/

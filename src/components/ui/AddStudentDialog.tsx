@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useForm, type FieldPath } from 'react-hook-form';
+import {
+  useForm,
+  useWatch,
+  type Control,
+  type FieldPath,
+} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { addDays, format } from 'date-fns';
@@ -11,6 +16,9 @@ import {
 } from '@/lib/phoneFormater';
 import { groupDigits } from '@/lib/money';
 import type { LeadSource } from '@/types/student';
+import type { Branch } from '@/types/branch';
+import type { Course } from '@/types/course';
+import type { Group } from '@/types/group';
 import ReferralFields from '@/components/ui/ReferralFields';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
@@ -195,6 +203,133 @@ const STEPS = [
   },
 ] as const;
 
+interface Step2ReferralSectionProps {
+  control: Control<AddStudentFormData>;
+  branchId: string;
+  onLeadSourceChange: (v: LeadSource | undefined) => void;
+  onLeadSourceOtherChange: (v: string) => void;
+  onReferrerChange: (next: { studentId?: string; userId?: string }) => void;
+}
+
+// react-hooks/incompatible-library: form.watch() during render isn't
+// compiler-safe; useWatch({ control }) is RHF's own drop-in replacement.
+// Kept as its own component (not lifted into AddStudentDialog's top level)
+// because it only ever mounts while step 2 is active -- watching here keeps
+// the exact original subscription lifetime: these 4 fields stop being
+// watched, and stop triggering any re-render, the instant the user leaves
+// step 2, same as the old inline form.watch() calls did.
+const Step2ReferralSection = ({
+  control,
+  branchId,
+  onLeadSourceChange,
+  onLeadSourceOtherChange,
+  onReferrerChange,
+}: Step2ReferralSectionProps) => {
+  const leadSource = useWatch({ control, name: 'lead_source' });
+  const leadSourceOther = useWatch({ control, name: 'lead_source_other' });
+  const referredByStudentId = useWatch({
+    control,
+    name: 'referred_by_student_id',
+  });
+  const referredByUserId = useWatch({ control, name: 'referred_by_user_id' });
+
+  return (
+    <ReferralFields
+      branchId={branchId}
+      leadSource={leadSource}
+      onLeadSourceChange={onLeadSourceChange}
+      leadSourceOther={leadSourceOther}
+      onLeadSourceOtherChange={onLeadSourceOtherChange}
+      referredByStudentId={referredByStudentId}
+      referredByUserId={referredByUserId}
+      onReferrerChange={onReferrerChange}
+    />
+  );
+};
+
+interface WizardSummaryProps {
+  control: Control<AddStudentFormData>;
+  courseId: string;
+  branchId: string;
+  courseList: Course[];
+  branchList: Branch[];
+  filteredGroups: Group[];
+  t: (key: string) => string;
+}
+
+// Same react-hooks/incompatible-library fix as Step2ReferralSection above,
+// for the step-3 summary card, and the same reason it's a separate
+// component: only mounts while step 3 is active, so last_name/first_name/
+// phone/group_id/payment_type/amount are watched HERE to keep their
+// original only-subscribed-on-step-3 lifetime. course_id/branch_id are
+// passed in as props instead of watched again -- AddStudentDialog already
+// watches both unconditionally below (filteredCourses/filteredGroups need
+// them on every step), so re-watching here would just be a redundant
+// second subscription to the same already-live value.
+const WizardSummary = ({
+  control,
+  courseId,
+  branchId,
+  courseList,
+  branchList,
+  filteredGroups,
+  t,
+}: WizardSummaryProps) => {
+  const lastName = useWatch({ control, name: 'last_name' });
+  const firstName = useWatch({ control, name: 'first_name' });
+  const phone = useWatch({ control, name: 'phone' });
+  const groupId = useWatch({ control, name: 'group_id' });
+  const paymentType = useWatch({ control, name: 'payment_type' });
+  const amount = useWatch({ control, name: 'amount' });
+
+  return (
+    <div className="bg-muted/50 rounded-lg p-4 border">
+      <h4 className="font-medium mb-3">{t('students.wizard.summary_title')}</h4>
+      <dl className="grid gap-2 sm:grid-cols-2 text-sm">
+        <dt className="text-muted-foreground">
+          {t('students.wizard.summary_full_name')}:
+        </dt>
+        <dd className="font-medium">
+          {lastName} {firstName}
+        </dd>
+        <dt className="text-muted-foreground">{t('students.phone')}:</dt>
+        <dd className="font-medium">{phone}</dd>
+        <dt className="text-muted-foreground">
+          {t('students.wizard.course')}:
+        </dt>
+        <dd className="font-medium">
+          {courseList.find((c) => c.id === courseId)?.name || '—'}
+        </dd>
+        <dt className="text-muted-foreground">
+          {t('students.wizard.branch')}:
+        </dt>
+        <dd className="font-medium">
+          {branchList.find((b) => b.id === branchId)?.name || '—'}
+        </dd>
+        <dt className="text-muted-foreground">{t('students.group')}:</dt>
+        <dd className="font-medium">
+          {filteredGroups.find((g) => g.id === groupId)?.name ||
+            t('students.wizard.group_later')}
+        </dd>
+        <dt className="text-muted-foreground">
+          {t('students.wizard.payment_type')}:
+        </dt>
+        <dd className="font-medium">
+          {paymentType === 'FULL' && t('students.wizard.payment_type_full')}
+          {paymentType === 'PARTIAL' &&
+            t('students.wizard.payment_type_partial')}
+          {paymentType === 'INSTALLMENT' &&
+            t('students.wizard.payment_type_installment')}
+        </dd>
+        <dt className="text-muted-foreground">
+          {t('students.wizard.amount')}:
+        </dt>
+        <dd className="font-medium">{amount.toLocaleString('uz-UZ')} so'm</dd>
+      </dl>
+    </div>
+  );
+};
+
 const AddStudentDialog = ({
   open,
   onClose,
@@ -291,8 +426,19 @@ const AddStudentDialog = ({
     form.setFocus('last_name');
   };
 
-  const watchedBranchId = form.watch('branch_id');
-  const watchedCourseId = form.watch('course_id');
+  // react-hooks/incompatible-library: form.watch() during render isn't
+  // compiler-safe; useWatch({ control }) is RHF's own drop-in replacement.
+  // Both are already watched unconditionally here (filteredCourses/
+  // filteredGroups below need them regardless of which step is active), so
+  // switching to useWatch doesn't change re-render timing at all.
+  const watchedBranchId = useWatch({
+    control: form.control,
+    name: 'branch_id',
+  });
+  const watchedCourseId = useWatch({
+    control: form.control,
+    name: 'course_id',
+  });
   const watchedCourse = courseList.find(
     (course) => course.id === watchedCourseId,
   );
@@ -308,7 +454,10 @@ const AddStudentDialog = ({
     (course) => !watchedBranchId || course.branch_id === watchedBranchId,
   );
 
-  const watchedStartDate = form.watch('start_date');
+  const watchedStartDate = useWatch({
+    control: form.control,
+    name: 'start_date',
+  });
 
   // Auto-fill completion_date from the selected course's duration, staying in
   // sync with start_date/course changes until the user manually edits the
@@ -392,10 +541,42 @@ const AddStudentDialog = ({
     }
   };
 
+  // react-hooks/set-state-in-effect (surfaced once the incompatible-library
+  // fix above let the compiler analyze further into this component):
+  // setActiveStep/setStepValidated used to reset inside the effect below.
+  // Split to a render-phase "reset state when a value changes" guard (same
+  // pattern used across this upgrade batch) with its own snapshot of the
+  // exact same deps, so it fires under the exact same conditions -- the
+  // effect below keeps the form.setValue() calls, which aren't flagged and
+  // legitimately belong in an effect.
+  const [wizardResetKey, setWizardResetKey] = useState({
+    open,
+    defaultBranchId,
+    defaultCourseId,
+    canAssignBranch,
+    userBranchId: user?.branch_id,
+  });
+  if (
+    open &&
+    (wizardResetKey.open !== open ||
+      wizardResetKey.defaultBranchId !== defaultBranchId ||
+      wizardResetKey.defaultCourseId !== defaultCourseId ||
+      wizardResetKey.canAssignBranch !== canAssignBranch ||
+      wizardResetKey.userBranchId !== user?.branch_id)
+  ) {
+    setWizardResetKey({
+      open,
+      defaultBranchId,
+      defaultCourseId,
+      canAssignBranch,
+      userBranchId: user?.branch_id,
+    });
+    setActiveStep(1);
+    setStepValidated({});
+  }
+
   useEffect(() => {
     if (open) {
-      setActiveStep(1);
-      setStepValidated({});
       if (!defaultBranchId && !canAssignBranch && user?.branch_id) {
         form.setValue('branch_id', user.branch_id);
       }
@@ -914,18 +1095,15 @@ const AddStudentDialog = ({
                       />
                     </div>
 
-                    <ReferralFields
+                    <Step2ReferralSection
+                      control={form.control}
                       branchId={watchedBranchId}
-                      leadSource={form.watch('lead_source')}
                       onLeadSourceChange={(v) =>
                         form.setValue('lead_source', v)
                       }
-                      leadSourceOther={form.watch('lead_source_other')}
                       onLeadSourceOtherChange={(v) =>
                         form.setValue('lead_source_other', v)
                       }
-                      referredByStudentId={form.watch('referred_by_student_id')}
-                      referredByUserId={form.watch('referred_by_user_id')}
                       onReferrerChange={({ studentId, userId }) => {
                         form.setValue(
                           'referred_by_student_id',
@@ -1096,64 +1274,15 @@ const AddStudentDialog = ({
                     </div>
 
                     {/* Summary Card */}
-                    <div className="bg-muted/50 rounded-lg p-4 border">
-                      <h4 className="font-medium mb-3">
-                        {t('students.wizard.summary_title')}
-                      </h4>
-                      <dl className="grid gap-2 sm:grid-cols-2 text-sm">
-                        <dt className="text-muted-foreground">
-                          {t('students.wizard.summary_full_name')}:
-                        </dt>
-                        <dd className="font-medium">
-                          {form.watch('last_name')} {form.watch('first_name')}
-                        </dd>
-                        <dt className="text-muted-foreground">
-                          {t('students.phone')}:
-                        </dt>
-                        <dd className="font-medium">{form.watch('phone')}</dd>
-                        <dt className="text-muted-foreground">
-                          {t('students.wizard.course')}:
-                        </dt>
-                        <dd className="font-medium">
-                          {courseList.find(
-                            (c) => c.id === form.watch('course_id'),
-                          )?.name || '—'}
-                        </dd>
-                        <dt className="text-muted-foreground">
-                          {t('students.wizard.branch')}:
-                        </dt>
-                        <dd className="font-medium">
-                          {branchList.find(
-                            (b) => b.id === form.watch('branch_id'),
-                          )?.name || '—'}
-                        </dd>
-                        <dt className="text-muted-foreground">
-                          {t('students.group')}:
-                        </dt>
-                        <dd className="font-medium">
-                          {filteredGroups.find(
-                            (g) => g.id === form.watch('group_id'),
-                          )?.name || t('students.wizard.group_later')}
-                        </dd>
-                        <dt className="text-muted-foreground">
-                          {t('students.wizard.payment_type')}:
-                        </dt>
-                        <dd className="font-medium">
-                          {form.watch('payment_type') === 'FULL' &&
-                            t('students.wizard.payment_type_full')}
-                          {form.watch('payment_type') === 'PARTIAL' &&
-                            t('students.wizard.payment_type_partial')}
-                          {form.watch('payment_type') === 'INSTALLMENT' &&
-                            t('students.wizard.payment_type_installment')}
-                        </dd>
-                        <dt className="text-muted-foreground">
-                          {t('students.wizard.amount')}:
-                        </dt>
-                        <dd className="font-medium">
-                          {form.watch('amount').toLocaleString('uz-UZ')} so'm
-                        </dd>
-                      </dl>
-                    </div>
+                    <WizardSummary
+                      control={form.control}
+                      courseId={watchedCourseId}
+                      branchId={watchedBranchId}
+                      courseList={courseList}
+                      branchList={branchList}
+                      filteredGroups={filteredGroups}
+                      t={t}
+                    />
                   </div>
                 )}
               </div>

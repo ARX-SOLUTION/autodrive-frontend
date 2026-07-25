@@ -16,3 +16,12 @@ export const isRootDomain = (hostname = window.location.hostname): boolean =>
 // cookie is sent on the new origin's first request.
 export const rootDomainAppUrl = (path: string): string =>
   `https://app.${ROOT_DOMAIN}${path}`;
+
+// A real full-page navigation, as opposed to react-router's client-side
+// navigate() -- deliberately outside any component: react-hooks/immutability
+// flags assigning to a global's property (window.location) anywhere inside a
+// component/hook body, even when (as with LoginPage's onSuccess) it's only
+// ever reachable from an async callback, never during render.
+export const navigateFullPage = (url: string): void => {
+  window.location.href = url;
+};
