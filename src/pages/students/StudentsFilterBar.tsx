@@ -1,7 +1,10 @@
 // Callers: StudentsPage. API: Date dateFrom/dateTo + setDateRange(Date?, Date?).
 // Schema: URL date_from/date_to YYYY-MM-DD unchanged. User: "davom et" (qsgc.4).
 import { useTranslation } from 'react-i18next';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  CourseTypeTabs,
+  type CourseTypeTab,
+} from '@/components/ui/course-type-tabs';
 import {
   Select,
   SelectContent,
@@ -13,16 +16,15 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { DateRangeFields } from '@/components/ui/date-range-fields';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { MagnifyingGlass } from '@phosphor-icons/react';
 import { formatCalendarDate, parseCalendarDate } from '@/lib/calendarDate';
-import type { CourseType } from '@/types/student';
 import type { Branch } from '@/types/branch';
 import type { User } from '@/types/user';
 
 interface StudentsFilterBarProps {
-  courseType: CourseType;
-  setCourseType: (v: CourseType) => void;
+  courseType: CourseTypeTab;
+  setCourseType: (v: CourseTypeTab) => void;
   isCrossTenant: boolean;
   canManageStaff: boolean;
   branchId: string | undefined;
@@ -72,17 +74,7 @@ export const StudentsFilterBar = ({
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <Tabs
-        value={courseType}
-        onValueChange={(v) => setCourseType(v as CourseType)}
-      >
-        <TabsList className="bg-secondary">
-          <TabsTrigger value="tezkor">{t('students.course_fast')}</TabsTrigger>
-          <TabsTrigger value="avto_maktab">
-            {t('students.course_school')}
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <CourseTypeTabs value={courseType} onChange={setCourseType} />
       {isCrossTenant && (
         <Select
           value={branchId || 'all'}
@@ -139,7 +131,7 @@ export const StudentsFilterBar = ({
       </Select>
 
       {/* Date filter — inclusive calendar-date range (autodrive-qsgc.4) */}
-      <DateRangeFields
+      <DateRangePicker
         from={dateFrom ? formatCalendarDate(dateFrom) : undefined}
         to={dateTo ? formatCalendarDate(dateTo) : undefined}
         onChange={(from, to) =>
@@ -148,8 +140,7 @@ export const StudentsFilterBar = ({
             to ? parseCalendarDate(to) : undefined,
           )
         }
-        fromAriaLabel={t('students.date_range')}
-        toAriaLabel={t('students.date_range')}
+        aria-label={t('students.date_range')}
         className="rounded-md border border-border bg-secondary px-2 py-1"
       />
       {(dateFrom || dateTo) && (
@@ -166,6 +157,7 @@ export const StudentsFilterBar = ({
         <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder={t('students.search_placeholder')}
+          aria-label={t('students.search_placeholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9 bg-secondary border-border"

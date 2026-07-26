@@ -10,7 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DateRangeFields } from '@/components/ui/date-range-fields';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import {
+  CourseTypeTabs,
+  type CourseTypeTab,
+} from '@/components/ui/course-type-tabs';
 import { formatCalendarDate, parseCalendarDate } from '@/lib/calendarDate';
 import type { Branch } from '@/types/branch';
 import { MagnifyingGlass, X } from '@phosphor-icons/react';
@@ -26,7 +30,7 @@ interface PaymentsFilterBarProps {
   paymentMethod: string;
   onMethodChange: (v: string) => void;
   courseType: string;
-  onCourseTypeChange: (v: string) => void;
+  onCourseTypeChange: (v: CourseTypeTab) => void;
   dateFrom: Date | undefined;
   dateTo: Date | undefined;
   onDateRangeChange: (from: Date | undefined, to: Date | undefined) => void;
@@ -145,20 +149,12 @@ export const PaymentsFilterBar = ({
           </SelectContent>
         </Select>
 
-        <Select value={courseType} onValueChange={onCourseTypeChange}>
-          <SelectTrigger className="w-40 bg-secondary border-border">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('payments.all_courses')}</SelectItem>
-            <SelectItem value="avto_maktab">
-              {t('payments.course_school')}
-            </SelectItem>
-            <SelectItem value="tezkor">{t('payments.course_fast')}</SelectItem>
-          </SelectContent>
-        </Select>
+        <CourseTypeTabs
+          value={(courseType as CourseTypeTab) || 'all'}
+          onChange={onCourseTypeChange}
+        />
 
-        <DateRangeFields
+        <DateRangePicker
           from={dateFrom ? formatCalendarDate(dateFrom) : undefined}
           to={dateTo ? formatCalendarDate(dateTo) : undefined}
           onChange={(from, to) =>
@@ -167,8 +163,7 @@ export const PaymentsFilterBar = ({
               to ? parseCalendarDate(to) : undefined,
             )
           }
-          fromAriaLabel={t('common.date')}
-          toAriaLabel={t('common.date')}
+          aria-label={t('common.date')}
           className="rounded-md border border-border bg-secondary px-2 py-1"
         />
 
@@ -176,6 +171,7 @@ export const PaymentsFilterBar = ({
           <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t('payments.search_placeholder')}
+            aria-label={t('payments.search_placeholder')}
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-9 bg-secondary border-border"

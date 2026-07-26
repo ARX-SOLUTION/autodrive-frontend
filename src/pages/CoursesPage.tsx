@@ -141,7 +141,7 @@ const CoursesPage = () => {
                   (courses || []).map((c) => (
                     <tr
                       key={c.id}
-                      className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
+                      className="table-row-interactive border-b border-border/50 cursor-pointer"
                       onClick={() => {
                         if (window.getSelection()?.toString()) return;
                         navigate(`/courses/${c.id}`);

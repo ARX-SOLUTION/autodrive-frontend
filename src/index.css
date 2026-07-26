@@ -218,7 +218,8 @@
     @apply border-border;
   }
   button:focus-visible,
-  a:focus-visible {
+  a:focus-visible,
+  [role='button']:focus-visible {
     outline: none;
     box-shadow:
       0 0 0 2px hsl(var(--background)),
@@ -281,8 +282,30 @@
     border-color: hsl(var(--muted-foreground) / 0.35);
     box-shadow: 0 4px 24px hsl(var(--primary) / 0.07);
   }
+  /* Interactive list/table rows — Warm Paper (was table-row-shabnam). */
+  .table-row-interactive {
+    transition: background-color 0.15s ease;
+  }
+  .table-row-interactive:nth-child(even) {
+    background: hsl(var(--muted) / 0.28);
+  }
+  .table-row-interactive:hover {
+    background: hsl(var(--muted) / 0.72);
+  }
+  .table-row-interactive:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px hsl(var(--background)),
+      0 0 0 4px hsl(var(--ring));
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .table-row-interactive {
+      transition: none;
+    }
+  }
+  /* Compat alias — remove once callers are gone. */
   .table-row-shabnam:hover {
-    background: hsl(var(--muted) / 0.6);
+    background: hsl(var(--muted) / 0.72);
     transition: background 0.15s ease;
   }
   .neon-glow {

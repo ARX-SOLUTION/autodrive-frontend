@@ -299,7 +299,7 @@ const OperatorsPage = () => {
                   : paginatedItems.map((o, idx) => (
                       <tr
                         key={o.id}
-                        className="table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors"
+                        className="table-row-interactive border-b border-border/50 cursor-pointer"
                         onClick={() => {
                           if (window.getSelection()?.toString()) return;
                           navigate(`/users/${o.id}`);

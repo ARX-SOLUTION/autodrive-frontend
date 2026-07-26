@@ -185,16 +185,25 @@ describe('CompanyRevenueDashboard', () => {
     ).toBeGreaterThanOrEqual(1);
   });
 
-  it('removes duplicate period select, lower quick-actions card, and MoM period-sum card', () => {
+  it('uses DateRangePicker and granularity as the only period controls', () => {
     render(
       <MemoryRouter>
         <CompanyRevenueDashboard />
       </MemoryRouter>,
     );
+
+    expect(
+      screen.queryByRole('group', { name: 'dashboard.v2.period' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('date-range-picker')).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: 'dashboard.v2.granularity' }),
+    ).toBeInTheDocument();
+
+    // Existing aggressive-dedupe guarantees remain covered here.
     expect(
       screen.queryByRole('combobox', { name: 'dashboard.v2.period' }),
     ).not.toBeInTheDocument();
-    // Header chips keep the quick_action_* labels; the lower card title must go.
     expect(
       screen.queryByText('dashboard.v2.quick_actions'),
     ).not.toBeInTheDocument();

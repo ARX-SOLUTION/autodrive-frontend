@@ -22,6 +22,7 @@ import {
 import { useBranches } from '@/services/branchService';
 import { useOperators } from '@/services/operatorService';
 import { CourseType, Student, StudentStatus } from '@/types/student';
+import type { CourseTypeTab } from '@/components/ui/course-type-tabs';
 import { type CreateStudentPayload } from '@/components/ui/StudentModal';
 import { type AddStudentPayload } from '@/components/ui/AddStudentDialog';
 import { CircleNotch } from '@phosphor-icons/react';
@@ -70,9 +71,13 @@ const StudentsPage = () => {
   };
 
   const courseType = (searchParams.get('course_type') ??
-    'tezkor') as CourseType;
-  const setCourseType = (v: CourseType) =>
-    setParam('course_type', v === 'tezkor' ? undefined : v);
+    'all') as CourseTypeTab;
+  const setCourseType = (v: CourseTypeTab) =>
+    setParam('course_type', v === 'all' ? undefined : v);
+  const courseTypeFilter =
+    courseType === 'all' ? undefined : (courseType as CourseType);
+  const createCourseType: CourseType =
+    courseType === 'avto_maktab' ? 'avto_maktab' : 'tezkor';
 
   const defaultBranchId = isCrossTenant
     ? undefined
@@ -173,7 +178,7 @@ const StudentsPage = () => {
     isError: isStudentsError,
     refetch: refetchStudents,
   } = useStudentsPage(
-    courseType,
+    courseTypeFilter,
     branchId,
     currentPage,
     SERVER_PAGE_SIZE,
@@ -250,7 +255,7 @@ const StudentsPage = () => {
     try {
       const XLSX = await import('xlsx');
       const exportRows = await fetchAllStudents({
-        courseType,
+        courseType: courseTypeFilter,
         branchId,
         operatorId,
         search: debouncedSearch,
@@ -486,7 +491,7 @@ const StudentsPage = () => {
 
       <StudentsDialogs
         students={sorted}
-        courseType={courseType}
+        courseType={createCourseType}
         branchId={branchId}
         operators={operators || []}
         modalOpen={modalOpen}

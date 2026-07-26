@@ -146,12 +146,6 @@ const uzDateFormatter = new Intl.DateTimeFormat('en-CA', {
 
 const todayInUz = () => uzDateFormatter.format(new Date());
 
-const addDays = (dateString: string, amount: number) => {
-  const date = new Date(`${dateString}T00:00:00+05:00`);
-  date.setUTCDate(date.getUTCDate() + amount);
-  return uzDateFormatter.format(date);
-};
-
 const startOfMonthInUz = () => {
   const today = todayInUz();
   return `${today.slice(0, 8)}01`;
@@ -366,7 +360,6 @@ const FilterBar = ({
   const today = todayInUz();
   const from = params.get('from') || startOfMonthInUz();
   const to = params.get('to') || today;
-  // Period presets live in PeriodPills; FilterBar keeps range picker + scopes.
   const controlClassName =
     'h-10 rounded-[11px] border border-border bg-card px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
   return (
@@ -438,64 +431,6 @@ const FilterBar = ({
           className={cn('h-4 w-4', isFetching && 'animate-spin')}
         />
       </Button>
-    </div>
-  );
-};
-
-// Hero-adjacent period shortcuts (mock section 1) — same preset ranges as
-// FilterBar's own select, just three big-thumb-target pills. Wired to the
-// same updateParam('range', ...) contract, so both controls always agree.
-const PeriodPills = ({
-  params,
-  onChange,
-}: {
-  params: URLSearchParams;
-  onChange: (key: string, value?: string) => void;
-}) => {
-  const { t } = useTranslation();
-  const today = todayInUz();
-  const from = params.get('from') || startOfMonthInUz();
-  const to = params.get('to') || today;
-  const active = `${from}|${to}`;
-  const presets = [
-    {
-      key: 'today',
-      label: t('dashboard.v2.today', 'Bugun'),
-      range: `${today}|${today}`,
-    },
-    {
-      key: 'week',
-      label: t('dashboard.v2.week', 'Hafta'),
-      range: `${addDays(today, -6)}|${today}`,
-    },
-    {
-      key: 'month',
-      label: t('dashboard.v2.month', 'Oy'),
-      range: `${startOfMonthInUz()}|${today}`,
-    },
-  ] as const;
-  return (
-    <div
-      role="group"
-      aria-label={t('dashboard.v2.period', 'Davr')}
-      className="flex items-center gap-1.5"
-    >
-      {presets.map((preset) => (
-        <button
-          key={preset.key}
-          type="button"
-          onClick={() => onChange('range', preset.range)}
-          aria-pressed={active === preset.range}
-          className={cn(
-            'h-8 rounded-[10px] px-3 text-xs font-semibold motion-safe:transition-colors',
-            active === preset.range
-              ? 'bg-primary text-primary-foreground'
-              : 'border border-border bg-card text-muted-foreground hover:bg-muted',
-          )}
-        >
-          {preset.label}
-        </button>
-      ))}
     </div>
   );
 };
@@ -916,22 +851,19 @@ const CompanyRevenueDashboard = () => {
   return (
     <div className="space-y-5 pb-8">
       <header className="space-y-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <LiveCaption />
-            <h1 className="mt-2 font-heading text-[40px] font-extrabold leading-[1.1] tracking-[-0.025em] text-balance">
-              {t(greetingKey())}
-              {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
-            </h1>
-            <p className="mt-1.5 max-w-2xl text-[15px] text-muted-foreground text-pretty">
-              {t(
-                'dashboard.hero_sub',
-                '{{count}} ta talaba joriy holatda qarzdor.',
-                { count: kpis.debt.students_with_debt },
-              )}
-            </p>
-          </div>
-          <PeriodPills params={params} onChange={updateParam} />
+        <div>
+          <LiveCaption />
+          <h1 className="mt-2 font-heading text-[40px] font-extrabold leading-[1.1] tracking-[-0.025em] text-balance">
+            {t(greetingKey())}
+            {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+          </h1>
+          <p className="mt-1.5 max-w-2xl text-[15px] text-muted-foreground text-pretty">
+            {t(
+              'dashboard.hero_sub',
+              '{{count}} ta talaba joriy holatda qarzdor.',
+              { count: kpis.debt.students_with_debt },
+            )}
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2.5">

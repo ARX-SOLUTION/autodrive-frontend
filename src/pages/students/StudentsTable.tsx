@@ -15,7 +15,8 @@ import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import { DebtStatusBadge } from '@/components/ui/DebtStatusBadge';
 import { DeletedBadge } from '@/components/ui/DeletedBadge';
-import type { CourseType, Student } from '@/types/student';
+import type { Student } from '@/types/student';
+import type { CourseTypeTab } from '@/components/ui/course-type-tabs';
 import {
   capitalize,
   formatDate,
@@ -30,7 +31,7 @@ interface StudentsTableProps {
   onRetry: () => void;
   totalStudents: number;
   startIndex: number;
-  courseType: CourseType;
+  courseType: CourseTypeTab;
   sortField: string;
   sortDir: 'asc' | 'desc';
   toggleSort: (field: string) => void;
@@ -323,10 +324,27 @@ export const StudentsTable = ({
     },
   ];
 
+  const courseTypeColumn: DataTableColumn<Student> = {
+    key: 'course_type',
+    header: t('students.course_type'),
+    cellClassName: 'text-muted-foreground',
+    render: (s) =>
+      s.course_type === 'tezkor'
+        ? t('students.course_fast')
+        : t('students.course_school'),
+  };
+
+  const midColumns =
+    courseType === 'tezkor'
+      ? tezkorColumns
+      : courseType === 'avto_maktab'
+        ? avtoMaktabColumns
+        : [courseTypeColumn, ...tezkorColumns];
+
   const columns: DataTableColumn<Student>[] = [
     indexColumn,
     ...nameColumns,
-    ...(courseType === 'tezkor' ? tezkorColumns : avtoMaktabColumns),
+    ...midColumns,
     ...tailColumns,
   ].filter((c) => canViewPayments || !MONEY_COLUMN_KEYS.has(c.key));
 

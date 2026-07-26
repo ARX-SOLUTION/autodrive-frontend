@@ -11,12 +11,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Branch } from '@/types/branch';
+import {
+  CourseTypeTabs,
+  type CourseTypeTab,
+} from '@/components/ui/course-type-tabs';
 
 interface GroupsFilterBarProps {
   search: string;
   onSearchChange: (v: string) => void;
   courseTypeFilter: string;
-  onCourseTypeChange: (v: string) => void;
+  onCourseTypeChange: (v: CourseTypeTab) => void;
   isCrossTenant: boolean;
   branchId: string | undefined;
   onBranchChange: (v: string | undefined) => void;
@@ -25,6 +29,8 @@ interface GroupsFilterBarProps {
   canViewDeleted: boolean;
   includeDeleted: boolean;
   setIncludeDeleted: (v: boolean) => void;
+  /** Desktop uses GroupsBranchNav; keep Select for mobile only. */
+  hideBranchSelectOnDesktop?: boolean;
 }
 
 const GroupsFilterBar = ({
@@ -39,6 +45,7 @@ const GroupsFilterBar = ({
   canViewDeleted,
   includeDeleted,
   setIncludeDeleted,
+  hideBranchSelectOnDesktop = false,
 }: GroupsFilterBarProps) => {
   const { t } = useTranslation();
 
@@ -48,40 +55,35 @@ const GroupsFilterBar = ({
         <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder={t('groups.search_placeholder')}
+          aria-label={t('groups.search_placeholder')}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           className="pl-9 bg-secondary border-border"
         />
       </div>
-      <Select value={courseTypeFilter} onValueChange={onCourseTypeChange}>
-        <SelectTrigger className="w-[180px] bg-secondary border-border">
-          <SelectValue placeholder={t('groups.course_type')} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">{t('groups.all')}</SelectItem>
-          <SelectItem value="tezkor">{t('groups.course_fast')}</SelectItem>
-          <SelectItem value="avto_maktab">
-            {t('groups.course_school')}
-          </SelectItem>
-        </SelectContent>
-      </Select>
+      <CourseTypeTabs
+        value={(courseTypeFilter as CourseTypeTab) || 'all'}
+        onChange={onCourseTypeChange}
+      />
       {isCrossTenant && (
-        <Select
-          value={branchId || 'all'}
-          onValueChange={(v) => onBranchChange(v === 'all' ? undefined : v)}
-        >
-          <SelectTrigger className="w-40 bg-secondary border-border">
-            <SelectValue placeholder={t('common.branch')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('common.all')}</SelectItem>
-            {branches.map((b) => (
-              <SelectItem key={b.id} value={b.id}>
-                {b.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className={hideBranchSelectOnDesktop ? 'lg:hidden' : undefined}>
+          <Select
+            value={branchId || 'all'}
+            onValueChange={(v) => onBranchChange(v === 'all' ? undefined : v)}
+          >
+            <SelectTrigger className="w-40 bg-secondary border-border">
+              <SelectValue placeholder={t('common.branch')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              {branches.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       )}
 
       {canViewDeleted && (

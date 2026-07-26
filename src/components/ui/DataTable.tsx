@@ -91,7 +91,7 @@ export function DataTable<T>({
   sortDir = 'asc',
   onToggleSort,
   className,
-  rowHoverClassName = 'hover:bg-muted/20 transition-colors',
+  rowHoverClassName = 'table-row-interactive',
   rowClassName,
 }: DataTableProps<T>) {
   const colSpan = columns.length;
@@ -105,9 +105,17 @@ export function DataTable<T>({
               {columns.map((col) => {
                 const align = col.align ?? 'left';
                 const sortKey = col.sortKey ?? col.key;
+                const ariaSort = col.sortable
+                  ? sortField === sortKey
+                    ? sortDir === 'asc'
+                      ? 'ascending'
+                      : 'descending'
+                    : 'none'
+                  : undefined;
                 return (
                   <th
                     key={col.key}
+                    aria-sort={ariaSort}
                     className={cn(
                       'px-4 py-3 font-medium text-muted-foreground',
                       ALIGN_CLASS[align],
@@ -165,8 +173,9 @@ export function DataTable<T>({
                 <tr
                   key={keyExtractor(row)}
                   className={cn(
-                    'table-row-striped border-b border-border/50',
-                    onRowClick && cn('cursor-pointer', rowHoverClassName),
+                    'border-b border-border/50',
+                    onRowClick && 'cursor-pointer',
+                    rowHoverClassName,
                     rowClassName?.(row),
                   )}
                   onClick={

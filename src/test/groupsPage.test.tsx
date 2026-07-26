@@ -88,6 +88,11 @@ const OVERVIEW: Partial<GroupOverview>[] = [
     branch_name: 'Yunusobod filiali',
     groups: [GROUPS[0] as Group],
   },
+  {
+    branch_id: 'b2',
+    branch_name: 'Chilonzor filiali',
+    groups: [GROUPS[1] as Group],
+  },
 ];
 
 const renderPage = (url = '/groups') =>
@@ -119,17 +124,28 @@ describe('GroupsPage rendering', () => {
     expect(screen.getByText('groups.count')).toBeTruthy();
   });
 
-  it('renders the by-branch overview and expands a branch on click', () => {
+  it('renders searchable branch nav and filters the list', () => {
     h.groupsData = [];
     renderPage();
-    const header = screen.getByRole('button', {
-      name: /Yunusobod filiali/,
-    });
-    // Collapsed: the overview group's row is not shown yet (list is empty so
-    // no table row can match either).
+    // No nested group dump in the nav — only branch names + counts.
     expect(screen.queryByText('Alpha guruh')).toBeNull();
-    fireEvent.click(header);
-    expect(screen.getByText('Alpha guruh')).toBeTruthy();
+    expect(
+      screen.getByRole('option', { name: /Yunusobod filiali/, hidden: true }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('textbox', {
+        name: 'groups.branch_search',
+        hidden: true,
+      }),
+    ).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole('option', { name: /Yunusobod filiali/, hidden: true }),
+    );
+    const pageCall = h.useGroupsSpy.mock.calls
+      .map((c) => c[0] as { branchId?: string })
+      .filter((c) => 'courseType' in (c as object))
+      .at(-1);
+    expect(pageCall?.branchId).toBe('b1');
   });
 });
 
@@ -183,8 +199,9 @@ describe('GroupsPage role gating', () => {
   it('owner sees delete buttons and the branch filter select', () => {
     renderPage();
     expect(screen.getAllByLabelText('common.delete').length).toBeGreaterThan(0);
-    // Filter bar has course-type + branch selects for cross-tenant roles.
-    expect(screen.getAllByRole('combobox').length).toBe(2);
+    // Course type is tabs; only branch select remains for cross-tenant roles.
+    expect(screen.getAllByRole('combobox').length).toBe(1);
+    expect(screen.getByRole('tablist')).toBeTruthy();
   });
 
   it('teacher gets no delete button, no branch filter, and is pinned to own branch', () => {
@@ -194,8 +211,9 @@ describe('GroupsPage role gating', () => {
     expect(screen.queryAllByLabelText('common.delete').length).toBe(0);
     // Edit stays available regardless of manageGroups.
     expect(screen.getAllByLabelText('common.edit').length).toBeGreaterThan(0);
-    // Only the course-type select renders — no branch picker.
-    expect(screen.getAllByRole('combobox').length).toBe(1);
+    // Course type is tabs; no branch picker for teachers.
+    expect(screen.queryAllByRole('combobox').length).toBe(0);
+    expect(screen.getByRole('tablist')).toBeTruthy();
     // Fetch is pinned to the teacher's own branch from the auth store.
     const pageCall = h.useGroupsSpy.mock.calls.find(
       (c) => 'courseType' in (c[0] as object),

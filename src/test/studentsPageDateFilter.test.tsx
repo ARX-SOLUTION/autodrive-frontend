@@ -3,7 +3,7 @@ import { MemoryRouter, useSearchParams } from 'react-router-dom';
 import { vi, describe, it, expect } from 'vitest';
 import StudentsPage from '@/pages/StudentsPage';
 
-// autodrive-qsgc.4: DateRangeFields typed entry (not Calendar range mode).
+// DateRangePicker: two calendar clicks write date_from/date_to.
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
     selector({
@@ -63,7 +63,7 @@ const SearchParamsSpy = () => {
 };
 
 describe('StudentsPage date-range filter', () => {
-  it('writes both typed local calendar days to the URL', () => {
+  it('writes both calendar-selected days to the URL', () => {
     render(
       <MemoryRouter initialEntries={['/students']}>
         <StudentsPage />
@@ -71,14 +71,23 @@ describe('StudentsPage date-range filter', () => {
       </MemoryRouter>,
     );
 
-    const range = screen.getByTestId('date-range-fields');
-    const inputs = range.querySelectorAll('input');
-    expect(inputs.length).toBeGreaterThanOrEqual(2);
-
-    fireEvent.change(inputs[0], { target: { value: '10.07.2026' } });
-    fireEvent.blur(inputs[0]);
-    fireEvent.change(inputs[1], { target: { value: '12.07.2026' } });
-    fireEvent.blur(inputs[1]);
+    fireEvent.click(
+      screen.getByTestId('date-range-picker').querySelector('button')!,
+    );
+    const clickDay = (day: string) => {
+      const cells = screen
+        .getAllByRole('gridcell')
+        .filter((c) => c.textContent === day);
+      const cell =
+        cells.find((c) => {
+          const btn = c.querySelector('button');
+          return btn && !btn.disabled && !btn.className.includes('day-outside');
+        }) ?? cells[0];
+      fireEvent.click(cell.querySelector('button')!);
+    };
+    // max defaults to Tashkent today; Jul 10–12 are in range.
+    clickDay('10');
+    clickDay('12');
 
     const params = screen.getByTestId('search-params').textContent ?? '';
     expect(params).toContain('date_from=2026-07-10');

@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { DateRangeFields } from '@/components/ui/date-range-fields';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { formatCalendarDate, parseCalendarDate } from '@/lib/calendarDate';
 import { MagnifyingGlass, X } from '@phosphor-icons/react';
 
@@ -110,7 +110,7 @@ export const AuditFilterBar = ({
     <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground text-balance">
-          {t('payments.filter_title')}
+          {t('audit.filter_title')}
         </h2>
         {hasAnyFilter && (
           <Button
@@ -119,7 +119,7 @@ export const AuditFilterBar = ({
             onClick={onClearAll}
             className="h-7 gap-1 text-xs"
           >
-            <X className="h-3 w-3" /> {t('payments.clear_all')}
+            <X className="h-3 w-3" /> {t('audit.clear_all')}
           </Button>
         )}
       </div>
@@ -164,7 +164,7 @@ export const AuditFilterBar = ({
           </SelectContent>
         </Select>
 
-        <DateRangeFields
+        <DateRangePicker
           from={dateFrom ? formatCalendarDate(dateFrom) : undefined}
           to={dateTo ? formatCalendarDate(dateTo) : undefined}
           onChange={(from, to) =>
@@ -173,8 +173,7 @@ export const AuditFilterBar = ({
               to ? parseCalendarDate(to) : undefined,
             )
           }
-          fromAriaLabel={t('audit.select_date')}
-          toAriaLabel={t('audit.select_date')}
+          aria-label={t('audit.select_date')}
           className="rounded-md border border-border bg-secondary px-2 py-1"
         />
 
@@ -182,6 +181,7 @@ export const AuditFilterBar = ({
           <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t('audit.filter_user')}
+            aria-label={t('audit.filter_user')}
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-9 bg-secondary border-border"

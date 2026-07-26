@@ -34,6 +34,7 @@ export interface DatePickerProps {
   id?: string;
   name?: string;
   className?: string;
+  'aria-label'?: string;
   'aria-describedby'?: string;
   'aria-invalid'?: boolean | 'true' | 'false';
   'aria-required'?: boolean | 'true' | 'false';
@@ -62,6 +63,7 @@ export const DatePicker = ({
   id,
   name,
   className,
+  'aria-label': ariaLabel,
   'aria-describedby': ariaDescribedBy,
   'aria-invalid': ariaInvalid,
   'aria-required': ariaRequired,
@@ -139,6 +141,7 @@ export const DatePicker = ({
         placeholder={placeholder ?? t('datepicker.placeholder')}
         disabled={disabled}
         autoComplete="off"
+        aria-label={ariaLabel}
         aria-describedby={ariaDescribedBy}
         aria-required={ariaRequired}
         aria-invalid={ariaInvalid}

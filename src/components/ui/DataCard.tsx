@@ -51,7 +51,7 @@ export const DataCard = ({
         'relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm transition-colors [contain-intrinsic-size:auto_180px] [content-visibility:auto]',
         accent && 'pl-5',
         interactive &&
-          'cursor-pointer hover:border-primary/40 hover:bg-accent/30',
+          'cursor-pointer motion-safe:transition-colors hover:border-primary/50 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         className,
       )}
     >
@@ -79,7 +79,7 @@ export const DataCard = ({
         <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
           {fields.map((f, i) => (
             <div key={i} className="min-w-0">
-              <dt className="truncate text-[10px] uppercase tracking-wider text-muted-foreground/70">
+              <dt className="truncate text-[10px] uppercase tracking-wider text-muted-foreground">
                 {f.label}
               </dt>
               <dd className="mt-0.5 truncate text-foreground tabular-nums">

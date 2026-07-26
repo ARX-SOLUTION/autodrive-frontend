@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CourseTypeTabs } from '@/components/ui/course-type-tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Area,
@@ -324,22 +324,11 @@ const LegacyMainDashboard = () => {
             />
             {t('dashboard.live_label')}
           </span>
-          <Tabs
+          <CourseTypeTabs
             value={courseType || 'all'}
-            onValueChange={(v) =>
-              setCourseType(v === 'all' ? undefined : (v as CourseType))
-            }
-          >
-            <TabsList className="bg-muted">
-              <TabsTrigger value="all">{t('dashboard.all')}</TabsTrigger>
-              <TabsTrigger value="tezkor">
-                {t('dashboard.chart_fast')}
-              </TabsTrigger>
-              <TabsTrigger value="avto_maktab">
-                {t('dashboard.chart_school')}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+            onChange={(v) => setCourseType(v === 'all' ? undefined : v)}
+            listClassName="bg-muted"
+          />
           {canViewAllBranches && (
             <Select
               value={branchId || 'all'}

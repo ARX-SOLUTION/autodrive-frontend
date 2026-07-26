@@ -446,7 +446,7 @@ const UsersPage = () => {
                       <tr
                         key={u.id}
                         className={cn(
-                          'table-row-striped border-b border-border/50 cursor-pointer hover:bg-muted/20 transition-colors',
+                          'table-row-interactive border-b border-border/50 cursor-pointer',
                           u.deleted_at && 'opacity-60',
                         )}
                         onClick={() => {
