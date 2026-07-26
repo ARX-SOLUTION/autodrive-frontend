@@ -17,7 +17,6 @@ import {
   Hourglass,
   PiggyBank,
   ArrowsClockwise,
-  TrendUp,
   UserCheck,
   UserMinus,
   UserPlus,
@@ -27,10 +26,7 @@ import {
 import {
   Area,
   AreaChart,
-  Bar,
-  BarChart,
   CartesianGrid,
-  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -39,7 +35,11 @@ import {
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DateRangeFields } from '@/components/ui/date-range-fields';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import {
+  CourseTypeTabs,
+  type CourseTypeTab,
+} from '@/components/ui/course-type-tabs';
 import { useBranches } from '@/services/branchService';
 import { useCompanyOverview } from '@/services/dashboardService';
 import type {
@@ -51,7 +51,7 @@ import { useCan } from '@/hooks/useCan';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
 import { formatMoney, groupDigits } from '@/lib/money';
-import { CHART_STYLE, formatNumber } from '@/pages/dashboard/dashboardCards';
+import { formatNumber } from '@/pages/dashboard/dashboardCards';
 
 gsap.registerPlugin(useGSAP);
 
@@ -82,17 +82,6 @@ const formatShortDate = (value: string | Date) =>
 // ponytail: local copy, not imported from DashboardPage.tsx — that file
 // already imports CompanyRevenueDashboard, so importing back would create a
 // circular dependency. Spec's offered fallback ("else local copy") applies.
-const initialsFor = (name?: string | null) => {
-  if (!name) return '··';
-  const parts = name.trim().split(/\s+/).slice(0, 2);
-  return parts
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('')
-    .padEnd(2, '·');
-};
-
-// ponytail: local copy of DashboardPage.tsx's greetingKey() — same
-// circular-import constraint as initialsFor above.
 const greetingKey = () => {
   const h = new Date().getHours();
   if (h < 12) return 'dashboard.greeting_morning';
@@ -332,6 +321,7 @@ const DeltaChip = ({
   ink?: boolean;
 }) => (
   <span
+    data-testid="kpi-delta"
     className={cn(
       'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums',
       ink
@@ -357,58 +347,6 @@ const Eyebrow = ({ children }: { children: React.ReactNode }) => (
   </p>
 );
 
-const DisplayMetric = ({
-  eyebrow,
-  value,
-  unit,
-  delta,
-  caption,
-  onClick,
-}: {
-  eyebrow: string;
-  value: string;
-  unit?: string;
-  delta?: number | null;
-  caption?: string;
-  onClick?: () => void;
-}) => {
-  const accessibleName = `${eyebrow}: ${value}${unit ? ` ${unit}` : ''}`;
-  return (
-    <div
-      onClick={onClick}
-      onKeyDown={(event) => {
-        if (onClick && (event.key === 'Enter' || event.key === ' ')) {
-          event.preventDefault();
-          onClick();
-        }
-      }}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      aria-label={onClick ? accessibleName : undefined}
-      className={cn(
-        onClick &&
-          'cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-      )}
-    >
-      <Eyebrow>{eyebrow}</Eyebrow>
-      <p className="font-heading text-6xl font-bold tracking-tight text-foreground tabular-nums text-balance sm:text-7xl">
-        {value}
-        {unit && (
-          <span className="ml-2 text-xl font-medium text-muted-foreground">
-            {unit}
-          </span>
-        )}
-      </p>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {delta !== undefined && delta !== null && <DeltaChip delta={delta} />}
-        {caption && (
-          <span className="text-sm text-muted-foreground">{caption}</span>
-        )}
-      </div>
-    </div>
-  );
-};
-
 const FilterBar = ({
   params,
   canViewAllBranches,
@@ -428,40 +366,12 @@ const FilterBar = ({
   const today = todayInUz();
   const from = params.get('from') || startOfMonthInUz();
   const to = params.get('to') || today;
-  const preset = (value: string) => {
-    if (value === 'today') return onChange('range', `${today}|${today}`);
-    if (value === '7d')
-      return onChange('range', `${addDays(today, -6)}|${today}`);
-    if (value === '30d')
-      return onChange('range', `${addDays(today, -29)}|${today}`);
-    return onChange('range', `${startOfMonthInUz()}|${today}`);
-  };
-  // exec-dash 1: collapsed toolbar — h-10/rounded-[11px]/bg-card controls,
-  // no section label. Same preset()/onChange contract as before, just denser.
+  // Period presets live in PeriodPills; FilterBar keeps range picker + scopes.
   const controlClassName =
     'h-10 rounded-[11px] border border-border bg-card px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2">
-      <select
-        aria-label={t('dashboard.v2.period', 'Davr')}
-        className={controlClassName}
-        value={`${from}|${to}`}
-        onChange={(event) => preset(event.target.value)}
-      >
-        <option value={`${startOfMonthInUz()}|${today}`}>
-          {t('dashboard.v2.this_month', 'Bu oy')}
-        </option>
-        <option value={`${today}|${today}`}>
-          {t('dashboard.v2.today', 'Bugun')}
-        </option>
-        <option value={`${addDays(today, -6)}|${today}`}>
-          {t('dashboard.v2.last_7_days', '7 kun')}
-        </option>
-        <option value={`${addDays(today, -29)}|${today}`}>
-          {t('dashboard.v2.last_30_days', '30 kun')}
-        </option>
-      </select>
-      <DateRangeFields
+      <DateRangePicker
         from={from}
         to={to}
         max={today}
@@ -472,8 +382,7 @@ const FilterBar = ({
           const t = nextTo ?? today;
           onChange('range', `${f <= t ? f : t}|${f <= t ? t : f}`);
         }}
-        fromAriaLabel={t('dashboard.v2.from', 'Dan')}
-        toAriaLabel={t('dashboard.v2.to', 'Gacha')}
+        aria-label={t('dashboard.v2.date_range', "Sana oralig'i")}
         className="gap-1.5"
       />
       {canViewAllBranches && (
@@ -498,23 +407,14 @@ const FilterBar = ({
           ))}
         </select>
       )}
-      <select
-        aria-label={t('dashboard.v2.course', 'Kurs')}
-        value={params.get('course_type') || 'all'}
-        onChange={(event) =>
-          onChange(
-            'course_type',
-            event.target.value === 'all' ? undefined : event.target.value,
-          )
+      <CourseTypeTabs
+        value={(params.get('course_type') as CourseTypeTab) || 'all'}
+        onChange={(value) =>
+          onChange('course_type', value === 'all' ? undefined : value)
         }
-        className={controlClassName}
-      >
-        <option value="all">{t('dashboard.all', 'Barchasi')}</option>
-        <option value="tezkor">{t('dashboard.chart_fast', 'Tezkor')}</option>
-        <option value="avto_maktab">
-          {t('dashboard.chart_school', 'Avto maktab')}
-        </option>
-      </select>
+        className="shrink-0"
+        listClassName="h-10"
+      />
       <select
         aria-label={t('dashboard.v2.granularity', 'Granulyarlik')}
         value={params.get('granularity') === 'week' ? 'week' : 'day'}
@@ -1012,21 +912,6 @@ const CompanyRevenueDashboard = () => {
     (sum, item) => sum + item.amount,
     0,
   );
-  const topBranchesChart = sortedBranches.slice(0, 6).map((branch) => ({
-    branch: branch.name,
-    revenue: branch.collected_revenue,
-  }));
-  const showBranchChart = canViewAllBranches && topBranchesChart.length > 1;
-  const mixData = [
-    {
-      name: t('dashboard.chart_school'),
-      value: kpis.revenue_by_course_type.avto_maktab.revenue,
-    },
-    {
-      name: t('dashboard.chart_fast'),
-      value: kpis.revenue_by_course_type.tezkor.revenue,
-    },
-  ];
 
   return (
     <div className="space-y-5 pb-8">
@@ -1114,249 +999,195 @@ const CompanyRevenueDashboard = () => {
       />
 
       <div
-        data-testid="dashboard-v2-primary-bands"
-        className="space-y-14 lg:space-y-20 motion-safe:animate-[rise_0.5s_ease_both]"
+        data-testid="dashboard-v2-kpi-strip"
+        className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6 motion-safe:animate-[rise_0.5s_ease_both]"
         style={{ animationDelay: '40ms' }}
         aria-label={t('dashboard.v2.kpi_section_label', 'Revenue control KPIs')}
       >
-        <section className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.6fr_1fr] lg:gap-14">
-          <div>
-            <Eyebrow>
-              {t('dashboard.v2.revenue_trend', 'Tushum trendi')}
-            </Eyebrow>
-            <h2 className="mb-2 font-heading text-2xl font-bold tracking-tight text-foreground">
-              {t('dashboard.revenue_trend_sub', {
-                total: formatNumber(revenueTrendTotal),
-                currency,
-              })}
-            </h2>
-            <p className="mb-6 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
-              {trendRangeCaption}
-            </p>
-            <RevenueChart data={data.revenue_trend} onReset={resetFilters} />
-          </div>
-          <DisplayMetric
-            eyebrow={t('dashboard.v2.today_revenue', 'Bugungi tushum')}
-            value={groupDigits(String(Math.round(kpis.revenue.today)))}
-            unit={currency}
-            delta={kpis.revenue.delta_percent}
-            caption={
-              t('dashboard.v2.period_revenue', 'Davr tushumi') +
-              `: ${formatMoney(kpis.revenue.period)}`
-            }
-            onClick={() =>
-              navigate(
-                withContext('/payments', {
-                  date_from: todayInUz(),
-                  date_to: todayInUz(),
-                }),
-              )
-            }
-          />
-        </section>
-
-        <section className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1fr_1.6fr] lg:gap-14">
-          <DisplayMetric
-            eyebrow={t('dashboard.hero_active_students')}
-            value={groupDigits(String(Math.round(kpis.students.active)))}
-            delta={kpis.revenue.delta_percent}
-            caption={`+${kpis.students.new} ${t('dashboard.hero_new_this_month')}`}
-            onClick={() =>
-              navigate(withContext('/students', { status: 'active' }))
-            }
-          />
-          <div>
-            <Eyebrow>
-              {showBranchChart
-                ? t('dashboard.top_branches_title')
-                : t('dashboard.course_mix_title')}
-            </Eyebrow>
-            <h2 className="mb-6 font-heading text-2xl font-bold tracking-tight text-foreground">
-              {showBranchChart
-                ? t('dashboard.top_branches_sub')
-                : t('dashboard.course_mix_sub')}
-            </h2>
-            {showBranchChart ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart
-                  data={topBranchesChart}
-                  margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-                  barSize={28}
-                >
-                  <CartesianGrid
-                    strokeDasharray="2 4"
-                    stroke="hsl(var(--border))"
-                    vertical={false}
-                  />
-                  <XAxis dataKey="branch" {...AXIS_PROPS} />
-                  <YAxis {...AXIS_PROPS} width={0} hide />
-                  <Tooltip
-                    {...CHART_STYLE}
-                    formatter={(v: number) => [
-                      `${formatNumber(v)} ${currency}`,
-                      t('dashboard.top_branches_revenue'),
-                    ]}
-                  />
-                  <Bar
-                    dataKey="revenue"
-                    radius={[6, 6, 0, 0]}
-                    fill="hsl(var(--primary))"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : mixData[0].value + mixData[1].value === 0 ? (
-              <div className="grid h-64 place-items-center text-sm text-muted-foreground">
-                {t('dashboard.no_data')}
-              </div>
+        <button
+          type="button"
+          onClick={() =>
+            navigate(
+              withContext('/payments', {
+                date_from: todayInUz(),
+                date_to: todayInUz(),
+              }),
+            )
+          }
+          className="rounded-xl border border-border bg-card p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <p className="text-[11px] text-muted-foreground">
+            {t('dashboard.v2.today_revenue', 'Bugungi tushum')}
+          </p>
+          <p className="mt-1 font-heading text-xl font-bold tabular-nums">
+            {formatMoney(kpis.revenue.today)}
+          </p>
+        </button>
+        <div className="rounded-xl border border-border bg-card p-3">
+          <p className="text-[11px] text-muted-foreground">
+            {t('dashboard.v2.period_revenue', 'Davr tushumi')}
+          </p>
+          <p className="mt-1 font-heading text-xl font-bold tabular-nums">
+            {formatMoney(kpis.revenue.period)}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-3">
+          <p className="text-[11px] text-muted-foreground">
+            {t('dashboard.v2.period_over_period', 'Davr o‘sishi')}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            {kpis.revenue.delta_percent != null ? (
+              <DeltaChip delta={kpis.revenue.delta_percent} />
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart
-                  data={mixData}
-                  layout="vertical"
-                  margin={{ top: 8, right: 24, left: 0, bottom: 0 }}
-                  barSize={40}
-                >
-                  <CartesianGrid
-                    strokeDasharray="2 4"
-                    stroke="hsl(var(--border))"
-                    horizontal={false}
-                  />
-                  <XAxis type="number" {...AXIS_PROPS} />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    {...AXIS_PROPS}
-                    width={120}
-                  />
-                  <Tooltip
-                    {...CHART_STYLE}
-                    formatter={(v: number) => [formatNumber(v), '']}
-                  />
-                  <Bar dataKey="value" radius={[0, 8, 8, 0]}>
-                    {mixData.map((_, i) => (
-                      <Cell
-                        key={i}
-                        fill={
-                          i === 0
-                            ? 'hsl(var(--primary))'
-                            : 'hsl(var(--warning))'
-                        }
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <span className="font-heading text-xl font-bold">—</span>
             )}
           </div>
-        </section>
-
-        <section className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.6fr_1fr] lg:gap-14">
-          <div>
-            <Eyebrow>
-              {t('dashboard.v2.recovery', 'Qarzdorlik navbati')}
-            </Eyebrow>
-            <h2 className="mb-6 font-heading text-2xl font-bold tracking-tight text-foreground">
-              {t(
-                'dashboard.v2.recovery_subtitle',
-                'Eng katta qarzlar birinchi ko‘rsatiladi.',
-              )}
-            </h2>
-            {data.recovery_queue.length ? (
-              <ul>
-                {data.recovery_queue.map((student) => {
-                  const overdueDays = daysSince(student.last_payment_at);
-                  const tone = debtPriorityTone(student.debt, overdueDays);
-                  return (
-                    <li
-                      key={student.student_id}
-                      onClick={() =>
-                        navigate(`/students/${student.student_id}`)
-                      }
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
-                          navigate(`/students/${student.student_id}`);
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={t(
-                        'dashboard.v2.view_debtor',
-                        "Ko'rish: {{name}}",
-                        { name: student.student_name },
-                      )}
-                      className="flex cursor-pointer items-center justify-between gap-4 border-b border-border py-4 last:border-b-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <span className="flex min-w-0 items-center gap-3">
-                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                          {initialsFor(student.student_name)}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-base font-semibold text-foreground">
-                            {student.student_name}
-                          </span>
-                          <span className="block truncate text-sm text-muted-foreground">
-                            {student.branch_name} ·{' '}
-                            {overdueDays === null
-                              ? t(
-                                  'dashboard.v2.last_payment_none',
-                                  "To'lov yo'q",
-                                )
-                              : t(
-                                  'dashboard.v2.overdue_days',
-                                  '{{count}} kun kechikkan',
-                                  { count: overdueDays },
-                                )}
-                          </span>
-                        </span>
-                      </span>
-                      <span className="flex shrink-0 items-center gap-1.5">
-                        <span
-                          className="h-1.5 w-1.5 shrink-0 rounded-full"
-                          style={{ backgroundColor: DEBT_TONE_VAR[tone] }}
-                          aria-hidden="true"
-                        />
-                        <span className="shrink-0 font-heading text-xl font-bold tabular-nums text-destructive">
-                          {formatMoney(student.debt)}
-                        </span>
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <EmptyData />
-            )}
-            {data.recovery_queue.length > 0 && (
-              <Link
-                to={withContext('/payments')}
-                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-              >
-                {t('dashboard.v2.view_all_debtors', 'Barcha qarzdorlar')}
-                <CaretRight className="h-3 w-3" aria-hidden="true" />
-              </Link>
-            )}
-          </div>
-          <DisplayMetric
-            eyebrow={t('dashboard.v2.outstanding_debt', 'Jami qarzdorlik')}
-            value={groupDigits(
-              String(Math.round(kpis.debt.current_outstanding)),
-            )}
-            unit={currency}
-            caption={t('dashboard.v2.debtors', '{{count}} ta qarzdor student', {
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {comparisonRange}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() =>
+            navigate(withContext('/students', { status: 'active' }))
+          }
+          className="rounded-xl border border-border bg-card p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <p className="text-[11px] text-muted-foreground">
+            {t('dashboard.hero_active_students')}
+          </p>
+          <p className="mt-1 font-heading text-xl font-bold tabular-nums">
+            {groupDigits(String(Math.round(kpis.students.active)))}
+          </p>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            +{kpis.students.new}{' '}
+            {t('dashboard.v2.new_in_period', 'tanlangan davrda')}
+          </p>
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            navigate(
+              withContext('/students', {
+                status: 'active',
+                has_debt: 'true',
+              }),
+            )
+          }
+          className="rounded-xl border border-border bg-card p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <p className="text-[11px] text-muted-foreground">
+            {t('dashboard.v2.outstanding_debt', 'Jami qarzdorlik')}
+          </p>
+          <p className="mt-1 font-heading text-xl font-bold tabular-nums text-destructive">
+            {formatMoney(kpis.debt.current_outstanding)}
+          </p>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {t('dashboard.v2.debtors', '{{count}} ta qarzdor student', {
               count: kpis.debt.students_with_debt,
             })}
-            onClick={() =>
-              navigate(
-                withContext('/students', {
-                  status: 'active',
-                  has_debt: 'true',
-                }),
-              )
-            }
-          />
-        </section>
+          </p>
+        </button>
+        <div className="rounded-xl border border-border bg-card p-3">
+          <p className="text-[11px] text-muted-foreground">
+            {t('dashboard.v2.academic_block.attendance_rate', 'Davomat')}
+          </p>
+          <p className="mt-1 font-heading text-xl font-bold tabular-nums">
+            {kpis.attendance_rate != null ? `${kpis.attendance_rate}%` : '—'}
+          </p>
+        </div>
       </div>
+
+      <section
+        className="space-y-3 motion-safe:animate-[rise_0.5s_ease_both]"
+        style={{ animationDelay: '80ms' }}
+      >
+        <div>
+          <Eyebrow>{t('dashboard.v2.revenue_trend', 'Tushum trendi')}</Eyebrow>
+          <h2 className="mb-2 font-heading text-2xl font-bold tracking-tight text-foreground">
+            {t('dashboard.revenue_trend_sub', {
+              total: formatNumber(revenueTrendTotal),
+              currency,
+            })}
+          </h2>
+          <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+            {trendRangeCaption}
+          </p>
+          <RevenueChart data={data.revenue_trend} onReset={resetFilters} />
+        </div>
+      </section>
+
+      <section
+        className="grid grid-cols-1 gap-4 lg:grid-cols-2 motion-safe:animate-[rise_0.5s_ease_both]"
+        style={{ animationDelay: '100ms' }}
+      >
+        <DashboardCard
+          title={t('dashboard.v2.recovery', 'Qarzdorlik navbati')}
+          description={t(
+            'dashboard.v2.recovery_subtitle',
+            'Eng katta qarzlar birinchi ko‘rsatiladi.',
+          )}
+        >
+          {data.recovery_queue.length ? (
+            <ul>
+              {data.recovery_queue.map((student) => {
+                const overdueDays = daysSince(student.last_payment_at);
+                const tone = debtPriorityTone(student.debt, overdueDays);
+                return (
+                  <li
+                    key={student.student_id}
+                    onClick={() => navigate(`/students/${student.student_id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        navigate(`/students/${student.student_id}`);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={t(
+                      'dashboard.v2.view_debtor',
+                      "Ko'rish: {{name}}",
+                      { name: student.student_name },
+                    )}
+                    className="flex cursor-pointer items-center justify-between gap-4 border-b border-border py-3 last:border-b-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">
+                        {student.student_name}
+                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {student.branch_name}
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1.5">
+                      <span
+                        className="h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: DEBT_TONE_VAR[tone] }}
+                        aria-hidden="true"
+                      />
+                      <span className="font-heading text-base font-bold tabular-nums text-destructive">
+                        {formatMoney(student.debt)}
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <EmptyData />
+          )}
+          {data.recovery_queue.length > 0 && (
+            <Link
+              to={withContext('/payments')}
+              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+            >
+              {t('dashboard.v2.view_all_debtors', 'Barcha qarzdorlar')}
+              <CaretRight className="h-3 w-3" aria-hidden="true" />
+            </Link>
+          )}
+        </DashboardCard>
+      </section>
 
       <section
         className="grid grid-cols-1 gap-4 lg:grid-cols-2 motion-safe:animate-[rise_0.5s_ease_both]"
@@ -1650,36 +1481,6 @@ const CompanyRevenueDashboard = () => {
             )}
           </div>
         </DashboardCard>
-        <DashboardCard
-          title={t('dashboard.v2.quick_actions', 'Tezkor amallar')}
-          description={t(
-            'dashboard.v2.quick_actions_subtitle',
-            'Eng ko‘p ishlatiladigan harakatlar.',
-          )}
-        >
-          <div className="grid grid-cols-2 gap-2">
-            <QuickAction
-              to="/payments?action=create"
-              icon={Wallet}
-              label={t('payments.add_payment', 'Payment qo‘shish')}
-            />
-            <QuickAction
-              to="/students?action=create"
-              icon={UserPlus}
-              label={t('students.add', 'Student qo‘shish')}
-            />
-            <QuickAction
-              to="/schedule?action=create"
-              icon={CalendarDot}
-              label={t('attendance.add_lesson', 'Dars yaratish')}
-            />
-            <QuickAction
-              to="/attendance"
-              icon={UsersThree}
-              label={t('nav.attendance', 'Davomat ochish')}
-            />
-          </div>
-        </DashboardCard>
       </section>
 
       <section
@@ -1696,21 +1497,10 @@ const CompanyRevenueDashboard = () => {
           )}
           description={t(
             'dashboard.v2.financial_block.subtitle',
-            'Oy-oyga o‘sish, qarzdorlik yoshi va kurs turi bo‘yicha daromad.',
+            'Qarzdorlik yoshi, ARPU va kurs turi bo‘yicha daromad.',
           )}
         >
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
-              label={t(
-                'dashboard.v2.financial_block.mom_growth',
-                'Oy-oyga o‘sish',
-              )}
-              value={formatMoney(kpis.revenue.period)}
-              meta={comparisonRange}
-              icon={TrendUp}
-              tone="primary"
-              delta={kpis.revenue.delta_percent}
-            />
             <KpiCard
               label={t('dashboard.v2.financial_block.bucket_0_30', '0–30 kun')}
               value={formatMoney(kpis.debt_aging.bucket_0_30)}
@@ -2067,27 +1857,6 @@ const CompanyRevenueDashboard = () => {
     </div>
   );
 };
-
-const QuickAction = ({
-  to,
-  icon: Icon,
-  label,
-}: {
-  to: string;
-  icon: typeof UserPlus;
-  label: string;
-}) => (
-  <Button
-    asChild
-    variant="outline"
-    className="h-auto min-h-12 justify-start border-border/70 bg-background/30 px-3 py-3 text-left"
-  >
-    <Link to={to}>
-      <Icon className="text-primary" aria-hidden="true" />
-      <span className="text-xs font-semibold">{label}</span>
-    </Link>
-  </Button>
-);
 
 const DashboardSkeleton = () => (
   <div className="space-y-5">

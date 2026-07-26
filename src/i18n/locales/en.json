@@ -127,6 +127,11 @@
     "previous_month": "Previous month",
     "next_month": "Next month"
   },
+  "daterange": {
+    "placeholder": "Date range",
+    "clear": "Clear range",
+    "open": "Choose date range"
+  },
   "login": {
     "title": "Sign in",
     "email_label": "Email",
@@ -284,7 +289,7 @@
       "coverage_short": "Coverage",
       "financial_block": {
         "title": "Financial KPIs",
-        "subtitle": "Month-over-month growth, debt aging, and revenue by course type.",
+        "subtitle": "Debt aging, ARPU, and revenue by course type.",
         "mom_growth": "Month-over-month growth",
         "bucket_0_30": "0–30 days",
         "bucket_31_60": "31–60 days",
@@ -328,7 +333,9 @@
         "on_time_attendance_meta": "Share of attendance marked on the lesson day",
         "operator_follow_through_label": "Operator payment follow-through",
         "operator_follow_through_meta": "Share of registered students who made a payment"
-      }
+      },
+      "period_over_period": "Period growth",
+      "new_in_period": "in selected period"
     },
     "teacher": {
       "kpi_my_groups": "My groups",
@@ -393,6 +400,9 @@
     "teacher": "Teacher",
     "count": "{{count}} groups",
     "by_branch": "By branch",
+    "branch_summary": "{{groups}} groups · {{students}} students",
+    "branch_search": "Search branches...",
+    "branch_search_empty": "No branches found",
     "group_count": "({{count}} groups)",
     "search_placeholder": "Group name...",
     "all": "All",
@@ -781,7 +791,9 @@
     "new_value": "New value",
     "old_short": "Old",
     "new_short": "New",
-    "value_short": "Value"
+    "value_short": "Value",
+    "filter_title": "Filters",
+    "clear_all": "Clear all"
   },
   "operators": {
     "title": "Operators",

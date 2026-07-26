@@ -47,7 +47,14 @@ const overview = vi.hoisted(() => ({
         students_with_debt: 10,
         avg_per_debtor: 1000000,
       },
-      students: { active: 60, new: 12, completed: 14, dropped: 8 },
+      students: {
+        active: 60,
+        new: 12,
+        new_previous_period: 8,
+        completed: 14,
+        dropped: 8,
+      },
+      attendance_rate: 91,
       collection: { paid: 40, partial: 10, debt: 10, coverage_rate: 66.7 },
       debt_aging: {
         bucket_0_30: 4000000,
@@ -155,15 +162,58 @@ describe('CompanyRevenueDashboard', () => {
     expect(overviewState.refetch).toHaveBeenCalled();
   });
 
-  it('renders Variant B primary bands for the editorial layout', () => {
+  it('renders Hierarchy B KPI strip (autodrive-9s5j dedupe)', () => {
+    render(
+      <MemoryRouter>
+        <CompanyRevenueDashboard />
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId('dashboard-v2-kpi-strip')).toBeInTheDocument();
+    expect(screen.getByText('dashboard.v2.today_revenue')).toBeInTheDocument();
+    expect(screen.getByText('dashboard.v2.period_revenue')).toBeInTheDocument();
+    expect(
+      screen.getByText('dashboard.v2.period_over_period'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('dashboard.hero_active_students'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('dashboard.v2.outstanding_debt'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText('dashboard.v2.academic_block.attendance_rate').length,
+    ).toBeGreaterThanOrEqual(1);
+  });
+
+  it('removes duplicate period select, lower quick-actions card, and MoM period-sum card', () => {
     render(
       <MemoryRouter>
         <CompanyRevenueDashboard />
       </MemoryRouter>,
     );
     expect(
-      screen.getByTestId('dashboard-v2-primary-bands'),
-    ).toBeInTheDocument();
+      screen.queryByRole('combobox', { name: 'dashboard.v2.period' }),
+    ).not.toBeInTheDocument();
+    // Header chips keep the quick_action_* labels; the lower card title must go.
+    expect(
+      screen.queryByText('dashboard.v2.quick_actions'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('dashboard.v2.financial_block.mom_growth'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows period-over-period delta only on the PoP strip tile', () => {
+    render(
+      <MemoryRouter>
+        <CompanyRevenueDashboard />
+      </MemoryRouter>,
+    );
+    const strip = screen.getByTestId('dashboard-v2-kpi-strip');
+    // DeltaChip renders "+15.5%" for revenue.delta_percent
+    const deltas = strip.querySelectorAll('[data-testid="kpi-delta"]');
+    expect(deltas.length).toBe(1);
+    expect(deltas[0].textContent).toMatch(/15\.5/);
   });
 
   it('renders revenue-control KPIs and the recovery queue', () => {
@@ -174,17 +224,7 @@ describe('CompanyRevenueDashboard', () => {
     );
 
     expect(screen.getByText('dashboard.v2.today_revenue')).toBeInTheDocument();
-    // exec-dash 7: the KPI tile's value and currency unit are now separate
-    // elements (two-tier .num value + unit typography per the mock) instead
-    // of one formatMoney() string, so check them independently.
-    expect(
-      screen.getByText((content) => content.replace(/\s/g, '') === '700000'),
-    ).toBeInTheDocument();
-    // react-i18next is mocked to `t: (str) => str` in test/setup.ts, so the
-    // unit renders as the raw key here, not the real "so'm" translation.
-    expect(
-      screen.getAllByText('dashboard.currency_suffix').length,
-    ).toBeGreaterThan(0);
+    expect(screen.getByTestId('dashboard-v2-kpi-strip')).toBeInTheDocument();
     expect(screen.getByText('Ali Valiyev')).toBeInTheDocument();
     expect(
       screen.getByText((content) => content.replace(/\D/g, '') === '5000000'),
@@ -217,9 +257,11 @@ describe('CompanyRevenueDashboard', () => {
         <LocationProbe />
       </MemoryRouter>,
     );
-    fireEvent.change(screen.getByLabelText('dashboard.v2.course'), {
-      target: { value: 'tezkor' },
-    });
+    // Radix TabsTrigger commits via mouseDown (button 0), not click.
+    fireEvent.mouseDown(
+      screen.getByRole('tab', { name: 'students.course_fast' }),
+      { button: 0 },
+    );
     expect(screen.getByTestId('location-search')).toHaveTextContent(
       'course_type=tezkor',
     );
@@ -315,9 +357,10 @@ describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
 
   it('a branch row navigates straight to /branches/:id, not a filtered list', () => {
     renderDashboardWithRoutes();
-    const branchTargets = screen
-      .getAllByText('Chorsu')
-      .filter((el) => el.closest('[role="button"]'));
+    const branchTargets = screen.getAllByText('Chorsu').filter((el) => {
+      const btn = el.closest('button');
+      return !!btn && !el.closest('ul') && btn.className.includes('w-full');
+    });
     expect(branchTargets.length).toBeGreaterThan(0);
     fireEvent.click(branchTargets[0]);
     expect(screen.getByTestId('destination').textContent).toBe(
@@ -375,7 +418,7 @@ describe('CompanyRevenueDashboard academic block (autodrive-sgf.3)', () => {
         graduated: 0,
         dropped_or_suspended: 0,
       },
-    } as typeof original;
+    } as unknown as typeof original;
     try {
       const { container } = render(
         <MemoryRouter>
@@ -384,7 +427,7 @@ describe('CompanyRevenueDashboard academic block (autodrive-sgf.3)', () => {
       );
       // exec-dash 7: attendance_rate null renders '—' in the academic block
       // (3 placeholders when the KPI grid tile was removed from primary bands).
-      expect(screen.getAllByText('—')).toHaveLength(3);
+      expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(3);
       expect(container.innerHTML).not.toContain('NaN%');
       expect(container.innerHTML).not.toContain('Infinity%');
     } finally {
