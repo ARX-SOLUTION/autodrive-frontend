@@ -83,11 +83,7 @@ export const KpiCard = ({
   };
   return (
     <Card
-      className={cn(
-        'relative overflow-hidden p-5',
-        'transition-all duration-150 hover:shadow-md hover:-translate-y-0.5',
-        'card-enter',
-      )}
+      className={cn('relative overflow-hidden p-5', 'card-enter')}
       style={{ transitionDelay: `${animationDelayMs}ms` }}
     >
       <div className="mb-3 flex items-center justify-between">
@@ -167,11 +163,7 @@ export const SectionCard = ({
   children,
 }: SectionCardProps) => (
   <Card
-    className={cn(
-      'p-5 transition-all duration-150 hover:shadow-md hover:-translate-y-0.5',
-      'card-enter',
-      className,
-    )}
+    className={cn('p-5 card-enter', className)}
     style={{ transitionDelay: `${staggerDelayMs}ms` }}
   >
     <div className="mb-4 flex items-center justify-between gap-3">

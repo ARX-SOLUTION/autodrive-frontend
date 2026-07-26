@@ -182,7 +182,6 @@ export const DashboardCard = ({
       // exec-dash 7: flat token surface (Design.md "Cards: 1px solid
       // --border, no shadow") — no glass blur/translucency, no hover lift.
       'border-border bg-card p-5 shadow-none',
-      'motion-safe:transition-colors duration-150 hover:translate-y-0 hover:shadow-none',
       className,
     )}
   >
@@ -1183,7 +1182,7 @@ const CompanyRevenueDashboard = () => {
                     key={branch.id}
                     type="button"
                     onClick={() => navigate(`/branches/${branch.id}`)}
-                    className="w-full rounded-lg border border-border/60 bg-background/30 p-3 text-left motion-safe:transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="w-full rounded-lg border border-border/60 bg-background/30 p-3 text-left motion-safe:transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-semibold">{branch.name}</span>
@@ -1349,7 +1348,7 @@ const CompanyRevenueDashboard = () => {
           <div className="grid gap-2 sm:grid-cols-2">
             <Link
               to="/schedule"
-              className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-[background-color,transform] duration-150 hover:-translate-y-0.5 hover:bg-muted/60"
+              className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-colors duration-150 hover:bg-muted/60"
             >
               <span className="flex items-center gap-3">
                 <CalendarDot
@@ -1372,7 +1371,7 @@ const CompanyRevenueDashboard = () => {
             </Link>
             <Link
               to="/attendance"
-              className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-[background-color,transform] duration-150 hover:-translate-y-0.5 hover:bg-muted/60"
+              className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-colors duration-150 hover:bg-muted/60"
             >
               <span className="flex items-center gap-3">
                 <Clock className="h-5 w-5 text-warning" aria-hidden="true" />
