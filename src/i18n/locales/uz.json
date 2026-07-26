@@ -120,6 +120,13 @@
     "offline_banner": "Internet aloqasi yo'q",
     "tab_info": "Ma'lumot"
   },
+  "datepicker": {
+    "placeholder": "Sana tanlang",
+    "clear": "Tozalash",
+    "open_calendar": "Kalendarni ochish",
+    "previous_month": "Oldingi oy",
+    "next_month": "Keyingi oy"
+  },
   "login": {
     "title": "Tizimga kirish",
     "email_label": "Email",
@@ -530,7 +537,10 @@
     "course_type": "Kurs",
     "course_fast": "Tezkor",
     "course_school": "Avto maktab",
-    "course": "Kurs",
+    "course": {
+      "tezkor": "Tezkor",
+      "avto_maktab": "Avtomaktab"
+    },
     "group": "Guruh",
     "total_price": "Kurs narxi",
     "debt": "Qarz",
@@ -609,10 +619,6 @@
     "validation_group_required": "Avto maktab kursi uchun Guruh tanlash shart!",
     "no_debt": "Qarzsiz",
     "no_group": "Guruhsiz",
-    "course": {
-      "tezkor": "Tezkor",
-      "avto_maktab": "Avtomaktab"
-    },
     "form_desc": "Talaba ma'lumotlarini kiriting",
     "confirm_delete_desc": "\"{{name}}\" talabasini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.",
     "detailed_toggle_locked": "Ma'lumot kiritilgan — rejimni almashtirish uni yo'qotadi",
@@ -1145,5 +1151,10 @@
     "related_title": "O'xshash maqolalar",
     "not_found_title": "Maqola topilmadi",
     "not_found_desc": "Bu maqola mavjud emas yoki o'chirilgan"
+  },
+  "datetimepicker": {
+    "placeholder": "Sana va vaqt",
+    "time": "Vaqt",
+    "open_calendar": "Kalendarni ochish"
   }
 }

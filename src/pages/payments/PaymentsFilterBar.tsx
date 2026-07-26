@@ -1,12 +1,8 @@
+// Callers: PaymentsPage. API: Date range + onDateRangeChange. Schema: URL
+// date_from/date_to. User: "davom et" (autodrive-qsgc.4).
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -14,14 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+import { DateRangeFields } from '@/components/ui/date-range-fields';
+import { formatCalendarDate, parseCalendarDate } from '@/lib/calendarDate';
 import type { Branch } from '@/types/branch';
-import { format } from 'date-fns';
-import {
-  Calendar as CalendarIcon,
-  MagnifyingGlass,
-  X,
-} from '@phosphor-icons/react';
+import { MagnifyingGlass, X } from '@phosphor-icons/react';
 import type { DatePreset } from './dateRangePresets';
 
 interface PaymentsFilterBarProps {
@@ -166,41 +158,19 @@ export const PaymentsFilterBar = ({
           </SelectContent>
         </Select>
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                'min-w-[200px] justify-start text-left font-normal bg-secondary border-border',
-                !dateFrom && 'text-muted-foreground',
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {!dateFrom
-                ? t('common.date')
-                : dateTo && dateTo.getTime() !== dateFrom.getTime()
-                  ? `${format(dateFrom, 'dd.MM.yyyy')} → ${format(dateTo, 'dd.MM.yyyy')}`
-                  : format(dateFrom, 'dd.MM.yyyy')}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-auto p-0 max-w-[calc(100vw-2rem)] overflow-x-auto"
-            align="start"
-          >
-            <Calendar
-              mode="range"
-              selected={{ from: dateFrom, to: dateTo }}
-              onSelect={(range) => {
-                if (!range) onDateRangeChange(undefined, undefined);
-                else onDateRangeChange(range.from, range.to ?? range.from);
-              }}
-              numberOfMonths={2}
-              autoFocus
-              disabled={{ after: new Date() }}
-              className={cn('p-3 pointer-events-auto')}
-            />
-          </PopoverContent>
-        </Popover>
+        <DateRangeFields
+          from={dateFrom ? formatCalendarDate(dateFrom) : undefined}
+          to={dateTo ? formatCalendarDate(dateTo) : undefined}
+          onChange={(from, to) =>
+            onDateRangeChange(
+              from ? parseCalendarDate(from) : undefined,
+              to ? parseCalendarDate(to) : undefined,
+            )
+          }
+          fromAriaLabel={t('common.date')}
+          toAriaLabel={t('common.date')}
+          className="rounded-md border border-border bg-secondary px-2 py-1"
+        />
 
         <div className="relative flex-1 min-w-[220px]">
           <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

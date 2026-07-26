@@ -106,19 +106,66 @@ vi.mock('@/hooks/useCan', () => ({ useCan: () => true }));
 vi.mock('@/services/branchService', () => ({
   useBranches: () => ({ data: [{ id: 'branch-1', name: 'Chorsu' }] }),
 }));
+const overviewState = vi.hoisted(() => ({
+  isLoading: false,
+  isError: false,
+  refetch: vi.fn(),
+}));
+
 vi.mock('@/services/dashboardService', () => ({
   useCompanyOverview: () => ({
     ...overview,
-    isLoading: false,
+    data:
+      overviewState.isLoading || overviewState.isError
+        ? undefined
+        : overview.data,
+    isLoading: overviewState.isLoading,
     isFetching: false,
-    isError: false,
-    refetch: vi.fn(),
+    isError: overviewState.isError,
+    refetch: overviewState.refetch,
   }),
 }));
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+  overviewState.isLoading = false;
+  overviewState.isError = false;
+  vi.clearAllMocks();
+});
 
 describe('CompanyRevenueDashboard', () => {
+  it('shows a loading skeleton while overview data is fetching', () => {
+    overviewState.isLoading = true;
+    const { container } = render(
+      <MemoryRouter>
+        <CompanyRevenueDashboard />
+      </MemoryRouter>,
+    );
+    expect(container.querySelector('.animate-pulse')).toBeTruthy();
+  });
+
+  it('shows an error state with retry when overview fetch fails', () => {
+    overviewState.isError = true;
+    render(
+      <MemoryRouter>
+        <CompanyRevenueDashboard />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('dashboard.v2.error_title')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('common.retry'));
+    expect(overviewState.refetch).toHaveBeenCalled();
+  });
+
+  it('renders Variant B primary bands for the editorial layout', () => {
+    render(
+      <MemoryRouter>
+        <CompanyRevenueDashboard />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByTestId('dashboard-v2-primary-bands'),
+    ).toBeInTheDocument();
+  });
+
   it('renders revenue-control KPIs and the recovery queue', () => {
     render(
       <MemoryRouter>
@@ -335,11 +382,9 @@ describe('CompanyRevenueDashboard academic block (autodrive-sgf.3)', () => {
           <CompanyRevenueDashboard />
         </MemoryRouter>,
       );
-      // exec-dash 7: the new KPI-grid "Davomat" tile also reads
-      // kpis.attendance_rate and renders '—' when it's null, same as the
-      // pre-existing academic-block card below it — 3 academic-block
-      // placeholders + 1 from the new KPI tile = 4.
-      expect(screen.getAllByText('—')).toHaveLength(4);
+      // exec-dash 7: attendance_rate null renders '—' in the academic block
+      // (3 placeholders when the KPI grid tile was removed from primary bands).
+      expect(screen.getAllByText('—')).toHaveLength(3);
       expect(container.innerHTML).not.toContain('NaN%');
       expect(container.innerHTML).not.toContain('Infinity%');
     } finally {

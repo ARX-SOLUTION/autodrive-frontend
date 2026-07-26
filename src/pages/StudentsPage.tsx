@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
+import { parseCalendarDate } from '@/lib/calendarDate';
 import {
   fetchAllStudents,
   useStudentsPage,
@@ -82,15 +83,18 @@ const StudentsPage = () => {
   const search = searchParams.get('q') ?? '';
   const setSearch = (v: string) => setParam('q', v || undefined);
 
+  // Callers: StudentsFilterBar + useStudentsPage. Wire: date_from/date_to
+  // YYYY-MM-DD. Must use parseCalendarDate — never new Date('YYYY-MM-DD').
+  // User: "davom et" (autodrive-qsgc.4).
   const rawDateFrom = searchParams.get('date_from');
   const dateFrom = useMemo(
-    () => (rawDateFrom ? new Date(rawDateFrom) : undefined),
+    () => (rawDateFrom ? parseCalendarDate(rawDateFrom) : undefined),
     [rawDateFrom],
   );
 
   const rawDateTo = searchParams.get('date_to');
   const dateTo = useMemo(
-    () => (rawDateTo ? new Date(rawDateTo) : undefined),
+    () => (rawDateTo ? parseCalendarDate(rawDateTo) : undefined),
     [rawDateTo],
   );
 

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuditLogs } from '@/services/auditService';
 import { useUsers } from '@/services/userService';
 import { toLocalDateStr } from '@/services/studentService';
+import { parseCalendarDate } from '@/lib/calendarDate';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { AuditFilterBar } from '@/pages/audit/AuditFilterBar';
 import { AuditTable } from '@/pages/audit/AuditTable';
 import { AuditMobileList } from '@/pages/audit/AuditMobileList';
 import { sortAuditLogs } from '@/pages/audit/sortAuditLogs';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const AuditLogPage = () => {
   const { t } = useTranslation();
@@ -32,14 +34,16 @@ const AuditLogPage = () => {
   const setActionFilter = (v: string) =>
     setParam('action', v === 'all' ? undefined : v);
 
+  // Wire date_from/date_to YYYY-MM-DD → local calendar Date (qsgc.4).
+  // User: "davom et". Callers: AuditFilterBar + useAuditLogs.
   const rawDateFrom = searchParams.get('date_from');
   const dateFrom = useMemo(
-    () => (rawDateFrom ? new Date(rawDateFrom) : undefined),
+    () => (rawDateFrom ? parseCalendarDate(rawDateFrom) : undefined),
     [rawDateFrom],
   );
   const rawDateTo = searchParams.get('date_to');
   const dateTo = useMemo(
-    () => (rawDateTo ? new Date(rawDateTo) : undefined),
+    () => (rawDateTo ? parseCalendarDate(rawDateTo) : undefined),
     [rawDateTo],
   );
   // Both keys must land in the same setSearchParams call — two sequential
@@ -111,13 +115,12 @@ const AuditLogPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="font-heading text-2xl font-bold flex items-center gap-2 text-balance">
-          <ShieldCheck className="h-6 w-6" /> {t('audit.title')}
-        </h1>
-        <p className="text-sm text-muted-foreground">{t('audit.subtitle')}</p>
-      </div>
+      <PageHeader
+        eyebrow={t('audit.title')}
+        title={t('audit.title')}
+        description={t('audit.subtitle')}
+        icon={<ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />}
+      />
 
       <AuditFilterBar
         search={search}

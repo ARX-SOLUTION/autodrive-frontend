@@ -1,5 +1,6 @@
+// Callers: StudentsPage. API: Date dateFrom/dateTo + setDateRange(Date?, Date?).
+// Schema: URL date_from/date_to YYYY-MM-DD unchanged. User: "davom et" (qsgc.4).
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -10,19 +11,11 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Calendar as CalendarIcon,
-  MagnifyingGlass,
-} from '@phosphor-icons/react';
-import { cn } from '@/lib/utils';
+import { DateRangeFields } from '@/components/ui/date-range-fields';
+import { MagnifyingGlass } from '@phosphor-icons/react';
+import { formatCalendarDate, parseCalendarDate } from '@/lib/calendarDate';
 import type { CourseType } from '@/types/student';
 import type { Branch } from '@/types/branch';
 import type { User } from '@/types/user';
@@ -145,44 +138,20 @@ export const StudentsFilterBar = ({
         </SelectContent>
       </Select>
 
-      {/* Date filter — single or range */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className={cn(
-              'min-w-[220px] justify-start text-left font-normal bg-secondary border-border',
-              !dateFrom && 'text-muted-foreground',
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {!dateFrom
-              ? t('students.date_range')
-              : dateTo && dateTo.getTime() !== dateFrom.getTime()
-                ? `${format(dateFrom, 'dd.MM.yyyy')} → ${format(dateTo, 'dd.MM.yyyy')}`
-                : format(dateFrom, 'dd.MM.yyyy')}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-auto p-0 max-w-[calc(100vw-2rem)] overflow-x-auto"
-          align="start"
-        >
-          <Calendar
-            mode="range"
-            selected={{ from: dateFrom, to: dateTo }}
-            onSelect={(range) =>
-              setDateRange(
-                range?.from,
-                range ? (range.to ?? range.from) : undefined,
-              )
-            }
-            numberOfMonths={2}
-            autoFocus
-            disabled={{ after: new Date() }}
-            className={cn('p-3 pointer-events-auto')}
-          />
-        </PopoverContent>
-      </Popover>
+      {/* Date filter — inclusive calendar-date range (autodrive-qsgc.4) */}
+      <DateRangeFields
+        from={dateFrom ? formatCalendarDate(dateFrom) : undefined}
+        to={dateTo ? formatCalendarDate(dateTo) : undefined}
+        onChange={(from, to) =>
+          setDateRange(
+            from ? parseCalendarDate(from) : undefined,
+            to ? parseCalendarDate(to) : undefined,
+          )
+        }
+        fromAriaLabel={t('students.date_range')}
+        toAriaLabel={t('students.date_range')}
+        className="rounded-md border border-border bg-secondary px-2 py-1"
+      />
       {(dateFrom || dateTo) && (
         <Button
           variant="ghost"

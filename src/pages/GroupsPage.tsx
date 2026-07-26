@@ -27,6 +27,7 @@ import GroupsTable from './groups/GroupsTable';
 import GroupsMobileList from './groups/GroupsMobileList';
 import GroupFormDialog from './groups/GroupFormDialog';
 import { groupDeleteDescArgs } from './groups/groupDeleteDescArgs';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const GroupsPage = () => {
   const { t } = useTranslation();
@@ -208,22 +209,21 @@ const GroupsPage = () => {
   );
 
   const startIndex = (currentPage - 1) * 10;
+  const groupsTitle = t('groups.title');
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-balance">
-            {t('groups.title')}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t('groups.count', { count: (groups || []).length })}
-          </p>
-        </div>
-        <Button className="gap-2" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> {t('groups.add')}
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow={groupsTitle}
+        title={groupsTitle}
+        description={t('groups.count', { count: (groups || []).length })}
+        icon={<Stack className="h-3.5 w-3.5" aria-hidden="true" />}
+        actions={
+          <Button className="gap-2" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> {t('groups.add')}
+          </Button>
+        }
+      />
 
       <GroupsOverviewSection overview={overview} />
 

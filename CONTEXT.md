@@ -2,7 +2,7 @@
 
 ## Overview
 
-React 18 + Vite + TypeScript frontend for a Uzbek driving school CRM. Tenant-facing application serving managers, operators, and teachers across driving school branches. Built with shadcn/ui, TanStack Query, Zustand, and the Shabnam theme (dark-mode-first glassmorphism).
+React 18 + Vite + TypeScript frontend for a Uzbek driving school CRM. Tenant-facing application serving managers, operators, and teachers across driving school branches. Built with shadcn/ui, TanStack Query, Zustand, and a tenant-local **Warm Paper** visual system (warm off-white surfaces, rust accent). Shared `@autodrive/design-tokens` remain the package default; the tenant CRM overrides palette in `src/index.css` so the admin panel stays unchanged.
 
 ---
 
@@ -21,15 +21,15 @@ React 18 + Vite + TypeScript frontend for a Uzbek driving school CRM. Tenant-fac
 
 ---
 
-## UI Architecture — Shabnam Theme
+## UI Architecture — Warm Paper (tenant CRM)
 
-- **Mode:** Dark-mode-first. `.dark` / `.light` CSS class toggles.
-- **Palette:** Cyan accent (hsl 186 100% 50%), amber for admin surfaces. Glassmorphism throughout — glass sidebar, glass topbar, glass-sm cards.
-- **Typography:** Unbounded (headings) + Inter (body).
-- **Components:** shadcn/ui Radix primitives in `src/components/ui/`, custom glass components alongside.
-- **Layout:** Collapsible glass sidebar (w-60 expanded, w-[68px] collapsed), glass topbar, main content area with glass-sm container.
-- **Animations:** fade-in, scale-in, float, neon-glow on active elements. Enter/exit transitions on modals and sidebars.
-- **i18n:** 3 languages — Uzbek (uz), Russian (ru), English (en). Language detection via `navigator.language` + `localStorage` override. Translation files in `src/i18n/`.
+- **Mode:** Light/dark via `.dark` / class toggles (user preference).
+- **Palette:** Warm paper surfaces + deep rust primary (tenant override in `src/index.css`). Semantic colors (success/warning/destructive/info) stay distinct from the brand accent. Admin panel is out of scope for this palette.
+- **Typography:** Heading + body fonts from the design-token stack (no cyan/glass identity).
+- **Components:** shadcn/ui Radix primitives in `src/components/ui/`.
+- **Layout:** Collapsible sidebar + topbar shell; owner dashboard uses an asymmetric Variant B hierarchy (oversized metrics, ≤2 primary charts).
+- **Dates:** Calendar-only fields use shared `DatePicker` / `DateRangeFields` (`YYYY-MM-DD`). Lesson/exam instants use `DateTimePicker` in Asia/Tashkent wall time → ISO.
+- **i18n:** Uzbek (uz), Russian (ru), English (en). Detection via `navigator.language` + `localStorage`. Files in `src/i18n/`.
 
 ---
 

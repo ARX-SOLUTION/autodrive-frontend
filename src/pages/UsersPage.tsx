@@ -51,6 +51,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { DeletedBadge } from '@/components/ui/DeletedBadge';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types/user';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const formatDate = (d?: string) => {
   if (!d) return '—';
@@ -262,24 +263,25 @@ const UsersPage = () => {
   }, [users, sortField, sortDir]);
 
   const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
+  const usersTitle = t('users.title');
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-balance">
-            {t('users.title')}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t('users.count', { count: usersPage?.meta.total ?? users.length })}
-          </p>
-        </div>
-        <RoleGate cap="manageStaff">
-          <Button className="gap-2" onClick={openCreate}>
-            <Plus className="h-4 w-4" /> {t('users.add')}
-          </Button>
-        </RoleGate>
-      </div>
+      <PageHeader
+        eyebrow={usersTitle}
+        title={usersTitle}
+        description={t('users.count', {
+          count: usersPage?.meta.total ?? users.length,
+        })}
+        icon={<UserGear className="h-3.5 w-3.5" aria-hidden="true" />}
+        actions={
+          <RoleGate cap="manageStaff">
+            <Button className="gap-2" onClick={openCreate}>
+              <Plus className="h-4 w-4" /> {t('users.add')}
+            </Button>
+          </RoleGate>
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-3">
         {isCrossTenant && (

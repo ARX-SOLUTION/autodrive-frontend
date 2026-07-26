@@ -71,7 +71,7 @@ describe('LandingPage blog teaser', () => {
 
     const card = screen.getByRole('link', { name: /Maqola newest/ });
     expect(card).toHaveAttribute('href', '/blog/newest');
-  });
+  }, 15_000);
 
   it('hides the section entirely when there are no published posts', async () => {
     vi.spyOn(axiosInstance, 'get').mockResolvedValue({

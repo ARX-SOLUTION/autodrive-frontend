@@ -21,6 +21,7 @@ import { extractErrorMessage } from '@/lib/errors';
 import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import CourseFormDialog from './courses/CourseFormDialog';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const CoursesPage = () => {
   const { t } = useTranslation();
@@ -58,22 +59,21 @@ const CoursesPage = () => {
     type === 'tezkor'
       ? t('courses.type_tezkor')
       : t('courses.type_avto_maktab');
+  const coursesTitle = t('courses.title');
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-balance">
-            {t('courses.title')}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t('courses.subtitle')}
-          </p>
-        </div>
-        <Button className="gap-2" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> {t('courses.add')}
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow={coursesTitle}
+        title={coursesTitle}
+        description={t('courses.subtitle')}
+        icon={<BookOpen className="h-3.5 w-3.5" aria-hidden="true" />}
+        actions={
+          <Button className="gap-2" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> {t('courses.add')}
+          </Button>
+        }
+      />
 
       <div className="relative">
         {isFetching && !isLoading && (

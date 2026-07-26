@@ -58,6 +58,7 @@ import {
 import { Branch } from '@/types/branch';
 import { useCan } from '@/hooks/useCan';
 import { branchDeleteDescArgs } from './branchDeleteDescArgs';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 // Factory so field messages can be localized via t(), matching
 // PersonModal's makePersonFormSchema convention.
@@ -207,40 +208,41 @@ const BranchesPage = () => {
   const deleteDescArgs = branchDeleteDescArgs(
     branches?.find((b) => b.id === deleteId),
   );
+  const branchesTitle = t('branches.title');
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-balance">
-            {t('branches.title')}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {canManageBranches
-              ? t('branches.subtitle')
-              : t('branches.subtitle_readonly')}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {canViewDeleted && (
-            <div className="flex items-center gap-2">
-              <Label htmlFor="branches-show-deleted">
-                {t('common.show_deleted')}
-              </Label>
-              <Switch
-                id="branches-show-deleted"
-                checked={includeDeleted}
-                onCheckedChange={setIncludeDeleted}
-              />
-            </div>
-          )}
-          {canManageBranches && (
-            <Button className="gap-2" onClick={openCreate}>
-              <Plus className="h-4 w-4" /> {t('branches.add')}
-            </Button>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        eyebrow={branchesTitle}
+        title={branchesTitle}
+        description={
+          canManageBranches
+            ? t('branches.subtitle')
+            : t('branches.subtitle_readonly')
+        }
+        icon={<Buildings className="h-3.5 w-3.5" aria-hidden="true" />}
+        actions={
+          <div className="flex items-center gap-3">
+            {canViewDeleted && (
+              <div className="flex items-center gap-2">
+                <Label htmlFor="branches-show-deleted">
+                  {t('common.show_deleted')}
+                </Label>
+                <Switch
+                  id="branches-show-deleted"
+                  checked={includeDeleted}
+                  onCheckedChange={setIncludeDeleted}
+                />
+              </div>
+            )}
+            {canManageBranches && (
+              <Button className="gap-2" onClick={openCreate}>
+                <Plus className="h-4 w-4" /> {t('branches.add')}
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       <div className="hidden md:block">
         <div className="overflow-x-auto">

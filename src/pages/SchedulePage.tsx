@@ -59,6 +59,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { extractErrorMessage } from '@/lib/errors';
 import { cn } from '@/lib/utils';
 import AttendanceDrawer from '@/components/AttendanceDrawer';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const formatTime = (iso: string) => {
   try {
@@ -314,22 +315,13 @@ const SchedulePage = () => {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="inline-flex items-center gap-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-primary">
-            <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
-            {t('schedule.title')}
-          </div>
-          <h1 className="mt-1.5 font-heading text-[34px] font-extrabold leading-[1.1] tracking-[-0.02em] text-balance">
-            {t('schedule.title')}
-          </h1>
-          <p className="num mt-1.5 font-mono text-[13px] text-muted-foreground">
-            {format(weekStart, 'dd.MM.yyyy')} — {format(weekEnd, 'dd.MM.yyyy')}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {canEdit && (
+      <PageHeader
+        eyebrow={t('schedule.title')}
+        title={t('schedule.title')}
+        description={`${format(weekStart, 'dd.MM.yyyy')} — ${format(weekEnd, 'dd.MM.yyyy')}`}
+        icon={<Calendar className="h-3.5 w-3.5" aria-hidden="true" />}
+        actions={
+          canEdit ? (
             <>
               <Button variant="outline" onClick={() => setGenerateOpen(true)}>
                 <Sparkle className="mr-2 h-4 w-4" />{' '}
@@ -339,9 +331,9 @@ const SchedulePage = () => {
                 <Plus className="mr-2 h-4 w-4" /> {t('schedule.template')}
               </Button>
             </>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       <Tabs defaultValue="calendar">
         <TabsList>

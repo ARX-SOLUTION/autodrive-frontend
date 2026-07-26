@@ -120,6 +120,13 @@
     "offline_banner": "Нет подключения к интернету",
     "tab_info": "Информация"
   },
+  "datepicker": {
+    "placeholder": "Выберите дату",
+    "clear": "Очистить",
+    "open_calendar": "Открыть календарь",
+    "previous_month": "Предыдущий месяц",
+    "next_month": "Следующий месяц"
+  },
   "login": {
     "title": "Вход в систему",
     "email_label": "Email",
@@ -530,7 +537,10 @@
     "course_type": "Курс",
     "course_fast": "Экспресс",
     "course_school": "Автошкола",
-    "course": "Курс",
+    "course": {
+      "tezkor": "Экспресс",
+      "avto_maktab": "Автошкола"
+    },
     "group": "Группа",
     "total_price": "Стоимость курса",
     "debt": "Долг",
@@ -609,10 +619,6 @@
     "validation_group_required": "Для курса автошколы необходимо выбрать группу",
     "no_debt": "Без долга",
     "no_group": "Без группы",
-    "course": {
-      "tezkor": "Экспресс",
-      "avto_maktab": "Автошкола"
-    },
     "form_desc": "Введите данные студента",
     "confirm_delete_desc": "Удалить студента «{{name}}»? Это действие необратимо.",
     "detailed_toggle_locked": "Данные введены — переключение режима приведёт к их потере",
@@ -1145,5 +1151,10 @@
     "related_title": "Похожие статьи",
     "not_found_title": "Статья не найдена",
     "not_found_desc": "Эта статья не существует или была удалена"
+  },
+  "datetimepicker": {
+    "placeholder": "Дата и время",
+    "time": "Время",
+    "open_calendar": "Открыть календарь"
   }
 }

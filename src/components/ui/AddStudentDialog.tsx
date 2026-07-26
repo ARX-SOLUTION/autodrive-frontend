@@ -8,13 +8,19 @@ import {
 } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { addDays, format } from 'date-fns';
+import { addDays } from 'date-fns';
 import {
   isValidUzPhone,
   uzPhoneE164,
   formatUzPhoneInput,
 } from '@/lib/phoneFormater';
 import { groupDigits } from '@/lib/money';
+import { DatePicker } from '@/components/ui/date-picker';
+import {
+  formatCalendarDate,
+  parseCalendarDate,
+  todayCalendarDate,
+} from '@/lib/calendarDate';
 import type { LeadSource } from '@/types/student';
 import type { Branch } from '@/types/branch';
 import type { Course } from '@/types/course';
@@ -125,7 +131,13 @@ const buildSchemas = (t: (key: string) => string) => {
       .string()
       .min(1, t('students.wizard.passport_number_required'))
       .regex(/^\d{7}$/, t('students.wizard.passport_number_format')),
-    birth_date: z.string().min(1, t('students.wizard.birth_date_required')),
+    birth_date: z
+      .string()
+      .min(1, t('students.wizard.birth_date_required'))
+      .refine(
+        (v) => !v || !!parseCalendarDate(v),
+        t('students.wizard.birth_date_required'),
+      ),
     gender: z.enum(['MALE', 'FEMALE']),
     address: z.string().min(5, t('students.wizard.address_too_short')),
   });
@@ -134,7 +146,13 @@ const buildSchemas = (t: (key: string) => string) => {
     branch_id: z.string().uuid(t('students.wizard.branch_required')),
     course_id: z.string().uuid(t('students.wizard.course_required')),
     group_id: z.string().uuid().optional().or(z.literal('')),
-    start_date: z.string().min(1, t('students.wizard.start_date_required')),
+    start_date: z
+      .string()
+      .min(1, t('students.wizard.start_date_required'))
+      .refine(
+        (v) => !v || !!parseCalendarDate(v),
+        t('students.wizard.start_date_required'),
+      ),
     completion_date: z.string().optional(),
     lead_source: z.enum(LEAD_SOURCE_VALUES).optional(),
     lead_source_other: z.string().optional(),
@@ -148,7 +166,11 @@ const buildSchemas = (t: (key: string) => string) => {
     payment_method: z.enum(['CASH', 'CARD', 'TRANSFER']),
     first_payment_date: z
       .string()
-      .min(1, t('students.wizard.first_payment_date_required')),
+      .min(1, t('students.wizard.first_payment_date_required'))
+      .refine(
+        (v) => !v || !!parseCalendarDate(v),
+        t('students.wizard.first_payment_date_required'),
+      ),
     contract_signed: z
       .boolean()
       .refine((value) => value, t('students.wizard.contract_required')),
@@ -377,12 +399,12 @@ const AddStudentDialog = ({
         : user?.branch_id || '',
       course_id: defaultCourseId || '',
       group_id: '',
-      start_date: new Date().toISOString().split('T')[0],
+      start_date: todayCalendarDate(),
       completion_date: '',
       payment_type: 'FULL',
       amount: 0,
       payment_method: 'CASH',
-      first_payment_date: new Date().toISOString().split('T')[0],
+      first_payment_date: todayCalendarDate(),
       contract_signed: false,
       lead_source: undefined,
       lead_source_other: '',
@@ -413,10 +435,10 @@ const AddStudentDialog = ({
       birth_date: '',
       address: '',
       group_id: '',
-      start_date: new Date().toISOString().split('T')[0],
+      start_date: todayCalendarDate(),
       completion_date: '',
       amount: 0,
-      first_payment_date: new Date().toISOString().split('T')[0],
+      first_payment_date: todayCalendarDate(),
       contract_signed: false,
       lead_source: undefined,
       lead_source_other: '',
@@ -465,11 +487,10 @@ const AddStudentDialog = ({
   useEffect(() => {
     if (form.formState.dirtyFields.completion_date) return;
     if (!watchedCourse || !watchedStartDate) return;
-    const start = new Date(watchedStartDate);
-    if (Number.isNaN(start.getTime())) return;
-    const computed = format(
+    const start = parseCalendarDate(watchedStartDate);
+    if (!start) return;
+    const computed = formatCalendarDate(
       addDays(start, watchedCourse.duration_days),
-      'yyyy-MM-dd',
     );
     form.setValue('completion_date', computed);
   }, [watchedCourse, watchedStartDate, form]);
@@ -867,10 +888,13 @@ const AddStudentDialog = ({
                               {t('students.wizard.birth_date')} *
                             </FormLabel>
                             <FormControl>
-                              <Input
-                                type="date"
-                                max={new Date().toISOString().split('T')[0]}
-                                {...field}
+                              <DatePicker
+                                value={field.value}
+                                onChange={(v) => field.onChange(v ?? '')}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                max={todayCalendarDate()}
+                                clearable
                               />
                             </FormControl>
                             <FormMessage />
@@ -1068,7 +1092,12 @@ const AddStudentDialog = ({
                               {t('students.wizard.start_date')} *
                             </FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} />
+                              <DatePicker
+                                value={field.value}
+                                onChange={(v) => field.onChange(v ?? '')}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1084,7 +1113,13 @@ const AddStudentDialog = ({
                               {t('students.wizard.completion_date_label')}
                             </FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} />
+                              <DatePicker
+                                value={field.value}
+                                onChange={(v) => field.onChange(v ?? '')}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                clearable
+                              />
                             </FormControl>
                             <FormDescription>
                               {t('students.wizard.completion_date_desc')}
@@ -1246,7 +1281,12 @@ const AddStudentDialog = ({
                               {t('students.wizard.first_payment_date')} *
                             </FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} />
+                              <DatePicker
+                                value={field.value}
+                                onChange={(v) => field.onChange(v ?? '')}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

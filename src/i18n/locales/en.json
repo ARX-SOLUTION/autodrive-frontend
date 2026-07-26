@@ -120,6 +120,13 @@
     "offline_banner": "No internet connection",
     "tab_info": "Info"
   },
+  "datepicker": {
+    "placeholder": "Pick a date",
+    "clear": "Clear",
+    "open_calendar": "Open calendar",
+    "previous_month": "Previous month",
+    "next_month": "Next month"
+  },
   "login": {
     "title": "Sign in",
     "email_label": "Email",
@@ -530,7 +537,10 @@
     "course_type": "Course",
     "course_fast": "Fast track",
     "course_school": "Driving school",
-    "course": "Course",
+    "course": {
+      "tezkor": "Express",
+      "avto_maktab": "Full course"
+    },
     "group": "Group",
     "total_price": "Course price",
     "debt": "Debt",
@@ -609,10 +619,6 @@
     "validation_group_required": "Group is required for driving school course",
     "no_debt": "No debt",
     "no_group": "No group",
-    "course": {
-      "tezkor": "Express",
-      "avto_maktab": "Full course"
-    },
     "form_desc": "Enter the student's details",
     "confirm_delete_desc": "Delete student \"{{name}}\"? This action cannot be undone.",
     "detailed_toggle_locked": "Data entered — switching modes will discard it",
@@ -1145,5 +1151,10 @@
     "related_title": "Related posts",
     "not_found_title": "Post not found",
     "not_found_desc": "This post doesn't exist or has been removed"
+  },
+  "datetimepicker": {
+    "placeholder": "Date and time",
+    "time": "Time",
+    "open_calendar": "Open calendar"
   }
 }

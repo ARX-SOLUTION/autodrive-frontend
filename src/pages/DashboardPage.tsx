@@ -85,7 +85,7 @@ const initialsFor = (name?: string | null) => {
 };
 
 const branchHues = [
-  35, // amber (primary)
+  14, // rust (primary)
   199, // cyan (info)
   145, // green (success)
   25, // orange

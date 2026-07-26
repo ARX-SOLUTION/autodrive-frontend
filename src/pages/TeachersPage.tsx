@@ -36,6 +36,7 @@ import { useBranches } from '@/services/branchService';
 import { toast } from 'sonner';
 import { User } from '@/types/user';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 // Backend GetUsersQueryDto caps limit at 100 -- large enough that a single
 // branch/company's teacher list never needs a second server page in
@@ -182,22 +183,21 @@ const TeachersPage = () => {
     t('common.na');
 
   const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
+  const teachersTitle = t('teachers.title');
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-balance">
-            {t('teachers.title')}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t('teachers.count', { count: total })}
-          </p>
-        </div>
-        <Button className="gap-2" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> {t('teachers.add')}
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow={teachersTitle}
+        title={teachersTitle}
+        description={t('teachers.count', { count: total })}
+        icon={<UsersThree className="h-3.5 w-3.5" aria-hidden="true" />}
+        actions={
+          <Button className="gap-2" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> {t('teachers.add')}
+          </Button>
+        }
+      />
       <div className="relative max-w-sm">
         <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input

@@ -91,6 +91,128 @@
   }
 }
 
+/* ==========================================================================
+ * Warm Paper tenant theme (autodrive-qsgc.1) -- BEGIN
+ *
+ * MUST stay UNLAYERED (not inside @layer base).
+ * `@autodrive/design-tokens/tokens.css` is imported unlayered. In the CSS
+ * cascade, unlayered normal declarations beat layered ones at equal
+ * specificity — so an override wrapped in `@layer base` silently loses to
+ * design-tokens and primary stays amber. Keep this block unlayered and
+ * after the design-tokens import so source order among unlayered peers wins.
+ *
+ * Light: approved prototype-B values. Dark: keep design-tokens warm-graphite
+ * surfaces; only swap amber brand (--primary/--ring/sidebar-*) for rust.
+ *
+ * WCAG AA (relative luminance): light fg/bg 14.67, muted-fg/bg 5.01,
+ * primary-fg/primary 5.06; dark primary-fg/primary 4.91. Pre-existing
+ * design-tokens dark --destructive text contrast (~3.1:1) is out of scope.
+ * ==========================================================================
+ */
+:root {
+  --background: 36 33% 97%;
+  --surface: 36 28% 94%;
+  --card: 0 0% 100%;
+  --card-foreground: 24 12% 14%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 24 12% 14%;
+  --foreground: 24 12% 14%;
+  --muted: 36 18% 92%;
+  --muted-foreground: 24 8% 42%;
+  --primary: 14 58% 44%;
+  --primary-foreground: 36 33% 98%;
+  --secondary: 36 18% 92%;
+  --secondary-foreground: 24 12% 14%;
+  --accent: 36 18% 92%;
+  --accent-foreground: 24 12% 14%;
+  --destructive: 4 55% 44%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 146 32% 34%;
+  --success-foreground: 0 0% 100%;
+  --warning: 32 60% 38%;
+  --warning-foreground: 0 0% 100%;
+  --info: 206 34% 38%;
+  --info-foreground: 0 0% 100%;
+  --border: 32 16% 87%;
+  --hair: 32 16% 90%;
+  --input: 32 16% 87%;
+  --ring: 14 58% 44%;
+  --radius: 1.25rem;
+
+  /* Full sidebar suite — paper surfaces + rust active (autodrive-qsgc.7). */
+  --sidebar-background: 36 28% 95%;
+  --sidebar-foreground: 24 10% 28%;
+  --sidebar-primary: 14 58% 44%;
+  --sidebar-primary-foreground: 36 33% 98%;
+  --sidebar-accent: 36 22% 90%;
+  --sidebar-accent-foreground: 14 45% 28%;
+  --sidebar-border: 32 14% 86%;
+  --sidebar-ring: 14 58% 44%;
+
+  /* Tailwind v4 @theme non-inline lesson (prototypeThemes.css): redeclare
+   * --color-* after HSL overrides so utilities always paint Warm Paper. */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-surface: hsl(var(--surface));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+  --color-border: hsl(var(--border));
+  --color-hair: hsl(var(--hair));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+.dark {
+  --primary: 14 58% 54%;
+  --primary-foreground: 220 10% 8%;
+  --ring: 14 58% 54%;
+
+  --sidebar-primary: 14 58% 54%;
+  --sidebar-primary-foreground: 220 10% 8%;
+  --sidebar-ring: 14 58% 54%;
+  --sidebar-accent: 220 5% 14%;
+  --sidebar-accent-foreground: 40 10% 92%;
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-ring: hsl(var(--ring));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+}
+/* Warm Paper tenant theme (autodrive-qsgc.1 / .7) -- END */
+
 @layer base {
   * {
     @apply border-border;
