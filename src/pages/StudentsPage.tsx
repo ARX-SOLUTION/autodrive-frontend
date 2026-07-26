@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
+import { parseCalendarDate } from '@/lib/calendarDate';
 import {
   fetchAllStudents,
   useStudentsPage,
@@ -21,6 +22,7 @@ import {
 import { useBranches } from '@/services/branchService';
 import { useOperators } from '@/services/operatorService';
 import { CourseType, Student, StudentStatus } from '@/types/student';
+import type { CourseTypeTab } from '@/components/ui/course-type-tabs';
 import { type CreateStudentPayload } from '@/components/ui/StudentModal';
 import { type AddStudentPayload } from '@/components/ui/AddStudentDialog';
 import { CircleNotch } from '@phosphor-icons/react';
@@ -69,9 +71,13 @@ const StudentsPage = () => {
   };
 
   const courseType = (searchParams.get('course_type') ??
-    'tezkor') as CourseType;
-  const setCourseType = (v: CourseType) =>
-    setParam('course_type', v === 'tezkor' ? undefined : v);
+    'all') as CourseTypeTab;
+  const setCourseType = (v: CourseTypeTab) =>
+    setParam('course_type', v === 'all' ? undefined : v);
+  const courseTypeFilter =
+    courseType === 'all' ? undefined : (courseType as CourseType);
+  const createCourseType: CourseType =
+    courseType === 'avto_maktab' ? 'avto_maktab' : 'tezkor';
 
   const defaultBranchId = isCrossTenant
     ? undefined
@@ -82,15 +88,18 @@ const StudentsPage = () => {
   const search = searchParams.get('q') ?? '';
   const setSearch = (v: string) => setParam('q', v || undefined);
 
+  // Callers: StudentsFilterBar + useStudentsPage. Wire: date_from/date_to
+  // YYYY-MM-DD. Must use parseCalendarDate — never new Date('YYYY-MM-DD').
+  // User: "davom et" (autodrive-qsgc.4).
   const rawDateFrom = searchParams.get('date_from');
   const dateFrom = useMemo(
-    () => (rawDateFrom ? new Date(rawDateFrom) : undefined),
+    () => (rawDateFrom ? parseCalendarDate(rawDateFrom) : undefined),
     [rawDateFrom],
   );
 
   const rawDateTo = searchParams.get('date_to');
   const dateTo = useMemo(
-    () => (rawDateTo ? new Date(rawDateTo) : undefined),
+    () => (rawDateTo ? parseCalendarDate(rawDateTo) : undefined),
     [rawDateTo],
   );
 
@@ -169,7 +178,7 @@ const StudentsPage = () => {
     isError: isStudentsError,
     refetch: refetchStudents,
   } = useStudentsPage(
-    courseType,
+    courseTypeFilter,
     branchId,
     currentPage,
     SERVER_PAGE_SIZE,
@@ -246,7 +255,7 @@ const StudentsPage = () => {
     try {
       const XLSX = await import('xlsx');
       const exportRows = await fetchAllStudents({
-        courseType,
+        courseType: courseTypeFilter,
         branchId,
         operatorId,
         search: debouncedSearch,
@@ -482,7 +491,7 @@ const StudentsPage = () => {
 
       <StudentsDialogs
         students={sorted}
-        courseType={courseType}
+        courseType={createCourseType}
         branchId={branchId}
         operators={operators || []}
         modalOpen={modalOpen}

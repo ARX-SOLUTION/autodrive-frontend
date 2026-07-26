@@ -1,3 +1,4 @@
+import { parseCalendarDate } from '@/lib/calendarDate';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
@@ -109,8 +110,8 @@ describe('AuditLogPage', () => {
       limit: 50,
       userId: 'u-alice', // 'Alice' uniquely matches one user -> real id
     });
-    expect(args.startDate).toEqual(new Date('2026-07-01'));
-    expect(args.endDate).toEqual(new Date('2026-07-10'));
+    expect(args.startDate).toEqual(parseCalendarDate('2026-07-01'));
+    expect(args.endDate).toEqual(parseCalendarDate('2026-07-10'));
 
     // Row numbering continues across pages: page 2 starts at 51.
     expect(screen.getByText('51')).toBeInTheDocument();

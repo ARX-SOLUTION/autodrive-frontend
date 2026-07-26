@@ -17,7 +17,6 @@ import {
   Hourglass,
   PiggyBank,
   ArrowsClockwise,
-  TrendUp,
   UserCheck,
   UserMinus,
   UserPlus,
@@ -36,6 +35,11 @@ import {
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import {
+  CourseTypeTabs,
+  type CourseTypeTab,
+} from '@/components/ui/course-type-tabs';
 import { useBranches } from '@/services/branchService';
 import { useCompanyOverview } from '@/services/dashboardService';
 import type {
@@ -47,6 +51,7 @@ import { useCan } from '@/hooks/useCan';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
 import { formatMoney, groupDigits } from '@/lib/money';
+import { formatNumber } from '@/pages/dashboard/dashboardCards';
 
 gsap.registerPlugin(useGSAP);
 
@@ -77,17 +82,6 @@ const formatShortDate = (value: string | Date) =>
 // ponytail: local copy, not imported from DashboardPage.tsx — that file
 // already imports CompanyRevenueDashboard, so importing back would create a
 // circular dependency. Spec's offered fallback ("else local copy") applies.
-const initialsFor = (name?: string | null) => {
-  if (!name) return '··';
-  const parts = name.trim().split(/\s+/).slice(0, 2);
-  return parts
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('')
-    .padEnd(2, '·');
-};
-
-// ponytail: local copy of DashboardPage.tsx's greetingKey() — same
-// circular-import constraint as initialsFor above.
 const greetingKey = () => {
   const h = new Date().getHours();
   if (h < 12) return 'dashboard.greeting_morning';
@@ -144,58 +138,6 @@ const DEBT_TONE_VAR: Record<DebtTone, string> = {
   success: 'hsl(var(--chart-success))',
 };
 
-// Compact money for tight spaces (trend peak stat) — local, not
-// DashboardPage.tsx's formatCompact(): same circular-import constraint.
-const formatCompactMoney = (n: number) => {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return String(Math.round(n));
-};
-
-/** Line path for a fixed-size sparkline — no Recharts, no fill (mock spec). */
-const sparklinePath = (data: number[], width: number, height: number) => {
-  if (data.length < 2) return '';
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const pad = 3; // keeps the 2px stroke from clipping at the viewBox edge
-  const innerHeight = height - pad * 2;
-  const stepX = width / (data.length - 1);
-  return data
-    .map((v, i) => {
-      const x = i * stepX;
-      const y = pad + innerHeight - ((v - min) / range) * innerHeight;
-      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
-};
-
-const MiniSparkline = ({ data, color }: { data: number[]; color: string }) => {
-  const width = 104;
-  const height = 30;
-  const d = sparklinePath(data, width, height);
-  if (!d) return null;
-  return (
-    <svg
-      width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      className="mt-3"
-      aria-hidden="true"
-    >
-      <path
-        d={d}
-        fill="none"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-};
-
 // en-CA formatter always renders YYYY-MM-DD — cache it once like
 // moneyFormatter instead of constructing it on every call.
 const uzDateFormatter = new Intl.DateTimeFormat('en-CA', {
@@ -203,12 +145,6 @@ const uzDateFormatter = new Intl.DateTimeFormat('en-CA', {
 });
 
 const todayInUz = () => uzDateFormatter.format(new Date());
-
-const addDays = (dateString: string, amount: number) => {
-  const date = new Date(`${dateString}T00:00:00+05:00`);
-  date.setUTCDate(date.getUTCDate() + amount);
-  return uzDateFormatter.format(date);
-};
 
 const startOfMonthInUz = () => {
   const today = todayInUz();
@@ -222,8 +158,7 @@ const getSearchQuery = (
 ): CompanyOverviewQuery => ({
   branchId: branchId || userBranchId,
   courseType: (params.get('course_type') || undefined) as
-    | CourseType
-    | undefined,
+    CourseType | undefined,
   from: params.get('from') || undefined,
   to: params.get('to') || undefined,
   granularity: params.get('granularity') === 'week' ? 'week' : 'day',
@@ -380,6 +315,7 @@ const DeltaChip = ({
   ink?: boolean;
 }) => (
   <span
+    data-testid="kpi-delta"
     className={cn(
       'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums',
       ink
@@ -399,129 +335,11 @@ const DeltaChip = ({
   </span>
 );
 
-// KPI grid tile (mock section 3) — mono label, delta chip, .num value +
-// unit, optional sub-line + no-fill sparkline. `primary` gives card 1 the
-// gradient/ink treatment; `countUp` (card 1 only) absorbs the old HeroMetric
-// count-up verbatim, now driven by a numeric value instead of parsing digits
-// back out of a formatted string.
-const KpiTile = ({
-  label,
-  value,
-  unit,
-  sub,
-  delta,
-  spark,
-  primary = false,
-  countUp = false,
-  onClick,
-}: {
-  label: string;
-  value: number | null;
-  unit?: string;
-  sub?: React.ReactNode;
-  delta?: number | null;
-  spark?: number[];
-  primary?: boolean;
-  countUp?: boolean;
-  onClick?: () => void;
-}) => {
-  const valueRef = useRef<HTMLSpanElement>(null);
-  const displayValue =
-    value == null ? '—' : groupDigits(String(Math.round(value)));
-
-  useGSAP(() => {
-    const el = valueRef.current;
-    if (!countUp || !el || value == null || prefersReducedMotion) return;
-    const proxy = { v: 0 };
-    gsap.to(proxy, {
-      v: value,
-      duration: 1,
-      ease: 'power2.out', // = easeOutCubic (Design.md) — GSAP's power2 is the cubic power ease
-      onUpdate() {
-        el.textContent = groupDigits(String(Math.round(proxy.v)));
-      },
-    });
-  }, [value]);
-
-  return (
-    <div
-      onClick={onClick}
-      onKeyDown={(event) => {
-        if (onClick && (event.key === 'Enter' || event.key === ' ')) {
-          event.preventDefault();
-          onClick();
-        }
-      }}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      // Explicit, concise name instead of the browser's default (verbose)
-      // name-from-content concatenation of label+delta+value+sub.
-      aria-label={
-        onClick
-          ? `${label}: ${displayValue}${unit ? ` ${unit}` : ''}`
-          : undefined
-      }
-      style={
-        primary
-          ? {
-              background:
-                'linear-gradient(150deg, hsl(var(--primary)), color-mix(in srgb, hsl(var(--primary)) 82%, #C77A10))',
-            }
-          : undefined
-      }
-      className={cn(
-        'relative overflow-hidden rounded-lg border p-5',
-        primary
-          ? 'border-transparent text-[hsl(var(--primary-foreground))] shadow-[0_8px_24px_hsl(var(--primary)/0.3)]'
-          : 'border-border bg-card',
-        onClick &&
-          (primary
-            ? 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-            : 'cursor-pointer motion-safe:transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'),
-      )}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <p
-          className={cn(
-            'font-mono text-[10.5px] font-semibold uppercase tracking-[0.11em]',
-            primary ? 'opacity-80' : 'text-muted-foreground',
-          )}
-        >
-          {label}
-        </p>
-        {delta !== undefined && delta !== null && (
-          <DeltaChip delta={delta} ink={primary} />
-        )}
-      </div>
-      <p className="num mt-3 flex items-baseline gap-1 text-[31px] font-extrabold leading-none">
-        <span ref={valueRef}>{displayValue}</span>
-        {unit && value != null && (
-          <span className="text-[13px] font-medium opacity-70">{unit}</span>
-        )}
-      </p>
-      {sub && (
-        <p
-          className={cn(
-            'mt-2 text-[11.5px]',
-            primary ? 'opacity-80' : 'text-muted-foreground',
-          )}
-        >
-          {sub}
-        </p>
-      )}
-      {spark && spark.length > 1 && (
-        <MiniSparkline
-          data={spark}
-          color={
-            primary
-              ? 'hsl(var(--primary-foreground) / 0.55)'
-              : 'hsl(var(--primary))'
-          }
-        />
-      )}
-    </div>
-  );
-};
+const Eyebrow = ({ children }: { children: React.ReactNode }) => (
+  <p className="mb-2 font-mono text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+    {children}
+  </p>
+);
 
 const FilterBar = ({
   params,
@@ -542,54 +360,23 @@ const FilterBar = ({
   const today = todayInUz();
   const from = params.get('from') || startOfMonthInUz();
   const to = params.get('to') || today;
-  const preset = (value: string) => {
-    if (value === 'today') return onChange('range', `${today}|${today}`);
-    if (value === '7d')
-      return onChange('range', `${addDays(today, -6)}|${today}`);
-    if (value === '30d')
-      return onChange('range', `${addDays(today, -29)}|${today}`);
-    return onChange('range', `${startOfMonthInUz()}|${today}`);
-  };
-  // exec-dash 1: collapsed toolbar — h-10/rounded-[11px]/bg-card controls,
-  // no section label. Same preset()/onChange contract as before, just denser.
   const controlClassName =
     'h-10 rounded-[11px] border border-border bg-card px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2">
-      <select
-        aria-label={t('dashboard.v2.period', 'Davr')}
-        className={controlClassName}
-        value={`${from}|${to}`}
-        onChange={(event) => preset(event.target.value)}
-      >
-        <option value={`${startOfMonthInUz()}|${today}`}>
-          {t('dashboard.v2.this_month', 'Bu oy')}
-        </option>
-        <option value={`${today}|${today}`}>
-          {t('dashboard.v2.today', 'Bugun')}
-        </option>
-        <option value={`${addDays(today, -6)}|${today}`}>
-          {t('dashboard.v2.last_7_days', '7 kun')}
-        </option>
-        <option value={`${addDays(today, -29)}|${today}`}>
-          {t('dashboard.v2.last_30_days', '30 kun')}
-        </option>
-      </select>
-      <input
-        type="date"
-        aria-label={t('dashboard.v2.from', 'Dan')}
-        value={from}
+      <DateRangePicker
+        from={from}
+        to={to}
         max={today}
-        onChange={(event) => onChange('from', event.target.value)}
-        className={controlClassName}
-      />
-      <input
-        type="date"
-        aria-label={t('dashboard.v2.to', 'Gacha')}
-        value={to}
-        max={today}
-        onChange={(event) => onChange('to', event.target.value)}
-        className={controlClassName}
+        onChange={(nextFrom, nextTo) => {
+          // Always one updateParam('range') so from/to stay in sync
+          // (same batching rule as autodrive-6cq.5.70).
+          const f = nextFrom ?? startOfMonthInUz();
+          const t = nextTo ?? today;
+          onChange('range', `${f <= t ? f : t}|${f <= t ? t : f}`);
+        }}
+        aria-label={t('dashboard.v2.date_range', "Sana oralig'i")}
+        className="gap-1.5"
       />
       {canViewAllBranches && (
         <select
@@ -613,23 +400,14 @@ const FilterBar = ({
           ))}
         </select>
       )}
-      <select
-        aria-label={t('dashboard.v2.course', 'Kurs')}
-        value={params.get('course_type') || 'all'}
-        onChange={(event) =>
-          onChange(
-            'course_type',
-            event.target.value === 'all' ? undefined : event.target.value,
-          )
+      <CourseTypeTabs
+        value={(params.get('course_type') as CourseTypeTab) || 'all'}
+        onChange={(value) =>
+          onChange('course_type', value === 'all' ? undefined : value)
         }
-        className={controlClassName}
-      >
-        <option value="all">{t('dashboard.all', 'Barchasi')}</option>
-        <option value="tezkor">{t('dashboard.chart_fast', 'Tezkor')}</option>
-        <option value="avto_maktab">
-          {t('dashboard.chart_school', 'Avto maktab')}
-        </option>
-      </select>
+        className="shrink-0"
+        listClassName="h-10"
+      />
       <select
         aria-label={t('dashboard.v2.granularity', 'Granulyarlik')}
         value={params.get('granularity') === 'week' ? 'week' : 'day'}
@@ -653,64 +431,6 @@ const FilterBar = ({
           className={cn('h-4 w-4', isFetching && 'animate-spin')}
         />
       </Button>
-    </div>
-  );
-};
-
-// Hero-adjacent period shortcuts (mock section 1) — same preset ranges as
-// FilterBar's own select, just three big-thumb-target pills. Wired to the
-// same updateParam('range', ...) contract, so both controls always agree.
-const PeriodPills = ({
-  params,
-  onChange,
-}: {
-  params: URLSearchParams;
-  onChange: (key: string, value?: string) => void;
-}) => {
-  const { t } = useTranslation();
-  const today = todayInUz();
-  const from = params.get('from') || startOfMonthInUz();
-  const to = params.get('to') || today;
-  const active = `${from}|${to}`;
-  const presets = [
-    {
-      key: 'today',
-      label: t('dashboard.v2.today', 'Bugun'),
-      range: `${today}|${today}`,
-    },
-    {
-      key: 'week',
-      label: t('dashboard.v2.week', 'Hafta'),
-      range: `${addDays(today, -6)}|${today}`,
-    },
-    {
-      key: 'month',
-      label: t('dashboard.v2.month', 'Oy'),
-      range: `${startOfMonthInUz()}|${today}`,
-    },
-  ] as const;
-  return (
-    <div
-      role="group"
-      aria-label={t('dashboard.v2.period', 'Davr')}
-      className="flex items-center gap-1.5"
-    >
-      {presets.map((preset) => (
-        <button
-          key={preset.key}
-          type="button"
-          onClick={() => onChange('range', preset.range)}
-          aria-pressed={active === preset.range}
-          className={cn(
-            'h-8 rounded-[10px] px-3 text-xs font-semibold motion-safe:transition-colors',
-            active === preset.range
-              ? 'bg-primary text-primary-foreground'
-              : 'border border-border bg-card text-muted-foreground hover:bg-muted',
-          )}
-        >
-          {preset.label}
-        </button>
-      ))}
     </div>
   );
 };
@@ -1068,8 +788,9 @@ const CompanyRevenueDashboard = () => {
     setParams(next, { replace: true });
   };
 
-  if (isLoading || !data) return <DashboardSkeleton />;
+  if (isLoading) return <DashboardSkeleton />;
   if (isError) return <ErrorState onRetry={() => void refetch()} />;
+  if (!data) return <DashboardSkeleton />;
 
   const { kpis } = data;
   const statusTotal =
@@ -1116,36 +837,33 @@ const CompanyRevenueDashboard = () => {
       kpis.revenue.previous_period_to)
       ? `${formatDate(kpis.revenue.previous_period_from)} — ${formatDate(kpis.revenue.previous_period_to_inclusive || kpis.revenue.previous_period_to!)}`
       : t('dashboard.v2.previous_period', 'Oldingi davr');
-  const revenueTrendPeak = data.revenue_trend.length
-    ? data.revenue_trend.reduce((max, item) =>
-        item.amount > max.amount ? item : max,
-      )
-    : null;
   // "01 — 18 IYUL 2026 · KUNLIK" — start day, end day+month(uz)+year, then
   // granularity, all uppercase per the mock's mono caption.
   const trendPeriodTo = kpis.revenue.period_to_inclusive || data.filters.to;
   const trendEnd = uzDateParts(trendPeriodTo);
   const trendRangeCaption = `${format(new Date(data.filters.from), 'dd')} — ${trendEnd.day} ${trendEnd.month} ${trendEnd.year} · ${t(data.filters.granularity === 'week' ? 'dashboard.v2.weekly' : 'dashboard.v2.daily').toUpperCase()}`;
+  const currency = t('dashboard.currency_suffix');
+  const revenueTrendTotal = data.revenue_trend.reduce(
+    (sum, item) => sum + item.amount,
+    0,
+  );
 
   return (
     <div className="space-y-5 pb-8">
       <header className="space-y-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <LiveCaption />
-            <h1 className="mt-2 font-heading text-[40px] font-extrabold leading-[1.1] tracking-[-0.025em] text-balance">
-              {t(greetingKey())}
-              {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
-            </h1>
-            <p className="mt-1.5 max-w-2xl text-[15px] text-muted-foreground text-pretty">
-              {t(
-                'dashboard.hero_sub',
-                '{{count}} ta talaba joriy holatda qarzdor.',
-                { count: kpis.debt.students_with_debt },
-              )}
-            </p>
-          </div>
-          <PeriodPills params={params} onChange={updateParam} />
+        <div>
+          <LiveCaption />
+          <h1 className="mt-2 font-heading text-[40px] font-extrabold leading-[1.1] tracking-[-0.025em] text-balance">
+            {t(greetingKey())}
+            {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+          </h1>
+          <p className="mt-1.5 max-w-2xl text-[15px] text-muted-foreground text-pretty">
+            {t(
+              'dashboard.hero_sub',
+              '{{count}} ta talaba joriy holatda qarzdor.',
+              { count: kpis.debt.students_with_debt },
+            )}
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2.5">
@@ -1212,18 +930,14 @@ const CompanyRevenueDashboard = () => {
         isFetching={isFetching}
       />
 
-      <section
-        className="grid grid-cols-[repeat(auto-fit,minmax(216px,1fr))] gap-4 motion-safe:animate-[rise_0.5s_ease_both]"
+      <div
+        data-testid="dashboard-v2-kpi-strip"
+        className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6 motion-safe:animate-[rise_0.5s_ease_both]"
         style={{ animationDelay: '40ms' }}
         aria-label={t('dashboard.v2.kpi_section_label', 'Revenue control KPIs')}
       >
-        <KpiTile
-          primary
-          countUp
-          label={t('dashboard.v2.today_revenue', 'Bugungi tushum')}
-          value={kpis.revenue.today}
-          unit={t('dashboard.currency_suffix')}
-          delta={kpis.revenue.delta_percent}
+        <button
+          type="button"
           onClick={() =>
             navigate(
               withContext('/payments', {
@@ -1232,112 +946,150 @@ const CompanyRevenueDashboard = () => {
               }),
             )
           }
-        />
-        <KpiTile
-          label={t('dashboard.v2.period_revenue', 'Davr tushumi')}
-          value={kpis.revenue.period}
-          unit={t('dashboard.currency_suffix')}
-          sub={`${comparisonRange}: ${formatMoney(kpis.revenue.previous_period)}`}
-          delta={kpis.revenue.delta_percent}
-          spark={data.revenue_trend.map((item) => item.amount)}
-          onClick={() => navigate(withContext('/payments'))}
-        />
-        <KpiTile
-          label={t('dashboard.v2.outstanding_debt', 'Jami qarzdorlik')}
-          value={kpis.debt.current_outstanding}
-          unit={t('dashboard.currency_suffix')}
-          sub={t('dashboard.v2.debtors', '{{count}} ta qarzdor student', {
-            count: kpis.debt.students_with_debt,
-          })}
+          className="rounded-xl border border-border bg-card p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <p className="text-[11px] text-muted-foreground">
+            {t('dashboard.v2.today_revenue', 'Bugungi tushum')}
+          </p>
+          <p className="mt-1 font-heading text-xl font-bold tabular-nums">
+            {formatMoney(kpis.revenue.today)}
+          </p>
+        </button>
+        <div className="rounded-xl border border-border bg-card p-3">
+          <p className="text-[11px] text-muted-foreground">
+            {t('dashboard.v2.period_revenue', 'Davr tushumi')}
+          </p>
+          <p className="mt-1 font-heading text-xl font-bold tabular-nums">
+            {formatMoney(kpis.revenue.period)}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-3">
+          <p className="text-[11px] text-muted-foreground">
+            {t('dashboard.v2.period_over_period', 'Davr o‘sishi')}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            {kpis.revenue.delta_percent != null ? (
+              <DeltaChip delta={kpis.revenue.delta_percent} />
+            ) : (
+              <span className="font-heading text-xl font-bold">—</span>
+            )}
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {comparisonRange}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() =>
+            navigate(withContext('/students', { status: 'active' }))
+          }
+          className="rounded-xl border border-border bg-card p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <p className="text-[11px] text-muted-foreground">
+            {t('dashboard.hero_active_students')}
+          </p>
+          <p className="mt-1 font-heading text-xl font-bold tabular-nums">
+            {groupDigits(String(Math.round(kpis.students.active)))}
+          </p>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            +{kpis.students.new}{' '}
+            {t('dashboard.v2.new_in_period', 'tanlangan davrda')}
+          </p>
+        </button>
+        <button
+          type="button"
           onClick={() =>
             navigate(
-              withContext('/students', { status: 'active', has_debt: 'true' }),
+              withContext('/students', {
+                status: 'active',
+                has_debt: 'true',
+              }),
             )
           }
-        />
-        <KpiTile
-          label={t('dashboard.v2.academic_block.attendance_rate', 'Davomat')}
-          value={kpis.attendance_rate ?? null}
-          unit="%"
-          sub={t(
-            'dashboard.v2.academic_block.attendance_meta',
-            'Tanlangan davr bo‘yicha',
-          )}
-          onClick={() => navigate('/attendance')}
-        />
+          className="rounded-xl border border-border bg-card p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <p className="text-[11px] text-muted-foreground">
+            {t('dashboard.v2.outstanding_debt', 'Jami qarzdorlik')}
+          </p>
+          <p className="mt-1 font-heading text-xl font-bold tabular-nums text-destructive">
+            {formatMoney(kpis.debt.current_outstanding)}
+          </p>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {t('dashboard.v2.debtors', '{{count}} ta qarzdor student', {
+              count: kpis.debt.students_with_debt,
+            })}
+          </p>
+        </button>
+        <div className="rounded-xl border border-border bg-card p-3">
+          <p className="text-[11px] text-muted-foreground">
+            {t('dashboard.v2.academic_block.attendance_rate', 'Davomat')}
+          </p>
+          <p className="mt-1 font-heading text-xl font-bold tabular-nums">
+            {kpis.attendance_rate != null ? `${kpis.attendance_rate}%` : '—'}
+          </p>
+        </div>
+      </div>
+
+      <section
+        className="space-y-3 motion-safe:animate-[rise_0.5s_ease_both]"
+        style={{ animationDelay: '80ms' }}
+      >
+        <div>
+          <Eyebrow>{t('dashboard.v2.revenue_trend', 'Tushum trendi')}</Eyebrow>
+          <h2 className="mb-2 font-heading text-2xl font-bold tracking-tight text-foreground">
+            {t('dashboard.revenue_trend_sub', {
+              total: formatNumber(revenueTrendTotal),
+              currency,
+            })}
+          </h2>
+          <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+            {trendRangeCaption}
+          </p>
+          <RevenueChart data={data.revenue_trend} onReset={resetFilters} />
+        </div>
       </section>
 
       <section
-        className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.85fr)] motion-safe:animate-[rise_0.5s_ease_both]"
-        style={{ animationDelay: '80ms' }}
+        className="grid grid-cols-1 gap-4 lg:grid-cols-2 motion-safe:animate-[rise_0.5s_ease_both]"
+        style={{ animationDelay: '100ms' }}
       >
-        <DashboardCard
-          title={t('dashboard.v2.revenue_trend', 'Tushum trendi')}
-          description={
-            <span className="font-mono text-[10px] uppercase tracking-[0.08em]">
-              {trendRangeCaption}
-            </span>
-          }
-          action={
-            revenueTrendPeak && (
-              <div className="text-right">
-                <p className="num font-mono text-[21px] font-bold text-primary">
-                  {formatCompactMoney(revenueTrendPeak.amount)}
-                </p>
-                <p className="text-[11px] font-medium text-success">
-                  {t('dashboard.v2.trend_peak', 'eng yuqori')} ·{' '}
-                  {formatShortDate(revenueTrendPeak.period_start)}
-                </p>
-              </div>
-            )
-          }
-        >
-          <RevenueChart data={data.revenue_trend} onReset={resetFilters} />
-        </DashboardCard>
         <DashboardCard
           title={t('dashboard.v2.recovery', 'Qarzdorlik navbati')}
           description={t(
             'dashboard.v2.recovery_subtitle',
             'Eng katta qarzlar birinchi ko‘rsatiladi.',
           )}
-          action={
-            <span className="rounded-full bg-destructive/[13%] px-2 py-0.5 font-mono text-[11px] font-bold text-destructive">
-              {t('dashboard.v2.recovery_count', '{{count}} ta', {
-                count: kpis.debt.students_with_debt,
-              })}
-            </span>
-          }
         >
-          <div className="space-y-1">
-            {data.recovery_queue.length ? (
-              data.recovery_queue.map((student) => {
+          {data.recovery_queue.length ? (
+            <ul>
+              {data.recovery_queue.map((student) => {
                 const overdueDays = daysSince(student.last_payment_at);
                 const tone = debtPriorityTone(student.debt, overdueDays);
                 return (
-                  <div
+                  <li
                     key={student.student_id}
                     onClick={() => navigate(`/students/${student.student_id}`)}
-                    className="group flex cursor-pointer items-center gap-3 rounded-[10px] p-2 motion-safe:transition-colors hover:bg-muted"
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        navigate(`/students/${student.student_id}`);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={t(
+                      'dashboard.v2.view_debtor',
+                      "Ko'rish: {{name}}",
+                      { name: student.student_name },
+                    )}
+                    className="flex cursor-pointer items-center justify-between gap-4 border-b border-border py-3 last:border-b-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <span
-                      className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[10px] bg-muted font-mono text-xs"
-                      aria-hidden="true"
-                    >
-                      {initialsFor(student.student_name)}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13.5px] font-semibold">
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">
                         {student.student_name}
                       </span>
-                      <span className="block truncate text-[11px] text-muted-foreground">
-                        {student.branch_name} ·{' '}
-                        {overdueDays === null
-                          ? t('dashboard.v2.last_payment_none', "To'lov yo'q")
-                          : t(
-                              'dashboard.v2.overdue_days',
-                              '{{count}} kun kechikkan',
-                              { count: overdueDays },
-                            )}
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {student.branch_name}
                       </span>
                     </span>
                     <span className="flex shrink-0 items-center gap-1.5">
@@ -1346,50 +1098,17 @@ const CompanyRevenueDashboard = () => {
                         style={{ backgroundColor: DEBT_TONE_VAR[tone] }}
                         aria-hidden="true"
                       />
-                      <span className="font-mono text-[13px] font-semibold tabular-nums text-destructive">
+                      <span className="font-heading text-base font-bold tabular-nums text-destructive">
                         {formatMoney(student.debt)}
                       </span>
                     </span>
-                    <span className="flex shrink-0 items-center">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          navigate(`/students/${student.student_id}`);
-                        }}
-                        aria-label={t(
-                          'dashboard.v2.view_debtor',
-                          "Ko'rish: {{name}}",
-                          {
-                            name: student.student_name,
-                          },
-                        )}
-                        title={t(
-                          'dashboard.v2.view_debtor',
-                          "Ko'rish: {{name}}",
-                          {
-                            name: student.student_name,
-                          },
-                        )}
-                        // ponytail: visible box is 24px (mock spec) —
-                        // after:-inset-2.5 grows the invisible hit area to
-                        // 44x44 (a11y minimum) without changing what's drawn.
-                        // Same after:-inset-N technique as components/ui/sidebar.tsx.
-                        className="relative grid h-6 w-6 place-items-center rounded-[7px] border border-border text-muted-foreground after:absolute after:-inset-2.5 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        <CaretRight
-                          className="h-3.5 w-3.5"
-                          aria-hidden="true"
-                        />
-                      </button>
-                    </span>
-                  </div>
+                  </li>
                 );
-              })
-            ) : (
-              <EmptyData />
-            )}
-          </div>
+              })}
+            </ul>
+          ) : (
+            <EmptyData />
+          )}
           {data.recovery_queue.length > 0 && (
             <Link
               to={withContext('/payments')}
@@ -1694,36 +1413,6 @@ const CompanyRevenueDashboard = () => {
             )}
           </div>
         </DashboardCard>
-        <DashboardCard
-          title={t('dashboard.v2.quick_actions', 'Tezkor amallar')}
-          description={t(
-            'dashboard.v2.quick_actions_subtitle',
-            'Eng ko‘p ishlatiladigan harakatlar.',
-          )}
-        >
-          <div className="grid grid-cols-2 gap-2">
-            <QuickAction
-              to="/payments?action=create"
-              icon={Wallet}
-              label={t('payments.add_payment', 'Payment qo‘shish')}
-            />
-            <QuickAction
-              to="/students?action=create"
-              icon={UserPlus}
-              label={t('students.add', 'Student qo‘shish')}
-            />
-            <QuickAction
-              to="/schedule?action=create"
-              icon={CalendarDot}
-              label={t('attendance.add_lesson', 'Dars yaratish')}
-            />
-            <QuickAction
-              to="/attendance"
-              icon={UsersThree}
-              label={t('nav.attendance', 'Davomat ochish')}
-            />
-          </div>
-        </DashboardCard>
       </section>
 
       <section
@@ -1740,21 +1429,10 @@ const CompanyRevenueDashboard = () => {
           )}
           description={t(
             'dashboard.v2.financial_block.subtitle',
-            'Oy-oyga o‘sish, qarzdorlik yoshi va kurs turi bo‘yicha daromad.',
+            'Qarzdorlik yoshi, ARPU va kurs turi bo‘yicha daromad.',
           )}
         >
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
-              label={t(
-                'dashboard.v2.financial_block.mom_growth',
-                'Oy-oyga o‘sish',
-              )}
-              value={formatMoney(kpis.revenue.period)}
-              meta={comparisonRange}
-              icon={TrendUp}
-              tone="primary"
-              delta={kpis.revenue.delta_percent}
-            />
             <KpiCard
               label={t('dashboard.v2.financial_block.bucket_0_30', '0–30 kun')}
               value={formatMoney(kpis.debt_aging.bucket_0_30)}
@@ -2112,27 +1790,6 @@ const CompanyRevenueDashboard = () => {
   );
 };
 
-const QuickAction = ({
-  to,
-  icon: Icon,
-  label,
-}: {
-  to: string;
-  icon: typeof UserPlus;
-  label: string;
-}) => (
-  <Button
-    asChild
-    variant="outline"
-    className="h-auto min-h-12 justify-start border-border/70 bg-background/30 px-3 py-3 text-left"
-  >
-    <Link to={to}>
-      <Icon className="text-primary" aria-hidden="true" />
-      <span className="text-xs font-semibold">{label}</span>
-    </Link>
-  </Button>
-);
-
 const DashboardSkeleton = () => (
   <div className="space-y-5">
     <div className="space-y-2">
@@ -2141,14 +1798,15 @@ const DashboardSkeleton = () => (
       <Skeleton className="h-4 w-96 max-w-full" />
     </div>
     <Skeleton className="h-16 w-full" />
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <Skeleton key={index} className="h-32" />
-      ))}
-    </div>
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.55fr_0.85fr]">
-      <Skeleton className="h-80" />
-      <Skeleton className="h-80" />
+    <div className="space-y-10">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.6fr_1fr]">
+        <Skeleton className="h-80 rounded-[var(--radius)]" />
+        <Skeleton className="h-40 w-2/3 rounded-[var(--radius)]" />
+      </div>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_1.6fr]">
+        <Skeleton className="h-40 w-2/3 rounded-[var(--radius)]" />
+        <Skeleton className="h-80 rounded-[var(--radius)]" />
+      </div>
     </div>
   </div>
 );

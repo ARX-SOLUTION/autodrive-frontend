@@ -172,7 +172,6 @@ const GroupsTable = ({
       sortField={sortField}
       sortDir={sortDir}
       onToggleSort={onToggleSort}
-      rowHoverClassName="hover:bg-muted/10"
       rowClassName={(g) => (g.deleted_at ? 'opacity-60' : undefined)}
     />
   );

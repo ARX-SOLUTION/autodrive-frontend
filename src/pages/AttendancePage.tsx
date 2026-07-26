@@ -16,8 +16,10 @@ import { useGroups } from '@/services/groupService';
 import { Lesson, LessonType } from '@/types/attendance';
 import { CalendarLesson } from '@/types/schedule';
 import AttendanceDrawer from '@/components/AttendanceDrawer';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
@@ -56,17 +58,6 @@ const formatDate = (d: string) => {
     return format(new Date(d), 'dd.MM.yyyy HH:mm');
   } catch {
     return d;
-  }
-};
-
-// <input type="datetime-local"> value format, in the browser's local time --
-// symmetric with handleSave's `new Date(values.date).toISOString()` (SLICE
-// B, autodrive-vh0.4: pre-fills the edit form from a lesson's ISO date).
-const toDatetimeLocalValue = (iso: string) => {
-  try {
-    return format(new Date(iso), "yyyy-MM-dd'T'HH:mm");
-  } catch {
-    return '';
   }
 };
 
@@ -278,7 +269,7 @@ const AttendancePage = () => {
     setEditingLesson(lesson);
     form.reset({
       title: lesson.title,
-      date: toDatetimeLocalValue(lesson.date),
+      date: lesson.date,
       groupId: lesson.group_id,
       lessonType: lesson.lesson_type,
     });
@@ -343,14 +334,14 @@ const AttendancePage = () => {
         await updateLesson.mutateAsync({
           id: editingLesson.id,
           title: values.title,
-          date: new Date(values.date).toISOString(),
+          date: values.date,
           lessonType: values.lessonType,
         });
         toast.success(t('attendance.updated'));
       } else {
         await createLesson.mutateAsync({
           title: values.title,
-          date: new Date(values.date).toISOString(),
+          date: values.date,
           lessonType: values.lessonType,
           groupId: values.groupId,
         });
@@ -387,22 +378,18 @@ const AttendancePage = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="inline-flex items-center gap-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-primary">
-            <ListChecks className="h-3.5 w-3.5" aria-hidden="true" />
-            {t('attendance.title')}
-          </div>
-          <h1 className="mt-1.5 font-heading text-[34px] font-extrabold leading-[1.1] tracking-[-0.02em] text-balance">
-            {t('attendance.title')}
-          </h1>
-        </div>
-        {canCreate && (
-          <Button onClick={openCreate} className="font-bold">
-            <Plus className="mr-2 h-4 w-4" /> {t('attendance.add_lesson')}
-          </Button>
-        )}
-      </header>
+      <PageHeader
+        eyebrow={t('attendance.title')}
+        title={t('attendance.title')}
+        icon={<ListChecks className="h-3.5 w-3.5" aria-hidden="true" />}
+        actions={
+          canCreate ? (
+            <Button onClick={openCreate} className="font-bold">
+              <Plus className="mr-2 h-4 w-4" /> {t('attendance.add_lesson')}
+            </Button>
+          ) : undefined
+        }
+      />
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -485,7 +472,12 @@ const AttendancePage = () => {
                   <FormItem>
                     <FormLabel>{t('attendance.lesson_date')}</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <DateTimePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

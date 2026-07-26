@@ -32,6 +32,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Brand } from './Brand';
+import { isNavActive } from '@/lib/navActive';
 
 type NavItem = {
   path: string;
@@ -174,7 +175,7 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
           className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-2.5"
         >
           {filteredItems.map((item) => {
-            const active = location.pathname === item.path;
+            const active = isNavActive(location.pathname, item.path);
             const label = t(item.labelKey);
             return (
               <Tooltip key={item.path}>
@@ -241,7 +242,7 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
               className="flex-1 space-y-1 overflow-y-auto p-2"
             >
               {filteredItems.map((item) => {
-                const active = location.pathname === item.path;
+                const active = isNavActive(location.pathname, item.path);
                 const label = t(item.labelKey);
                 return (
                   <a

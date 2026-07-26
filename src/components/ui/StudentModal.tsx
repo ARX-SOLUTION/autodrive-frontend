@@ -12,6 +12,7 @@ import {
   uzLocalDigits,
 } from '@/lib/phoneFormater';
 import { groupDigits } from '@/lib/money';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Student,
   CourseType,
@@ -745,11 +746,12 @@ const StudentModal = ({
                                 {t('students.completion_date')}
                               </FormLabel>
                               <FormControl>
-                                <Input
-                                  type="date"
-                                  {...field}
-                                  value={field.value || ''}
-                                  className="bg-secondary border-border"
+                                <DatePicker
+                                  value={field.value || undefined}
+                                  onChange={(v) => field.onChange(v ?? '')}
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  clearable
                                 />
                               </FormControl>
                               <FormMessage />

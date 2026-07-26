@@ -79,7 +79,7 @@ export const AppLayout = () => {
           ref={mainRef}
           id="main-content"
           tabIndex={-1}
-          className="flex-1 p-3 outline-none sm:p-4 md:p-6"
+          className="flex-1 p-4 outline-none sm:p-6 md:p-8 lg:p-10"
         >
           <div className="mx-auto w-full max-w-screen-2xl">
             <Breadcrumbs />

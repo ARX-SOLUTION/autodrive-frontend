@@ -28,9 +28,9 @@ afterEach(() => {
   cleanup();
 });
 
-const renderSidebar = (mobileOpen = false) =>
+const renderSidebar = (mobileOpen = false, path = '/dashboard') =>
   render(
-    <MemoryRouter initialEntries={['/dashboard']}>
+    <MemoryRouter initialEntries={[path]}>
       <TooltipProvider>
         <Sidebar mobileOpen={mobileOpen} onMobileOpenChange={vi.fn()} />
       </TooltipProvider>
@@ -40,10 +40,7 @@ const renderSidebar = (mobileOpen = false) =>
 describe('Sidebar rail', () => {
   it('renders items icon-only: aria-label present, no visible text label', () => {
     renderSidebar();
-    // reachable by accessible name (aria-label + hover tooltip)...
     expect(screen.getByLabelText('nav.dashboard')).toBeTruthy();
-    // ...but the label is not rendered as visible text in the icon-only rail
-    // (the closed tooltip contributes no text node).
     expect(screen.queryByText('nav.dashboard')).toBeNull();
   });
 
@@ -62,11 +59,18 @@ describe('Sidebar rail', () => {
 
   it('mobile sheet: renders the full-label list with the solid active treatment', () => {
     renderSidebar(true);
-    // One match in the always-rendered desktop rail, one in the open sheet.
     const items = screen.getAllByLabelText('nav.dashboard');
     expect(items.length).toBe(2);
-    // Both rail and sheet mark the active route with the solid primary pill
-    // (a11y contrast fix — the mobile tint was a failing 2.6:1).
     expect(items.every((el) => el.className.includes('bg-primary'))).toBe(true);
+  });
+
+  it('keeps the parent menu active on nested detail routes', () => {
+    renderSidebar(false, '/groups/group-42');
+    expect(screen.getByLabelText('nav.groups').className).toContain(
+      'bg-primary',
+    );
+    expect(screen.getByLabelText('nav.dashboard').className).not.toContain(
+      'bg-primary',
+    );
   });
 });

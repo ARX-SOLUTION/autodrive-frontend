@@ -17,6 +17,7 @@ import {
   usePaymentSummary,
 } from '@/services/paymentService';
 import { toLocalDateStr } from '@/services/studentService';
+import { parseCalendarDate } from '@/lib/calendarDate';
 import { useAuthStore } from '@/store/authStore';
 import { CircleNotch } from '@phosphor-icons/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -64,14 +65,16 @@ const PaymentsPage = () => {
   const setCourseTypeFilter = (v: string) =>
     setParam('course_type', v === 'all' ? undefined : v);
 
+  // Wire date_from/date_to YYYY-MM-DD → local calendar Date (qsgc.4).
+  // User: "davom et". Callers: PaymentsFilterBar + usePaymentsPage.
   const rawDateFrom = searchParams.get('date_from');
   const dateFrom = useMemo(
-    () => (rawDateFrom ? new Date(rawDateFrom) : undefined),
+    () => (rawDateFrom ? parseCalendarDate(rawDateFrom) : undefined),
     [rawDateFrom],
   );
   const rawDateTo = searchParams.get('date_to');
   const dateTo = useMemo(
-    () => (rawDateTo ? new Date(rawDateTo) : undefined),
+    () => (rawDateTo ? parseCalendarDate(rawDateTo) : undefined),
     [rawDateTo],
   );
   // Both keys must land in the same setSearchParams call (autodrive-6cq.5.70).

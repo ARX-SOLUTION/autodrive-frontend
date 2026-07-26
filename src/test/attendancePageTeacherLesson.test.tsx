@@ -188,6 +188,18 @@ describe('AttendancePage edit-lesson submit (autodrive-vh0.4)', () => {
     expect(payload.id).toBe('l1');
     expect(payload.title).toBe('Updated title');
     expect(payload.lessonType).toBe('practice');
+    expect(payload.date).toBe('2026-07-10T09:00:00.000Z');
+  });
+
+  it('pre-fills lesson datetime in Asia/Tashkent wall time', () => {
+    renderAsRole('teacher', 'teacher-1');
+    fireEvent.click(screen.getByLabelText('attendance.edit_title'));
+    expect(
+      screen.getByLabelText('datetimepicker.time') as HTMLInputElement,
+    ).toHaveValue('14:00');
+    expect(
+      screen.getByLabelText('attendance.lesson_date') as HTMLInputElement,
+    ).toHaveValue('10.07.2026');
   });
 
   // autodrive-vh0.6: the teacher dashboard's upcoming-lessons rows link to

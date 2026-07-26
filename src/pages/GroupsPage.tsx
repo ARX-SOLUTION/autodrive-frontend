@@ -21,12 +21,13 @@ import { cn } from '@/lib/utils';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { EmptyState } from '@/components/ui/EmptyState';
-import GroupsOverviewSection from './groups/GroupsOverviewSection';
+import GroupsBranchNav from './groups/GroupsBranchNav';
 import GroupsFilterBar from './groups/GroupsFilterBar';
 import GroupsTable from './groups/GroupsTable';
 import GroupsMobileList from './groups/GroupsMobileList';
 import GroupFormDialog from './groups/GroupFormDialog';
 import { groupDeleteDescArgs } from './groups/groupDeleteDescArgs';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const GroupsPage = () => {
   const { t } = useTranslation();
@@ -208,99 +209,118 @@ const GroupsPage = () => {
   );
 
   const startIndex = (currentPage - 1) * 10;
+  const groupsTitle = t('groups.title');
+  // Sidebar only when multi-branch; otherwise keep the filter Select.
+  const showBranchNav = isCrossTenant && (overview?.length ?? 0) > 1;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-balance">
-            {t('groups.title')}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t('groups.count', { count: (groups || []).length })}
-          </p>
-        </div>
-        <Button className="gap-2" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> {t('groups.add')}
-        </Button>
-      </div>
-
-      <GroupsOverviewSection overview={overview} />
-
-      <GroupsFilterBar
-        search={search}
-        onSearchChange={setSearch}
-        courseTypeFilter={courseTypeFilter}
-        onCourseTypeChange={setCourseTypeFilter}
-        isCrossTenant={isCrossTenant}
-        branchId={branchId}
-        onBranchChange={setBranchId}
-        branches={branchList}
-        canViewDeleted={canViewDeleted}
-        includeDeleted={includeDeleted}
-        setIncludeDeleted={setIncludeDeleted}
+      <PageHeader
+        eyebrow={groupsTitle}
+        title={groupsTitle}
+        description={t('groups.count', { count: (groups || []).length })}
+        icon={<Stack className="h-3.5 w-3.5" aria-hidden="true" />}
+        actions={
+          <Button className="gap-2" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> {t('groups.add')}
+          </Button>
+        }
       />
 
-      <div className="relative">
-        {isFetching && !isLoading && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
-            <CircleNotch className="h-6 w-6 animate-spin text-primary" />
-          </div>
+      <div
+        className={cn(
+          'gap-4',
+          showBranchNav &&
+            'lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[16rem_minmax(0,1fr)]',
         )}
-        <div
-          className={cn(
-            'glass-card overflow-hidden transition-opacity duration-200',
-            isFetching && !isLoading && 'opacity-50',
-          )}
-        >
-          <GroupsTable
-            groups={filtered}
-            isLoading={isLoading}
-            startIndex={startIndex}
-            sortField={sortField}
-            sortDir={sortDir}
-            onToggleSort={toggleSort}
-            getBranchName={getBranchName}
-            onNavigate={goToGroup}
-            onEdit={openEdit}
-            onDelete={setDeleteId}
-            canManageGroups={canManageGroups}
-            canViewDeleted={canViewDeleted}
-            onRestore={setRestoreId}
+      >
+        {showBranchNav && (
+          <GroupsBranchNav
+            overview={overview}
+            selectedBranchId={branchId}
+            onSelectBranch={setBranchId}
+            className="sticky top-4 hidden self-start lg:flex"
           />
-          <GroupsMobileList
-            groups={filtered}
-            isLoading={isLoading}
-            getBranchName={getBranchName}
-            onNavigate={goToGroup}
-            onEdit={openEdit}
-            onDelete={setDeleteId}
-            canManageGroups={canManageGroups}
+        )}
+
+        <div className="min-w-0 space-y-4">
+          <GroupsFilterBar
+            search={search}
+            onSearchChange={setSearch}
+            courseTypeFilter={courseTypeFilter}
+            onCourseTypeChange={setCourseTypeFilter}
+            isCrossTenant={isCrossTenant}
+            branchId={branchId}
+            onBranchChange={setBranchId}
+            branches={branchList}
             canViewDeleted={canViewDeleted}
-            onRestore={setRestoreId}
+            includeDeleted={includeDeleted}
+            setIncludeDeleted={setIncludeDeleted}
+            hideBranchSelectOnDesktop={showBranchNav}
           />
-          {isGroupsError ? (
-            <EmptyState
-              title={t('common.error')}
-              action={{
-                label: t('common.retry'),
-                onClick: () => refetchGroups(),
-              }}
-            />
-          ) : (
-            filteredGroups.length === 0 &&
-            !isLoading && (
-              <EmptyState icon={Stack} title={t('groups.not_found')} />
-            )
-          )}
+
+          <div className="relative">
+            {isFetching && !isLoading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
+                <CircleNotch className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            )}
+            <div
+              className={cn(
+                'glass-card overflow-hidden transition-opacity duration-200',
+                isFetching && !isLoading && 'opacity-50',
+              )}
+            >
+              <GroupsTable
+                groups={filtered}
+                isLoading={isLoading}
+                startIndex={startIndex}
+                sortField={sortField}
+                sortDir={sortDir}
+                onToggleSort={toggleSort}
+                getBranchName={getBranchName}
+                onNavigate={goToGroup}
+                onEdit={openEdit}
+                onDelete={setDeleteId}
+                canManageGroups={canManageGroups}
+                canViewDeleted={canViewDeleted}
+                onRestore={setRestoreId}
+              />
+              <GroupsMobileList
+                groups={filtered}
+                isLoading={isLoading}
+                getBranchName={getBranchName}
+                onNavigate={goToGroup}
+                onEdit={openEdit}
+                onDelete={setDeleteId}
+                canManageGroups={canManageGroups}
+                canViewDeleted={canViewDeleted}
+                onRestore={setRestoreId}
+              />
+              {isGroupsError ? (
+                <EmptyState
+                  title={t('common.error')}
+                  action={{
+                    label: t('common.retry'),
+                    onClick: () => refetchGroups(),
+                  }}
+                />
+              ) : (
+                filteredGroups.length === 0 &&
+                !isLoading && (
+                  <EmptyState icon={Stack} title={t('groups.not_found')} />
+                )
+              )}
+            </div>
+          </div>
+
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
-
-      <PaginationControls
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
 
       <GroupFormDialog
         open={modalOpen}

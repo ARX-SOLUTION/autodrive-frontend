@@ -1,3 +1,4 @@
+import { parseCalendarDate } from '@/lib/calendarDate';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -140,8 +141,8 @@ describe('PaymentsPage characterization', () => {
     const [branchId, courseType, dateFrom, dateTo, page, limit, opts] = call!;
     expect(branchId).toBe('b9');
     expect(courseType).toBe('tezkor');
-    expect(dateFrom).toEqual(new Date('2026-07-01'));
-    expect(dateTo).toEqual(new Date('2026-07-10'));
+    expect(dateFrom).toEqual(parseCalendarDate('2026-07-01'));
+    expect(dateTo).toEqual(parseCalendarDate('2026-07-10'));
     expect(page).toBe(2);
     expect(limit).toBe(50);
     expect(opts).toMatchObject({

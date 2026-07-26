@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -33,6 +34,7 @@ import { useCreateExam } from '@/services/examService';
 import { CreateExamPayload, ExamType } from '@/types/exam';
 import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/errors';
+import { nowTashkentParts, partsToIso } from '@/lib/calendarDateTime';
 
 const schema = z.object({
   exam_type: z.enum(['THEORY', 'PRACTICE']),
@@ -69,12 +71,7 @@ export const RecordExamModal = ({
   // the "now at first render" case, same as useState(() => Date.now())'s
   // lazy initializer: computed once, at the same logical moment RHF would
   // have used it anyway.
-  const [defaultExamDate] = useState(
-    () =>
-      // ponytail: shift by UZ+5 before reading the UTC date so 00:00-04:59
-      // Tashkent time doesn't read as yesterday (mirrors PaymentsPage's today()).
-      new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().split('T')[0],
-  );
+  const [defaultExamDate] = useState(() => partsToIso(nowTashkentParts()));
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -93,7 +90,7 @@ export const RecordExamModal = ({
       exam_type: values.exam_type as ExamType,
       passed: values.passed,
       notes: values.notes,
-      date: new Date(values.date).toISOString(),
+      date: values.date,
     };
     if (values.score !== undefined) {
       payload.score = values.score;
@@ -156,9 +153,11 @@ export const RecordExamModal = ({
                 <FormItem>
                   <FormLabel>{t('common.date')}</FormLabel>
                   <FormControl>
-                    <Input
-                      type="date"
-                      {...field}
+                    <DateTimePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
                       className="bg-secondary border-border"
                     />
                   </FormControl>

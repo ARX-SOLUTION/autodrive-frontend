@@ -120,6 +120,18 @@
     "offline_banner": "Нет подключения к интернету",
     "tab_info": "Информация"
   },
+  "datepicker": {
+    "placeholder": "Выберите дату",
+    "clear": "Очистить",
+    "open_calendar": "Открыть календарь",
+    "previous_month": "Предыдущий месяц",
+    "next_month": "Следующий месяц"
+  },
+  "daterange": {
+    "placeholder": "Диапазон дат",
+    "clear": "Очистить диапазон",
+    "open": "Выбрать диапазон дат"
+  },
   "login": {
     "title": "Вход в систему",
     "email_label": "Email",
@@ -277,7 +289,7 @@
       "coverage_short": "Покрытие",
       "financial_block": {
         "title": "Финансовые показатели",
-        "subtitle": "Рост месяц к месяцу, возраст задолженности и доход по типу курса.",
+        "subtitle": "Возраст долга, ARPU и выручка по типу курса.",
         "mom_growth": "Рост месяц к месяцу",
         "bucket_0_30": "0–30 дней",
         "bucket_31_60": "31–60 дней",
@@ -321,7 +333,9 @@
         "on_time_attendance_meta": "Доля отметок посещаемости, сделанных в день занятия",
         "operator_follow_through_label": "Доведение до оплаты (оператор)",
         "operator_follow_through_meta": "Доля зарегистрированных студентов, совершивших оплату"
-      }
+      },
+      "period_over_period": "Рост за период",
+      "new_in_period": "за выбранный период"
     },
     "teacher": {
       "kpi_my_groups": "Мои группы",
@@ -386,6 +400,9 @@
     "teacher": "Преподаватель",
     "count": "{{count}} групп",
     "by_branch": "По филиалам",
+    "branch_summary": "{{groups}} групп · {{students}} студентов",
+    "branch_search": "Поиск филиала...",
+    "branch_search_empty": "Филиал не найден",
     "group_count": "({{count}} групп)",
     "search_placeholder": "Название группы...",
     "all": "Все",
@@ -530,7 +547,10 @@
     "course_type": "Курс",
     "course_fast": "Экспресс",
     "course_school": "Автошкола",
-    "course": "Курс",
+    "course": {
+      "tezkor": "Экспресс",
+      "avto_maktab": "Автошкола"
+    },
     "group": "Группа",
     "total_price": "Стоимость курса",
     "debt": "Долг",
@@ -609,10 +629,6 @@
     "validation_group_required": "Для курса автошколы необходимо выбрать группу",
     "no_debt": "Без долга",
     "no_group": "Без группы",
-    "course": {
-      "tezkor": "Экспресс",
-      "avto_maktab": "Автошкола"
-    },
     "form_desc": "Введите данные студента",
     "confirm_delete_desc": "Удалить студента «{{name}}»? Это действие необратимо.",
     "detailed_toggle_locked": "Данные введены — переключение режима приведёт к их потере",
@@ -775,7 +791,9 @@
     "new_value": "Новое значение",
     "old_short": "Старое",
     "new_short": "Новое",
-    "value_short": "Значение"
+    "value_short": "Значение",
+    "filter_title": "Фильтр",
+    "clear_all": "Очистить всё"
   },
   "operators": {
     "title": "Операторы",
@@ -1145,5 +1163,10 @@
     "related_title": "Похожие статьи",
     "not_found_title": "Статья не найдена",
     "not_found_desc": "Эта статья не существует или была удалена"
+  },
+  "datetimepicker": {
+    "placeholder": "Дата и время",
+    "time": "Время",
+    "open_calendar": "Открыть календарь"
   }
 }
