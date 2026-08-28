@@ -205,7 +205,8 @@ const PersonModal = ({
       });
     } else {
       form.reset(defaultFormValues());
-      setTimeout(() => form.setFocus('fullName'), 50);
+      const focusTimer = window.setTimeout(() => form.setFocus('fullName'), 50);
+      return () => window.clearTimeout(focusTimer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [person, role, open]);

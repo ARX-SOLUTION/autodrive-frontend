@@ -69,8 +69,8 @@ const formatTime = (iso: string) => {
   }
 };
 
-// exec-dash 8: practice -> info to match the mock's schedule-grid tone
-// (Design.md: teoriya=amber, amaliy=blue). Cell bg/border/tag share the same
+// exec-dash 8: practice -> info to match the schedule-grid tone
+// (theory=primary, practice=info). Cell bg/border/tag share the same
 // tone, kept as full static strings (not `bg-${tone}`) since Tailwind's
 // scanner only picks up literal class text.
 const typeCellClass: Record<LessonType, string> = {

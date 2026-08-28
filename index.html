@@ -11,37 +11,30 @@
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.png" />
-    <link rel="canonical" href="https://automaktab.uz/" />
-    <meta name="theme-color" content="#1a1f2e" />
-    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://app.automaktab.uz/" />
+    <meta name="theme-color" content="#092634" />
+    <meta name="robots" content="noindex, nofollow" />
     <meta name="color-scheme" content="dark light" />
-    <title>Avtomaktab CRM — to&#39;lov, davomat, jadval | Auto Maktab</title>
+    <title>Auto Maktab CRM | App</title>
     <meta
       name="description"
-      content="Qarzdorlar ro&#39;yxati, kunlik tushum, davomat va dars jadvali — bitta tizimda. Birinchi oy bepul, o&#39;rnatish shart emas: brauzerda ishlaydi."
+      content="Auto Maktab CRM ilovasiga kirish. Talabalar, to&#39;lovlar, davomat va dars jadvalini boshqaring."
     />
     <meta name="author" content="Auto Maktab" />
-    <meta name="yandex-verification" content="76839dfd1ebe1b22" />
 
-    <meta
-      property="og:title"
-      content="Avtomaktab CRM — to&#39;lov, davomat, jadval | Auto Maktab"
-    />
-    <meta
-      name="twitter:title"
-      content="Avtomaktab CRM — to&#39;lov, davomat, jadval | Auto Maktab"
-    />
+    <meta property="og:title" content="Auto Maktab CRM | App" />
+    <meta name="twitter:title" content="Auto Maktab CRM | App" />
     <meta
       property="og:description"
-      content="Qarzdorlar ro&#39;yxati, kunlik tushum, davomat va dars jadvali — bitta tizimda. Birinchi oy bepul, o&#39;rnatish shart emas: brauzerda ishlaydi."
+      content="Auto Maktab CRM ilovasiga kirish. Talabalar, to&#39;lovlar, davomat va dars jadvalini boshqaring."
     />
     <meta
       name="twitter:description"
-      content="Qarzdorlar ro&#39;yxati, kunlik tushum, davomat va dars jadvali — bitta tizimda. Birinchi oy bepul, o&#39;rnatish shart emas: brauzerda ishlaydi."
+      content="Auto Maktab CRM ilovasiga kirish. Talabalar, to&#39;lovlar, davomat va dars jadvalini boshqaring."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://automaktab.uz/" />
-    <meta property="og:site_name" content="Auto Maktab CRM" />
+    <meta property="og:url" content="https://app.automaktab.uz/" />
+    <meta property="og:site_name" content="Auto Maktab CRM App" />
     <meta property="og:locale" content="uz_UZ" />
     <meta property="og:locale:alternate" content="ru_RU" />
     <meta property="og:image" content="https://automaktab.uz/og-banner.png" />
@@ -54,38 +47,6 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://automaktab.uz/og-banner.png" />
     <link rel="preconnect" href="https://api.automaktab.uz" crossorigin />
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@graph": [
-          {
-            "@type": "Organization",
-            "@id": "https://automaktab.uz/#org",
-            "name": "Auto Maktab CRM",
-            "url": "https://automaktab.uz/",
-            "logo": "https://automaktab.uz/favicon.png",
-            "email": "demo@automaktab.uz",
-            "areaServed": "UZ"
-          },
-          {
-            "@type": "SoftwareApplication",
-            "name": "Auto Maktab CRM",
-            "applicationCategory": "BusinessApplication",
-            "operatingSystem": "Web",
-            "url": "https://automaktab.uz/",
-            "inLanguage": ["uz", "ru", "en"],
-            "description": "O'zbekistondagi avtomaktablar uchun boshqaruv tizimi: talabalar, guruhlar, to'lovlar, davomat va jadval — bitta CRM'da. CRM для автошкол Узбекистана.",
-            "publisher": { "@id": "https://automaktab.uz/#org" },
-            "offers": {
-              "@type": "Offer",
-              "price": "0",
-              "priceCurrency": "UZS",
-              "description": "Demo hisob bilan bepul sinab ko'ring"
-            }
-          }
-        ]
-      }
-    </script>
     <script>
       // Apply theme before React mounts to avoid FOUC
       (function () {
@@ -94,7 +55,12 @@
           var prefersDark = window.matchMedia(
             '(prefers-color-scheme: dark)',
           ).matches;
-          var theme = stored || (prefersDark ? 'dark' : 'light');
+          var theme =
+            stored && stored !== 'system'
+              ? stored
+              : prefersDark
+                ? 'dark'
+                : 'light';
           if (theme === 'dark') document.documentElement.classList.add('dark');
         } catch (e) {}
       })();
@@ -105,15 +71,9 @@
     <div id="root"></div>
     <noscript>
       <p>
-        <strong>Auto Maktab CRM</strong> — avtomaktablar uchun boshqaruv tizimi.
-        Qarzdorlar ro&#39;yxati, kunlik tushum, davomat va dars jadvali — bitta
-        tizimda. Birinchi oy bepul, o&#39;rnatish shart emas: brauzerda
-        ishlaydi.
-      </p>
-      <p>
-        Telefon: <a href="tel:+998946110066">+998 94 611 00 66</a> · Demo
-        so&#39;rash:
-        <a href="https://t.me/Xamidullo_xudoyberdiyev">Telegram</a>
+        <strong>Auto Maktab CRM</strong> ilovasi JavaScript talab qiladi. Asosiy
+        saytga o&#39;tish uchun
+        <a href="https://automaktab.uz/">automaktab.uz</a> manzilini oching.
       </p>
     </noscript>
     <script type="module" src="/src/main.tsx"></script>

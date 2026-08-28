@@ -355,7 +355,11 @@ const StudentModal = ({
       } else {
         form.reset(defaultFormValues());
         // Focus first field after dialog animation settles
-        setTimeout(() => form.setFocus('last_name'), 50);
+        const focusTimer = window.setTimeout(
+          () => form.setFocus('last_name'),
+          50,
+        );
+        return () => window.clearTimeout(focusTimer);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, useSearchParams } from 'react-router-dom';
-import { vi, describe, it, expect } from 'vitest';
+import { afterEach, beforeEach, vi, describe, it, expect } from 'vitest';
 import StudentsPage from '@/pages/StudentsPage';
 
 // DateRangePicker: two calendar clicks write date_from/date_to.
@@ -63,6 +63,15 @@ const SearchParamsSpy = () => {
 };
 
 describe('StudentsPage date-range filter', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-25T10:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('writes both calendar-selected days to the URL', () => {
     render(
       <MemoryRouter initialEntries={['/students']}>

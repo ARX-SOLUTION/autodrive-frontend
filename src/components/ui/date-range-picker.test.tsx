@@ -3,7 +3,7 @@
  * Schema: YYYY-MM-DD. User: "A" (range picker grill confirm).
  */
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   DateRangePicker,
   formatRangeLabel,
@@ -87,6 +87,15 @@ describe('formatRangeLabel', () => {
 });
 
 describe('DateRangePicker', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-25T10:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('commits a fresh inclusive range on the second day click', () => {
     const onChange = vi.fn();
     render(<DateRangePicker max="2026-12-31" onChange={onChange} />);

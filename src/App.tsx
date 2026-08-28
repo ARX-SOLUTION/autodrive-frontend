@@ -14,6 +14,7 @@ import { OfflineBanner } from '@/components/layout/OfflineBanner';
 import { ChunkErrorBoundary } from '@/components/layout/ChunkErrorBoundary';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { queryClient } from '@/lib/queryClient';
+import { useAuthStore } from '@/store/authStore';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -37,9 +38,14 @@ const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
 const AuditDetailPage = lazy(() => import('./pages/AuditDetailPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
-const LandingPage = lazy(() => import('./pages/LandingPage'));
 const BlogPage = lazy(() => import('./pages/BlogPage'));
 const BlogPostPage = lazy(() => import('./pages/BlogPostPage'));
+
+const AppEntry = () => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  return <Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />;
+};
 
 const OwnerRoute = ({ children }: { children: React.ReactNode }) => {
   // owner + dev (dev is a strict superset of owner) — company-wide admin routes
@@ -67,8 +73,8 @@ const App = () => (
   <ThemeProvider
     attribute="class"
     storageKey="theme"
-    defaultTheme="dark"
-    enableSystem={false}
+    defaultTheme="system"
+    enableSystem
     disableTransitionOnChange
   >
     <QueryClientProvider client={queryClient}>
@@ -79,7 +85,7 @@ const App = () => (
           <ChunkErrorBoundary>
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                <Route path="/" element={<LandingPage />} />
+                <Route path="/" element={<AppEntry />} />
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
                 <Route path="/login" element={<LoginPage />} />
