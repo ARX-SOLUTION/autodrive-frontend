@@ -35,10 +35,11 @@ export default defineConfig(({ mode }) => ({
         short_name: 'Auto Maktab',
         description:
           "Avtomaktablar uchun boshqaruv tizimi: to'lov, davomat va dars jadvali bitta tizimda",
-        theme_color: '#1a1f2e',
-        background_color: '#0e1018',
+        theme_color: '#092634',
+        background_color: '#092634',
         display: 'standalone',
         start_url: '/',
+        lang: 'uz',
         icons: [
           {
             src: 'favicon.png',

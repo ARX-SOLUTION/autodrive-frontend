@@ -5,9 +5,10 @@ export type Theme = 'light' | 'dark';
 /**
  * Thin wrapper over next-themes' useTheme(), narrowing its string/undefined
  * resolvedTheme down to this app's light/dark-only contract. resolvedTheme is
- * undefined with no ThemeProvider mounted (tests, the build-time SSR
- * prerender) or before next-themes reads localStorage — fall back to 'dark'
- * to match the provider's defaultTheme and the old hook's SSR snapshot.
+ * undefined with no ThemeProvider mounted (tests) or before next-themes
+ * resolves the system preference. Keep the fallback deterministic; the real
+ * provider applies system preference before
+ * the app paints.
  * The provider (mounted in App.tsx with attribute="class" + storageKey="theme")
  * now owns the DOM class + localStorage sync that this hook used to hand-roll.
  */

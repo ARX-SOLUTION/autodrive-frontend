@@ -5,8 +5,8 @@ const MOBILE_BREAKPOINT = 768;
 // Textbook useSyncExternalStore migration off a matchMedia-mirroring
 // useState+useEffect (react-hooks/set-state-in-effect) -- same pattern as
 // src/hooks/useTheme.ts. getServerSnapshot matches the old hook's
-// pre-effect initial value (`!!undefined` = false) so the SSR prerender and
-// the client's first paint agree.
+// pre-effect initial value (`!!undefined` = false) so the first client render
+// stays deterministic.
 const subscribe = (onStoreChange: () => void) => {
   const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
   mql.addEventListener('change', onStoreChange);

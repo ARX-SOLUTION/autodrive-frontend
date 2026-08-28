@@ -84,12 +84,12 @@ const initialsFor = (name?: string | null) => {
     .padEnd(2, '·');
 };
 
-const branchHues = [
-  14, // rust (primary)
-  199, // cyan (info)
-  145, // green (success)
-  25, // orange
-  220, // steel blue
+const branchColors = [
+  'hsl(var(--primary))',
+  'hsl(var(--brand-blue-bright))',
+  'hsl(var(--brand-orange))',
+  'hsl(var(--success))',
+  'hsl(var(--info))',
 ];
 
 // ---------- Main dashboard ----------
@@ -634,7 +634,7 @@ const LegacyMainDashboard = () => {
                   {topBranches.map((_, i) => (
                     <Cell
                       key={i}
-                      fill={`hsl(${branchHues[i % branchHues.length]} 80% 52%)`}
+                      fill={branchColors[i % branchColors.length]}
                     />
                   ))}
                 </Bar>
@@ -651,7 +651,7 @@ const LegacyMainDashboard = () => {
                     <span
                       className="grid h-7 w-7 place-items-center rounded-md text-[11px] font-bold text-primary-foreground"
                       style={{
-                        background: `linear-gradient(135deg, hsl(${branchHues[i % branchHues.length]} 80% 52%), hsl(${branchHues[(i + 1) % branchHues.length]} 80% 56%))`,
+                        background: `linear-gradient(135deg, ${branchColors[i % branchColors.length]}, ${branchColors[(i + 1) % branchColors.length]})`,
                       }}
                       aria-hidden
                     >
@@ -688,7 +688,7 @@ const LegacyMainDashboard = () => {
                   <span
                     className="grid h-9 w-9 place-items-center rounded-full text-[11px] font-bold text-primary-foreground"
                     style={{
-                      background: `linear-gradient(135deg, hsl(${branchHues[i % branchHues.length]} 80% 52%), hsl(${branchHues[(i + 1) % branchHues.length]} 80% 56%))`,
+                      background: `linear-gradient(135deg, ${branchColors[i % branchColors.length]}, ${branchColors[(i + 1) % branchColors.length]})`,
                     }}
                     aria-hidden
                   >

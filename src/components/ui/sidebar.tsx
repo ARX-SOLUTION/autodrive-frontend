@@ -660,11 +660,10 @@ const SidebarMenuSkeleton = React.forwardRef<
 >(({ className, showIcon = false, ...props }, ref) => {
   // Random-looking width between 50-90%, purely decorative (visual variety
   // across skeleton rows) -- not an id. Was Math.random(), which is impure
-  // during render: this repo prerenders on the server, so the SSR pass and
-  // the client hydration pass would compute two different random values, a
-  // live hydration-mismatch hazard. useId() gives a value React guarantees
-  // is identical between server and client; hashing it into the same 50-90
-  // range keeps the "looks random per row" effect while staying pure.
+  // during render: two separate client renders could compute different random
+  // values, making a loading skeleton jump unnecessarily. useId() gives a
+  // stable value; hashing it into the same 50-90 range keeps the "looks
+  // random per row" effect while staying pure.
   const skeletonId = React.useId();
   const width = React.useMemo(() => {
     let hash = 0;

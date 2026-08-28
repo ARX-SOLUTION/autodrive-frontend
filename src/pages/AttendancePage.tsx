@@ -64,7 +64,7 @@ const formatDate = (d: string) => {
 // ponytail: mirrors SchedulePage's local typeDotClass. Kept duplicated (2
 // entries) instead of extracted to a shared file, to avoid touching that
 // already-shipped page for a 2-line map. exec-dash 8: practice -> info to
-// match the mock's schedule-grid tone (Design.md: teoriya=amber, amaliy=blue).
+// match the schedule-grid tone (theory=primary, practice=info).
 const lessonTypeDotClass: Record<LessonType, string> = {
   theory: 'bg-primary',
   practice: 'bg-info',

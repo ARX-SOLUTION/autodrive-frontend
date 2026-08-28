@@ -31,8 +31,8 @@ window.HTMLElement.prototype.scrollIntoView = () => {};
 // GSAP's ScrollTrigger installs a module-level ~34ms sync timer that can fire
 // after a test file's environment is torn down, calling requestAnimationFrame
 // once it no longer exists — an unhandled ReferenceError that fails the whole
-// run even though every test passed (surfaced via BlogPage/LandingPage, whose
-// pass/fail is unaffected). jsdom has no layout or scrolling, so the real
+// run even though every test passed (surfaced via BlogPage, whose pass/fail is
+// unaffected). jsdom has no layout or scrolling, so the real
 // plugin never fires its callbacks here anyway; only .batch/.create are used.
 vi.mock('gsap/ScrollTrigger', () => ({
   ScrollTrigger: { batch: () => {}, create: () => {} },
