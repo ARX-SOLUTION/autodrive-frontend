@@ -3,21 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import {
-  SquaresFour,
-  Buildings,
-  GraduationCap,
-  CreditCard,
-  Headphones,
-  UsersThree,
-  User,
-  Stack,
-  UserGear,
-  ShieldCheck,
-  Calendar,
-  ListChecks,
-  BookOpen,
-} from '@phosphor-icons/react';
+import { GraduationCap, Stack, UserGear } from '@phosphor-icons/react';
 import {
   CommandDialog,
   CommandEmpty,
@@ -32,65 +18,7 @@ import {
   useGlobalSearch,
   type SearchResultItem,
 } from '@/services/searchService';
-import type { Capability } from '@/lib/permissions';
-
-type NavEntry = {
-  labelKey: string;
-  path: string;
-  icon: typeof SquaresFour;
-  cap?: Capability;
-};
-
-const NAV_ENTRIES: NavEntry[] = [
-  { labelKey: 'nav.dashboard', path: '/dashboard', icon: SquaresFour },
-  {
-    labelKey: 'nav.branches',
-    path: '/branches',
-    icon: Buildings,
-    cap: 'manageBranches',
-  },
-  { labelKey: 'nav.schedule', path: '/schedule', icon: Calendar },
-  { labelKey: 'nav.attendance', path: '/attendance', icon: ListChecks },
-  { labelKey: 'nav.groups', path: '/groups', icon: Stack },
-  {
-    labelKey: 'nav.courses',
-    path: '/courses',
-    icon: BookOpen,
-    cap: 'manageStaff',
-  },
-  { labelKey: 'nav.students', path: '/students', icon: GraduationCap },
-  {
-    labelKey: 'nav.payments',
-    path: '/payments',
-    icon: CreditCard,
-    cap: 'recordPayment',
-  },
-  {
-    labelKey: 'nav.operators',
-    path: '/operators',
-    icon: Headphones,
-    cap: 'manageStaff',
-  },
-  {
-    labelKey: 'nav.teachers',
-    path: '/teachers',
-    icon: UsersThree,
-    cap: 'manageStaff',
-  },
-  {
-    labelKey: 'nav.users',
-    path: '/users',
-    icon: UserGear,
-    cap: 'manageUsers',
-  },
-  {
-    labelKey: 'nav.audit',
-    path: '/audit',
-    icon: ShieldCheck,
-    cap: 'viewAudit',
-  },
-  { labelKey: 'nav.profile', path: '/profile', icon: User },
-];
+import { NAV_ITEMS } from '@/lib/navigation';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -108,7 +36,7 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
     recordPayment: useCan('recordPayment'),
   };
 
-  const visibleNav = NAV_ENTRIES.filter((n) => !n.cap || gate[n.cap]);
+  const visibleNav = NAV_ITEMS.filter((n) => !n.cap || gate[n.cap]);
 
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);

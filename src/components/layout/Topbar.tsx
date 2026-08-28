@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/store/authStore';
+import { useCan } from '@/hooks/useCan';
 import { SUPPORTED_LANGS } from '@/i18n';
 import {
   DropdownMenu,
@@ -32,7 +33,7 @@ const langLabels: Record<string, string> = {
 };
 
 const iconButtonClass =
-  'inline-flex h-11 w-11 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground';
+  'inline-flex h-11 w-11 items-center justify-center rounded-md border border-border bg-background text-muted-foreground shadow-[0_1px_2px_hsl(var(--foreground)/0.05)] transition-[background-color,color,box-shadow,scale] duration-150 ease-out hover:bg-accent hover:text-foreground active:scale-[0.96]';
 
 const isMac =
   typeof navigator !== 'undefined' &&
@@ -47,6 +48,7 @@ export const Topbar = ({
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
   const user = useAuthStore((s) => s.user);
+  const canRecordPayment = useCan('recordPayment');
   const currentLang = (i18n.resolvedLanguage ?? i18n.language ?? 'uz').slice(
     0,
     2,
@@ -64,22 +66,22 @@ export const Topbar = ({
   ) as string;
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3.5 border-b border-hair bg-background/[78%] px-[30px] backdrop-blur-[14px]">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-hair bg-background/[88%] px-4 backdrop-blur-[14px] sm:px-6 lg:px-8">
       <button
         type="button"
         aria-label={t('actions.sidebar') as string}
         title={t('actions.sidebar') as string}
         onClick={onMobileMenuClick}
-        className="-ml-2 inline-flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
+        className="-ml-2 inline-flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-accent hover:text-foreground active:scale-[0.96] lg:hidden"
       >
         <List className="h-5 w-5" />
       </button>
-      <span className="md:hidden">
+      <span className="lg:hidden">
         <Brand size="sm" />
       </span>
 
       {branchLabel && (
-        <div className="hidden h-10 items-center gap-2 rounded-[11px] border border-border bg-card px-3 text-sm font-semibold md:flex">
+        <div className="hidden h-10 items-center gap-2 rounded-[11px] border border-border bg-card px-3 text-sm font-semibold shadow-[0_1px_2px_hsl(var(--foreground)/0.04)] lg:flex">
           <Buildings className="h-4 w-4 text-muted-foreground" />
           <span>{branchLabel}</span>
         </div>
@@ -91,7 +93,7 @@ export const Topbar = ({
         type="button"
         onClick={onCommandPaletteOpen}
         aria-label={searchHint}
-        className="hidden h-10 w-[260px] items-center gap-2 rounded-[11px] border border-border bg-card px-3 text-sm text-muted-foreground md:inline-flex"
+        className="hidden h-10 w-[260px] items-center gap-2 rounded-[11px] border border-border bg-card px-3 text-sm text-muted-foreground transition-[background-color,color,box-shadow] duration-150 ease-out hover:bg-accent lg:inline-flex"
       >
         <MagnifyingGlass className="h-4 w-4 shrink-0" />
         <span className="truncate">{searchHint}</span>
@@ -134,14 +136,16 @@ export const Topbar = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <button
-        type="button"
-        onClick={() => navigate('/payments')}
-        className="hidden h-10 items-center gap-1.5 rounded-[11px] bg-primary px-4 text-sm font-bold text-primary-foreground md:inline-flex"
-      >
-        <Plus className="h-4 w-4" />
-        {t('actions.quick_payment', "To'lov")}
-      </button>
+      {canRecordPayment && (
+        <button
+          type="button"
+          onClick={() => navigate('/payments')}
+          className="hidden h-10 items-center gap-1.5 rounded-[11px] bg-primary px-4 text-sm font-bold text-primary-foreground shadow-[0_2px_6px_hsl(var(--primary)/0.24)] transition-[background-color,box-shadow,scale] duration-150 ease-out hover:bg-primary/90 active:scale-[0.98] lg:inline-flex"
+        >
+          <Plus className="h-4 w-4" />
+          {t('actions.quick_payment', "To'lov")}
+        </button>
+      )}
     </header>
   );
 };

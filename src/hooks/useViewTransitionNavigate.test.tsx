@@ -63,6 +63,23 @@ describe('useViewTransitionNavigate', () => {
     expect(document.startViewTransition).not.toHaveBeenCalled();
   });
 
+  it('uses a plain navigation when a caller has no named element to animate', () => {
+    document.startViewTransition =
+      vi.fn() as typeof document.startViewTransition;
+
+    const { result } = renderHook(() => useViewTransitionNavigate(), {
+      wrapper,
+    });
+
+    // Sidebar navigation deliberately has no source/destination pair. Starting
+    // a whole-document View Transition in that case makes the menu appear to
+    // jump while the route is rendering.
+    act(() => result.current('/dashboard', null, ''));
+
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard');
+    expect(document.startViewTransition).not.toHaveBeenCalled();
+  });
+
   it('sets the transition name for the transition, then clears it once finished', async () => {
     let capturedCallback: () => void = () => {};
     document.startViewTransition = vi.fn((cb: () => void) => {

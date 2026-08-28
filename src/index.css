@@ -122,8 +122,8 @@
  * specificity. Keep this block unlayered and after the design-tokens import
  * so the app palette is authoritative in both light and dark mode.
  *
- * Light: #F9F9F9 / #004E72 / #092634 / #FF6E42.
- * Dark: navy surfaces with the same blue primary and orange action/ring.
+ * Road Signal: warm paper #F4F0E7, ink #132A30 and amber #E2A42D.
+ * Dark: deep road-teal surfaces with an amber action/ring.
  *
  * Semantic status colors remain distinct from the brand colors so warnings,
  * errors, and success states do not become ambiguous UI decoration.
@@ -131,100 +131,100 @@
  */
 :root {
   color-scheme: light;
-  --brand-white: 0 0% 97.65%;
-  --brand-blue: 198.95 100% 22.35%;
-  --brand-navy: 199.53 70.49% 11.96%;
-  --brand-orange: 13.97 100% 62.94%;
-  --brand-blue-bright: 198.95 78% 43%;
-  --brand-blue-soft: 198.95 62% 34%;
-  --brand-blue-deep: 198.95 100% 17%;
-  --brand-blue-pale: 198.95 55% 91%;
+  --brand-white: 45 32% 93%;
+  --brand-blue: 192 43% 13%;
+  --brand-navy: 192 43% 13%;
+  --brand-orange: 39 76% 53%;
+  --brand-blue-bright: 191 37% 28%;
+  --brand-blue-soft: 191 26% 38%;
+  --brand-blue-deep: 192 52% 10%;
+  --brand-blue-pale: 45 40% 92%;
 
   --background: var(--brand-white);
-  --surface: 198.95 35% 94%;
-  --card: 0 0% 100%;
+  --surface: 45 45% 98%;
+  --card: 45 45% 99%;
   --card-foreground: var(--brand-navy);
-  --popover: 0 0% 100%;
+  --popover: 45 45% 99%;
   --popover-foreground: var(--brand-navy);
   --foreground: var(--brand-navy);
-  --muted: 198.95 28% 91%;
-  --muted-foreground: 198.95 17% 43%;
-  --muted-foreground-strong: 198.95 37% 27%;
-  --primary: var(--brand-blue);
-  --primary-foreground: var(--brand-white);
-  --secondary: 198.95 42% 91%;
+  --muted: 40 25% 90%;
+  --muted-foreground: 191 14% 36%;
+  --muted-foreground-strong: 192 28% 24%;
+  --primary: var(--brand-orange);
+  --primary-foreground: var(--brand-navy);
+  --secondary: 44 55% 88%;
   --secondary-foreground: var(--brand-navy);
-  --accent: 13.97 100% 94%;
+  --accent: 43 72% 88%;
   --accent-foreground: var(--brand-navy);
   --destructive: 0 72% 42%;
   --destructive-foreground: var(--brand-white);
-  --success: 161 62% 31%;
+  --success: 155 48% 29%;
   --success-foreground: var(--brand-white);
-  --warning: 13.97 100% 40%;
-  --warning-strong: 13.97 100% 35%;
+  --warning: 32 82% 36%;
+  --warning-strong: 32 82% 31%;
   --warning-foreground: var(--brand-white);
-  --info: 198.95 100% 28%;
+  --info: 191 54% 27%;
   --info-foreground: var(--brand-white);
-  --border: 198.95 24% 82%;
-  --hair: 198.95 18% 88%;
-  --input: 198.95 24% 76%;
+  --border: 39 19% 82%;
+  --hair: 39 26% 88%;
+  --input: 39 20% 76%;
   --ring: var(--brand-orange);
-  --radius: 1rem;
+  --radius: 0.875rem;
 
-  --sidebar-background: 198.95 35% 94%;
+  --sidebar-background: 45 45% 98%;
   --sidebar-foreground: var(--brand-navy);
-  --sidebar-primary: var(--brand-blue);
-  --sidebar-primary-foreground: var(--brand-white);
-  --sidebar-accent: 198.95 42% 89%;
+  --sidebar-primary: var(--brand-orange);
+  --sidebar-primary-foreground: var(--brand-navy);
+  --sidebar-accent: 43 62% 91%;
   --sidebar-accent-foreground: var(--brand-navy);
-  --sidebar-border: 198.95 24% 82%;
+  --sidebar-border: 39 19% 84%;
   --sidebar-ring: var(--brand-orange);
 }
 
 .dark {
   color-scheme: dark;
-  --brand-blue-bright: 198.95 84% 62%;
-  --brand-blue-soft: 198.95 70% 47%;
-  --brand-blue-deep: 198.95 88% 68%;
-  --brand-blue-pale: 198.95 52% 29%;
+  --brand-blue-bright: 174 31% 72%;
+  --brand-blue-soft: 178 22% 54%;
+  --brand-blue-deep: 174 38% 78%;
+  --brand-blue-pale: 188 27% 26%;
 
-  --background: var(--brand-navy);
-  --surface: 199.53 55% 15%;
-  --card: 199.53 53% 17%;
+  --background: 192 45% 11%;
+  --surface: 192 40% 14%;
+  --card: 192 35% 17%;
   --card-foreground: var(--brand-white);
   --popover: 199.53 53% 17%;
   --popover-foreground: var(--brand-white);
   --foreground: var(--brand-white);
-  --muted: 199.53 45% 22%;
-  --muted-foreground: 198.95 25% 73%;
-  --muted-foreground-strong: 198.95 28% 84%;
-  --primary: var(--brand-blue);
-  --primary-foreground: var(--brand-white);
-  --secondary: 199.53 55% 23%;
+  --muted: 191 28% 22%;
+  --muted-foreground: 178 14% 72%;
+  --muted-foreground-strong: 178 18% 84%;
+  --primary: 40 84% 61%;
+  --primary-foreground: 192 45% 11%;
+  --secondary: 191 31% 23%;
   --secondary-foreground: var(--brand-white);
-  --accent: 13.97 100% 25%;
+  --accent: 174 20% 25%;
   --accent-foreground: var(--brand-white);
   --destructive: 0 76% 57%;
   --destructive-foreground: var(--brand-white);
-  --success: 161 67% 48%;
+  --success: 155 48% 48%;
   --success-foreground: var(--brand-navy);
   --warning: var(--brand-orange);
   --warning-strong: var(--brand-orange);
   --warning-foreground: var(--brand-navy);
-  --info: 198.95 88% 58%;
+  --info: 185 55% 57%;
   --info-foreground: var(--brand-navy);
-  --border: 199.53 33% 28%;
-  --hair: 199.53 30% 22%;
-  --input: 199.53 33% 31%;
+  --border: 191 23% 31%;
+  --hair: 191 24% 23%;
+  --input: 191 23% 34%;
   --ring: var(--brand-orange);
 
-  --sidebar-background: 199.53 63% 10%;
+  --sidebar-background: 192 42% 13%;
   --sidebar-foreground: var(--brand-white);
-  --sidebar-primary: var(--brand-blue);
-  --sidebar-primary-foreground: var(--brand-white);
-  --sidebar-accent: 199.53 55% 18%;
+  --sidebar-primary: 40 84% 61%;
+  --sidebar-primary-foreground: 192 45% 11%;
+  --sidebar-accent: 174 20% 22%;
   --sidebar-accent-foreground: var(--brand-white);
-  --sidebar-border: 199.53 33% 24%;
+  --sidebar-border: 191 23% 27%;
   --sidebar-ring: var(--brand-orange);
 }
 /* AutoDrive brand theme -- END */
@@ -380,6 +380,12 @@
   background: hsl(var(--background) / 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+}
+
+/* Keeps the sidebar's content box stable when a page gains or loses a
+   scrollbar. This prevents a one-frame horizontal nudge on navigation. */
+.app-sidebar-scroll {
+  scrollbar-gutter: stable;
 }
 
 ::-webkit-scrollbar {

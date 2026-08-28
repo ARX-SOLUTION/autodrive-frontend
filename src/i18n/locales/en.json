@@ -26,6 +26,13 @@
     "lightMode": "Light mode",
     "darkMode": "Dark mode"
   },
+  "nav_sections": {
+    "pinned": "Pinned",
+    "workspace": "Workspace",
+    "learning": "Learning",
+    "team": "Team",
+    "system": "System"
+  },
   "actions": {
     "logout": "Sign out",
     "theme_dark": "Dark mode",
@@ -39,13 +46,16 @@
     "search_empty": "Nothing found",
     "search_pages": "Pages",
     "search_group_staff": "Staff",
-    "quick_payment": "Payment"
+    "quick_payment": "Payment",
+    "pin": "Pin {{item}}",
+    "unpin": "Unpin {{item}}"
   },
   "roles": {
     "owner": "Owner",
     "manager": "Manager",
     "operator": "Operator",
-    "teacher": "Teacher"
+    "teacher": "Teacher",
+    "dev": "Platform administrator"
   },
   "common": {
     "save": "Save",
