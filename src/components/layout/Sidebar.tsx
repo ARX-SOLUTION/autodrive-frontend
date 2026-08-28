@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
@@ -5,99 +6,32 @@ import { useLogout } from '@/services/authService';
 import { useCan } from '@/hooks/useCan';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import type { Capability } from '@/lib/permissions';
-import {
-  SquaresFour,
-  Buildings,
-  GraduationCap,
-  CreditCard,
-  Headphones,
-  UsersThree,
-  User,
-  SignOut,
-  ArrowRight,
-  Stack,
-  UserGear,
-  ShieldCheck,
-  Calendar,
-  ListChecks,
-  BookOpen,
-} from '@phosphor-icons/react';
+import { SignOut, PushPin, PushPinSlash } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/routePrefetch';
+import { NAV_ITEMS, NAV_SECTIONS, type NavItem } from '@/lib/navigation';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { Brand } from './Brand';
 import { isNavActive } from '@/lib/navActive';
-
-type NavItem = {
-  path: string;
-  labelKey: string;
-  icon: typeof SquaresFour;
-  // Capability required to see this item; absent = visible to everyone.
-  // Must match the route guard in App.tsx for the same path.
-  cap?: Capability;
-};
-
-const navItems: NavItem[] = [
-  { path: '/dashboard', labelKey: 'nav.dashboard', icon: SquaresFour },
-  {
-    path: '/branches',
-    labelKey: 'nav.branches',
-    icon: Buildings,
-    cap: 'manageBranches',
-  },
-  { path: '/schedule', labelKey: 'nav.schedule', icon: Calendar },
-  { path: '/attendance', labelKey: 'nav.attendance', icon: ListChecks },
-  { path: '/groups', labelKey: 'nav.groups', icon: Stack },
-  {
-    path: '/courses',
-    labelKey: 'nav.courses',
-    icon: BookOpen,
-    cap: 'manageStaff',
-  },
-  { path: '/students', labelKey: 'nav.students', icon: GraduationCap },
-  {
-    path: '/payments',
-    labelKey: 'nav.payments',
-    icon: CreditCard,
-    cap: 'recordPayment',
-  },
-  {
-    path: '/operators',
-    labelKey: 'nav.operators',
-    icon: Headphones,
-    cap: 'manageStaff',
-  },
-  {
-    path: '/teachers',
-    labelKey: 'nav.teachers',
-    icon: UsersThree,
-    cap: 'manageStaff',
-  },
-  {
-    path: '/users',
-    labelKey: 'nav.users',
-    icon: UserGear,
-    cap: 'manageUsers',
-  },
-  {
-    path: '/audit',
-    labelKey: 'nav.audit',
-    icon: ShieldCheck,
-    cap: 'viewAudit',
-  },
-  { path: '/profile', labelKey: 'nav.profile', icon: User },
-];
 
 interface SidebarProps {
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
 }
+
+const readPinnedPaths = (storageKey: string | null): string[] => {
+  if (!storageKey || typeof window === 'undefined') return [];
+
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(storageKey) ?? '[]');
+    return Array.isArray(stored)
+      ? stored.filter((path): path is string => typeof path === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+};
 
 export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
   const location = useLocation();
@@ -105,14 +39,51 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
   const user = useAuthStore((s) => s.user);
   const goTo = useViewTransitionNavigate();
   const logoutMutation = useLogout();
+  const pinStorageKey = user?.id
+    ? `autodrive-sidebar-pins:${user.company_id ?? 'default'}:${user.id}`
+    : null;
+  const [pinnedPaths, setPinnedPaths] = useState<string[]>(() =>
+    readPinnedPaths(pinStorageKey),
+  );
 
-  // ponytail: real <a href> instead of <Link> so the view transition can be
-  // triggered from onClick — keeps native Enter-key activation and
-  // ctrl/cmd/shift/middle-click "open in new tab" behavior for free, same as
-  // <Link> gave us. Only a plain left-click intercepts for the SPA/transition
-  // navigate; anything else falls through to the browser's default anchor
-  // behavior. `onNavigate` is only passed by the mobile sheet, to close
-  // itself before navigating.
+  useEffect(() => {
+    setPinnedPaths(readPinnedPaths(pinStorageKey));
+  }, [pinStorageKey]);
+
+  const gate: Partial<Record<Capability, boolean>> = {
+    manageBranches: useCan('manageBranches'),
+    manageStaff: useCan('manageStaff'),
+    manageUsers: useCan('manageUsers'),
+    viewAudit: useCan('viewAudit'),
+    recordPayment: useCan('recordPayment'),
+  };
+  const canSee = (item: NavItem) => !item.cap || gate[item.cap] === true;
+  const visibleItems = NAV_ITEMS.filter(canSee);
+  const itemByPath = useMemo(
+    () => new Map(visibleItems.map((item) => [item.path, item])),
+    [visibleItems],
+  );
+  const visibleSections = NAV_SECTIONS.map((section) => ({
+    ...section,
+    items: visibleItems.filter((item) => item.section === section.id),
+  })).filter((section) => section.items.length > 0);
+  const pinnedItems = pinnedPaths
+    .map((path) => itemByPath.get(path))
+    .filter((item): item is NavItem => Boolean(item));
+
+  const roleLabel =
+    user?.role === 'owner'
+      ? t('roles.owner')
+      : user?.branch_name || t(`roles.${user?.role ?? 'operator'}`);
+  const initials =
+    (user?.name || user?.email || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]!.toUpperCase())
+      .join('') || '?';
+
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
     path: string,
@@ -129,158 +100,200 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
     ) {
       return;
     }
+
     e.preventDefault();
+    // Sidebar links deliberately have no source/destination pair. The hook
+    // therefore takes the plain navigation path instead of animating a whole
+    // document transition and making the menu appear to jump.
     goTo(path, null, '');
   };
 
-  // Precompute every gate (hooks can't run in a loop). Keyed by capability so
-  // canSee is a plain lookup that mirrors CommandPalette and the App.tsx guards.
-  const gate: Partial<Record<Capability, boolean>> = {
-    manageBranches: useCan('manageBranches'),
-    manageStaff: useCan('manageStaff'),
-    manageUsers: useCan('manageUsers'),
-    viewAudit: useCan('viewAudit'),
-    recordPayment: useCan('recordPayment'),
-  };
-  const canSee = (item: NavItem) => !item.cap || gate[item.cap] === true;
-  const filteredItems = navItems.filter(canSee);
+  const togglePin = (path: string) => {
+    setPinnedPaths((current) => {
+      const next = current.includes(path)
+        ? current.filter((itemPath) => itemPath !== path)
+        : [...current, path].slice(0, 5);
 
-  const roleLabel =
-    user?.role === 'owner' ? t('roles.owner') : user?.branch_name;
-  const initials =
-    (user?.name || user?.email || '')
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]!.toUpperCase())
-      .join('') || '?';
+      if (pinStorageKey) {
+        window.localStorage.setItem(pinStorageKey, JSON.stringify(next));
+      }
+
+      return next;
+    });
+  };
+
+  const renderNavItem = (
+    item: NavItem,
+    variant: 'desktop' | 'mobile',
+    onNavigate?: () => void,
+  ) => {
+    const active = isNavActive(location.pathname, item.path);
+    const label = t(item.labelKey);
+    const pinned = pinnedPaths.includes(item.path);
+    const isDesktop = variant === 'desktop';
+
+    return (
+      <div className="group relative" key={`${variant}-${item.path}`}>
+        <a
+          href={item.path}
+          onClick={(e) => handleNavClick(e, item.path, onNavigate)}
+          onMouseEnter={() => prefetchRoute(item.path)}
+          onFocus={() => prefetchRoute(item.path)}
+          aria-label={label}
+          aria-current={active ? 'page' : undefined}
+          data-sidebar-item="true"
+          data-active={String(active)}
+          className={cn(
+            'before:absolute before:left-1.5 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-full before:bg-primary before:transition-[opacity,scale] before:duration-150 before:ease-out',
+            'relative flex h-10 w-full items-center gap-3 rounded-[10px] py-0 pl-4 pr-3 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 ease-out',
+            active
+              ? 'before:scale-100 before:opacity-100 bg-sidebar-accent text-sidebar-foreground shadow-[0_1px_2px_hsl(var(--foreground)/0.05)]'
+              : 'before:scale-75 before:opacity-0 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground',
+            !isDesktop && 'h-11 text-[0.95rem]',
+          )}
+        >
+          <item.icon className="h-[18px] w-[18px] shrink-0" />
+          <span className="min-w-0 flex-1 truncate">{label}</span>
+        </a>
+        {isDesktop && item.pinnable !== false && (
+          <button
+            type="button"
+            aria-label={t(pinned ? 'actions.unpin' : 'actions.pin', {
+              item: label,
+            })}
+            title={t(pinned ? 'actions.unpin' : 'actions.pin', { item: label })}
+            onClick={() => togglePin(item.path)}
+            className={cn(
+              'absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-[background-color,color,opacity,scale] duration-150 ease-out active:scale-[0.96]',
+              pinned
+                ? 'opacity-100 hover:bg-sidebar hover:text-sidebar-foreground'
+                : 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-sidebar hover:text-sidebar-foreground',
+            )}
+          >
+            {pinned ? (
+              <PushPinSlash className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <PushPin className="h-4 w-4" aria-hidden="true" />
+            )}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const renderNavGroups = (
+    variant: 'desktop' | 'mobile',
+    onNavigate?: () => void,
+  ) => (
+    <>
+      {pinnedItems.length > 0 && (
+        <section className="mb-5" aria-label={t('nav_sections.pinned')}>
+          <p className="px-3 pb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+            {t('nav_sections.pinned')}
+          </p>
+          <div className="space-y-1">
+            {pinnedItems.map((item) =>
+              renderNavItem(item, variant, onNavigate),
+            )}
+          </div>
+        </section>
+      )}
+
+      {visibleSections.map((section) => (
+        <section
+          className="mb-5 last:mb-0"
+          key={section.id}
+          aria-label={t(section.labelKey)}
+        >
+          <p className="px-3 pb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+            {t(section.labelKey)}
+          </p>
+          <div className="space-y-1">
+            {section.items.map((item) =>
+              renderNavItem(item, variant, onNavigate),
+            )}
+          </div>
+        </section>
+      ))}
+    </>
+  );
 
   return (
     <>
-      {/* Desktop rail — icon-only: the label is a hover tooltip (side=right)
-          and stays on aria-label for screen readers / discoverability. */}
-      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[72px] flex-col border-r border-hair bg-surface md:flex">
-        <div className="flex flex-col items-center pt-5">
-          <div className="mb-[22px] flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-[0_4px_14px] shadow-primary/45">
-            <ArrowRight
-              weight="bold"
-              className="h-5 w-5 text-primary-foreground"
-            />
-          </div>
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
+        <div className="border-b border-sidebar-border px-4 py-4">
+          <Brand size="sm" />
+          <p className="mt-2 truncate pl-3 text-xs font-medium text-muted-foreground">
+            {user?.branch_name || t('nav.branches_all')}
+          </p>
         </div>
 
         <nav
           aria-label={t('actions.sidebar')}
-          className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-2.5"
+          className="app-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4"
         >
-          {filteredItems.map((item) => {
-            const active = isNavActive(location.pathname, item.path);
-            const label = t(item.labelKey);
-            return (
-              <Tooltip key={item.path}>
-                <TooltipTrigger asChild>
-                  <a
-                    href={item.path}
-                    onClick={(e) => handleNavClick(e, item.path)}
-                    onMouseEnter={() => prefetchRoute(item.path)}
-                    onFocus={() => prefetchRoute(item.path)}
-                    aria-label={label}
-                    aria-current={active ? 'page' : undefined}
-                    className={cn(
-                      'flex h-11 w-full items-center justify-center rounded-xl transition-colors',
-                      active
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground',
-                    )}
-                  >
-                    <item.icon className="h-[21px] w-[21px] shrink-0" />
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent side="right">{label}</TooltipContent>
-              </Tooltip>
-            );
-          })}
+          {renderNavGroups('desktop')}
         </nav>
 
-        <div className="flex flex-col items-center gap-2 pb-4 pt-2">
-          <Avatar className="h-10 w-10 rounded-xl border border-border bg-muted">
-            <AvatarFallback className="rounded-xl bg-muted font-mono text-xs font-semibold text-foreground">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => logoutMutation.mutate()}
-                aria-label={t('actions.logout', 'Chiqish')}
-                className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-destructive"
-              >
-                <SignOut className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{t('actions.logout')}</TooltipContent>
-          </Tooltip>
+        <div className="border-t border-sidebar-border p-3">
+          <div className="flex items-center gap-2 rounded-xl bg-sidebar-accent/80 p-2 shadow-[0_1px_2px_hsl(var(--foreground)/0.05)]">
+            <Avatar className="h-9 w-9 shrink-0 rounded-[10px]">
+              <AvatarFallback className="rounded-[10px] bg-background text-xs font-semibold text-foreground">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-sidebar-foreground">
+                {user?.name || user?.email}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {roleLabel}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => logoutMutation.mutate()}
+              aria-label={t('actions.logout', 'Chiqish')}
+              title={t('actions.logout', 'Chiqish')}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-background hover:text-destructive active:scale-[0.96]"
+            >
+              <SignOut className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* Mobile — unchanged full-label sheet (labels + icons, no rail). */}
       <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
         <SheetContent
           side="left"
-          className="w-72 bg-sidebar p-0 [&>button]:text-sidebar-foreground"
+          className="w-80 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground"
         >
-          {/* Radix Dialog requires a title for screen readers; visually hidden. */}
           <SheetTitle className="sr-only">{t('actions.sidebar')}</SheetTitle>
           <div className="flex h-full flex-col">
-            <div className="flex h-16 items-center gap-3 border-b border-border px-4">
+            <div className="border-b border-sidebar-border px-5 py-4">
               <Brand size="sm" />
+              <p className="mt-2 truncate pl-3 text-xs font-medium text-muted-foreground">
+                {user?.branch_name || t('nav.branches_all')}
+              </p>
             </div>
 
             <nav
               aria-label={t('actions.sidebar')}
-              className="flex-1 space-y-1 overflow-y-auto p-2"
+              className="app-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4"
             >
-              {filteredItems.map((item) => {
-                const active = isNavActive(location.pathname, item.path);
-                const label = t(item.labelKey);
-                return (
-                  <a
-                    key={item.path}
-                    href={item.path}
-                    onClick={(e) =>
-                      handleNavClick(e, item.path, () =>
-                        onMobileOpenChange(false),
-                      )
-                    }
-                    onMouseEnter={() => prefetchRoute(item.path)}
-                    onFocus={() => prefetchRoute(item.path)}
-                    aria-label={label}
-                    aria-current={active ? 'page' : undefined}
-                    className={cn(
-                      'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
-                      active
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground',
-                    )}
-                  >
-                    <item.icon className="h-[18px] w-[18px] shrink-0" />
-                    <span>{label}</span>
-                  </a>
-                );
-              })}
+              {renderNavGroups('mobile', () => onMobileOpenChange(false))}
             </nav>
 
-            <div className="border-t border-border p-3">
-              <div className="flex items-center justify-between gap-2">
+            <div className="border-t border-sidebar-border p-3">
+              <div className="flex items-center justify-between gap-2 rounded-xl bg-sidebar-accent/80 p-2 shadow-[0_1px_2px_hsl(var(--foreground)/0.05)]">
                 <div className="flex min-w-0 items-center gap-2">
-                  <Avatar className="h-9 w-9 shrink-0 rounded-xl">
-                    <AvatarFallback className="rounded-xl bg-muted text-xs font-semibold text-foreground">
+                  <Avatar className="h-9 w-9 shrink-0 rounded-[10px]">
+                    <AvatarFallback className="rounded-[10px] bg-background text-xs font-semibold text-foreground">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-foreground">
+                    <p className="truncate text-sm font-semibold text-sidebar-foreground">
                       {user?.name || user?.email}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
@@ -289,15 +302,15 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => {
                     onMobileOpenChange(false);
                     logoutMutation.mutate();
                   }}
                   aria-label={t('actions.logout', 'Chiqish')}
-                  className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground transition-colors hover:text-destructive"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-background hover:text-destructive active:scale-[0.96]"
                 >
                   <SignOut className="h-4 w-4" />
-                  <span>{t('actions.logout')}</span>
                 </button>
               </div>
             </div>

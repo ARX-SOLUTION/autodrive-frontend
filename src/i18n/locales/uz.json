@@ -26,6 +26,13 @@
     "lightMode": "Yorug' rejim",
     "darkMode": "Qorong'i rejim"
   },
+  "nav_sections": {
+    "pinned": "Biriktirilganlar",
+    "workspace": "Ish maydoni",
+    "learning": "O'quv jarayoni",
+    "team": "Jamoa",
+    "system": "Tizim"
+  },
   "actions": {
     "logout": "Chiqish",
     "theme_dark": "Tungi rejim",
@@ -39,13 +46,16 @@
     "search_empty": "Hech narsa topilmadi",
     "search_pages": "Sahifalar",
     "search_group_staff": "Xodimlar",
-    "quick_payment": "To'lov"
+    "quick_payment": "To'lov",
+    "pin": "{{item}}ni biriktirish",
+    "unpin": "{{item}}ni olib tashlash"
   },
   "roles": {
     "owner": "Biznes egasi",
     "manager": "Manager",
     "operator": "Operator",
-    "teacher": "O'qituvchi"
+    "teacher": "O'qituvchi",
+    "dev": "Platforma administratori"
   },
   "common": {
     "save": "Saqlash",

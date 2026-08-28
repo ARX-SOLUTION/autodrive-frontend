@@ -18,7 +18,16 @@ export function useViewTransitionNavigate() {
   const navigate = useNavigate();
 
   return (path: string, el: HTMLElement | null, transitionName: string) => {
-    if (!document.startViewTransition || prefersReducedMotion()) {
+    // A transition only makes sense when a source element has a matching
+    // destination element. Global navigation (the sidebar) passes no pair;
+    // animating the whole document there makes the active menu look like it
+    // jumps while the next route mounts.
+    if (
+      !el ||
+      !transitionName ||
+      !document.startViewTransition ||
+      prefersReducedMotion()
+    ) {
       navigate(path);
       return;
     }
