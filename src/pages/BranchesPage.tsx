@@ -288,7 +288,7 @@ const BranchesPage = () => {
                     }
                   }}
                   className={cn(
-                    'glass-card p-5 animate-slide-in cursor-pointer hover:border-primary/40 transition-colors',
+                    'glass-card cursor-pointer p-5 transition-colors hover:border-primary/40',
                     b.deleted_at && 'opacity-60',
                   )}
                 >

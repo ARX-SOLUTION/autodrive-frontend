@@ -58,7 +58,6 @@ export interface KpiCardProps {
   metaLeft?: React.ReactNode;
   metaRight?: React.ReactNode;
   spark?: number[];
-  animationDelayMs?: number;
   lead?: boolean;
 }
 
@@ -72,7 +71,6 @@ export const KpiCard = ({
   metaLeft,
   metaRight,
   spark,
-  animationDelayMs = 0,
   lead = false,
 }: KpiCardProps) => {
   const toneClasses: Record<KpiCardProps['tone'], string> = {
@@ -82,10 +80,7 @@ export const KpiCard = ({
     success: 'bg-success/10 text-success',
   };
   return (
-    <Card
-      className={cn('relative overflow-hidden p-5', 'card-enter')}
-      style={{ transitionDelay: `${animationDelayMs}ms` }}
-    >
+    <Card className="relative overflow-hidden p-5">
       <div className="mb-3 flex items-center justify-between">
         <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
           {label}
@@ -150,7 +145,6 @@ export interface SectionCardProps {
   subtitle?: string;
   action?: React.ReactNode;
   className?: string;
-  staggerDelayMs?: number;
   children: React.ReactNode;
 }
 
@@ -159,13 +153,9 @@ export const SectionCard = ({
   subtitle,
   action,
   className,
-  staggerDelayMs = 0,
   children,
 }: SectionCardProps) => (
-  <Card
-    className={cn('p-5 card-enter', className)}
-    style={{ transitionDelay: `${staggerDelayMs}ms` }}
-  >
+  <Card className={cn('p-5', className)}>
     <div className="mb-4 flex items-center justify-between gap-3">
       <div className="min-w-0">
         <h2 className="truncate text-sm font-semibold tracking-tight text-foreground">

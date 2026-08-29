@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
@@ -42,13 +42,17 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
   const pinStorageKey = user?.id
     ? `autodrive-sidebar-pins:${user.company_id ?? 'default'}:${user.id}`
     : null;
-  const [pinnedPaths, setPinnedPaths] = useState<string[]>(() =>
-    readPinnedPaths(pinStorageKey),
-  );
-
-  useEffect(() => {
-    setPinnedPaths(readPinnedPaths(pinStorageKey));
-  }, [pinStorageKey]);
+  const [pinnedState, setPinnedState] = useState(() => ({
+    storageKey: pinStorageKey,
+    paths: readPinnedPaths(pinStorageKey),
+  }));
+  if (pinnedState.storageKey !== pinStorageKey) {
+    setPinnedState({
+      storageKey: pinStorageKey,
+      paths: readPinnedPaths(pinStorageKey),
+    });
+  }
+  const pinnedPaths = pinnedState.paths;
 
   const gate: Partial<Record<Capability, boolean>> = {
     manageBranches: useCan('manageBranches'),
@@ -109,17 +113,14 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
   };
 
   const togglePin = (path: string) => {
-    setPinnedPaths((current) => {
-      const next = current.includes(path)
-        ? current.filter((itemPath) => itemPath !== path)
-        : [...current, path].slice(0, 5);
+    const next = pinnedPaths.includes(path)
+      ? pinnedPaths.filter((itemPath) => itemPath !== path)
+      : [...pinnedPaths, path].slice(0, 5);
 
-      if (pinStorageKey) {
-        window.localStorage.setItem(pinStorageKey, JSON.stringify(next));
-      }
-
-      return next;
-    });
+    setPinnedState({ storageKey: pinStorageKey, paths: next });
+    if (pinStorageKey) {
+      window.localStorage.setItem(pinStorageKey, JSON.stringify(next));
+    }
   };
 
   const renderNavItem = (

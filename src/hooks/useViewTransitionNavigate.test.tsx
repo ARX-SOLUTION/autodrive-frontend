@@ -3,10 +3,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import { useViewTransitionNavigate } from './useViewTransitionNavigate';
 
-// autodrive-8i0.5: feature-detection + prefers-reduced-motion fallback, and
-// the dynamic-list-item name lifecycle (set on click, cleared once the
-// transition finishes) — all testable without a real browser View
-// Transitions implementation (jsdom has none).
+// CRM navigation is deliberately plain: callers keep the old three-argument
+// API, but no browser snapshot or element style mutation should run.
 
 const navigateMock = vi.fn();
 vi.mock('react-router-dom', async (importOriginal) => {
@@ -18,17 +16,14 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
   <MemoryRouter>{children}</MemoryRouter>
 );
 
-const originalMatchMedia = window.matchMedia;
-
 describe('useViewTransitionNavigate', () => {
   afterEach(() => {
     vi.clearAllMocks();
     // @ts-expect-error - jsdom doesn't define this; tests add/remove it
     delete document.startViewTransition;
-    window.matchMedia = originalMatchMedia;
   });
 
-  it('falls back to a plain navigate when startViewTransition is unsupported', () => {
+  it('navigates directly without mutating the source element', () => {
     const { result } = renderHook(() => useViewTransitionNavigate(), {
       wrapper,
     });
@@ -37,20 +32,12 @@ describe('useViewTransitionNavigate', () => {
     act(() => result.current('/students/1', el, 'student-1'));
 
     expect(navigateMock).toHaveBeenCalledWith('/students/1');
-    // fallback path never touches the element's style at all. jsdom's
-    // pre-29 CSSOM didn't recognize `viewTransitionName` as a style
-    // property at all, so an untouched read fell through to `undefined`;
-    // the v29 CSSOM rewrite (Changelog v29.0.0) now recognizes it and
-    // reports the spec-correct "" for an unset-but-known property, same
-    // as this file's own "cleared" case below (line ~81) and real
-    // browsers. Same assertion, different jsdom representation.
     expect(el.style.viewTransitionName).toBe('');
   });
 
-  it('falls back to a plain navigate when prefers-reduced-motion matches', () => {
+  it('does not start a browser view transition when the API exists', () => {
     document.startViewTransition =
       vi.fn() as typeof document.startViewTransition;
-    window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as never;
 
     const { result } = renderHook(() => useViewTransitionNavigate(), {
       wrapper,
@@ -63,7 +50,7 @@ describe('useViewTransitionNavigate', () => {
     expect(document.startViewTransition).not.toHaveBeenCalled();
   });
 
-  it('uses a plain navigation when a caller has no named element to animate', () => {
+  it('accepts navigation without a named source element', () => {
     document.startViewTransition =
       vi.fn() as typeof document.startViewTransition;
 
@@ -71,21 +58,15 @@ describe('useViewTransitionNavigate', () => {
       wrapper,
     });
 
-    // Sidebar navigation deliberately has no source/destination pair. Starting
-    // a whole-document View Transition in that case makes the menu appear to
-    // jump while the route is rendering.
     act(() => result.current('/dashboard', null, ''));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard');
     expect(document.startViewTransition).not.toHaveBeenCalled();
   });
 
-  it('sets the transition name for the transition, then clears it once finished', async () => {
-    let capturedCallback: () => void = () => {};
-    document.startViewTransition = vi.fn((cb: () => void) => {
-      capturedCallback = cb;
-      return { finished: Promise.resolve() };
-    }) as unknown as typeof document.startViewTransition;
+  it('ignores a requested transition name and still navigates once', () => {
+    document.startViewTransition =
+      vi.fn() as typeof document.startViewTransition;
 
     const { result } = renderHook(() => useViewTransitionNavigate(), {
       wrapper,
@@ -94,13 +75,8 @@ describe('useViewTransitionNavigate', () => {
 
     act(() => result.current('/students/1', el, 'student-1'));
 
-    expect(el.style.viewTransitionName).toBe('student-1');
-    capturedCallback();
     expect(navigateMock).toHaveBeenCalledWith('/students/1');
-
-    await act(async () => {
-      await Promise.resolve();
-    });
     expect(el.style.viewTransitionName).toBe('');
+    expect(document.startViewTransition).not.toHaveBeenCalled();
   });
 });

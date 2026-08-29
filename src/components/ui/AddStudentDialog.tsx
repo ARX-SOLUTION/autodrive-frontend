@@ -734,7 +734,7 @@ const AddStudentDialog = ({
               <div className="flex-1 overflow-y-auto pr-2">
                 {/* Step 1: Personal Info */}
                 {activeStep === 1 && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-200">
+                  <div className="space-y-4">
                     <h3 className="text-sm font-medium text-muted-foreground">
                       {t(STEPS[0].titleKey)}
                     </h3>
@@ -961,7 +961,7 @@ const AddStudentDialog = ({
 
                 {/* Step 2: Course & Branch */}
                 {activeStep === 2 && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
+                  <div className="space-y-4">
                     <h3 className="text-sm font-medium text-muted-foreground">
                       {t(STEPS[1].titleKey)}
                     </h3>
@@ -1152,7 +1152,7 @@ const AddStudentDialog = ({
 
                 {/* Step 3: Payment & Confirmation */}
                 {activeStep === 3 && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
+                  <div className="space-y-4">
                     <h3 className="text-sm font-medium text-muted-foreground">
                       {t(STEPS[2].titleKey)}
                     </h3>

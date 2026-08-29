@@ -21,7 +21,7 @@ export const SummaryCard = ({
   className,
   isLoading,
 }: SummaryCardProps) => (
-  <div className={cn('glass-card p-5 animate-slide-in', className)}>
+  <div className={cn('glass-card p-5', className)}>
     <div className="flex items-start justify-between">
       <div>
         <p className="text-sm text-muted-foreground">{title}</p>
