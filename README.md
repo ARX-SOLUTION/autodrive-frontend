@@ -1,6 +1,38 @@
-# Welcome to your Lovable project
+# AutoDrive tenant frontend
 
-TODO: Document your project here.
+React 19 + Vite tenant workspace for Automaktab driving schools. The public
+marketing site is a separate application; this app only serves authenticated
+owner, manager, operator and teacher workflows.
+
+## Development
+
+```bash
+pnpm install
+pnpm run dev
+pnpm run lint
+pnpm run typecheck
+pnpm test
+pnpm run build
+pnpm run check:bundle
+```
+
+The app uses TanStack Router for file-based routes and TanStack Query for
+server state. `src/services/` contains feature query/mutation factories;
+`src/shared/api/schema.d.ts` is generated from the authenticated backend
+OpenAPI contract and must not be edited manually.
+
+## API contract
+
+Set `OPENAPI_TOKEN` or `OPENAPI_USERNAME` plus `OPENAPI_PASSWORD` only in the
+runtime environment, then run:
+
+```bash
+pnpm run api:types
+pnpm run api:check
+```
+
+Never use a `VITE_` prefix for contract credentials: Vite exposes those values
+to browser code. The tenant API base URL remains `VITE_API_BASE_URL`.
 
 ## Storybook
 
