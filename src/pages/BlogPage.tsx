@@ -1,9 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useGSAP } from '@gsap/react';
 import { MagnifyingGlass, Eye, Clock, X } from '@phosphor-icons/react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -13,14 +10,11 @@ import { BlogHeader } from '@/components/blog/BlogHeader';
 import { useBlogPosts } from '@/services/blogService';
 import { localizedField, estimateReadingTime } from '@/lib/blog';
 
-gsap.registerPlugin(ScrollTrigger, useGSAP);
-
 const BlogPage = () => {
   const { t, i18n } = useTranslation();
   const { data: posts, isLoading } = useBlogPosts();
   const [search, setSearch] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const gridRef = useRef<HTMLDivElement>(null);
 
   const allTags = useMemo(
     () => Array.from(new Set((posts ?? []).flatMap((p) => p.tags))).sort(),
@@ -45,30 +39,6 @@ const BlogPage = () => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((x) => x !== tag) : [...prev, tag],
     );
-
-  // ponytail: reveal runs once when the full list first renders; filtering
-  // afterwards just shows/hides cards instantly (no ScrollTrigger rebuild).
-  useGSAP(
-    () => {
-      // a11y: honor prefers-reduced-motion like the other gsap consumers —
-      // reduced-motion users get the cards immediately, no reveal animation.
-      gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
-        ScrollTrigger.batch('.blog-card', {
-          onEnter: (els) =>
-            gsap.from(els, {
-              y: 40,
-              opacity: 0,
-              stagger: 0.1,
-              duration: 0.6,
-              ease: 'power3.out',
-            }),
-          start: 'top 90%',
-          once: true,
-        });
-      });
-    },
-    { scope: gridRef, dependencies: [posts?.length ?? 0] },
-  );
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -126,10 +96,7 @@ const BlogPage = () => {
             description={t('blog.empty_desc')}
           />
         ) : (
-          <div
-            ref={gridRef}
-            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-          >
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((post) => {
               const title = localizedField(post, 'title', i18n.language);
               const excerpt = localizedField(post, 'excerpt', i18n.language);
@@ -138,7 +105,7 @@ const BlogPage = () => {
                 <Link
                   key={post.slug}
                   to={`/blog/${post.slug}`}
-                  className="blog-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 transition-colors duration-300 hover:border-primary/30 dark:border-white/[8%] dark:bg-white/[0.03]"
+                  className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 transition-colors hover:border-primary/30 dark:border-white/[8%] dark:bg-white/[0.03]"
                 >
                   {post.cover_image_url && (
                     <div className="aspect-video w-full overflow-hidden bg-muted">
@@ -146,7 +113,7 @@ const BlogPage = () => {
                         src={post.cover_image_url}
                         alt={title}
                         loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="h-full w-full object-cover"
                       />
                     </div>
                   )}

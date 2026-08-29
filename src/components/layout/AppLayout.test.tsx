@@ -23,7 +23,6 @@ vi.mock('./CommandPalette', () => ({
   useCommandPalette: () => ({ open: false, setOpen: vi.fn() }),
 }));
 vi.mock('./PageLoader', () => ({ PageLoader: () => null }));
-vi.mock('@/lib/routePrefetch', () => ({ prefetchIdle: vi.fn() }));
 
 afterEach(cleanup);
 

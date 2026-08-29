@@ -69,20 +69,12 @@ export default defineConfig(({ mode }) => ({
     ],
   },
   build: {
-    // ponytail (autodrive-6ef.17): charts-vendor (recharts/d3, ~110KB gzip)
-    // is only used by Dashboard/BranchDetail's analytics -- Vite's default
-    // modulePreload eagerly injects <link rel=modulepreload> for it on
-    // EVERY route (incl. /login) since those are reachable dynamic imports
-    // from the root. It's a prefetch hint, not a blocking load, but it's
-    // still wasted bandwidth/parse-ahead-of-time work on routes that never
-    // render a chart. Drop it from the eager preload list; it still loads
-    // normally (own <script>) the moment a chart route is actually visited.
-    modulePreload: {
-      resolveDependencies: (_filename, deps) =>
-        deps.filter((d) => !d.includes('charts-vendor')),
-    },
     rollupOptions: {
       output: {
+        // Keep dependencies shared with the app shell (notably clsx) out of
+        // charts-vendor. Without this, Rollup absorbs transitive dependencies
+        // into the manual chunk and the root/login graph imports all charts.
+        onlyExplicitManualChunks: true,
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
           if (id.includes('/xlsx/')) return 'export-xlsx';

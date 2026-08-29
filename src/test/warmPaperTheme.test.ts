@@ -62,17 +62,17 @@ describe('AutoDrive brand theme override', () => {
     expect(before).not.toMatch(/@layer\s+base\s*\{\s*$/);
   });
 
-  it('defines the supplied white, blue, navy, and orange brand colors', () => {
-    expect(extractVar(root, 'brand-white')).toBe('0 0% 97.65%');
-    expect(extractVar(root, 'brand-blue')).toBe('198.95 100% 22.35%');
-    expect(extractVar(root, 'brand-navy')).toBe('199.53 70.49% 11.96%');
-    expect(extractVar(root, 'brand-orange')).toBe('13.97 100% 62.94%');
+  it('defines the Road Signal paper, ink, and amber brand colors', () => {
+    expect(extractVar(root, 'brand-white')).toBe('45 32% 93%');
+    expect(extractVar(root, 'brand-blue')).toBe('192 43% 13%');
+    expect(extractVar(root, 'brand-navy')).toBe('192 43% 13%');
+    expect(extractVar(root, 'brand-orange')).toBe('39 76% 53%');
     expect(extractVar(root, 'background')).toBe('var(--brand-white)');
     expect(extractVar(root, 'foreground')).toBe('var(--brand-navy)');
-    expect(extractVar(root, 'primary')).toBe('var(--brand-blue)');
-    expect(extractVar(root, 'primary-foreground')).toBe('var(--brand-white)');
+    expect(extractVar(root, 'primary')).toBe('var(--brand-orange)');
+    expect(extractVar(root, 'primary-foreground')).toBe('var(--brand-navy)');
     expect(extractVar(root, 'ring')).toBe('var(--brand-orange)');
-    expect(extractVar(root, 'radius')).toBe('1rem');
+    expect(extractVar(root, 'radius')).toBe('0.875rem');
   });
 
   it('maps legacy utility color names to semantic brand tokens', () => {
@@ -92,13 +92,13 @@ describe('AutoDrive brand theme override', () => {
   });
 
   it('provides a complete light and dark semantic surface pairing', () => {
-    expect(extractVar(root, 'sidebar-background')).toBe('198.95 35% 94%');
-    expect(extractVar(root, 'card')).toBe('0 0% 100%');
-    expect(extractVar(dark, 'background')).toBe('var(--brand-navy)');
+    expect(extractVar(root, 'sidebar-background')).toBe('45 45% 98%');
+    expect(extractVar(root, 'card')).toBe('45 45% 99%');
+    expect(extractVar(dark, 'background')).toBe('192 45% 11%');
     expect(extractVar(dark, 'foreground')).toBe('var(--brand-white)');
-    expect(extractVar(dark, 'primary')).toBe('var(--brand-blue)');
+    expect(extractVar(dark, 'primary')).toBe('40 84% 61%');
     expect(extractVar(dark, 'ring')).toBe('var(--brand-orange)');
-    expect(extractVar(dark, 'sidebar-background')).toBe('199.53 63% 10%');
+    expect(extractVar(dark, 'sidebar-background')).toBe('192 42% 13%');
   });
 
   it('mirrors the dark brand colors onto the sidebar tokens', () => {

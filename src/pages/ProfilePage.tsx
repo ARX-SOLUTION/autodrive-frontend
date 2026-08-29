@@ -130,7 +130,7 @@ const ProfilePage = () => {
   const handleLinkTelegram = () => {
     linkTokenMut.mutate(undefined, {
       onSuccess: ({ deep_link }) => {
-        window.open(deep_link, '_blank');
+        window.open(deep_link, '_blank', 'noopener,noreferrer');
         toast.success(t('profile.telegram.link_opened'));
       },
       onError: (err) =>

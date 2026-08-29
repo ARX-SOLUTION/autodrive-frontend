@@ -1,9 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
-import { gsap } from 'gsap';
-import { useGSAP } from '@gsap/react';
 import {
   Warning,
   ArrowDownRight,
@@ -53,16 +51,7 @@ import { cn } from '@/lib/utils';
 import { formatMoney, groupDigits } from '@/lib/money';
 import { formatNumber } from '@/pages/dashboard/dashboardCards';
 
-gsap.registerPlugin(useGSAP);
-
 const UZ_TIMEZONE = 'Asia/Tashkent';
-
-// One-time check (per make-interfaces-feel-better: reduced-motion guard for
-// the trend chart's enter animation) — a static read is fine here, same
-// tradeoff the KpiCard count-up below already accepts.
-const prefersReducedMotion = window.matchMedia(
-  '(prefers-reduced-motion: reduce)',
-).matches;
 
 // uz-UZ Intl month:'short' renders as an unresolved skeleton (e.g. "M07 1")
 // in some browsers — build the date-fns dd.MM(.yyyy)(HH:mm) convention
@@ -227,31 +216,6 @@ export const KpiCard = ({
     success: 'bg-success/[14%] text-success',
     info: 'bg-info/[14%] text-info',
   };
-  const valueRef = useRef<HTMLParagraphElement>(null);
-
-  // Lead-card count-up, mount-once (empty deps). Non-lead cards no-op.
-  useGSAP(() => {
-    const el = valueRef.current;
-    if (!lead || !el) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    // ponytail: strips sign along with non-digits (fine — money/% values here
-    // are non-negative); add sign handling if a lead card ever goes negative.
-    const digits = value.replace(/\D/g, '');
-    const target = Number(digits);
-    if (!digits || !Number.isFinite(target)) return;
-    const lastDigitAt = value.search(/\d(?!.*\d)/);
-    const suffix = lastDigitAt >= 0 ? value.slice(lastDigitAt + 1) : '';
-    const proxy = { v: 0 };
-    gsap.to(proxy, {
-      v: target,
-      duration: 0.9,
-      ease: 'power2.out',
-      onUpdate() {
-        el.textContent = `${Math.round(proxy.v).toLocaleString('uz-UZ')}${suffix}`;
-      },
-    });
-  });
-
   return (
     <Card
       className={cn(
@@ -286,7 +250,6 @@ export const KpiCard = ({
         </span>
       </div>
       <p
-        ref={valueRef}
         className={cn(
           'num mt-4 font-bold font-mono',
           lead ? 'text-4xl' : 'text-2xl',
@@ -442,7 +405,7 @@ const LiveCaption = () => {
   return (
     <div className="inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
       <span
-        className="h-[7px] w-[7px] shrink-0 rounded-full bg-success shadow-[0_0_0_3px_hsl(var(--success)/0.2)] motion-safe:animate-[pulse-dot_2.4s_ease-in-out_infinite]"
+        className="h-[7px] w-[7px] shrink-0 rounded-full bg-success shadow-[0_0_0_3px_hsl(var(--success)/0.2)]"
         aria-hidden="true"
       />
       {t('dashboard.live_label', 'Jonli')} ·{' '}
@@ -537,7 +500,7 @@ const RevenueChart = ({
                   stroke="hsl(var(--primary))"
                   strokeWidth={2.6}
                   fill="url(#company-revenue-fill)"
-                  isAnimationActive={!prefersReducedMotion}
+                  isAnimationActive={false}
                   // Dot only on the last point (mock spec) — zero it out for
                   // every earlier point instead of branching return shape.
                   dot={(dotProps: {
@@ -931,8 +894,7 @@ const CompanyRevenueDashboard = () => {
 
       <div
         data-testid="dashboard-v2-kpi-strip"
-        className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6 motion-safe:animate-[rise_0.5s_ease_both]"
-        style={{ animationDelay: '40ms' }}
+        className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6"
         aria-label={t('dashboard.v2.kpi_section_label', 'Revenue control KPIs')}
       >
         <button
@@ -1029,10 +991,7 @@ const CompanyRevenueDashboard = () => {
         </div>
       </div>
 
-      <section
-        className="space-y-3 motion-safe:animate-[rise_0.5s_ease_both]"
-        style={{ animationDelay: '80ms' }}
-      >
+      <section className="space-y-3">
         <div>
           <Eyebrow>{t('dashboard.v2.revenue_trend', 'Tushum trendi')}</Eyebrow>
           <h2 className="mb-2 font-heading text-2xl font-bold tracking-tight text-foreground">
@@ -1048,10 +1007,7 @@ const CompanyRevenueDashboard = () => {
         </div>
       </section>
 
-      <section
-        className="grid grid-cols-1 gap-4 lg:grid-cols-2 motion-safe:animate-[rise_0.5s_ease_both]"
-        style={{ animationDelay: '100ms' }}
-      >
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <DashboardCard
           title={t('dashboard.v2.recovery', 'Qarzdorlik navbati')}
           description={t(
@@ -1120,10 +1076,7 @@ const CompanyRevenueDashboard = () => {
         </DashboardCard>
       </section>
 
-      <section
-        className="grid grid-cols-1 gap-4 lg:grid-cols-2 motion-safe:animate-[rise_0.5s_ease_both]"
-        style={{ animationDelay: '120ms' }}
-      >
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <DashboardCard
           title={t('dashboard.v2.branch_performance', 'Filial performance')}
           description={t(
@@ -1334,10 +1287,7 @@ const CompanyRevenueDashboard = () => {
         </DashboardCard>
       </section>
 
-      <section
-        className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_0.9fr] motion-safe:animate-[rise_0.5s_ease_both]"
-        style={{ animationDelay: '160ms' }}
-      >
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <DashboardCard
           title={t('dashboard.v2.operations', 'Operational follow-through')}
           description={t(

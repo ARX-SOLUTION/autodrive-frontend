@@ -164,10 +164,7 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
         </SheetHeader>
 
         {roster.length > 0 && (
-          <div
-            className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2 border-b border-border p-4 motion-safe:animate-[rise_0.4s_ease-out_both]"
-            style={{ animationDelay: '40ms' }}
-          >
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2 border-b border-border p-4">
             {SUMMARY_STATUSES.map((status) => (
               <div
                 key={status}

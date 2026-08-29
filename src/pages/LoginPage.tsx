@@ -99,7 +99,7 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="glass-card w-full max-w-sm p-8 animate-slide-in">
+      <div className="glass-card w-full max-w-sm p-8">
         <div className="mb-8 text-center">
           <div className="flex justify-center">
             <Brand size="lg" />

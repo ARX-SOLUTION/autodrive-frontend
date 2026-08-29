@@ -318,10 +318,7 @@ const LegacyMainDashboard = () => {
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
-            <span
-              className="h-1.5 w-1.5 rounded-full bg-success motion-safe:animate-pulse"
-              aria-hidden
-            />
+            <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden />
             {t('dashboard.live_label')}
           </span>
           <CourseTypeTabs
@@ -368,7 +365,6 @@ const LegacyMainDashboard = () => {
             </span>
           }
           spark={revenueSparkValues}
-          animationDelayMs={40}
           lead
         />
         <KpiCard
@@ -383,7 +379,6 @@ const LegacyMainDashboard = () => {
             </span>
           }
           spark={studentsSpark}
-          animationDelayMs={80}
         />
         <KpiCard
           label={t('dashboard.hero_outstanding_debt')}
@@ -409,7 +404,6 @@ const LegacyMainDashboard = () => {
                 })
               : undefined
           }
-          animationDelayMs={120}
         />
         <KpiCard
           label={t('dashboard.hero_graduates')}
@@ -423,7 +417,6 @@ const LegacyMainDashboard = () => {
               </span>
             ) : undefined
           }
-          animationDelayMs={160}
         />
       </section>
 
@@ -431,7 +424,6 @@ const LegacyMainDashboard = () => {
       <section className="cv-auto grid grid-cols-1 gap-4 lg:grid-cols-5">
         <SectionCard
           className="lg:col-span-3"
-          staggerDelayMs={200}
           title={t('dashboard.revenue_trend_title')}
           subtitle={t('dashboard.revenue_trend_sub', {
             total: formatNumber(revenueTotal),
@@ -506,7 +498,6 @@ const LegacyMainDashboard = () => {
 
         <SectionCard
           className="lg:col-span-2"
-          staggerDelayMs={240}
           title={t('dashboard.course_mix_title')}
           subtitle={t('dashboard.course_mix_sub')}
         >
@@ -588,7 +579,6 @@ const LegacyMainDashboard = () => {
       <section className="cv-auto grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Top branches */}
         <SectionCard
-          staggerDelayMs={280}
           title={t('dashboard.top_branches_title')}
           subtitle={t('dashboard.top_branches_sub')}
         >
@@ -670,7 +660,6 @@ const LegacyMainDashboard = () => {
 
         {/* Recent payments */}
         <SectionCard
-          staggerDelayMs={320}
           title={t('dashboard.recent_payments_title')}
           subtitle={t('dashboard.recent_payments_sub')}
         >
@@ -722,7 +711,6 @@ const LegacyMainDashboard = () => {
         {/* Pulse log — viewAudit (owner/dev); backend gates /audit-logs */}
         {canViewAudit && (
           <SectionCard
-            staggerDelayMs={360}
             title={t('dashboard.activity_title')}
             subtitle={t('dashboard.activity_sub')}
           >
@@ -800,7 +788,6 @@ const LegacyMainDashboard = () => {
       {/* ===== Owner-only: branch comparison ===== */}
       {canViewAllBranches && analytics.branch_stats.length > 1 && (
         <SectionCard
-          staggerDelayMs={400}
           className="cv-auto"
           title={t('dashboard.branch_comparison')}
           subtitle={t('dashboard.top_branches_sub')}

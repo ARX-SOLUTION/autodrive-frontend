@@ -6,7 +6,6 @@ import { Topbar } from './Topbar';
 import { Breadcrumbs } from './Breadcrumbs';
 import { CommandPalette, useCommandPalette } from './CommandPalette';
 import { PageLoader } from './PageLoader';
-import { prefetchIdle } from '@/lib/routePrefetch';
 
 export const AppLayout = () => {
   const { t } = useTranslation();
@@ -53,11 +52,6 @@ export const AppLayout = () => {
     }
   }, [location.pathname, navigationType]);
 
-  // Warm the highest-traffic routes during idle time (covers click-before-hover).
-  useEffect(() => {
-    prefetchIdle(['/students', '/payments', '/dashboard']);
-  }, []);
-
   return (
     <div className="min-h-dvh bg-background">
       <a
@@ -83,7 +77,7 @@ export const AppLayout = () => {
         >
           <div className="mx-auto w-full max-w-screen-2xl">
             <Breadcrumbs />
-            <div className="animate-in fade-in duration-200">
+            <div>
               <Suspense fallback={<PageLoader />}>
                 <Outlet />
               </Suspense>

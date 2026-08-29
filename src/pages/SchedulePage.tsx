@@ -347,10 +347,7 @@ const SchedulePage = () => {
 
         <TabsContent value="calendar" className="space-y-6">
           {/* Calendar navigation */}
-          <div
-            className="flex flex-wrap items-center justify-between gap-3 motion-safe:animate-[rise_0.4s_ease-out_both]"
-            style={{ animationDelay: '40ms' }}
-          >
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -401,10 +398,7 @@ const SchedulePage = () => {
               ))}
             </div>
           ) : (
-            <div
-              className="overflow-x-auto rounded-xl border border-border bg-card p-[18px] motion-safe:animate-[rise_0.4s_ease-out_both]"
-              style={{ animationDelay: '80ms' }}
-            >
+            <div className="overflow-x-auto rounded-xl border border-border bg-card p-[18px]">
               <div className="grid min-w-[840px] grid-cols-7 gap-3">
                 {weekDays.map((day) => {
                   const key = format(day, 'yyyy-MM-dd');

@@ -403,10 +403,7 @@ const AttendancePage = () => {
           description={t('attendance.not_found_desc')}
         />
       ) : (
-        <div
-          className="space-y-4 motion-safe:animate-[rise_0.4s_ease-out_both]"
-          style={{ animationDelay: '40ms' }}
-        >
+        <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {lessons.map((lesson) => (
               <LessonCard
