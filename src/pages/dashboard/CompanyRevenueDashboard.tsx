@@ -1020,22 +1020,6 @@ const CompanyRevenueDashboard = () => {
         </div>
       </div>
 
-      <section className="space-y-3">
-        <div>
-          <Eyebrow>{t('dashboard.v2.revenue_trend', 'Tushum trendi')}</Eyebrow>
-          <h2 className="mb-2 font-heading text-2xl font-bold tracking-tight text-foreground">
-            {t('dashboard.revenue_trend_sub', {
-              total: formatNumber(revenueTrendTotal),
-              currency,
-            })}
-          </h2>
-          <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
-            {trendRangeCaption}
-          </p>
-          <RevenueChart data={data.revenue_trend} onReset={resetFilters} />
-        </div>
-      </section>
-
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <DashboardCard
           title={t('dashboard.v2.recovery', 'Qarzdorlik navbati')}
@@ -1112,6 +1096,96 @@ const CompanyRevenueDashboard = () => {
             </Link>
           )}
         </DashboardCard>
+        <DashboardCard
+          title={t('dashboard.v2.operations', 'Operational follow-through')}
+          description={t(
+            'dashboard.v2.operations_subtitle',
+            'Revenue qaroridan keyingi bajariladigan ishlar.',
+          )}
+        >
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <Link
+              to="/schedule"
+              className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-colors duration-150 hover:bg-muted/60"
+            >
+              <span className="flex items-center gap-3">
+                <CalendarDot
+                  className="h-5 w-5 text-primary"
+                  aria-hidden="true"
+                />
+                <span>
+                  <span className="block text-sm font-semibold">
+                    {t('nav.schedule', 'Kelasi darslar')}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {data.operations.next_lessons.length} ta rejalashtirilgan
+                  </span>
+                </span>
+              </span>
+              <CaretRight
+                className="h-4 w-4 text-muted-foreground motion-safe:transition-transform duration-150 group-hover:translate-x-0.5"
+                aria-hidden="true"
+              />
+            </Link>
+            <Link
+              to="/attendance"
+              className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-colors duration-150 hover:bg-muted/60"
+            >
+              <span className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-warning" aria-hidden="true" />
+                <span>
+                  <span className="block text-sm font-semibold">
+                    {t('nav.attendance', 'Davomat tekshiruvi')}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {data.operations.incomplete_attendance_lessons.length} ta
+                    dars kutilmoqda
+                  </span>
+                </span>
+              </span>
+              <CaretRight
+                className="h-4 w-4 text-muted-foreground motion-safe:transition-transform duration-150 group-hover:translate-x-0.5"
+                aria-hidden="true"
+              />
+            </Link>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
+            {Object.entries(data.operations.attendance_status).map(
+              ([status, count]) => (
+                <span
+                  key={status}
+                  className="rounded-full border border-border px-2.5 py-1"
+                >
+                  <span className="font-semibold text-foreground tabular-nums">
+                    {count}
+                  </span>{' '}
+                  {status}
+                </span>
+              ),
+            )}
+            {attendanceTotal === 0 && (
+              <span>
+                {t('dashboard.v2.attendance_no_data', 'Davomat maʼlumoti yo‘q')}
+              </span>
+            )}
+          </div>
+        </DashboardCard>
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <Eyebrow>{t('dashboard.v2.revenue_trend', 'Tushum trendi')}</Eyebrow>
+          <h2 className="mb-2 font-heading text-2xl font-bold tracking-tight text-foreground">
+            {t('dashboard.revenue_trend_sub', {
+              total: formatNumber(revenueTrendTotal),
+              currency,
+            })}
+          </h2>
+          <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+            {trendRangeCaption}
+          </p>
+          <RevenueChart data={data.revenue_trend} onReset={resetFilters} />
+        </div>
       </section>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -1335,83 +1409,6 @@ const CompanyRevenueDashboard = () => {
           ) : (
             <EmptyData />
           )}
-        </DashboardCard>
-      </section>
-
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <DashboardCard
-          title={t('dashboard.v2.operations', 'Operational follow-through')}
-          description={t(
-            'dashboard.v2.operations_subtitle',
-            'Revenue qaroridan keyingi bajariladigan ishlar.',
-          )}
-        >
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Link
-              to="/schedule"
-              className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-colors duration-150 hover:bg-muted/60"
-            >
-              <span className="flex items-center gap-3">
-                <CalendarDot
-                  className="h-5 w-5 text-primary"
-                  aria-hidden="true"
-                />
-                <span>
-                  <span className="block text-sm font-semibold">
-                    {t('nav.schedule', 'Kelasi darslar')}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {data.operations.next_lessons.length} ta rejalashtirilgan
-                  </span>
-                </span>
-              </span>
-              <CaretRight
-                className="h-4 w-4 text-muted-foreground motion-safe:transition-transform duration-150 group-hover:translate-x-0.5"
-                aria-hidden="true"
-              />
-            </Link>
-            <Link
-              to="/attendance"
-              className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-colors duration-150 hover:bg-muted/60"
-            >
-              <span className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-warning" aria-hidden="true" />
-                <span>
-                  <span className="block text-sm font-semibold">
-                    {t('nav.attendance', 'Davomat tekshiruvi')}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {data.operations.incomplete_attendance_lessons.length} ta
-                    dars kutilmoqda
-                  </span>
-                </span>
-              </span>
-              <CaretRight
-                className="h-4 w-4 text-muted-foreground motion-safe:transition-transform duration-150 group-hover:translate-x-0.5"
-                aria-hidden="true"
-              />
-            </Link>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-            {Object.entries(data.operations.attendance_status).map(
-              ([status, count]) => (
-                <span
-                  key={status}
-                  className="rounded-full border border-border px-2.5 py-1"
-                >
-                  <span className="font-semibold text-foreground tabular-nums">
-                    {count}
-                  </span>{' '}
-                  {status}
-                </span>
-              ),
-            )}
-            {attendanceTotal === 0 && (
-              <span>
-                {t('dashboard.v2.attendance_no_data', 'Davomat maʼlumoti yo‘q')}
-              </span>
-            )}
-          </div>
         </DashboardCard>
       </section>
 
