@@ -185,6 +185,52 @@ describe('CompanyRevenueDashboard', () => {
     ).toBeGreaterThanOrEqual(1);
   });
 
+  it('shows generated freshness without claiming the dashboard is live', () => {
+    render(
+      <MemoryRouter>
+        <CompanyRevenueDashboard />
+      </MemoryRouter>,
+    );
+
+    const freshness = screen.getByTestId('dashboard-freshness-caption');
+    expect(freshness).toHaveTextContent('dashboard.v2.updated');
+    expect(freshness).toHaveTextContent('10.07.2026');
+    expect(screen.getAllByText(/dashboard\.v2\.updated/)).toHaveLength(2);
+    expect(screen.queryByText('dashboard.live_label')).not.toBeInTheDocument();
+  });
+
+  it('shows an older data-through timestamp when it adds freshness context', () => {
+    const originalDataThrough = overview.data.freshness.data_through;
+    overview.data.freshness.data_through = '2026-07-09T08:30:00.000Z';
+
+    try {
+      render(
+        <MemoryRouter>
+          <CompanyRevenueDashboard />
+        </MemoryRouter>,
+      );
+
+      const freshness = screen.getByTestId('dashboard-freshness-caption');
+      expect(freshness).toHaveTextContent('dashboard.v2.to');
+      expect(freshness).toHaveTextContent('09.07.2026');
+    } finally {
+      overview.data.freshness.data_through = originalDataThrough;
+    }
+  });
+
+  it('keeps manual refresh connected to the overview query', () => {
+    render(
+      <MemoryRouter>
+        <CompanyRevenueDashboard />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'dashboard.v2.refresh' }),
+    );
+    expect(overviewState.refetch).toHaveBeenCalledTimes(1);
+  });
+
   it('uses DateRangePicker and granularity as the only period controls', () => {
     render(
       <MemoryRouter>

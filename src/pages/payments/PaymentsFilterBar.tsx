@@ -146,6 +146,9 @@ export const PaymentsFilterBar = ({
             <SelectItem value="all">{t('payments.all_types')}</SelectItem>
             <SelectItem value="naqd">{t('payments.payment_cash')}</SelectItem>
             <SelectItem value="karta">{t('payments.payment_card')}</SelectItem>
+            <SelectItem value="perechisleniya">
+              {t('payments.payment_transfer')}
+            </SelectItem>
           </SelectContent>
         </Select>
 

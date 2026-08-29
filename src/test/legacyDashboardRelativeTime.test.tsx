@@ -110,6 +110,15 @@ describe('LegacyMainDashboard relative-time refresh', () => {
     expect(screen.getByText('Ali Valiyev')).toBeInTheDocument();
   });
 
+  it('does not present month-over-month revenue as a yesterday comparison', () => {
+    renderDashboard();
+
+    expect(
+      screen.queryByText('dashboard.hero_vs_yesterday'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('+11.1%')).not.toBeInTheDocument();
+  });
+
   it('shows accurate elapsed time and keeps updating on a 60s interval', () => {
     renderDashboard();
     expect(screen.getByText('5m')).toBeInTheDocument();

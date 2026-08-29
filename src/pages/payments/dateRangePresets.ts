@@ -32,15 +32,14 @@ export type DatePreset = 'today' | 'week' | 'month' | 'lastMonth' | 'all';
 export const presetRange = (
   preset: DatePreset,
 ): { from: Date | undefined; to: Date | undefined } => {
-  const now = new Date();
-  now.setHours(23, 59, 59, 999);
+  const today = tashkentToday();
   switch (preset) {
     case 'today':
-      return { from: tashkentToday(), to: now };
+      return { from: tashkentToday(), to: today };
     case 'week':
-      return { from: weekAgo(), to: now };
+      return { from: weekAgo(), to: today };
     case 'month':
-      return { from: monthStart(), to: now };
+      return { from: monthStart(), to: today };
     case 'lastMonth':
       return { from: lastMonthStart(), to: lastMonthEnd() };
     case 'all':

@@ -260,11 +260,6 @@ const LegacyMainDashboard = () => {
 
   // KPI 1: Today revenue
   const todayRevenue = snapshot?.today_income ?? 0;
-  // Estimate "yesterday" via this_month avg (no daily series exposed)
-  const todayDelta =
-    snapshot && analytics.this_month_revenue && analytics.last_month_revenue
-      ? computeDelta(analytics.this_month_revenue, analytics.last_month_revenue)
-      : null;
 
   // KPI 4: Graduates as fallback (lessons schedule not exposed)
   const graduates = analytics.result_stats.topshirdi;
@@ -358,12 +353,6 @@ const LegacyMainDashboard = () => {
           unit={currency}
           icon={<Wallet className="h-4 w-4" />}
           tone="primary"
-          delta={todayDelta}
-          metaLeft={
-            <span className="text-xs text-muted-foreground">
-              {t('dashboard.hero_vs_yesterday')}
-            </span>
-          }
           spark={revenueSparkValues}
           lead
         />

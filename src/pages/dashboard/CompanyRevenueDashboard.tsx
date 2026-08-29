@@ -52,6 +52,23 @@ import { formatMoney, groupDigits } from '@/lib/money';
 import { formatNumber } from '@/pages/dashboard/dashboardCards';
 
 const UZ_TIMEZONE = 'Asia/Tashkent';
+const freshnessTimestampFormatter = new Intl.DateTimeFormat('en-GB', {
+  timeZone: UZ_TIMEZONE,
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
+
+const formatFreshnessTimestamp = (value: string | Date) => {
+  const parts = freshnessTimestampFormatter.formatToParts(new Date(value));
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value ?? '';
+
+  return `${part('day')}.${part('month')}.${part('year')} ${part('hour')}:${part('minute')}`;
+};
 
 // uz-UZ Intl month:'short' renders as an unresolved skeleton (e.g. "M07 1")
 // in some browsers — build the date-fns dd.MM(.yyyy)(HH:mm) convention
@@ -397,20 +414,33 @@ const FilterBar = ({
   );
 };
 
-// Hero live caption (mock section 1) — pulsing dot + "Jonli · Asia/Tashkent
-// · DD MMM" (uzDateParts' static month table, not Intl month names).
-const LiveCaption = () => {
+const FreshnessCaption = ({
+  generated_at,
+  data_through,
+}: CompanyOverview['freshness']) => {
   const { t } = useTranslation();
-  const { day: liveDay, month: liveMonth } = uzDateParts(new Date());
+  const generatedAt = new Date(generated_at);
+  const dataThrough = data_through ? new Date(data_through) : null;
+  const showDataThrough =
+    dataThrough !== null && dataThrough.getTime() < generatedAt.getTime();
+
   return (
-    <div className="inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-      <span
-        className="h-[7px] w-[7px] shrink-0 rounded-full bg-success shadow-[0_0_0_3px_hsl(var(--success)/0.2)]"
-        aria-hidden="true"
-      />
-      {t('dashboard.live_label', 'Jonli')} ·{' '}
-      {t('dashboard.v2.live_caption_tz', 'Asia/Tashkent')} · {liveDay}{' '}
-      {liveMonth}
+    <div
+      data-testid="dashboard-freshness-caption"
+      className="inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground"
+    >
+      <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      <span>
+        {t('dashboard.v2.updated', 'Yangilandi')} ·{' '}
+        {formatFreshnessTimestamp(generatedAt)}
+        {showDataThrough && (
+          <>
+            {' '}
+            · {t('dashboard.v2.to', 'Gacha')}{' '}
+            {formatFreshnessTimestamp(dataThrough)}
+          </>
+        )}
+      </span>
     </div>
   );
 };
@@ -814,7 +844,7 @@ const CompanyRevenueDashboard = () => {
     <div className="space-y-5 pb-8">
       <header className="space-y-5">
         <div>
-          <LiveCaption />
+          <FreshnessCaption {...data.freshness} />
           <h1 className="mt-2 font-heading text-[40px] font-extrabold leading-[1.1] tracking-[-0.025em] text-balance">
             {t(greetingKey())}
             {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
@@ -1730,10 +1760,7 @@ const CompanyRevenueDashboard = () => {
 
       <p className="text-right text-xs text-muted-foreground">
         {t('dashboard.v2.updated', 'Yangilandi')} ·{' '}
-        {formatDate(data.freshness.generated_at, {
-          hour: '2-digit',
-          minute: '2-digit',
-        })}
+        {formatFreshnessTimestamp(data.freshness.generated_at)}
       </p>
     </div>
   );
