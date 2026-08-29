@@ -1,10 +1,49 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 import { componentTagger } from 'lovable-tagger';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
+
+const assertProductionApiBaseUrl = (value: string | undefined) => {
+  const apiBaseUrl = value?.trim();
+
+  if (!apiBaseUrl) {
+    throw new Error('VITE_API_BASE_URL is required for production builds.');
+  }
+
+  let url: URL;
+  try {
+    url = new URL(apiBaseUrl);
+  } catch {
+    throw new Error('VITE_API_BASE_URL must be a valid absolute URL.');
+  }
+
+  const hostname = url.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  const isLocalhost =
+    hostname === 'localhost' || hostname.endsWith('.localhost');
+  const isLoopback =
+    hostname === '::1' || hostname === '0.0.0.0' || hostname.startsWith('127.');
+
+  if (url.protocol !== 'https:' || isLocalhost || isLoopback) {
+    throw new Error(
+      'VITE_API_BASE_URL must use HTTPS and must not target localhost or a loopback address in production.',
+    );
+  }
+};
+
+const productionApiGuard: Plugin = {
+  name: 'autodrive-production-api-guard',
+  config(_config, { command, mode }) {
+    if (command !== 'build' || mode !== 'production') return;
+
+    const fileEnv = loadEnv(mode, process.cwd(), '');
+    const apiBaseUrl =
+      process.env.VITE_API_BASE_URL ?? fileEnv.VITE_API_BASE_URL;
+    assertProductionApiBaseUrl(apiBaseUrl);
+  },
+};
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -16,6 +55,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   plugins: [
+    productionApiGuard,
     tanstackRouter({
       target: 'react',
       autoCodeSplitting: true,
@@ -34,7 +74,6 @@ export default defineConfig(({ mode }) => ({
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.js',
-      registerType: 'autoUpdate',
       injectRegister: false,
       includeManifestIcons: false,
       injectManifest: {

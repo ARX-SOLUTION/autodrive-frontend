@@ -17,13 +17,13 @@ export const useOperators = () => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
-    queryKey: operatorKeys.list({ branchId }),
+    queryKey: operatorKeys.list({ branchId, page: 1, limit: 100 }),
     // autodrive-6ef.17: operator lists are stable org structure, so they can
     // use a longer stale window than the 30s global default.
     staleTime: 5 * 60_000,
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get<unknown>('/users', {
-        params: { role: 'operator' } satisfies UsersQuery,
+        params: { role: 'operator', page: 1, limit: 100 } satisfies UsersQuery,
         signal,
       });
       return parseListEnvelope<User>(res, 'operators').data;
@@ -84,6 +84,7 @@ export const useCreateOperator = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: operatorKeys.all });
+      qc.invalidateQueries({ queryKey: userKeys.all });
     },
   });
 };
@@ -114,6 +115,7 @@ export const useDeleteOperator = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: operatorKeys.all });
+      qc.invalidateQueries({ queryKey: userKeys.all });
     },
   });
 };

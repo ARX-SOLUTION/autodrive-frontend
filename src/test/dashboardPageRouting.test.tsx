@@ -43,7 +43,19 @@ vi.mock('@/services/paymentService', () => ({
   usePaymentSnapshot: () => ({
     data: { today_income: 0, current_total_debt: 0, students_with_debt: 0 },
   }),
-  usePayments: () => ({ data: [] }),
+  usePaymentsPage: () => ({
+    data: {
+      data: [],
+      meta: {
+        total: 0,
+        page: 1,
+        limit: 5,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    },
+  }),
 }));
 vi.mock('@/services/dashboardService', () => ({
   useDashboardAnalytics: () => ({

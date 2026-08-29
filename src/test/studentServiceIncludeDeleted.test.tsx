@@ -2,7 +2,12 @@ import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { useStudentsPage, useRestoreStudent } from '@/services/studentService';
+import {
+  studentsPageQueryOptions,
+  useStudents,
+  useStudentsPage,
+  useRestoreStudent,
+} from '@/services/studentService';
 import axiosInstance from '@/api/axiosInstance';
 import { studentKeys } from '@/lib/queryKeys';
 
@@ -46,6 +51,55 @@ const makeWrapper = (queryClient: QueryClient) => {
 };
 
 describe('useStudentsPage includeDeleted (autodrive-cg9)', () => {
+  it('normalizes page and list cache keys exactly like request filters', async () => {
+    const rawPage = studentsPageQueryOptions({
+      branchId: 'b1',
+      search: '  Ali  ',
+      dateFrom: new Date(2026, 6, 1, 8),
+      sortBy: 'unsupported',
+      includeDeleted: false,
+    });
+    const normalizedPage = studentsPageQueryOptions({
+      branchId: 'b1',
+      search: 'Ali',
+      dateFrom: new Date(2026, 6, 1, 20),
+    });
+    expect(rawPage.queryKey).toEqual(normalizedPage.queryKey);
+
+    (axiosInstance.get as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: emptyPage,
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+    });
+    const wrapper = makeWrapper(queryClient);
+
+    const { result: rawList } = renderHook(
+      () =>
+        useStudents(undefined, 'b1', 1, 50, undefined, {
+          search: '  Ali  ',
+          dateFrom: new Date(2026, 6, 1, 8),
+          sortBy: 'unsupported',
+          includeDeleted: false,
+        }),
+      { wrapper },
+    );
+    await waitFor(() => expect(rawList.current.data).toEqual([]));
+
+    const { result: normalizedList } = renderHook(
+      () =>
+        useStudents(undefined, 'b1', 1, 50, undefined, {
+          search: 'Ali',
+          dateFrom: new Date(2026, 6, 1, 20),
+        }),
+      { wrapper },
+    );
+    await waitFor(() => expect(normalizedList.current.data).toEqual([]));
+
+    expect(queryClient.getQueryCache().getAll()).toHaveLength(1);
+    expect(axiosInstance.get).toHaveBeenCalledTimes(1);
+  });
+
   it('sends include_deleted=true on the wire when the toggle is on', async () => {
     (axiosInstance.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       data: emptyPage,

@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useLogin } from '@/services/authService';
 import { isRootDomain, navigateFullPage, rootDomainAppUrl } from '@/lib/domain';
+import { queryClient } from '@/lib/queryClient';
 import { Brand } from '@/components/layout/Brand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +47,7 @@ const LoginPage = () => {
     // Always start a direct /login visit from a clean auth state so stale
     // persisted sessions cannot bounce the user away from the form.
     logout();
+    queryClient.clear();
   }, [logout]);
 
   useEffect(() => {
@@ -83,7 +85,7 @@ const LoginPage = () => {
       navigateFullPage(rootDomainAppUrl(target));
       return;
     }
-    void router.navigate({ href: target });
+    void router.navigate({ href: target, replace: true });
   };
 
   const onValid = (values: LoginFormValues) => {

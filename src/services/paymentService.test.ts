@@ -49,8 +49,28 @@ describe('payment page request contract', () => {
 
     const options = paymentsPageQueryOptions(filters, false);
 
-    expect(options.queryKey).toEqual(['payments', 'page', filters]);
+    expect(options.queryKey).toEqual([
+      'payments',
+      'page',
+      toPaymentQueryParams(filters),
+    ]);
     expect(options.enabled).toBe(false);
     expect(options.queryFn).toBeTypeOf('function');
+  });
+
+  it('uses one cache entry for filters that normalize to the same request', () => {
+    const raw = paymentsPageQueryOptions({
+      search: '  Aziz  ',
+      startDate: new Date(2026, 6, 1, 8),
+      courseType: 'unsupported',
+      paymentMethod: 'unsupported',
+      sortBy: 'unsupported',
+    });
+    const normalized = paymentsPageQueryOptions({
+      search: 'Aziz',
+      startDate: new Date(2026, 6, 1, 20),
+    });
+
+    expect(raw.queryKey).toEqual(normalized.queryKey);
   });
 });

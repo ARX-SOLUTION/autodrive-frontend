@@ -136,8 +136,8 @@ describe('UsersPage deleted-row rendering (autodrive-cg9)', () => {
     });
     await renderPage();
 
-    expect(screen.getAllByText('common.deleted')).toHaveLength(2);
-    expect(screen.getAllByLabelText('common.restore')).toHaveLength(2);
+    expect(screen.getAllByText('common.deleted')).toHaveLength(1);
+    expect(screen.getAllByLabelText('common.restore')).toHaveLength(1);
     expect(screen.getAllByLabelText('common.edit').length).toBeGreaterThan(0);
   });
 

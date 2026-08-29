@@ -73,9 +73,9 @@ const pageResult = (data: User[], page: number, totalPages = 3) => ({
   data: {
     data,
     meta: {
-      total: totalPages * 100,
+      total: totalPages * 25,
       page,
-      limit: 100,
+      limit: 25,
       totalPages,
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
@@ -156,7 +156,7 @@ describe('Staff DataGrid server ownership', () => {
       routePattern: '/users',
     });
 
-    expect(h.useUsersPage).toHaveBeenLastCalledWith('manager', 2, 100, {
+    expect(h.useUsersPage).toHaveBeenLastCalledWith('manager', 2, 25, {
       search: 'nigora',
       branchId: 'b1',
       isActive: true,
@@ -169,7 +169,7 @@ describe('Staff DataGrid server ownership', () => {
       expect(h.useUsersPage).toHaveBeenLastCalledWith(
         'manager',
         3,
-        100,
+        25,
         expect.objectContaining({ search: 'nigora' }),
       ),
     );
@@ -181,7 +181,7 @@ describe('Staff DataGrid server ownership', () => {
       routePattern: '/oqituvchilar',
     });
 
-    expect(h.useTeachersPage).toHaveBeenLastCalledWith(2, 100, 'ali');
+    expect(h.useTeachersPage).toHaveBeenLastCalledWith(2, 25, 'ali');
     const table = screen.getByRole('table', { name: 'teachers.title' });
     let rows = within(table).getAllByRole('row').slice(1);
     expect(rows[0]).toHaveTextContent('Ali');
@@ -196,7 +196,7 @@ describe('Staff DataGrid server ownership', () => {
     );
     rows = within(table).getAllByRole('row').slice(1);
     expect(rows[0]).toHaveTextContent('Zara');
-    expect(h.useTeachersPage).toHaveBeenLastCalledWith(2, 100, 'ali');
+    expect(h.useTeachersPage).toHaveBeenLastCalledWith(2, 25, 'ali');
   });
 
   it('uses server paging and search for operators without a sort argument', async () => {
@@ -205,11 +205,11 @@ describe('Staff DataGrid server ownership', () => {
       routePattern: '/operatorlar',
     });
 
-    expect(h.useOperatorsPage).toHaveBeenLastCalledWith(2, 100, 'malika');
+    expect(h.useOperatorsPage).toHaveBeenLastCalledWith(2, 25, 'malika');
     fireEvent.click(screen.getByRole('button', { name: 'common.next' }));
 
     await waitFor(() =>
-      expect(h.useOperatorsPage).toHaveBeenLastCalledWith(3, 100, 'malika'),
+      expect(h.useOperatorsPage).toHaveBeenLastCalledWith(3, 25, 'malika'),
     );
   });
 });

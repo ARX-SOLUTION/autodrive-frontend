@@ -78,7 +78,7 @@ export const AppLayout = () => {
         />
         <div
           className={cn(
-            'flex min-h-dvh flex-col transition-[margin-left] duration-200 ease-out motion-reduce:transition-none',
+            'flex min-h-dvh flex-col',
             desktopSidebarExpanded ? 'lg:ml-64' : 'lg:ml-[72px]',
           )}
         >

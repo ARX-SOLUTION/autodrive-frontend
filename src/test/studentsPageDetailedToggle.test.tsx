@@ -7,6 +7,11 @@ import { renderWithRouter } from '@/test/utils/renderWithRouter';
 // One "Yangi talaba qo'shish" button opens the add flow in QUICK mode; the
 // in-dialog "Batafsil" checkbox switches to the DETAILED dialog.
 
+const dialogRenders = vi.hoisted(() => ({
+  quick: vi.fn(),
+  detailed: vi.fn(),
+}));
+
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
     selector({ user: { role: 'owner', branch_id: null }, isOwner: () => true }),
@@ -46,7 +51,10 @@ vi.mock('@/components/ui/StudentModal', () => ({
   }: {
     open: boolean;
     detailedToggle?: ReactNode;
-  }) => (open ? <div data-testid="quick-dialog">{detailedToggle}</div> : null),
+  }) => {
+    dialogRenders.quick();
+    return open ? <div data-testid="quick-dialog">{detailedToggle}</div> : null;
+  },
 }));
 vi.mock('@/components/ui/AddStudentDialog', () => ({
   default: ({
@@ -55,8 +63,12 @@ vi.mock('@/components/ui/AddStudentDialog', () => ({
   }: {
     open: boolean;
     detailedToggle?: ReactNode;
-  }) =>
-    open ? <div data-testid="detailed-dialog">{detailedToggle}</div> : null,
+  }) => {
+    dialogRenders.detailed();
+    return open ? (
+      <div data-testid="detailed-dialog">{detailedToggle}</div>
+    ) : null;
+  },
 }));
 
 const renderPage = () =>
@@ -70,6 +82,8 @@ describe('StudentsPage add flow toggle', () => {
     await renderPage();
     expect(screen.queryByTestId('quick-dialog')).toBeNull();
     expect(screen.queryByTestId('detailed-dialog')).toBeNull();
+    expect(dialogRenders.quick).not.toHaveBeenCalled();
+    expect(dialogRenders.detailed).not.toHaveBeenCalled();
 
     // exec-dash 4-polish: the empty-state (0 students, per the mock above)
     // now also renders its own "students.add" action in both the table and
@@ -79,9 +93,12 @@ describe('StudentsPage add flow toggle', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'students.add' })[0]);
     expect(screen.getByTestId('quick-dialog')).toBeInTheDocument();
     expect(screen.queryByTestId('detailed-dialog')).toBeNull();
+    expect(dialogRenders.quick).toHaveBeenCalled();
+    expect(dialogRenders.detailed).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('checkbox'));
     expect(screen.queryByTestId('quick-dialog')).toBeNull();
     expect(screen.getByTestId('detailed-dialog')).toBeInTheDocument();
+    expect(dialogRenders.detailed).toHaveBeenCalled();
   });
 });

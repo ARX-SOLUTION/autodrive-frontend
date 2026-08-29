@@ -60,11 +60,7 @@ const formatDate = (d?: string) => {
   }
 };
 
-// Backend GetUsersQueryDto caps limit at 100 -- large enough that a single
-// branch/company's manager list never needs a second server page in
-// practice, while still being real pagination (not a silent truncation)
-// if it ever does.
-const SERVER_PAGE_SIZE = 100;
+const SERVER_PAGE_SIZE = 25;
 const userColumnHelper = createDataGridColumnHelper<User>();
 const NO_COLUMN_FILTERS: ColumnFiltersState = [];
 const ignoreColumnFiltersChange = () => undefined;

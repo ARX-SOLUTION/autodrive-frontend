@@ -71,7 +71,7 @@ const DesktopSidebar = ({
   <aside
     data-state={expanded ? 'expanded' : 'collapsed'}
     className={cn(
-      'fixed inset-y-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-sidebar-border bg-sidebar transition-[width] duration-200 ease-out motion-reduce:transition-none lg:flex',
+      'fixed inset-y-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-sidebar-border bg-sidebar lg:flex',
       expanded ? 'w-64' : 'w-[72px]',
     )}
   >

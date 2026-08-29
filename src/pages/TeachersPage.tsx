@@ -36,11 +36,7 @@ import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataGrid, createDataGridColumnHelper } from '@/shared/ui/data-grid';
 
-// Backend GetUsersQueryDto caps limit at 100 -- large enough that a single
-// branch/company's teacher list never needs a second server page in
-// practice, while still being real pagination (not a silent truncation)
-// if it ever does.
-const SERVER_PAGE_SIZE = 100;
+const SERVER_PAGE_SIZE = 25;
 const teacherColumnHelper = createDataGridColumnHelper<User>();
 const NO_COLUMN_FILTERS: ColumnFiltersState = [];
 const ignoreColumnFiltersChange = () => undefined;

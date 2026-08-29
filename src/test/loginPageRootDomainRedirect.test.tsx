@@ -1,6 +1,7 @@
 import { screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import LoginPage from '@/pages/LoginPage';
+import { queryClient } from '@/lib/queryClient';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-dtj.2: root domain (automaktab.uz) has no app UI of its own, so
@@ -50,8 +51,20 @@ const submitLogin = () => {
 
 describe('LoginPage root-domain redirect (autodrive-dtj.2)', () => {
   afterEach(() => {
+    queryClient.clear();
     vi.clearAllMocks();
     cleanup();
+  });
+
+  it('clears cached tenant data when the login page mounts', async () => {
+    setHostname('app.automaktab.uz');
+    queryClient.setQueryData(['students', 'page'], { id: 'previous-tenant' });
+
+    await renderLogin('/dashboard');
+
+    await waitFor(() =>
+      expect(queryClient.getQueryData(['students', 'page'])).toBeUndefined(),
+    );
   });
 
   it('full-navigates to app.<domain> with the preserved `from` path on the root domain', async () => {
@@ -80,5 +93,10 @@ describe('LoginPage root-domain redirect (autodrive-dtj.2)', () => {
       expect(router.state.location.pathname).toBe('/students/42'),
     );
     expect(window.location.href).toBe('');
+
+    router.history.back();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/students/42'),
+    );
   });
 });

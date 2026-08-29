@@ -19,13 +19,13 @@ export const useTeachers = () => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
-    queryKey: teacherKeys.list({ branchId }),
+    queryKey: teacherKeys.list({ branchId, page: 1, limit: 100 }),
     // autodrive-6ef.17: teacher lists are stable org structure, so they can
     // use a longer stale window than the 30s global default.
     staleTime: 5 * 60_000,
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get<unknown>('/users', {
-        params: { role: 'teacher' } satisfies UsersQuery,
+        params: { role: 'teacher', page: 1, limit: 100 } satisfies UsersQuery,
         signal,
       });
       return parseListEnvelope<User>(res, 'teachers').data;
@@ -84,6 +84,7 @@ export const useCreateTeacher = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: teacherKeys.all });
+      qc.invalidateQueries({ queryKey: userKeys.all });
     },
   });
 };
@@ -114,6 +115,7 @@ export const useDeleteTeacher = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: teacherKeys.all });
+      qc.invalidateQueries({ queryKey: userKeys.all });
     },
   });
 };

@@ -63,7 +63,7 @@ const COURSE = {
 };
 courseQuery.data = COURSE;
 
-const renderPage = () => {
+const renderPage = (initialEntry = '/courses/c1') => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -71,7 +71,7 @@ const renderPage = () => {
     <QueryClientProvider client={queryClient}>
       <CourseDetailPage />
     </QueryClientProvider>,
-    { initialEntry: '/courses/c1', routePattern: '/courses/$id' },
+    { initialEntry, routePattern: '/courses/$id' },
   );
 };
 
@@ -115,10 +115,25 @@ describe("CourseDetailPage Ma'lumot (info) tab", () => {
 });
 
 describe('CourseDetailPage Talabalar (students) tab', () => {
-  it('fetches the roster filtered by this course id', async () => {
+  it('enables the 50-row roster only after the students tab opens', async () => {
     await renderPage();
+    let lastCall = useStudentsSpy.mock.calls.at(-1) as unknown[];
+    expect(lastCall[3]).toBe(50);
+    expect(lastCall[5]).toMatchObject({ courseId: 'c1', enabled: false });
+
+    fireEvent.mouseDown(screen.getByText('students.title'));
+    await waitFor(() => {
+      lastCall = useStudentsSpy.mock.calls.at(-1) as unknown[];
+      expect(lastCall[5]).toMatchObject({ courseId: 'c1', enabled: true });
+    });
+  });
+
+  it('keeps the URL-selected students tab as the initial tab', async () => {
+    await renderPage('/courses/c1?tab=students');
+
     const lastCall = useStudentsSpy.mock.calls.at(-1) as unknown[];
-    expect(lastCall[5]).toMatchObject({ courseId: 'c1' });
+    expect(lastCall[5]).toMatchObject({ courseId: 'c1', enabled: true });
+    expect(screen.getByText('students.not_found')).toBeTruthy();
   });
 
   it('renders the enrolled-student roster and navigates to the student detail page on click', async () => {

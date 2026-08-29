@@ -23,6 +23,10 @@ class ResizeObserverStub {
 globalThis.ResizeObserver =
   ResizeObserverStub as unknown as typeof ResizeObserver;
 
+const paymentQueries = vi.hoisted(() => ({
+  usePaymentsPage: vi.fn(),
+}));
+
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
     selector({
@@ -48,18 +52,24 @@ vi.mock('@/services/paymentService', () => ({
   usePaymentSnapshot: () => ({
     data: { today_income: 0, current_total_debt: 0, students_with_debt: 0 },
   }),
-  usePayments: () => ({
-    data: [
-      {
-        id: 'p1',
-        student_name: 'Ali Valiyev',
-        branch_name: 'Chorsu',
-        course_type: 'avto_maktab',
-        amount_paid: 500000,
-        created_at: '2026-07-25T09:55:00.000Z',
+  usePaymentsPage: (...args: unknown[]) => {
+    paymentQueries.usePaymentsPage(...args);
+    return {
+      data: {
+        data: [
+          {
+            id: 'p1',
+            student_name: 'Ali Valiyev',
+            branch_name: 'Chorsu',
+            course_type: 'avto_maktab',
+            amount_paid: 500000,
+            created_at: '2026-07-25T09:55:00.000Z',
+          },
+        ],
+        meta: { total: 1, totalPages: 1 },
       },
-    ],
-  }),
+    };
+  },
 }));
 vi.mock('@/services/dashboardService', () => ({
   useDashboardAnalytics: () => ({
@@ -101,12 +111,22 @@ describe('LegacyMainDashboard relative-time refresh', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    paymentQueries.usePaymentsPage.mockClear();
     cleanup();
   });
 
   it('renders KPIs from the widened studentsSpark memo dependency without crashing', async () => {
     await renderDashboard();
     expect(screen.getByText('Ali Valiyev')).toBeInTheDocument();
+    expect(paymentQueries.usePaymentsPage).toHaveBeenLastCalledWith(
+      'b1',
+      undefined,
+      undefined,
+      undefined,
+      1,
+      5,
+      { sortBy: 'date', sortOrder: 'desc' },
+    );
   });
 
   it('does not present month-over-month revenue as a yesterday comparison', async () => {

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useDashboardAnalytics } from '@/services/dashboardService';
-import { usePaymentSnapshot, usePayments } from '@/services/paymentService';
+import { usePaymentSnapshot, usePaymentsPage } from '@/services/paymentService';
 import { useAuditLogs } from '@/services/auditService';
 import { useBranches } from '@/services/branchService';
 import {
@@ -108,7 +108,15 @@ const LegacyMainDashboard = () => {
     courseType,
   );
   const { data: snapshot } = usePaymentSnapshot(branchId);
-  const { data: recentPayments } = usePayments(branchId, courseType);
+  const { data: recentPaymentsPage } = usePaymentsPage(
+    branchId,
+    courseType,
+    undefined,
+    undefined,
+    1,
+    5,
+    { sortBy: 'date', sortOrder: 'desc' },
+  );
   const canViewAudit = useCan('viewAudit');
   const { data: auditData } = useAuditLogs({
     page: 1,
@@ -210,18 +218,8 @@ const LegacyMainDashboard = () => {
     [analytics?.branch_stats],
   );
 
-  // Recent payments: limit 5, newest first
-  const recentPaymentList = useMemo(
-    () =>
-      (recentPayments ?? [])
-        .slice()
-        .sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        )
-        .slice(0, 5),
-    [recentPayments],
-  );
+  // Recent payments arrive already limited and newest-first from the API.
+  const recentPaymentList = recentPaymentsPage?.data ?? [];
 
   // Pulse log entries
   const activityList = useMemo(

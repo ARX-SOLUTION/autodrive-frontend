@@ -58,17 +58,19 @@ export interface GroupListQueryParams extends GroupListParams {
   authBranchId?: string;
 }
 
+const toGroupQueryParams = (params: GroupListParams): GroupsQuery => ({
+  search: params.search?.trim() || undefined,
+  branch_id: params.branchId || undefined,
+  course_type: toOptionalGroupCourseType(params.courseType),
+  include_deleted: params.includeDeleted || undefined,
+});
+
 export const fetchGroups = async (
   params: GroupListParams,
   signal?: AbortSignal,
 ): Promise<Group[]> => {
   const { data: res } = await axiosInstance.get<unknown>('/groups', {
-    params: {
-      search: params.search || undefined,
-      branch_id: params.branchId || undefined,
-      course_type: toOptionalGroupCourseType(params.courseType),
-      include_deleted: params.includeDeleted || undefined,
-    } satisfies GroupsQuery,
+    params: toGroupQueryParams(params),
     signal,
   });
   return parseListEnvelope<Group>(res, 'groups').data;
@@ -77,14 +79,13 @@ export const fetchGroups = async (
 export const groupsListQueryOptions = (
   params: GroupListQueryParams = {},
   enabled = true,
-) =>
-  queryOptions({
+) => {
+  const queryParams = toGroupQueryParams(params);
+
+  return queryOptions({
     queryKey: groupKeys.list({
       authBranchId: params.authBranchId,
-      branchId: params.branchId,
-      search: params.search,
-      courseType: params.courseType,
-      includeDeleted: params.includeDeleted,
+      ...queryParams,
     }),
     // Group lists are stable org structure, so they can use a longer stale
     // window than the 30s global default.
@@ -92,6 +93,7 @@ export const groupsListQueryOptions = (
     queryFn: ({ signal }) => fetchGroups(params, signal),
     enabled,
   });
+};
 
 // Callers that don't pass params (StudentModal, SchedulePage, AttendancePage)
 // keep getting the full tenant-scoped list, unchanged. GroupsPage passes

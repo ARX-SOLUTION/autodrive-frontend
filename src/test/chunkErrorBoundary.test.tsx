@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { AppProviders } from '@/app/AppProviders';
 import { ChunkErrorBoundary } from '@/components/layout/ChunkErrorBoundary';
+
+vi.mock('@/app/DeferredFeedback', () => ({
+  DeferredFeedback: () => {
+    throw new Error('Deferred feedback failed to load');
+  },
+}));
 
 const Boom = () => {
   throw new Error(
@@ -38,6 +45,16 @@ describe('ChunkErrorBoundary', () => {
       </ChunkErrorBoundary>,
     );
     expect(reload).not.toHaveBeenCalled();
+    expect(screen.getByText('Xatolik yuz berdi')).toBeInTheDocument();
+  });
+
+  it('contains deferred feedback failures above the app tree', () => {
+    render(
+      <AppProviders>
+        <div>App content</div>
+      </AppProviders>,
+    );
+
     expect(screen.getByText('Xatolik yuz berdi')).toBeInTheDocument();
   });
 });
