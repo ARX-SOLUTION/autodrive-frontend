@@ -18,7 +18,7 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_UMAMI_SRC=$VITE_UMAMI_SRC
 ENV VITE_UMAMI_WEBSITE_ID=$VITE_UMAMI_WEBSITE_ID
 
-# `pnpm run build` = vite build && node scripts/prerender.mjs (Node SSR-render step, needs dist/ present).
+# Build the Vite SPA and its minimal online-first service worker.
 RUN pnpm run build
 
 # ---- runtime stage ----

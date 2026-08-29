@@ -1,7 +1,7 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect } from 'vitest';
 import StudentsPage from '@/pages/StudentsPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-6ef.18: whole row navigates to student detail; action buttons
 // (edit/delete) stopPropagation so they don't also trigger navigation.
@@ -75,27 +75,25 @@ vi.mock('@/services/groupService', () => ({
 }));
 
 const renderPage = () =>
-  render(
-    <MemoryRouter initialEntries={['/students']}>
-      <Routes>
-        <Route path="/students" element={<StudentsPage />} />
-        <Route path="/students/:id" element={<div>student-detail-page</div>} />
-      </Routes>
-    </MemoryRouter>,
-  );
-
-describe('StudentsPage row navigation', () => {
-  it('navigates to the detail page when a row is clicked', () => {
-    renderPage();
-    fireEvent.click(screen.getByText('Karimov'));
-    expect(screen.getByText('student-detail-page')).toBeTruthy();
+  renderWithRouter(<StudentsPage />, {
+    initialEntry: '/students',
+    routePattern: '/$',
   });
 
-  it('does not navigate when the edit button is clicked', () => {
-    renderPage();
+describe('StudentsPage row navigation', () => {
+  it('navigates to the detail page when a row is clicked', async () => {
+    const { router } = await renderPage();
+    fireEvent.click(screen.getByText('Karimov'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/students/s1'),
+    );
+  });
+
+  it('does not navigate when the edit button is clicked', async () => {
+    const { router } = await renderPage();
     // desktop table + mobile DataCard both render in jsdom (no real media
     // query), so there are two edit buttons — either is a valid check.
     fireEvent.click(screen.getAllByLabelText('common.edit')[0]);
-    expect(screen.queryByText('student-detail-page')).toBeNull();
+    expect(router.state.location.pathname).toBe('/students');
   });
 });

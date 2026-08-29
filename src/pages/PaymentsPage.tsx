@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import PaginationControls from '@/components/ui/PaginationControls';
 import PaymentModal, {
   CreatePaymentPayload,
 } from '@/components/ui/PaymentModal';
@@ -8,7 +7,6 @@ import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { cn } from '@/lib/utils';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { useBranches } from '@/services/branchService';
 import {
   useCreatePayment,
@@ -27,7 +25,6 @@ import { exportPaymentsToExcel } from './payments/exportPayments';
 import { PaymentPeriodSummary } from './payments/PaymentPeriodSummary';
 import { PaymentSnapshotCards } from './payments/PaymentSnapshotCards';
 import { PaymentsFilterBar } from './payments/PaymentsFilterBar';
-import { PaymentsMobileList } from './payments/PaymentsMobileList';
 import { PaymentsPageHeader } from './payments/PaymentsPageHeader';
 import { PaymentsTable } from './payments/PaymentsTable';
 
@@ -212,7 +209,7 @@ const PaymentsPage = () => {
   } = usePaymentSummary(paymentQueryFilters, canQueryPayments && hasAnyFilter);
 
   const visiblePayments = paymentsPage?.data ?? [];
-  const totalPayments = paymentsPage?.meta.total ?? visiblePayments.length;
+  const totalPayments = paymentsPage?.meta.total ?? 0;
   const totalPages = Math.max(1, paymentsPage?.meta.totalPages ?? 1);
 
   // Deleting the last row of the last page leaves currentPage pointing past
@@ -221,11 +218,6 @@ const PaymentsPage = () => {
     if (currentPage > totalPages) setCurrentPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalPages]);
-
-  const toggleSort = (field: string) => {
-    if (sortField === field) setSort(field, sortDir === 'asc' ? 'desc' : 'asc');
-    else setSort(field, 'asc');
-  };
 
   const handlePaymentSubmit = (data: CreatePaymentPayload) => {
     createPayment.mutate(data, {
@@ -248,8 +240,6 @@ const PaymentsPage = () => {
       setIsExporting(false);
     }
   };
-
-  const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
 
   const setPreset = (preset: DatePreset) => {
     const { from, to } = presetRange(preset);
@@ -309,7 +299,6 @@ const PaymentsPage = () => {
       {hasAnyFilter && (
         <PaymentPeriodSummary
           summary={summary}
-          totalPayments={totalPayments}
           isLoading={isSummaryLoading}
           isError={isSummaryError}
           onRetry={() => void refetchSummary()}
@@ -338,39 +327,22 @@ const PaymentsPage = () => {
               isFetching && !isLoading && 'opacity-50',
             )}
           >
-            {isPaymentsError ? (
-              <EmptyState
-                title={t('common.error')}
-                action={{
-                  label: t('common.retry'),
-                  onClick: () => refetchPayments(),
-                }}
-              />
-            ) : (
-              <>
-                <PaymentsTable
-                  payments={visiblePayments}
-                  isLoading={isLoading}
-                  startIndex={startIndex}
-                  sortField={sortField}
-                  sortDir={sortDir}
-                  onToggleSort={toggleSort}
-                />
-                <PaymentsMobileList
-                  payments={visiblePayments}
-                  isLoading={isLoading}
-                />
-              </>
-            )}
+            <PaymentsTable
+              payments={visiblePayments}
+              isLoading={isLoading}
+              isFetching={isFetching}
+              isError={isPaymentsError}
+              onRetry={() => void refetchPayments()}
+              currentPage={currentPage}
+              pageSize={SERVER_PAGE_SIZE}
+              totalPayments={totalPayments}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              sortField={sortField}
+              sortDir={sortDir}
+              onSortChange={setSort}
+            />
           </div>
-        </div>
-
-        <div className="mt-4">
-          <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
         </div>
       </section>
 

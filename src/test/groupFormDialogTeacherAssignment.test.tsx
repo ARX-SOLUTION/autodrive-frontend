@@ -1,16 +1,15 @@
 import {
-  render,
   screen,
   fireEvent,
   waitFor,
   cleanup,
   within,
 } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import GroupFormDialog from '@/pages/groups/GroupFormDialog';
 import type { Branch } from '@/types/branch';
 import type { Group } from '@/types/group';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-vh0.1: the group form gains an optional teacher selector.
 // mutate is a spy (not a real mutation) so these assert on the payload the
@@ -55,15 +54,14 @@ const GROUP: Group = {
 };
 
 const renderDialog = (editGroup: Group | null = null) =>
-  render(
-    <MemoryRouter>
-      <GroupFormDialog
-        open
-        editGroup={editGroup}
-        branches={BRANCHES as Branch[]}
-        onClose={vi.fn()}
-      />
-    </MemoryRouter>,
+  renderWithRouter(
+    <GroupFormDialog
+      open
+      editGroup={editGroup}
+      branches={BRANCHES as Branch[]}
+      onClose={vi.fn()}
+    />,
+    { initialEntry: '/groups', routePattern: '/groups' },
   );
 
 // Same combobox-click pattern as pickBranch in groupFormDialogDuplicateWarning
@@ -89,7 +87,7 @@ describe('GroupFormDialog teacher assignment', () => {
   });
 
   it('includes teacher_id in the create payload when a teacher is selected', async () => {
-    renderDialog();
+    await renderDialog();
     fillRequiredFields();
     pickSelectOption(/groups\.form\.teacher_label/, 'Aziz Karimov');
 
@@ -104,7 +102,7 @@ describe('GroupFormDialog teacher assignment', () => {
   });
 
   it('sends teacher_id: null when "unassigned" (the default) is submitted', async () => {
-    renderDialog();
+    await renderDialog();
     fillRequiredFields();
 
     fireEvent.click(screen.getByRole('button', { name: 'common.add' }));
@@ -118,7 +116,7 @@ describe('GroupFormDialog teacher assignment', () => {
   });
 
   it("defaults to the group's current teacher on edit and preserves it on submit", async () => {
-    renderDialog(GROUP);
+    await renderDialog(GROUP);
 
     fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
 

@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useIsCrossTenant } from '@/hooks/useCan';
 import { Payment, PaymentSnapshot, PaymentSummary } from '@/types/payment';
@@ -65,6 +70,16 @@ export const fetchPaymentsPage = async (
   return parseListResponse<Payment>(data, filters.page, filters.limit);
 };
 
+export const paymentsPageQueryOptions = (
+  filters: PaymentListFilters,
+  enabled = true,
+) =>
+  queryOptions({
+    queryKey: paymentKeys.page({ ...filters }),
+    enabled,
+    queryFn: ({ signal }) => fetchPaymentsPage(filters, signal),
+  });
+
 export const fetchAllPayments = async (
   filters: PaymentListFilters,
 ): Promise<Payment[]> => {
@@ -95,23 +110,12 @@ export const usePaymentsPage = (
   >,
 ) => {
   const isCrossTenant = useIsCrossTenant();
-  return useQuery<ListResponse<Payment>>({
-    queryKey: paymentKeys.page({
-      branchId,
-      courseType,
-      startDate,
-      endDate,
-      page,
-      limit,
-      ...options,
-    }),
-    enabled: !!branchId || isCrossTenant,
-    queryFn: ({ signal }) =>
-      fetchPaymentsPage(
-        { branchId, courseType, startDate, endDate, page, limit, ...options },
-        signal,
-      ),
-  });
+  return useQuery(
+    paymentsPageQueryOptions(
+      { branchId, courseType, startDate, endDate, page, limit, ...options },
+      !!branchId || isCrossTenant,
+    ),
+  );
 };
 
 export const usePayments = (

@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useIsCrossTenant } from '@/hooks/useCan';
 import { Student, CourseType, StudentStatus } from '@/types/student';
@@ -18,7 +23,7 @@ import {
 export const toLocalDateStr = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-interface StudentListOptions {
+export interface StudentListOptions {
   enabled?: boolean;
   search?: string;
   dateFrom?: Date;
@@ -39,7 +44,7 @@ interface StudentListOptions {
   courseId?: string;
 }
 
-interface StudentListParams extends StudentListOptions {
+export interface StudentListParams extends Omit<StudentListOptions, 'enabled'> {
   courseType?: CourseType;
   branchId?: string;
   page?: number;
@@ -96,6 +101,16 @@ export const fetchStudentsPage = async (
   return parseListResponse<Student>(data, params.page, params.limit);
 };
 
+export const studentsPageQueryOptions = (
+  params: StudentListParams,
+  enabled = true,
+) =>
+  queryOptions({
+    queryKey: studentKeys.page({ ...params }),
+    enabled,
+    queryFn: ({ signal }) => fetchStudentsPage(params, signal),
+  });
+
 export const fetchAllStudents = async (
   params: StudentListParams,
 ): Promise<Student[]> => {
@@ -123,22 +138,13 @@ export const useStudentsPage = (
 ) => {
   const isCrossTenant = useIsCrossTenant();
   const baseEnabled = !!branchId || isCrossTenant;
-  return useQuery<ListResponse<Student>>({
-    queryKey: studentKeys.page({
-      courseType,
-      branchId,
-      page,
-      limit,
-      operatorId,
-      ...options,
-    }),
-    enabled: (options?.enabled ?? true) && baseEnabled,
-    queryFn: ({ signal }) =>
-      fetchStudentsPage(
-        { courseType, branchId, page, limit, operatorId, ...options },
-        signal,
-      ),
-  });
+  const { enabled: optionEnabled = true, ...listOptions } = options ?? {};
+  return useQuery(
+    studentsPageQueryOptions(
+      { courseType, branchId, page, limit, operatorId, ...listOptions },
+      optionEnabled && baseEnabled,
+    ),
+  );
 };
 
 export const useStudents = (
@@ -171,15 +177,18 @@ export const useStudents = (
 };
 
 // Single student for the detail card (header + Ma'lumot/Imtihonlar tabs).
-export const useStudent = (id?: string) =>
-  useQuery<Student>({
+export const studentDetailQueryOptions = (id?: string, enabled = !!id) =>
+  queryOptions({
     queryKey: studentKeys.detail(id),
-    enabled: !!id,
+    enabled,
     queryFn: async ({ signal }) => {
       const { data } = await axiosInstance.get(`/students/${id}`, { signal });
       return parseItemEnvelope<Student>(data, 'student');
     },
   });
+
+export const useStudent = (id?: string) =>
+  useQuery(studentDetailQueryOptions(id));
 
 export const useCreateStudent = () => {
   const qc = useQueryClient();

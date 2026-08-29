@@ -3,6 +3,7 @@ import {
   screen,
   fireEvent,
   cleanup,
+  waitFor,
   within,
 } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach } from 'vitest';
@@ -176,5 +177,35 @@ describe('PersonModal submit payload shape', () => {
 
     expect(await screen.findByText('Required')).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('submits a teacher payload without monetary or manager-only fields', async () => {
+    auth.role = 'owner';
+    const onSubmit = vi.fn();
+    render(
+      <PersonModal
+        open
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+        role="teacher"
+        title="t"
+        description="d"
+      />,
+    );
+    fireEvent.change(q('fullName'), { target: { value: 'Malika Ustoz' } });
+    fireEvent.change(q('phone'), { target: { value: '909876543' } });
+    fireEvent.click(screen.getByRole('button', { name: 'common.add' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit).toHaveBeenCalledWith({
+      fullName: 'Malika Ustoz',
+      phone: '+998909876543',
+      branchId: undefined,
+      specialization: 'THEORY',
+    });
+    expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('email');
+    expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('password');
+    expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('amount');
+    expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('price');
   });
 });

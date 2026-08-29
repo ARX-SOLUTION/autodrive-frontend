@@ -4,7 +4,7 @@ import {
   useParams,
   useNavigate,
   useSearchParams,
-} from 'react-router-dom';
+} from '@/app/navigation';
 import { useTranslation } from 'react-i18next';
 import {
   Warning,

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import type { ColumnFiltersState, SortingState } from '@tanstack/react-table';
+import { useNavigate } from '@/app/navigation';
 import { useTranslation } from 'react-i18next';
 import { useSearchSortFilters } from '@/hooks/useSearchSortFilters';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -10,15 +11,11 @@ import {
   MagnifyingGlass,
   PencilSimple,
   Trash,
-  CaretUp,
-  CaretDown,
-  CaretUpDown,
   Headphones,
   CircleNotch,
 } from '@phosphor-icons/react';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import PaginationControls from '@/components/ui/PaginationControls';
 import { cn } from '@/lib/utils';
 import PersonModal, {
   type PersonFormPayload,
@@ -37,12 +34,16 @@ import { User } from '@/types/user';
 import { formatPhone } from '@/lib/phoneFormater';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { DataGrid, createDataGridColumnHelper } from '@/shared/ui/data-grid';
 
 // Backend GetUsersQueryDto caps limit at 100 -- large enough that a single
 // branch/company's operator list never needs a second server page in
 // practice, while still being real pagination (not a silent truncation)
 // if it ever does.
 const SERVER_PAGE_SIZE = 100;
+const operatorColumnHelper = createDataGridColumnHelper<User>();
+const NO_COLUMN_FILTERS: ColumnFiltersState = [];
+const ignoreColumnFiltersChange = () => undefined;
 
 const OperatorsPage = () => {
   const { t } = useTranslation();
@@ -77,33 +78,23 @@ const OperatorsPage = () => {
   const updateMut = useUpdateOperator();
   const deleteMut = useDeleteOperator();
 
-  // MagnifyingGlass is server-side now (autodrive-b85.3) -- GET /users matches
-  // name/email/phone across the whole company (autodrive-3kl), not just the
-  // current page. Sort still applies client-side to the current server page
-  // only -- GET /users has no sortBy param.
-  const paginatedItems = useMemo(() => {
-    return [...operators].sort((a, b) => {
-      const va = a[sortField as keyof typeof a];
-      const vb = b[sortField as keyof typeof b];
-      if (va == null && vb == null) return 0;
-      if (va == null) return 1;
-      if (vb == null) return -1;
-      if (typeof va === 'string' && typeof vb === 'string') {
-        return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-      }
-      return sortDir === 'asc'
-        ? va < vb
-          ? -1
-          : va > vb
-            ? 1
-            : 0
-        : va > vb
-          ? -1
-          : va < vb
-            ? 1
-            : 0;
-    });
-  }, [operators, sortField, sortDir]);
+  // Search is server-owned. GET /users exposes no sort contract, so the
+  // controlled TanStack state below is intentionally limited to this page.
+  const activeSortField =
+    sortField === 'phone' || sortField === 'branch_name' ? sortField : 'name';
+  const sorting = useMemo<SortingState>(
+    () => [{ id: activeSortField, desc: sortDir === 'desc' }],
+    [activeSortField, sortDir],
+  );
+
+  const handleSortingChange = (nextSorting: SortingState) => {
+    const nextSort = nextSorting[0];
+    if (!nextSort) return;
+    const nextDirection = nextSort.desc ? 'desc' : 'asc';
+    if (nextSort.id !== activeSortField || nextDirection !== sortDir) {
+      toggleSort(nextSort.id);
+    }
+  };
 
   // Out-of-range page (e.g. search narrowed results) -> reset.
   useEffect(() => {
@@ -172,6 +163,116 @@ const OperatorsPage = () => {
 
   const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
   const operatorsTitle = t('operators.title');
+  const columns = useMemo(
+    () =>
+      operatorColumnHelper.columns([
+        operatorColumnHelper.display({
+          id: 'rowNumber',
+          header: '#',
+          meta: { align: 'center' },
+          cell: ({ row }) => startIndex + row.getDisplayIndex() + 1,
+        }),
+        operatorColumnHelper.accessor('name', {
+          header: t('operators.first_name'),
+          enableSorting: true,
+          sortFn: 'text',
+          meta: { cellClassName: 'font-medium' },
+          cell: ({ getValue }) => getValue() || t('common.na'),
+        }),
+        operatorColumnHelper.accessor('phone', {
+          header: t('operators.phone'),
+          enableSorting: true,
+          sortFn: 'text',
+          meta: { cellClassName: 'text-muted-foreground' },
+          cell: ({ getValue }) => formatPhone(getValue()),
+        }),
+        operatorColumnHelper.accessor(
+          (operator) => operator.branch_name || '',
+          {
+            id: 'branch_name',
+            header: t('operators.branch'),
+            enableSorting: true,
+            sortFn: 'text',
+            meta: { cellClassName: 'text-muted-foreground' },
+            cell: ({ row }) =>
+              row.original.branch_name ||
+              (branches || []).find(
+                (branch) => branch.id === row.original.branch_id,
+              )?.name ||
+              row.original.branch_id ||
+              t('common.na'),
+          },
+        ),
+        operatorColumnHelper.accessor('registered_students_count', {
+          header: t('operators.registered_count'),
+          meta: {
+            align: 'center',
+            cellClassName: 'text-muted-foreground tabular-nums',
+          },
+          cell: ({ getValue }) => getValue() ?? t('common.na'),
+        }),
+        operatorColumnHelper.accessor('payment_follow_through_rate', {
+          header: t('operators.follow_through_rate'),
+          meta: {
+            align: 'center',
+            cellClassName: 'text-muted-foreground tabular-nums',
+          },
+          cell: ({ getValue }) => {
+            const rate = getValue();
+            return rate != null ? `${rate}%` : t('common.na');
+          },
+        }),
+        operatorColumnHelper.display({
+          id: 'status',
+          header: t('common.status'),
+          meta: { align: 'center' },
+          cell: ({ row }) => (
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${row.original.is_active !== false ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}
+            >
+              {row.original.is_active !== false
+                ? t('common.active')
+                : t('common.inactive')}
+            </span>
+          ),
+        }),
+        operatorColumnHelper.display({
+          id: 'actions',
+          header: t('common.actions'),
+          meta: { align: 'center' },
+          cell: ({ row }) => (
+            <div className="flex items-center justify-center gap-1">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setEditItem(row.original);
+                  setModalOpen(true);
+                }}
+                aria-label={t('common.edit')}
+                title={t('common.edit')}
+                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <PencilSimple className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setDeleteId(row.original.id);
+                }}
+                aria-label={t('common.delete')}
+                title={t('common.delete')}
+                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ),
+        }),
+      ]),
+    [branches, startIndex, t],
+  );
 
   return (
     <div className="space-y-6">
@@ -206,266 +307,138 @@ const OperatorsPage = () => {
             <CircleNotch className="h-6 w-6 animate-spin text-primary" />
           </div>
         )}
-        <div
+        <DataGrid
+          data={operators}
+          columns={columns}
+          getRowId={(operator) => operator.id}
+          pagination={{
+            pageIndex: currentPage - 1,
+            pageSize: SERVER_PAGE_SIZE,
+            rowCount: total,
+            pageCount: totalPages,
+          }}
+          onPaginationChange={({ pageIndex }) => setCurrentPage(pageIndex + 1)}
+          sorting={sorting}
+          onSortingChange={handleSortingChange}
+          columnFilters={NO_COLUMN_FILTERS}
+          onColumnFiltersChange={ignoreColumnFiltersChange}
+          manualPagination
+          manualSorting={false}
+          manualFiltering
+          isInitialLoading={isLoading}
+          isFetching={isFetching}
+          labels={{
+            table: operatorsTitle,
+            loading: t('common.loading'),
+            fetching: t('common.loading'),
+            previousPage: t('common.previous'),
+            nextPage: t('common.next'),
+          }}
+          loadingState={
+            <div className="space-y-3">
+              {[0, 1, 2].map((index) => (
+                <Skeleton key={index} className="h-5 w-full" />
+              ))}
+            </div>
+          }
+          errorState={
+            isError ? (
+              <EmptyState
+                title={t('common.error')}
+                action={{ label: t('common.retry'), onClick: () => refetch() }}
+              />
+            ) : undefined
+          }
+          emptyState={
+            <EmptyState icon={Headphones} title={t('operators.not_found')} />
+          }
+          renderMobileRow={({ row: operator }) => (
+            <div className="px-3 py-1.5">
+              <DataCard
+                title={operator.name || t('common.na')}
+                subtitle={formatPhone(operator.phone)}
+                onClick={() => navigate(`/users/${operator.id}`)}
+                fields={[
+                  {
+                    label: t('operators.detail.email'),
+                    value: operator.email || t('common.na'),
+                  },
+                  {
+                    label: t('operators.detail.branch'),
+                    value:
+                      operator.branch_name ||
+                      getBranchName(operator.branch_id || ''),
+                  },
+                  {
+                    label: t('operators.registered_count'),
+                    value: operator.registered_students_count ?? t('common.na'),
+                  },
+                  {
+                    label: t('operators.follow_through_rate'),
+                    value:
+                      operator.payment_follow_through_rate != null
+                        ? `${operator.payment_follow_through_rate}%`
+                        : t('common.na'),
+                  },
+                  {
+                    label: t('operators.detail.created'),
+                    value: operator.created_at
+                      ? new Date(operator.created_at).toLocaleDateString(
+                          'uz-UZ',
+                        )
+                      : t('common.na'),
+                  },
+                  {
+                    label: t('operators.detail.status'),
+                    value:
+                      operator.is_active !== false
+                        ? t('common.active')
+                        : t('common.inactive'),
+                  },
+                ]}
+                actions={
+                  <>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openEdit(operator);
+                      }}
+                      aria-label={t('common.edit')}
+                      title={t('common.edit')}
+                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                      <PencilSimple className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setDeleteId(operator.id);
+                      }}
+                      aria-label={t('common.delete')}
+                      title={t('common.delete')}
+                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                }
+              />
+            </div>
+          )}
+          tableClassName="min-w-[820px]"
           className={cn(
             'glass-card overflow-hidden transition-opacity duration-200',
             isFetching && !isLoading && 'opacity-50',
           )}
-        >
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full min-w-[600px] text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    #
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    <button
-                      onClick={() => toggleSort('name')}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      {t('operators.first_name')}
-                      {sortField === 'name' ? (
-                        sortDir === 'asc' ? (
-                          <CaretUp className="h-3 w-3" />
-                        ) : (
-                          <CaretDown className="h-3 w-3" />
-                        )
-                      ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    <button
-                      onClick={() => toggleSort('phone')}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      {t('operators.phone')}
-                      {sortField === 'phone' ? (
-                        sortDir === 'asc' ? (
-                          <CaretUp className="h-3 w-3" />
-                        ) : (
-                          <CaretDown className="h-3 w-3" />
-                        )
-                      ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    <button
-                      onClick={() => toggleSort('branch_name')}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      {t('operators.branch')}
-                      {sortField === 'branch_name' ? (
-                        sortDir === 'asc' ? (
-                          <CaretUp className="h-3 w-3" />
-                        ) : (
-                          <CaretDown className="h-3 w-3" />
-                        )
-                      ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
-                      )}
-                    </button>
-                  </th>
-                  {/* autodrive-sgf.4 -- lifetime counts, no date filter on this page.
-                    Never labeled "conversion" -- there is no true lead-conversion
-                    data, only registered-student -> has-a-payment follow-through. */}
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    {t('operators.registered_count')}
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    {t('operators.follow_through_rate')}
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    {t('common.status')}
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    {t('common.actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading
-                  ? [...Array(3)].map((_, i) => (
-                      <tr key={i} className="border-b border-border/50">
-                        <td colSpan={8} className="p-4">
-                          <Skeleton className="h-5 w-full" />
-                        </td>
-                      </tr>
-                    ))
-                  : paginatedItems.map((o, idx) => (
-                      <tr
-                        key={o.id}
-                        className="table-row-interactive border-b border-border/50 cursor-pointer"
-                        onClick={() => {
-                          if (window.getSelection()?.toString()) return;
-                          navigate(`/users/${o.id}`);
-                        }}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') navigate(`/users/${o.id}`);
-                          if (e.key === ' ') {
-                            e.preventDefault();
-                            navigate(`/users/${o.id}`);
-                          }
-                        }}
-                      >
-                        <td className="px-4 py-3 text-center text-muted-foreground">
-                          {startIndex + idx + 1}
-                        </td>
-                        <td className="px-4 py-3 font-medium">{o?.name}</td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {formatPhone(o?.phone)}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {o?.branch_name || getBranchName(o?.branch_id)}
-                        </td>
-                        <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
-                          {o.registered_students_count ?? t('common.na')}
-                        </td>
-                        <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
-                          {o.payment_follow_through_rate != null
-                            ? `${o.payment_follow_through_rate}%`
-                            : t('common.na')}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${o.is_active !== false ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}
-                          >
-                            {o.is_active !== false
-                              ? t('common.active')
-                              : t('common.inactive')}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEdit(o);
-                              }}
-                              aria-label={t('common.edit')}
-                              title={t('common.edit')}
-                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                            >
-                              <PencilSimple className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteId(o.id);
-                              }}
-                              aria-label={t('common.delete')}
-                              title={t('common.delete')}
-                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                            >
-                              <Trash className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="md:hidden grid gap-3 p-3">
-            {isLoading
-              ? [...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-28 w-full" />
-                ))
-              : paginatedItems.map((o) => (
-                  <DataCard
-                    key={o.id}
-                    title={o?.name || t('common.na')}
-                    subtitle={formatPhone(o?.phone)}
-                    onClick={() => navigate(`/users/${o.id}`)}
-                    fields={[
-                      {
-                        label: t('operators.detail.email'),
-                        value: o?.email || t('common.na'),
-                      },
-                      {
-                        label: t('operators.detail.branch'),
-                        value:
-                          o?.branch_name || getBranchName(o?.branch_id || ''),
-                      },
-                      {
-                        label: t('operators.registered_count'),
-                        value: o.registered_students_count ?? t('common.na'),
-                      },
-                      {
-                        label: t('operators.follow_through_rate'),
-                        value:
-                          o.payment_follow_through_rate != null
-                            ? `${o.payment_follow_through_rate}%`
-                            : t('common.na'),
-                      },
-                      {
-                        label: t('operators.detail.created'),
-                        value: o?.created_at
-                          ? new Date(o.created_at).toLocaleDateString('uz-UZ')
-                          : t('common.na'),
-                      },
-                      {
-                        label: t('operators.detail.status'),
-                        value:
-                          o.is_active !== false
-                            ? t('common.active')
-                            : t('common.inactive'),
-                      },
-                    ]}
-                    actions={
-                      <>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEdit(o);
-                          }}
-                          aria-label={t('common.edit')}
-                          title={t('common.edit')}
-                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                        >
-                          <PencilSimple className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteId(o.id);
-                          }}
-                          aria-label={t('common.delete')}
-                          title={t('common.delete')}
-                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                        >
-                          <Trash className="h-3.5 w-3.5" />
-                        </button>
-                      </>
-                    }
-                  />
-                ))}
-          </div>
-          {isError ? (
-            <EmptyState
-              title={t('common.error')}
-              action={{ label: t('common.retry'), onClick: () => refetch() }}
-            />
-          ) : (
-            total === 0 &&
-            !isLoading && (
-              <EmptyState icon={Headphones} title={t('operators.not_found')} />
-            )
-          )}
-        </div>
+          rowClassName={() => 'table-row-interactive'}
+          onRowActivate={(operator) => navigate(`/users/${operator.id}`)}
+          getRowAriaLabel={(operator) =>
+            `${t('common.view')}: ${operator.name || operator.email}`
+          }
+        />
       </div>
-
-      <PaginationControls
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
 
       <PersonModal
         open={modalOpen}

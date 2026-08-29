@@ -1,16 +1,15 @@
 import {
-  render,
   screen,
   fireEvent,
   cleanup,
   waitFor,
   within,
 } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import GroupsPage from '@/pages/GroupsPage';
 import type { Group } from '@/types/group';
 import type { UserRole } from '@/types/user';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-cg9: owner-only "show deleted" toggle + restore on GroupsPage.
 // Role-parameterized authStore mock (real permissions matrix), mirrors
@@ -72,11 +71,10 @@ vi.mock('@/services/teacherService', () => ({
 }));
 
 const renderPage = () =>
-  render(
-    <MemoryRouter initialEntries={['/groups']}>
-      <GroupsPage />
-    </MemoryRouter>,
-  );
+  renderWithRouter(<GroupsPage />, {
+    initialEntry: '/groups',
+    routePattern: '/groups',
+  });
 
 const emptyResult = {
   data: [] as Group[],
@@ -94,33 +92,33 @@ afterEach(() => {
 });
 
 describe('GroupsPage "show deleted" toggle visibility (autodrive-cg9)', () => {
-  it('is absent for a manager', () => {
+  it('is absent for a manager', async () => {
     role = 'manager';
     h.useGroups.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
     expect(screen.queryByRole('switch')).toBeNull();
   });
 
-  it('is absent for an operator', () => {
+  it('is absent for an operator', async () => {
     role = 'operator';
     h.useGroups.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
     expect(screen.queryByRole('switch')).toBeNull();
   });
 
-  it('is present for an owner', () => {
+  it('is present for an owner', async () => {
     role = 'owner';
     h.useGroups.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
     expect(screen.getByRole('switch')).toBeInTheDocument();
   });
 });
 
 describe('GroupsPage "show deleted" toggle wiring (autodrive-cg9)', () => {
-  it('flips includeDeleted through to useGroups when switched on', () => {
+  it('flips includeDeleted through to useGroups when switched on', async () => {
     role = 'owner';
     h.useGroups.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
 
     fireEvent.click(screen.getByRole('switch'));
 
@@ -138,13 +136,13 @@ describe('GroupsPage "show deleted" toggle wiring (autodrive-cg9)', () => {
 });
 
 describe('GroupsPage deleted-row rendering (autodrive-cg9)', () => {
-  it('shows the deleted badge and restore action only on the deleted row', () => {
+  it('shows the deleted badge and restore action only on the deleted row', async () => {
     role = 'owner';
     h.useGroups.mockReturnValue({
       ...emptyResult,
       data: [LIVE_GROUP, DELETED_GROUP],
     });
-    renderPage();
+    await renderPage();
 
     // Desktop table + mobile list both mount in jsdom -- 2 renders for the
     // ONE deleted group.
@@ -153,10 +151,10 @@ describe('GroupsPage deleted-row rendering (autodrive-cg9)', () => {
     expect(screen.getAllByLabelText('common.edit').length).toBeGreaterThan(0);
   });
 
-  it('hides the restore action for a non-owner even if a deleted row is present', () => {
+  it('hides the restore action for a non-owner even if a deleted row is present', async () => {
     role = 'manager';
     h.useGroups.mockReturnValue({ ...emptyResult, data: [DELETED_GROUP] });
-    renderPage();
+    await renderPage();
 
     expect(screen.queryByLabelText('common.restore')).toBeNull();
   });
@@ -166,7 +164,7 @@ describe('GroupsPage restore action (autodrive-cg9)', () => {
   it('fires the restore mutation with the row id after confirming', async () => {
     role = 'owner';
     h.useGroups.mockReturnValue({ ...emptyResult, data: [DELETED_GROUP] });
-    renderPage();
+    await renderPage();
 
     fireEvent.click(screen.getAllByLabelText('common.restore')[0]);
     const dialog = screen.getByRole('dialog');

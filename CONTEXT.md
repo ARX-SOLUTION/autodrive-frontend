@@ -4,6 +4,16 @@
 
 React 18 + Vite + TypeScript frontend for a Uzbek driving school CRM. Tenant-facing application serving managers, operators, and teachers across driving school branches. Built with shadcn/ui, TanStack Query, Zustand, and a tenant-local **Warm Paper** visual system (warm off-white surfaces, rust accent). Shared `@autodrive/design-tokens` remain the package default; the tenant CRM overrides palette in `src/index.css` so the admin panel stays unchanged.
 
+## Product boundaries
+
+**Tenant App**:
+The authenticated driving-school workspace used by owners, managers, operators, and teachers. It contains no public marketing or editorial pages.
+_Avoid_: website, landing app, public app
+
+**Public Web**:
+The public Automaktab presence containing the landing pages and blog. It is separate from the Tenant App.
+_Avoid_: CRM, tenant app
+
 ---
 
 ## Domain Glossary

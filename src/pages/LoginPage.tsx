@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -80,7 +80,7 @@ const LoginPage = () => {
       navigateFullPage(rootDomainAppUrl(target));
       return;
     }
-    navigate(target);
+    void navigate({ to: target as never });
   };
 
   const onValid = (values: LoginFormValues) => {

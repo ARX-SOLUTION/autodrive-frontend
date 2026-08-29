@@ -7,7 +7,6 @@ import { Warning, Receipt, Wallet } from '@phosphor-icons/react';
 
 interface PaymentPeriodSummaryProps {
   summary: PaymentSummary | undefined;
-  totalPayments: number;
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
@@ -16,7 +15,6 @@ interface PaymentPeriodSummaryProps {
 /** SECTION 3: totals for the currently filtered period. */
 export const PaymentPeriodSummary = ({
   summary,
-  totalPayments,
   isLoading,
   isError,
   onRetry,
@@ -32,7 +30,9 @@ export const PaymentPeriodSummary = ({
         </h2>
         {summary && !isError && (
           <span className="text-xs text-muted-foreground">
-            {t('payments.by_count', { count: totalPayments })}
+            {t('payments.by_count', {
+              count: summary.period_payments_count,
+            })}
           </span>
         )}
       </div>

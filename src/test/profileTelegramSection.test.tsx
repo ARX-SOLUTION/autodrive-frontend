@@ -1,7 +1,7 @@
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent, cleanup } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach, beforeEach } from 'vitest';
 import ProfilePage from '@/pages/ProfilePage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 import {
   useTelegramLinkStatus,
   useTelegramUnlink,
@@ -41,16 +41,15 @@ vi.mock('@/services/telegramService', () => ({
   useTelegramDailyReport: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
-function renderProfile() {
+async function renderProfile() {
   vi.mocked(useTelegramLinkStatus).mockReturnValue({
     data: linkStatus,
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useTelegramLinkStatus>);
-  return render(
-    <MemoryRouter>
-      <ProfilePage />
-    </MemoryRouter>,
-  );
+  return renderWithRouter(<ProfilePage />, {
+    initialEntry: '/profile',
+    routePattern: '/profile',
+  });
 }
 
 afterEach(cleanup);
@@ -63,10 +62,10 @@ beforeEach(() => {
 });
 
 describe('ProfilePage Telegram section — not linked', () => {
-  it('shows link + check buttons, no unlink/toggle', () => {
+  it('shows link + check buttons, no unlink/toggle', async () => {
     linkStatus.linked = false;
     linkStatus.daily_report_enabled = false;
-    renderProfile();
+    await renderProfile();
     expect(
       screen.getByText('profile.telegram.link_button'),
     ).toBeInTheDocument();
@@ -83,10 +82,10 @@ describe('ProfilePage Telegram section — not linked', () => {
 });
 
 describe('ProfilePage Telegram section — linked, daily-report gate', () => {
-  it('shows the toggle for owner', () => {
+  it('shows the toggle for owner', async () => {
     auth.role = 'owner';
     linkStatus.linked = true;
-    renderProfile();
+    await renderProfile();
     expect(
       screen.getByText('profile.telegram.daily_report_label'),
     ).toBeInTheDocument();
@@ -95,19 +94,19 @@ describe('ProfilePage Telegram section — linked, daily-report gate', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows the toggle for manager', () => {
+  it('shows the toggle for manager', async () => {
     auth.role = 'manager';
     linkStatus.linked = true;
-    renderProfile();
+    await renderProfile();
     expect(
       screen.getByText('profile.telegram.daily_report_label'),
     ).toBeInTheDocument();
   });
 
-  it('hides the toggle for operator (backend would 403)', () => {
+  it('hides the toggle for operator (backend would 403)', async () => {
     auth.role = 'operator';
     linkStatus.linked = true;
-    renderProfile();
+    await renderProfile();
     expect(
       screen.queryByText('profile.telegram.daily_report_label'),
     ).not.toBeInTheDocument();
@@ -118,7 +117,7 @@ describe('ProfilePage Telegram section — linked, daily-report gate', () => {
 });
 
 describe('ProfilePage Telegram section — unlink confirm', () => {
-  it('opens ConfirmDialog and calls unlink mutation on confirm', () => {
+  it('opens ConfirmDialog and calls unlink mutation on confirm', async () => {
     auth.role = 'owner';
     linkStatus.linked = true;
     const mutate = vi.fn();
@@ -126,7 +125,7 @@ describe('ProfilePage Telegram section — unlink confirm', () => {
       mutate,
       isPending: false,
     } as unknown as ReturnType<typeof useTelegramUnlink>);
-    renderProfile();
+    await renderProfile();
 
     fireEvent.click(screen.getByText('profile.telegram.unlink_button'));
     expect(

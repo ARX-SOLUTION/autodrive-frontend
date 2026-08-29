@@ -1124,11 +1124,7 @@
     "cta2_risk": "First month free · no install · cancel any time",
     "demo_form_eyebrow": "Request a demo",
     "demo_form_title": "Leave your details",
-    "demo_form_sub": "Tell us about your school and we'll get back to you",
-    "nav_blog": "Blog",
-    "blog_title": "Latest from the blog",
-    "blog_sub": "Tips and news for driving school owners",
-    "blog_view_all": "View all"
+    "demo_form_sub": "Tell us about your school and we'll get back to you"
   },
   "demo_form": {
     "full_name_label": "Full name and surname",
@@ -1155,24 +1151,6 @@
       "phone_invalid": "Enter a valid phone number (+998 XX XXX XX XX)",
       "region_required": "Please select a region"
     }
-  },
-  "blog": {
-    "nav_back": "Home",
-    "hero_title": "Blog",
-    "hero_subtitle": "Tips and news for driving school owners",
-    "search_placeholder": "Search articles...",
-    "filter_all": "All",
-    "empty_title": "No articles found",
-    "empty_desc": "Try a different keyword or tag",
-    "reading_time": "{{count}} min read",
-    "views": "{{count}} views",
-    "share": "Share",
-    "share_copied": "Link copied",
-    "share_telegram": "Share on Telegram",
-    "share_copy_link": "Copy link",
-    "related_title": "Related posts",
-    "not_found_title": "Post not found",
-    "not_found_desc": "This post doesn't exist or has been removed"
   },
   "datetimepicker": {
     "placeholder": "Date and time",

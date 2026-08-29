@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useIsCrossTenant } from '@/hooks/useCan';
 import { Course, CreateCoursePayload } from '@/types/course';
@@ -12,35 +17,54 @@ export interface CourseListParams {
   search?: string;
 }
 
-export const useCourses = (params: CourseListParams = {}) => {
-  const { branchId, courseType, search } = params;
-  const isCrossTenant = useIsCrossTenant();
-  return useQuery<Course[]>({
-    queryKey: courseKeys.list({ branchId, courseType, search }),
-    queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get('/courses', {
-        params: {
-          branch_id: branchId || undefined,
-          course_type: courseType || undefined,
-          search: search || undefined,
-        },
-        signal,
-      });
-      return parseListEnvelope<Course>(res, 'courses').data;
+export const fetchCourses = async (
+  params: CourseListParams = {},
+  signal?: AbortSignal,
+): Promise<Course[]> => {
+  const { data: res } = await axiosInstance.get('/courses', {
+    params: {
+      branch_id: params.branchId || undefined,
+      course_type: params.courseType || undefined,
+      search: params.search || undefined,
     },
-    enabled: !!branchId || isCrossTenant,
+    signal,
   });
+  return parseListEnvelope<Course>(res, 'courses').data;
 };
 
-export const useCourse = (id?: string) =>
-  useQuery<Course>({
+export const coursesListQueryOptions = (
+  params: CourseListParams = {},
+  enabled = true,
+) =>
+  queryOptions({
+    queryKey: courseKeys.list({
+      branchId: params.branchId,
+      courseType: params.courseType,
+      search: params.search,
+    }),
+    queryFn: ({ signal }) => fetchCourses(params, signal),
+    enabled,
+  });
+
+export const useCourses = (params: CourseListParams = {}) => {
+  const isCrossTenant = useIsCrossTenant();
+  return useQuery(
+    coursesListQueryOptions(params, !!params.branchId || isCrossTenant),
+  );
+};
+
+export const courseDetailQueryOptions = (id?: string, enabled = !!id) =>
+  queryOptions({
     queryKey: courseKeys.detail(id),
     queryFn: async ({ signal }) => {
       const { data } = await axiosInstance.get(`/courses/${id}`, { signal });
       return parseItemEnvelope<Course>(data, 'course');
     },
-    enabled: !!id,
+    enabled,
   });
+
+export const useCourse = (id?: string) =>
+  useQuery(courseDetailQueryOptions(id));
 
 export const useCreateCourse = () => {
   const qc = useQueryClient();

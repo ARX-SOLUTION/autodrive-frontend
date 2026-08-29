@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import StudentsPage from '@/pages/StudentsPage';
 import { formatMoney } from '@/lib/money';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // Characterization tests for the StudentsPage decomposition (route file →
 // src/pages/students/* subcomponents). They pin CURRENT observable behavior:
@@ -102,11 +102,10 @@ vi.mock('@/services/groupService', () => ({
 }));
 
 const renderPage = (initialEntry = '/students') =>
-  render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <StudentsPage />
-    </MemoryRouter>,
-  );
+  renderWithRouter(<StudentsPage />, {
+    initialEntry,
+    routePattern: '/students',
+  });
 
 const pageOf = (students: typeof STUDENTS) => ({
   data: students,
@@ -125,7 +124,7 @@ beforeEach(() => {
 });
 
 describe('StudentsPage characterization', () => {
-  it('renders desktop rows and mobile cards from list data', () => {
+  it('renders desktop rows and mobile cards from list data', async () => {
     h.useStudentsPage.mockReturnValue({
       data: pageOf(STUDENTS),
       isLoading: false,
@@ -133,7 +132,7 @@ describe('StudentsPage characterization', () => {
       isError: false,
       refetch: vi.fn(),
     });
-    renderPage();
+    await renderPage();
 
     // Desktop table cells (names capitalized).
     expect(screen.getAllByText('Karimov').length).toBeGreaterThan(0);
@@ -153,8 +152,8 @@ describe('StudentsPage characterization', () => {
     expect(screen.getByText('students.count')).toBeInTheDocument();
   });
 
-  it('feeds URL filter params into the students fetch', () => {
-    renderPage(
+  it('feeds URL filter params into the students fetch', async () => {
+    await renderPage(
       '/students?course_type=avto_maktab&branch_id=b9&operator_id=op7' +
         '&q=aziz&status=active&has_debt=true&has_group=false' +
         '&date_from=2026-07-01&date_to=2026-07-03',
@@ -178,8 +177,8 @@ describe('StudentsPage characterization', () => {
     expect(screen.getByText('students.o83')).toBeInTheDocument();
   });
 
-  it('renders the explicit empty state, not a blank table', () => {
-    renderPage();
+  it('renders the explicit empty state, not a blank table', async () => {
+    await renderPage();
 
     // Both the desktop table body and the mobile list show the empty state.
     expect(screen.getAllByText('students.not_found').length).toBeGreaterThan(0);
@@ -190,7 +189,7 @@ describe('StudentsPage characterization', () => {
     expect(screen.getByText('students.last_name')).toBeInTheDocument();
   });
 
-  it('hides manage controls for a teacher (role gating)', () => {
+  it('hides manage controls for a teacher (role gating)', async () => {
     h.user = { role: 'teacher', branch_id: 'b1' };
     h.useStudentsPage.mockReturnValue({
       data: pageOf(STUDENTS),
@@ -199,7 +198,7 @@ describe('StudentsPage characterization', () => {
       isError: false,
       refetch: vi.fn(),
     });
-    renderPage();
+    await renderPage();
 
     // Rows still render...
     expect(screen.getAllByText('Karimov').length).toBeGreaterThan(0);
@@ -225,7 +224,26 @@ describe('StudentsPage characterization', () => {
   // pointing past the new (shrunk) totalPages -- the page silently kept
   // requesting a page that no longer exists. Same clamp GroupsPage already
   // had; StudentsPage, PaymentsPage and UsersPage didn't.
-  it('clamps currentPage back to 1 once totalPages shrinks below the URL page', () => {
+  it('hydrates page and filters before the first list query', async () => {
+    h.useStudentsPage.mockReturnValue({
+      data: { data: [], meta: { total: 100, totalPages: 3 } },
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+
+    await renderPage('/students?page=2&q=aziz&has_group=false');
+
+    const firstCall = h.useStudentsPage.mock.calls[0];
+    expect(firstCall[2]).toBe(2);
+    expect(firstCall[5]).toMatchObject({ search: 'aziz', hasGroup: false });
+    expect(h.useStudentsPage.mock.calls.every((call) => call[2] === 2)).toBe(
+      true,
+    );
+  });
+
+  it('clamps currentPage back to 1 once totalPages shrinks below the URL page', async () => {
     h.useStudentsPage.mockReturnValue({
       data: { data: [], meta: { total: 0, totalPages: 1 } },
       isLoading: false,
@@ -233,9 +251,11 @@ describe('StudentsPage characterization', () => {
       isError: false,
       refetch: vi.fn(),
     });
-    renderPage('/students?page=3');
+    await renderPage('/students?page=3');
 
-    const last = h.useStudentsPage.mock.calls.at(-1)!;
-    expect(last[2]).toBe(1); // currentPage (3rd positional arg), clamped from 3
+    await waitFor(() => {
+      const last = h.useStudentsPage.mock.calls.at(-1)!;
+      expect(last[2]).toBe(1); // currentPage (3rd positional arg), clamped from 3
+    });
   });
 });

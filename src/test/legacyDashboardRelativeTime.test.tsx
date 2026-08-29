@@ -1,7 +1,7 @@
-import { act, render, screen, cleanup } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { act, screen, cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import DashboardPage from '@/pages/DashboardPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // Covers two DashboardPage.tsx fixes on the same (legacy, pre-dashboard-v2)
 // component, both from the eslint-plugin-react-hooks 7 upgrade:
@@ -88,11 +88,10 @@ vi.mock('@/services/dashboardService', () => ({
 }));
 
 const renderDashboard = () =>
-  render(
-    <MemoryRouter initialEntries={['/dashboard']}>
-      <DashboardPage />
-    </MemoryRouter>,
-  );
+  renderWithRouter(<DashboardPage />, {
+    initialEntry: '/dashboard',
+    routePattern: '/dashboard',
+  });
 
 describe('LegacyMainDashboard relative-time refresh', () => {
   beforeEach(() => {
@@ -105,13 +104,13 @@ describe('LegacyMainDashboard relative-time refresh', () => {
     cleanup();
   });
 
-  it('renders KPIs from the widened studentsSpark memo dependency without crashing', () => {
-    renderDashboard();
+  it('renders KPIs from the widened studentsSpark memo dependency without crashing', async () => {
+    await renderDashboard();
     expect(screen.getByText('Ali Valiyev')).toBeInTheDocument();
   });
 
-  it('does not present month-over-month revenue as a yesterday comparison', () => {
-    renderDashboard();
+  it('does not present month-over-month revenue as a yesterday comparison', async () => {
+    await renderDashboard();
 
     expect(
       screen.queryByText('dashboard.hero_vs_yesterday'),
@@ -119,8 +118,8 @@ describe('LegacyMainDashboard relative-time refresh', () => {
     expect(screen.queryByText('+11.1%')).not.toBeInTheDocument();
   });
 
-  it('shows accurate elapsed time and keeps updating on a 60s interval', () => {
-    renderDashboard();
+  it('shows accurate elapsed time and keeps updating on a 60s interval', async () => {
+    await renderDashboard();
     expect(screen.getByText('5m')).toBeInTheDocument();
 
     act(() => {

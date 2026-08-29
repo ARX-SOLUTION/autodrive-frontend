@@ -1,14 +1,13 @@
 import {
-  render,
   screen,
   fireEvent,
   cleanup,
   waitFor,
   within,
 } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import UsersPage from '@/pages/UsersPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-rz3.3: UsersPage only ever rendered PersonModal in create mode --
 // no edit/delete affordance existed even though useUpdateUser and
@@ -73,12 +72,7 @@ vi.mock('@/services/branchService', () => ({
   }),
 }));
 
-const renderPage = () =>
-  render(
-    <MemoryRouter>
-      <UsersPage />
-    </MemoryRouter>,
-  );
+const renderPage = () => renderWithRouter(<UsersPage />);
 
 afterEach(() => {
   cleanup();
@@ -88,7 +82,7 @@ afterEach(() => {
 
 describe('UsersPage edit', () => {
   it('opens the modal prefilled with the row values', async () => {
-    renderPage();
+    await renderPage();
 
     fireEvent.click(screen.getAllByLabelText('common.edit')[0]);
 
@@ -99,7 +93,7 @@ describe('UsersPage edit', () => {
   });
 
   it('sends the expected update payload on save', async () => {
-    renderPage();
+    await renderPage();
 
     fireEvent.click(screen.getAllByLabelText('common.edit')[0]);
     await waitFor(() =>
@@ -120,7 +114,7 @@ describe('UsersPage edit', () => {
 
 describe('UsersPage delete', () => {
   it('triggers the delete mutation after confirmation', async () => {
-    renderPage();
+    await renderPage();
 
     fireEvent.click(screen.getAllByLabelText('common.delete')[0]);
     const dialog = screen.getByRole('dialog');

@@ -3,7 +3,6 @@ import {
   attendanceKeys,
   auditLogKeys,
   authKeys,
-  blogKeys,
   branchKeys,
   courseKeys,
   dashboardKeys,
@@ -121,7 +120,7 @@ describe('paymentKeys (base + summary/snapshot/byStudent extensions)', () => {
   });
 });
 
-describe('non-base-shape domains (attendance, schedule, dashboard, exams, blog, search, auth, telegram)', () => {
+describe('non-base-shape domains (attendance, schedule, dashboard, exams, search, auth, telegram)', () => {
   it('attendanceKeys.history varies with studentId and filters', () => {
     expect(attendanceKeys.history('s1', { limit: 20 })).toEqual(
       attendanceKeys.history('s1', { limit: 20 }),
@@ -149,12 +148,6 @@ describe('non-base-shape domains (attendance, schedule, dashboard, exams, blog, 
   it('examKeys.byStudent varies with studentId', () => {
     expect(examKeys.byStudent('s1')).toEqual(examKeys.byStudent('s1'));
     expect(examKeys.byStudent('s1')).not.toEqual(examKeys.byStudent('s2'));
-  });
-
-  it('blogKeys.list and .detail are distinct and stable', () => {
-    expect(blogKeys.list()).toEqual(blogKeys.list());
-    expect(blogKeys.detail('my-slug')).toEqual(blogKeys.detail('my-slug'));
-    expect(blogKeys.detail('slug-a')).not.toEqual(blogKeys.detail('slug-b'));
   });
 
   it('searchKeys.query varies with the search term', () => {

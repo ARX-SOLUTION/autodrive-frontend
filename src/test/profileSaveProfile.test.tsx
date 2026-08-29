@@ -1,15 +1,9 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  cleanup,
-  waitFor,
-} from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import ProfilePage from '@/pages/ProfilePage';
 import { useUpdateUser } from '@/services/userService';
 import { useTelegramLinkStatus } from '@/services/telegramService';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // Regression test for autodrive-f9u.8: the Save button used to have no
 // onClick and the inputs were uncontrolled -- editing them and clicking
@@ -43,16 +37,15 @@ vi.mock('@/services/telegramService', () => ({
   useTelegramDailyReport: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
-function renderProfile() {
+async function renderProfile() {
   vi.mocked(useTelegramLinkStatus).mockReturnValue({
     data: { linked: false, daily_report_enabled: false },
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useTelegramLinkStatus>);
-  return render(
-    <MemoryRouter>
-      <ProfilePage />
-    </MemoryRouter>,
-  );
+  return renderWithRouter(<ProfilePage />, {
+    initialEntry: '/profile',
+    routePattern: '/profile',
+  });
 }
 
 afterEach(cleanup);
@@ -67,7 +60,7 @@ describe('ProfilePage Save button — owner/manager/dev', () => {
       mutate,
       isPending: false,
     } as unknown as ReturnType<typeof useUpdateUser>);
-    renderProfile();
+    await renderProfile();
 
     const nameInput = screen.getByLabelText('profile.name') as HTMLInputElement;
     expect(nameInput).not.toBeDisabled();
@@ -87,27 +80,27 @@ describe('ProfilePage Save button — owner/manager/dev', () => {
     expect(setUser).toHaveBeenCalled();
   });
 
-  it('email field is never editable (backend has no email-update field)', () => {
+  it('email field is never editable (backend has no email-update field)', async () => {
     auth.role = 'owner';
     vi.mocked(useUpdateUser).mockReturnValue({
       mutate: vi.fn(),
       isPending: false,
     } as unknown as ReturnType<typeof useUpdateUser>);
-    renderProfile();
+    await renderProfile();
 
     expect(screen.getByLabelText('Email')).toBeDisabled();
   });
 });
 
 describe('ProfilePage Save button — operator/teacher (no backend permission)', () => {
-  it('disables the fields and Save button instead of a silent 403', () => {
+  it('disables the fields and Save button instead of a silent 403', async () => {
     auth.role = 'operator';
     const mutate = vi.fn();
     vi.mocked(useUpdateUser).mockReturnValue({
       mutate,
       isPending: false,
     } as unknown as ReturnType<typeof useUpdateUser>);
-    renderProfile();
+    await renderProfile();
 
     expect(screen.getByLabelText('profile.name')).toBeDisabled();
     expect(screen.getByLabelText('profile.phone')).toBeDisabled();

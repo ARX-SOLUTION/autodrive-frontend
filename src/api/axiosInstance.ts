@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
 import { queryClient } from '@/lib/queryClient';
 import i18n from '@/i18n';
@@ -38,7 +37,9 @@ axiosInstance.interceptors.response.use(
       if (!SKIP_LOGOUT_ON_401.test(url)) {
         useAuthStore.getState().logout();
         queryClient.clear();
-        toast.error(i18n.t('login.session_expired'));
+        void import('sonner')
+          .then(({ toast }) => toast.error(i18n.t('login.session_expired')))
+          .catch(() => undefined);
         // No hard reload / navigate() here — logout() flips isAuthenticated,
         // and ProtectedRoute already reacts to that by rendering <Navigate>.
       }

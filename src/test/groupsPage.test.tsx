@@ -1,9 +1,9 @@
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach, beforeEach } from 'vitest';
 import GroupsPage from '@/pages/GroupsPage';
 import { groupDeleteDescArgs } from '@/pages/groups/groupDeleteDescArgs';
 import type { Group, GroupOverview } from '@/types/group';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // Characterization tests for GroupsPage, written BEFORE decomposing the page
 // into src/pages/groups/* — they pin the page's observable behavior:
@@ -96,11 +96,10 @@ const OVERVIEW: Partial<GroupOverview>[] = [
 ];
 
 const renderPage = (url = '/groups') =>
-  render(
-    <MemoryRouter initialEntries={[url]}>
-      <GroupsPage />
-    </MemoryRouter>,
-  );
+  renderWithRouter(<GroupsPage />, {
+    initialEntry: url,
+    routePattern: '/groups',
+  });
 
 beforeEach(() => {
   h.auth.role = 'owner';
@@ -113,8 +112,8 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('GroupsPage rendering', () => {
-  it('renders a table row and a mobile card per group', () => {
-    renderPage();
+  it('renders a table row and a mobile card per group', async () => {
+    await renderPage();
     // jsdom applies no media queries, so the desktop table AND the mobile
     // DataCard list both render — each group name appears at least twice.
     expect(screen.getAllByText('Alpha guruh').length).toBeGreaterThanOrEqual(2);
@@ -124,9 +123,9 @@ describe('GroupsPage rendering', () => {
     expect(screen.getByText('groups.count')).toBeTruthy();
   });
 
-  it('renders searchable branch nav and filters the list', () => {
+  it('renders searchable branch nav and filters the list', async () => {
     h.groupsData = [];
-    renderPage();
+    await renderPage();
     // No nested group dump in the nav — only branch names + counts.
     expect(screen.queryByText('Alpha guruh')).toBeNull();
     expect(
@@ -141,17 +140,38 @@ describe('GroupsPage rendering', () => {
     fireEvent.click(
       screen.getByRole('option', { name: /Yunusobod filiali/, hidden: true }),
     );
-    const pageCall = h.useGroupsSpy.mock.calls
-      .map((c) => c[0] as { branchId?: string })
-      .filter((c) => 'courseType' in (c as object))
-      .at(-1);
-    expect(pageCall?.branchId).toBe('b1');
+    await waitFor(() => {
+      const pageCall = h.useGroupsSpy.mock.calls
+        .map((c) => c[0] as { branchId?: string })
+        .filter((c) => 'courseType' in (c as object))
+        .at(-1);
+      expect(pageCall?.branchId).toBe('b1');
+    });
+  });
+
+  it('sorts the complete returned list before applying client pagination', async () => {
+    h.overviewData = [];
+    h.groupsData = [
+      ...Array.from({ length: 10 }, (_, index) => ({
+        ...GROUPS[0],
+        id: `g-${index + 1}`,
+        name: `B${String(index + 1).padStart(2, '0')} guruh`,
+      })),
+      { ...GROUPS[0], id: 'g-last', name: 'A01 guruh' },
+    ];
+
+    await renderPage();
+
+    // A01 arrived as row 11 from the endpoint. Client-owned sorting must run
+    // over all returned rows before the 10-row page is selected.
+    expect(screen.getAllByText('A01 guruh')).toHaveLength(2);
+    expect(screen.queryByText('B10 guruh')).toBeNull();
   });
 });
 
 describe('GroupsPage URL filter params', () => {
-  it('feeds q/course_type/branch_id from the URL into useGroups', () => {
-    renderPage('/groups?q=alpha&course_type=tezkor&branch_id=b2');
+  it('feeds q/course_type/branch_id from the URL into useGroups', async () => {
+    await renderPage('/groups?q=alpha&course_type=tezkor&branch_id=b2');
     // autodrive-553: GroupFormDialog (always mounted, just closed) now also
     // calls useGroups for its own create-time duplicate check, so `.at(-1)`
     // is no longer reliably the page's call -- only the page passes
@@ -172,8 +192,8 @@ describe('GroupsPage URL filter params', () => {
     ).toBe('alpha');
   });
 
-  it('defaults to no filters for a cross-tenant owner', () => {
-    renderPage();
+  it('defaults to no filters for a cross-tenant owner', async () => {
+    await renderPage();
     const pageCall = h.useGroupsSpy.mock.calls.find(
       (c) => 'courseType' in (c[0] as object),
     )?.[0];
@@ -187,27 +207,27 @@ describe('GroupsPage URL filter params', () => {
 });
 
 describe('GroupsPage empty state', () => {
-  it('shows the explicit empty state instead of a blank table', () => {
+  it('shows the explicit empty state instead of a blank table', async () => {
     h.groupsData = [];
     h.overviewData = [];
-    renderPage();
+    await renderPage();
     expect(screen.getByText('groups.not_found')).toBeTruthy();
   });
 });
 
 describe('GroupsPage role gating', () => {
-  it('owner sees delete buttons and the branch filter select', () => {
-    renderPage();
+  it('owner sees delete buttons and the branch filter select', async () => {
+    await renderPage();
     expect(screen.getAllByLabelText('common.delete').length).toBeGreaterThan(0);
     // Course type is tabs; only branch select remains for cross-tenant roles.
     expect(screen.getAllByRole('combobox').length).toBe(1);
     expect(screen.getByRole('tablist')).toBeTruthy();
   });
 
-  it('teacher gets no delete button, no branch filter, and is pinned to own branch', () => {
+  it('teacher gets no delete button, no branch filter, and is pinned to own branch', async () => {
     h.auth.role = 'teacher';
     h.auth.branch_id = 'b1';
-    renderPage();
+    await renderPage();
     expect(screen.queryAllByLabelText('common.delete').length).toBe(0);
     // Edit stays available regardless of manageGroups.
     expect(screen.getAllByLabelText('common.edit').length).toBeGreaterThan(0);
@@ -265,8 +285,8 @@ describe('groupDeleteDescArgs (autodrive-cg9)', () => {
 });
 
 describe('GroupsPage delete confirmation blast radius (autodrive-cg9)', () => {
-  it('renders the with-students copy key for a group that has enrolled students', () => {
-    renderPage();
+  it('renders the with-students copy key for a group that has enrolled students', async () => {
+    await renderPage();
     // GROUPS[0] (Alpha guruh) has active_students: 12 -- table row renders
     // before the mobile card list, so index 0 is its desktop delete button.
     fireEvent.click(screen.getAllByLabelText('common.delete')[0]);
@@ -276,9 +296,9 @@ describe('GroupsPage delete confirmation blast radius (autodrive-cg9)', () => {
     expect(screen.queryByText('groups.confirm_delete_desc_empty')).toBeNull();
   });
 
-  it('renders the distinct empty-group copy key for a group with zero students', () => {
+  it('renders the distinct empty-group copy key for a group with zero students', async () => {
     h.groupsData = [{ ...GROUPS[0], id: 'g3', active_students: 0 }];
-    renderPage();
+    await renderPage();
     fireEvent.click(screen.getAllByLabelText('common.delete')[0]);
     expect(screen.getByText('groups.confirm_delete_desc_empty')).toBeTruthy();
     expect(

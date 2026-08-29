@@ -1,16 +1,15 @@
 import {
-  render,
   screen,
   fireEvent,
   waitFor,
   cleanup,
   within,
 } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { toast } from 'sonner';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import GroupFormDialog from '@/pages/groups/GroupFormDialog';
 import type { Branch } from '@/types/branch';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-52v.1: submitting with the required branch <Select> left unset
 // used to just `return` with no toast/inline error -- the dialog looked
@@ -36,15 +35,14 @@ vi.mock('@/services/teacherService', () => ({
 const BRANCHES: Partial<Branch>[] = [{ id: 'b1', name: 'Yunusobod' }];
 
 const renderDialog = () =>
-  render(
-    <MemoryRouter>
-      <GroupFormDialog
-        open
-        editGroup={null}
-        branches={BRANCHES as Branch[]}
-        onClose={vi.fn()}
-      />
-    </MemoryRouter>,
+  renderWithRouter(
+    <GroupFormDialog
+      open
+      editGroup={null}
+      branches={BRANCHES as Branch[]}
+      onClose={vi.fn()}
+    />,
+    { initialEntry: '/groups', routePattern: '/groups' },
   );
 
 describe('GroupFormDialog validation feedback', () => {
@@ -55,7 +53,7 @@ describe('GroupFormDialog validation feedback', () => {
   });
 
   it('shows an inline required error and does not submit when branch is left unset', async () => {
-    renderDialog();
+    await renderDialog();
     fireEvent.change(screen.getByLabelText(/groups\.name/), {
       target: { value: '11-guruh' },
     });
@@ -70,7 +68,7 @@ describe('GroupFormDialog validation feedback', () => {
   });
 
   it('submits once name and branch are both filled', async () => {
-    renderDialog();
+    await renderDialog();
     fireEvent.change(screen.getByLabelText(/groups\.name/), {
       target: { value: '11-guruh' },
     });

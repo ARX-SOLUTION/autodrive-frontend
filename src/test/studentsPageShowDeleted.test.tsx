@@ -1,16 +1,15 @@
 import {
-  render,
   screen,
   fireEvent,
   cleanup,
   waitFor,
   within,
 } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import StudentsPage from '@/pages/StudentsPage';
 import type { Student } from '@/types/student';
 import type { UserRole } from '@/types/user';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-cg9: owner-only "show deleted" toggle + restore on StudentsPage.
 // Role-parameterized authStore mock (not a hardcoded useCan stub) so this
@@ -88,11 +87,10 @@ vi.mock('@/components/ui/AddStudentDialog', () => ({
 }));
 
 const renderPage = () =>
-  render(
-    <MemoryRouter initialEntries={['/students']}>
-      <StudentsPage />
-    </MemoryRouter>,
-  );
+  renderWithRouter(<StudentsPage />, {
+    initialEntry: '/students',
+    routePattern: '/students',
+  });
 
 const emptyResult = {
   data: { data: [], meta: { total: 0, totalPages: 1 } },
@@ -110,48 +108,48 @@ afterEach(() => {
 });
 
 describe('StudentsPage "show deleted" toggle visibility (autodrive-cg9)', () => {
-  it('is absent for a manager', () => {
+  it('is absent for a manager', async () => {
     role = 'manager';
     h.useStudentsPage.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
     expect(screen.queryByRole('switch')).toBeNull();
     expect(screen.queryByText('common.show_deleted')).toBeNull();
   });
 
-  it('is absent for an operator', () => {
+  it('is absent for an operator', async () => {
     role = 'operator';
     h.useStudentsPage.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
     expect(screen.queryByRole('switch')).toBeNull();
   });
 
-  it('is absent for a teacher', () => {
+  it('is absent for a teacher', async () => {
     role = 'teacher';
     h.useStudentsPage.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
     expect(screen.queryByRole('switch')).toBeNull();
   });
 
-  it('is present for an owner', () => {
+  it('is present for an owner', async () => {
     role = 'owner';
     h.useStudentsPage.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
     expect(screen.getByRole('switch')).toBeInTheDocument();
   });
 
-  it('is present for dev (owner is a strict subset of dev)', () => {
+  it('is present for dev (owner is a strict subset of dev)', async () => {
     role = 'dev';
     h.useStudentsPage.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
     expect(screen.getByRole('switch')).toBeInTheDocument();
   });
 });
 
 describe('StudentsPage "show deleted" toggle wiring (autodrive-cg9)', () => {
-  it('flips includeDeleted through to useStudentsPage when switched on', () => {
+  it('flips includeDeleted through to useStudentsPage when switched on', async () => {
     role = 'owner';
     h.useStudentsPage.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
 
     fireEvent.click(screen.getByRole('switch'));
 
@@ -164,7 +162,7 @@ describe('StudentsPage "show deleted" toggle wiring (autodrive-cg9)', () => {
 });
 
 describe('StudentsPage deleted-row rendering (autodrive-cg9)', () => {
-  it('shows the deleted badge and restore action only on the deleted row', () => {
+  it('shows the deleted badge and restore action only on the deleted row', async () => {
     role = 'owner';
     h.useStudentsPage.mockReturnValue({
       ...emptyResult,
@@ -173,7 +171,7 @@ describe('StudentsPage deleted-row rendering (autodrive-cg9)', () => {
         meta: { total: 2, totalPages: 1 },
       },
     });
-    renderPage();
+    await renderPage();
 
     // Rendered twice each -- once in the desktop table, once in the mobile
     // list (both mount in jsdom; only CSS hides one) -- for the ONE
@@ -187,7 +185,7 @@ describe('StudentsPage deleted-row rendering (autodrive-cg9)', () => {
     expect(screen.getAllByLabelText('common.delete').length).toBeGreaterThan(0);
   });
 
-  it('hides the restore action for a non-owner even if a deleted row is present', () => {
+  it('hides the restore action for a non-owner even if a deleted row is present', async () => {
     // Defensive case: role flips mid-session while stale deleted rows are
     // still in the rendered list.
     role = 'manager';
@@ -198,7 +196,7 @@ describe('StudentsPage deleted-row rendering (autodrive-cg9)', () => {
         meta: { total: 1, totalPages: 1 },
       },
     });
-    renderPage();
+    await renderPage();
 
     expect(screen.queryByLabelText('common.restore')).toBeNull();
   });
@@ -214,7 +212,7 @@ describe('StudentsPage restore action (autodrive-cg9)', () => {
         meta: { total: 1, totalPages: 1 },
       },
     });
-    renderPage();
+    await renderPage();
 
     fireEvent.click(screen.getAllByLabelText('common.restore')[0]);
     const dialog = screen.getByRole('dialog');

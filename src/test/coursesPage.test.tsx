@@ -1,8 +1,8 @@
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import CoursesPage from '@/pages/CoursesPage';
 import type { Course } from '@/types/course';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // TDD for the CoursesPage -> CourseDetailPage row navigation (Course entity
 // detail views were modal-only, violating the repo's own "row/card that
@@ -42,15 +42,11 @@ const COURSES: Course[] = [
 afterEach(cleanup);
 
 describe('CoursesPage row navigation', () => {
-  it('navigates to the course detail page when a row is clicked, but not via the edit/delete buttons', () => {
-    render(
-      <MemoryRouter initialEntries={['/courses']}>
-        <Routes>
-          <Route path="/courses" element={<CoursesPage />} />
-          <Route path="/courses/:id" element={<div>course-detail-page</div>} />
-        </Routes>
-      </MemoryRouter>,
-    );
+  it('navigates to the course detail page when a row is clicked, but not via the edit/delete buttons', async () => {
+    const { router } = await renderWithRouter(<CoursesPage />, {
+      initialEntry: '/courses',
+      routePattern: '/courses',
+    });
 
     // Every edit/delete button — desktop <tr> AND mobile card — must
     // stopPropagation so it never also navigates to the detail page.
@@ -60,9 +56,11 @@ describe('CoursesPage row navigation', () => {
     screen
       .getAllByLabelText('common.delete')
       .forEach((btn) => fireEvent.click(btn));
-    expect(screen.queryByText('course-detail-page')).toBeNull();
+    expect(router.state.location.pathname).toBe('/courses');
 
     fireEvent.click(screen.getAllByText('Toyota kursi')[0]);
-    expect(screen.getByText('course-detail-page')).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/courses/c1'),
+    );
   });
 });

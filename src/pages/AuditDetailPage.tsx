@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from '@/app/navigation';
 import { useTranslation } from 'react-i18next';
 import { ShieldCheck, Warning } from '@phosphor-icons/react';
 import { useAuditLogById } from '@/services/auditService';

@@ -1,9 +1,9 @@
 import { parseCalendarDate } from '@/lib/calendarDate';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import PaymentsPage from '@/pages/PaymentsPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 import type { Payment } from '@/types/payment';
 
 // Characterization tests for PaymentsPage (autodrive decomposition work):
@@ -85,12 +85,11 @@ const pageOf = (payments: Payment[], totalPages = 1) => ({
 });
 
 const renderPage = (url = '/payments') =>
-  render(
-    <MemoryRouter initialEntries={[url]}>
-      <TooltipProvider>
-        <PaymentsPage />
-      </TooltipProvider>
-    </MemoryRouter>,
+  renderWithRouter(
+    <TooltipProvider>
+      <PaymentsPage />
+    </TooltipProvider>,
+    { initialEntry: url, routePattern: '/payments' },
   );
 
 beforeEach(() => {
@@ -111,8 +110,8 @@ beforeEach(() => {
 });
 
 describe('PaymentsPage characterization', () => {
-  it('renders a row/card per payment from the fetched page', () => {
-    renderPage();
+  it('renders a row/card per payment from the fetched page', async () => {
+    await renderPage();
 
     // Both the desktop table and the mobile card list render each payment.
     expect(screen.getAllByText('Aziz Karimov').length).toBeGreaterThan(0);
@@ -125,12 +124,12 @@ describe('PaymentsPage characterization', () => {
     expect(screen.getByText('payments.stats.today_income')).toBeInTheDocument();
   });
 
-  it('feeds URL filter params into the payments query', () => {
+  it('feeds URL filter params into the payments query', async () => {
     // totalPages: 2 -- page=2 in the URL below must be a legitimate page,
     // otherwise the autodrive-52v.3 clamp (currentPage > totalPages) fires
     // and rewrites it back to 1 before this assertion ever reads it.
     usePaymentsPageMock.mockReturnValue(pageOf([payment()], 2));
-    renderPage(
+    await renderPage(
       '/payments?branch_id=b9&status=paid&method=karta&course_type=tezkor' +
         '&q=aziz&sort_by=amount_paid&sort_dir=asc&page=2' +
         '&date_from=2026-07-01&date_to=2026-07-10',
@@ -154,16 +153,16 @@ describe('PaymentsPage characterization', () => {
     });
   });
 
-  it('renders the explicit empty state when there are no payments', () => {
+  it('renders the explicit empty state when there are no payments', async () => {
     usePaymentsPageMock.mockReturnValue(pageOf([]));
-    renderPage();
+    await renderPage();
 
     // EmptyState appears in both the desktop table and mobile list branches.
     expect(screen.getAllByText('payments.not_found').length).toBeGreaterThan(0);
     expect(screen.queryByText('Aziz Karimov')).not.toBeInTheDocument();
   });
 
-  it('shows a distinct error state (not the empty state) with a working retry on fetch failure', () => {
+  it('shows a distinct error state (not the empty state) with a working retry on fetch failure', async () => {
     const refetch = vi.fn();
     usePaymentsPageMock.mockReturnValue({
       data: undefined,
@@ -172,7 +171,7 @@ describe('PaymentsPage characterization', () => {
       isError: true,
       refetch,
     });
-    renderPage();
+    await renderPage();
 
     expect(screen.getAllByText('common.error').length).toBeGreaterThan(0);
     expect(screen.queryByText('payments.not_found')).not.toBeInTheDocument();
@@ -181,16 +180,16 @@ describe('PaymentsPage characterization', () => {
     expect(refetch).toHaveBeenCalled();
   });
 
-  it('shows export + add payment for cross-tenant owner', () => {
-    renderPage();
+  it('shows export + add payment for cross-tenant owner', async () => {
+    await renderPage();
 
     expect(screen.getByText('payments.export_excel')).toBeInTheDocument();
     expect(screen.getByText('payments.add_payment')).toBeInTheDocument();
   });
 
-  it('hides export and add payment from teacher role', () => {
+  it('hides export and add payment from teacher role', async () => {
     authState.user = { role: 'teacher', branch_id: 'b1' };
-    renderPage();
+    await renderPage();
 
     expect(screen.queryByText('payments.export_excel')).not.toBeInTheDocument();
     expect(screen.queryByText('payments.add_payment')).not.toBeInTheDocument();
@@ -200,13 +199,13 @@ describe('PaymentsPage characterization', () => {
   // pointing past the new (shrunk) totalPages -- the page silently kept
   // requesting a page that no longer exists. Same clamp GroupsPage already
   // had; StudentsPage, PaymentsPage and UsersPage didn't.
-  it('clamps currentPage back to 1 once totalPages shrinks below the URL page', () => {
+  it('clamps currentPage back to 1 once totalPages shrinks below the URL page', async () => {
     usePaymentsPageMock.mockReturnValue({
       data: { data: [], meta: { total: 0, totalPages: 1 } },
       isLoading: false,
       isFetching: false,
     });
-    renderPage('/payments?page=3');
+    await renderPage('/payments?page=3');
 
     const call = usePaymentsPageMock.mock.calls.at(-1)!;
     expect(call[4]).toBe(1); // effectivePage (5th positional arg), clamped from 3

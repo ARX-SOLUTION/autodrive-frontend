@@ -1,13 +1,13 @@
 import {
-  render,
   screen,
   fireEvent,
   act,
   cleanup,
+  waitFor,
 } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { vi, describe, it, expect, afterEach, beforeEach } from 'vitest';
 import { CommandPalette } from '@/components/layout/CommandPalette';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-cdy: Cmd+K palette wires a debounced (300ms, 2+ chars) call to
 // the global search endpoint alongside the existing static page-name
@@ -48,19 +48,10 @@ vi.mock('@/hooks/useCan', () => ({
 }));
 
 const renderPalette = (onOpenChange = vi.fn()) =>
-  render(
-    <MemoryRouter initialEntries={['/dashboard']}>
-      <Routes>
-        <Route
-          path="/dashboard"
-          element={<CommandPalette open onOpenChange={onOpenChange} />}
-        />
-        <Route path="/students/:id" element={<div>student-detail</div>} />
-        <Route path="/groups/:id" element={<div>group-detail</div>} />
-        <Route path="/users/:id" element={<div>user-detail</div>} />
-      </Routes>
-    </MemoryRouter>,
-  );
+  renderWithRouter(<CommandPalette open onOpenChange={onOpenChange} />, {
+    initialEntry: '/dashboard',
+    routePattern: '/$',
+  });
 
 describe('CommandPalette global search', () => {
   beforeEach(() => {
@@ -75,8 +66,8 @@ describe('CommandPalette global search', () => {
     mockQueryState.hasData = true;
   });
 
-  it('debounces the query by 300ms before it reaches useGlobalSearch', () => {
-    renderPalette();
+  it('debounces the query by 300ms before it reaches useGlobalSearch', async () => {
+    await renderPalette();
     const input = screen.getByPlaceholderText('actions.search_placeholder');
 
     fireEvent.change(input, { target: { value: 'k' } });
@@ -91,8 +82,8 @@ describe('CommandPalette global search', () => {
     expect(searchSpy).toHaveBeenCalledWith('k');
   });
 
-  it('renders results grouped by type once the query is non-trivial', () => {
-    renderPalette();
+  it('renders results grouped by type once the query is non-trivial', async () => {
+    await renderPalette();
     const input = screen.getByPlaceholderText('actions.search_placeholder');
 
     fireEvent.change(input, { target: { value: 'aziz' } });
@@ -108,9 +99,9 @@ describe('CommandPalette global search', () => {
     expect(screen.getByText('Nigora Yusupova')).toBeTruthy();
   });
 
-  it('navigates to the matching detail route and closes on select', () => {
+  it('navigates to the matching detail route and closes on select', async () => {
     const onOpenChange = vi.fn();
-    renderPalette(onOpenChange);
+    const { router } = await renderPalette(onOpenChange);
     const input = screen.getByPlaceholderText('actions.search_placeholder');
 
     fireEvent.change(input, { target: { value: 'aziz' } });
@@ -118,16 +109,19 @@ describe('CommandPalette global search', () => {
       vi.advanceTimersByTime(300);
     });
 
+    vi.useRealTimers();
     fireEvent.click(screen.getByText('Aziz Karimov'));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(screen.getByText('student-detail')).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/students/s1'),
+    );
   });
 
-  it('disables input and sets aria-busy while the first fetch of a fresh query is pending', () => {
+  it('disables input and sets aria-busy while the first fetch of a fresh query is pending', async () => {
     mockQueryState.isFetching = true;
     mockQueryState.hasData = false;
-    renderPalette();
+    await renderPalette();
     const input = screen.getByPlaceholderText('actions.search_placeholder');
 
     fireEvent.change(input, { target: { value: 'aziz' } });
@@ -139,10 +133,10 @@ describe('CommandPalette global search', () => {
     expect(input).toHaveAttribute('aria-busy', 'true');
   });
 
-  it('keeps input enabled but still aria-busy on incremental re-fetches once results exist', () => {
+  it('keeps input enabled but still aria-busy on incremental re-fetches once results exist', async () => {
     mockQueryState.isFetching = true;
     mockQueryState.hasData = true;
-    renderPalette();
+    await renderPalette();
     const input = screen.getByPlaceholderText('actions.search_placeholder');
 
     fireEvent.change(input, { target: { value: 'aziz' } });

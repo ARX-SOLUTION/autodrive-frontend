@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, cleanup } from '@testing-library/react';
-import { MemoryRouter, Routes, Route, Link } from 'react-router-dom';
+import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 import { AppLayout } from './AppLayout';
 
 // react-hooks/set-state-in-effect fix: setMobileSidebarOpen(false) moved
@@ -46,38 +46,25 @@ afterEach(() => {
   cleanup();
 });
 
-const Page = ({ label }: { label: string }) => <Link to="/other">{label}</Link>;
-
 describe('AppLayout mobile sidebar auto-close on navigation', () => {
-  it('closes the mobile sidebar drawer when the route changes', () => {
-    render(
-      <MemoryRouter initialEntries={['/home']}>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route path="/home" element={<Page label="go" />} />
-            <Route path="/other" element={<Page label="here" />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>,
-    );
+  it('closes the mobile sidebar drawer when the route changes', async () => {
+    const { router } = await renderWithRouter(<AppLayout />, {
+      initialEntry: '/home',
+      routePattern: '/$',
+    });
 
     fireEvent.click(screen.getByText('open-menu'));
     expect(screen.getByTestId('mobile-open').textContent).toBe('true');
 
-    fireEvent.click(screen.getByText('go'));
+    await act(() => router.navigate({ to: '/other' as never }));
     expect(screen.getByTestId('mobile-open').textContent).toBe('false');
   });
 
-  it('reclaims desktop content width and persists the collapsed preference', () => {
-    render(
-      <MemoryRouter initialEntries={['/home']}>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route path="/home" element={<Page label="go" />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>,
-    );
+  it('reclaims desktop content width and persists the collapsed preference', async () => {
+    await renderWithRouter(<AppLayout />, {
+      initialEntry: '/home',
+      routePattern: '/home',
+    });
 
     const contentShell = screen.getByRole('main').parentElement!;
     expect(screen.getByTestId('desktop-expanded')).toHaveTextContent('true');
@@ -90,18 +77,13 @@ describe('AppLayout mobile sidebar auto-close on navigation', () => {
     expect(localStorage.getItem('autodrive-sidebar-expanded')).toBe('false');
   });
 
-  it('restores the persisted desktop preference during initial render', () => {
+  it('restores the persisted desktop preference during initial render', async () => {
     localStorage.setItem('autodrive-sidebar-expanded', 'false');
 
-    render(
-      <MemoryRouter initialEntries={['/home']}>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route path="/home" element={<Page label="go" />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>,
-    );
+    await renderWithRouter(<AppLayout />, {
+      initialEntry: '/home',
+      routePattern: '/home',
+    });
 
     expect(screen.getByTestId('desktop-expanded')).toHaveTextContent('false');
     expect(screen.getByRole('main').parentElement!.className).toContain(

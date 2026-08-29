@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Brand } from '@/components/layout/Brand';
 import { Button } from '@/components/ui/button';

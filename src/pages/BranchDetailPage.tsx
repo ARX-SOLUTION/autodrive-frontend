@@ -1,4 +1,4 @@
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from '@/app/navigation';
 import { useTranslation } from 'react-i18next';
 import { Warning, MapPin, Phone, ShieldCheck } from '@phosphor-icons/react';
 import {

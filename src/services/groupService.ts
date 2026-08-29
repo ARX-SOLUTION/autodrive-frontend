@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { useIsCrossTenant } from '@/hooks/useCan';
@@ -16,45 +21,62 @@ export interface GroupListParams {
   includeDeleted?: boolean;
 }
 
+export interface GroupListQueryParams extends GroupListParams {
+  authBranchId?: string;
+}
+
+export const fetchGroups = async (
+  params: GroupListParams,
+  signal?: AbortSignal,
+): Promise<Group[]> => {
+  const { data: res } = await axiosInstance.get('/groups', {
+    params: {
+      search: params.search || undefined,
+      branch_id: params.branchId || undefined,
+      course_type: params.courseType || undefined,
+      include_deleted: params.includeDeleted || undefined,
+    },
+    signal,
+  });
+  return parseListEnvelope<Group>(res, 'groups').data;
+};
+
+export const groupsListQueryOptions = (
+  params: GroupListQueryParams = {},
+  enabled = true,
+) =>
+  queryOptions({
+    queryKey: groupKeys.list({
+      authBranchId: params.authBranchId,
+      branchId: params.branchId,
+      search: params.search,
+      courseType: params.courseType,
+      includeDeleted: params.includeDeleted,
+    }),
+    // Group lists are stable org structure, so they can use a longer stale
+    // window than the 30s global default.
+    staleTime: 5 * 60_000,
+    queryFn: ({ signal }) => fetchGroups(params, signal),
+    enabled,
+  });
+
 // Callers that don't pass params (StudentModal, SchedulePage, AttendancePage)
 // keep getting the full tenant-scoped list, unchanged. GroupsPage passes
 // search/branchId/courseType so GET /groups filters server-side instead of
 // the page re-filtering the full list client-side (autodrive-b85.5).
 export const useGroups = (params: GroupListParams = {}) => {
-  const { search, branchId, courseType, includeDeleted } = params;
   const authBranchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
-  return useQuery<Group[]>({
-    queryKey: groupKeys.list({
-      authBranchId,
-      branchId,
-      search,
-      courseType,
-      includeDeleted,
-    }),
-    // autodrive-6ef.17: group list is org structure, rarely changes -- longer
-    // than the 30s global default (matches blogService's precedent).
-    staleTime: 5 * 60_000,
-    queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get('/groups', {
-        params: {
-          search: search || undefined,
-          branch_id: branchId || undefined,
-          course_type: courseType || undefined,
-          include_deleted: includeDeleted || undefined,
-        },
-        signal,
-      });
-      return parseListEnvelope<Group>(res, 'groups').data;
-    },
-    enabled: !!authBranchId || isCrossTenant,
-  });
+  return useQuery(
+    groupsListQueryOptions(
+      { ...params, authBranchId },
+      !!authBranchId || isCrossTenant,
+    ),
+  );
 };
 
-export const useGroupsOverview = () => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
-  const isCrossTenant = useIsCrossTenant();
-  return useQuery<GroupOverview[]>({
+export const groupsOverviewQueryOptions = (branchId?: string, enabled = true) =>
+  queryOptions({
     queryKey: groupKeys.overview({ branchId }),
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/groups/overview', {
@@ -62,19 +84,28 @@ export const useGroupsOverview = () => {
       });
       return parseListEnvelope<GroupOverview>(res, 'groups-overview').data;
     },
-    enabled: !!branchId || isCrossTenant,
+    enabled,
   });
+
+export const useGroupsOverview = () => {
+  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const isCrossTenant = useIsCrossTenant();
+  return useQuery(
+    groupsOverviewQueryOptions(branchId, !!branchId || isCrossTenant),
+  );
 };
 
-export const useGroup = (id?: string) =>
-  useQuery<Group>({
+export const groupDetailQueryOptions = (id?: string, enabled = !!id) =>
+  queryOptions({
     queryKey: groupKeys.detail(id),
     queryFn: async ({ signal }) => {
       const { data } = await axiosInstance.get(`/groups/${id}`, { signal });
       return parseItemEnvelope<Group>(data, 'group');
     },
-    enabled: !!id,
+    enabled,
   });
+
+export const useGroup = (id?: string) => useQuery(groupDetailQueryOptions(id));
 
 export const useCreateGroup = () => {
   const qc = useQueryClient();

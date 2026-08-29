@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link } from '@/app/navigation';
 import { toast } from 'sonner';
 import { Warning, X } from '@phosphor-icons/react';
 import { useForm, useWatch } from 'react-hook-form';

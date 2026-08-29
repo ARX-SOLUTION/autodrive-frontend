@@ -1,14 +1,8 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import PaymentsPage from '@/pages/PaymentsPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 import type { PaymentSnapshot, PaymentSummary } from '@/types/payment';
 
 const { aggregateState, snapshotRefetch, summaryRefetch } = vi.hoisted(() => ({
@@ -71,12 +65,14 @@ vi.mock('@/components/ui/PaymentModal', () => ({
 }));
 
 const renderFilteredPage = () =>
-  render(
-    <MemoryRouter initialEntries={['/payments?status=paid']}>
-      <TooltipProvider>
-        <PaymentsPage />
-      </TooltipProvider>
-    </MemoryRouter>,
+  renderWithRouter(
+    <TooltipProvider>
+      <PaymentsPage />
+    </TooltipProvider>,
+    {
+      initialEntry: '/payments?status=paid',
+      routePattern: '/payments',
+    },
   );
 
 const aggregateSection = (heading: string): HTMLElement => {
@@ -101,11 +97,11 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('payment aggregate accuracy states', () => {
-  it('shows skeletons instead of authoritative zeroes while aggregate data is missing', () => {
+  it('shows skeletons instead of authoritative zeroes while aggregate data is missing', async () => {
     aggregateState.snapshotLoading = true;
     aggregateState.summaryLoading = true;
 
-    renderFilteredPage();
+    await renderFilteredPage();
 
     const snapshot = aggregateSection('payments.current_status');
     const summary = aggregateSection('payments.selected_results');
@@ -122,11 +118,11 @@ describe('payment aggregate accuracy states', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows independent aggregate errors and retries the failed queries', () => {
+  it('shows independent aggregate errors and retries the failed queries', async () => {
     aggregateState.snapshotError = true;
     aggregateState.summaryError = true;
 
-    renderFilteredPage();
+    await renderFilteredPage();
 
     const snapshot = aggregateSection('payments.current_status');
     const summary = aggregateSection('payments.selected_results');
@@ -145,7 +141,7 @@ describe('payment aggregate accuracy states', () => {
     expect(summaryRefetch).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps a legitimate aggregate zero visible once data exists', () => {
+  it('keeps a legitimate aggregate zero visible once data exists', async () => {
     aggregateState.snapshot = {
       today_income: 0,
       this_month_income: 0,
@@ -158,7 +154,7 @@ describe('payment aggregate accuracy states', () => {
       period_debt: 0,
     };
 
-    renderFilteredPage();
+    await renderFilteredPage();
 
     const snapshot = aggregateSection('payments.current_status');
     const summary = aggregateSection('payments.selected_results');

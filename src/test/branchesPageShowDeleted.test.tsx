@@ -1,16 +1,15 @@
 import {
-  render,
   screen,
   fireEvent,
   cleanup,
   waitFor,
   within,
 } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import BranchesPage from '@/pages/BranchesPage';
 import type { Branch } from '@/types/branch';
 import type { UserRole } from '@/types/user';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-cg9: owner-only "show deleted" toggle + restore on
 // BranchesPage. Role-parameterized authStore mock (real permissions
@@ -52,11 +51,10 @@ vi.mock('@/services/branchService', () => ({
 }));
 
 const renderPage = () =>
-  render(
-    <MemoryRouter>
-      <BranchesPage />
-    </MemoryRouter>,
-  );
+  renderWithRouter(<BranchesPage />, {
+    initialEntry: '/branches',
+    routePattern: '/branches',
+  });
 
 afterEach(() => {
   auth.role = 'owner';
@@ -66,33 +64,33 @@ afterEach(() => {
 });
 
 describe('BranchesPage "show deleted" toggle visibility (autodrive-cg9)', () => {
-  it('is absent for a manager', () => {
+  it('is absent for a manager', async () => {
     auth.role = 'manager';
     h.useBranches.mockReturnValue({ data: [], isLoading: false });
-    renderPage();
+    await renderPage();
     expect(screen.queryByRole('switch')).toBeNull();
   });
 
-  it('is absent for an operator', () => {
+  it('is absent for an operator', async () => {
     auth.role = 'operator';
     h.useBranches.mockReturnValue({ data: [], isLoading: false });
-    renderPage();
+    await renderPage();
     expect(screen.queryByRole('switch')).toBeNull();
   });
 
-  it('is present for an owner', () => {
+  it('is present for an owner', async () => {
     auth.role = 'owner';
     h.useBranches.mockReturnValue({ data: [], isLoading: false });
-    renderPage();
+    await renderPage();
     expect(screen.getByRole('switch')).toBeInTheDocument();
   });
 });
 
 describe('BranchesPage "show deleted" toggle wiring (autodrive-cg9)', () => {
-  it('flips includeDeleted through to useBranches when switched on', () => {
+  it('flips includeDeleted through to useBranches when switched on', async () => {
     auth.role = 'owner';
     h.useBranches.mockReturnValue({ data: [], isLoading: false });
-    renderPage();
+    await renderPage();
 
     fireEvent.click(screen.getByRole('switch'));
 
@@ -104,13 +102,13 @@ describe('BranchesPage "show deleted" toggle wiring (autodrive-cg9)', () => {
 });
 
 describe('BranchesPage deleted-row rendering (autodrive-cg9)', () => {
-  it('shows the deleted badge and restore action only on the deleted row', () => {
+  it('shows the deleted badge and restore action only on the deleted row', async () => {
     auth.role = 'owner';
     h.useBranches.mockReturnValue({
       data: [LIVE_BRANCH, DELETED_BRANCH],
       isLoading: false,
     });
-    renderPage();
+    await renderPage();
 
     // Desktop grid + mobile list both mount in jsdom -- 2 renders for the
     // ONE deleted branch.
@@ -119,10 +117,10 @@ describe('BranchesPage deleted-row rendering (autodrive-cg9)', () => {
     expect(screen.getAllByLabelText('common.edit').length).toBeGreaterThan(0);
   });
 
-  it('hides the restore action for a non-owner even if a deleted row is present', () => {
+  it('hides the restore action for a non-owner even if a deleted row is present', async () => {
     auth.role = 'manager';
     h.useBranches.mockReturnValue({ data: [DELETED_BRANCH], isLoading: false });
-    renderPage();
+    await renderPage();
 
     expect(screen.queryByLabelText('common.restore')).toBeNull();
   });
@@ -132,7 +130,7 @@ describe('BranchesPage restore action (autodrive-cg9)', () => {
   it('fires the restore mutation with the row id after confirming', async () => {
     auth.role = 'owner';
     h.useBranches.mockReturnValue({ data: [DELETED_BRANCH], isLoading: false });
-    renderPage();
+    await renderPage();
 
     fireEvent.click(screen.getAllByLabelText('common.restore')[0]);
     const dialog = screen.getByRole('dialog');

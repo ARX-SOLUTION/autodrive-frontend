@@ -1,10 +1,9 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useLogout } from '@/services/authService';
 import { useCan } from '@/hooks/useCan';
-import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import type { Capability } from '@/lib/permissions';
 import {
   SignOut,
@@ -13,7 +12,6 @@ import {
   SidebarSimple,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
-import { prefetchRoute } from '@/lib/routePrefetch';
 import { NAV_ITEMS, NAV_SECTIONS, type NavItem } from '@/lib/navigation';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
@@ -239,7 +237,6 @@ export const Sidebar = ({
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const goTo = useViewTransitionNavigate();
   const logoutMutation = useLogout();
   const pinStorageKey = user?.id
     ? `autodrive-sidebar-pins:${user.company_id ?? 'default'}:${user.id}`
@@ -294,30 +291,6 @@ export const Sidebar = ({
   const logoutLabel = t('actions.logout', 'Chiqish');
   const userLabel = user?.name || user?.email;
 
-  const handleNavClick = (
-    e: React.MouseEvent<HTMLAnchorElement>,
-    path: string,
-    onNavigate?: () => void,
-  ) => {
-    onNavigate?.();
-    if (
-      e.defaultPrevented ||
-      e.button !== 0 ||
-      e.metaKey ||
-      e.ctrlKey ||
-      e.shiftKey ||
-      e.altKey
-    ) {
-      return;
-    }
-
-    e.preventDefault();
-    // Sidebar links deliberately have no source/destination pair. The hook
-    // therefore takes the plain navigation path instead of animating a whole
-    // document transition and making the menu appear to jump.
-    goTo(path, null, '');
-  };
-
   const togglePin = (path: string) => {
     const next = pinnedPaths.includes(path)
       ? pinnedPaths.filter((itemPath) => itemPath !== path)
@@ -340,11 +313,10 @@ export const Sidebar = ({
     const isDesktop = variant === 'desktop';
 
     const navLink = (
-      <a
-        href={item.path}
-        onClick={(e) => handleNavClick(e, item.path, onNavigate)}
-        onMouseEnter={() => prefetchRoute(item.path)}
-        onFocus={() => prefetchRoute(item.path)}
+      <Link
+        to={item.path as never}
+        preload="intent"
+        onClick={onNavigate}
         aria-label={label}
         aria-current={active ? 'page' : undefined}
         data-sidebar-item="true"
@@ -371,7 +343,7 @@ export const Sidebar = ({
         >
           {label}
         </span>
-      </a>
+      </Link>
     );
 
     return (

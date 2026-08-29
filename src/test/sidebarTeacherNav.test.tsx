@@ -1,8 +1,8 @@
-import { render, screen, cleanup } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { cleanup, screen } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 import type { UserRole } from '@/types/user';
 
 // autodrive-vh0.2: teacher self-service nav trim. Unlike sidebarRail.test.tsx
@@ -30,29 +30,28 @@ afterEach(() => {
 });
 
 const renderSidebar = () =>
-  render(
-    <MemoryRouter initialEntries={['/dashboard']}>
-      <TooltipProvider>
-        <Sidebar
-          mobileOpen={false}
-          onMobileOpenChange={vi.fn()}
-          desktopExpanded
-          onDesktopExpandedChange={vi.fn()}
-        />
-      </TooltipProvider>
-    </MemoryRouter>,
+  renderWithRouter(
+    <TooltipProvider>
+      <Sidebar
+        mobileOpen={false}
+        onMobileOpenChange={vi.fn()}
+        desktopExpanded
+        onDesktopExpandedChange={vi.fn()}
+      />
+    </TooltipProvider>,
+    { initialEntry: '/dashboard', routePattern: '/dashboard' },
   );
 
 describe('Sidebar teacher nav trim (autodrive-vh0.2)', () => {
-  it('hides Payments for a teacher', () => {
+  it('hides Payments for a teacher', async () => {
     role = 'teacher';
-    renderSidebar();
+    await renderSidebar();
     expect(screen.queryByLabelText('nav.payments')).toBeNull();
   });
 
-  it('keeps dashboard/schedule/attendance/groups/students/profile for a teacher', () => {
+  it('keeps dashboard/schedule/attendance/groups/students/profile for a teacher', async () => {
     role = 'teacher';
-    renderSidebar();
+    await renderSidebar();
     expect(screen.getByLabelText('nav.dashboard')).toBeTruthy();
     expect(screen.getByLabelText('nav.schedule')).toBeTruthy();
     expect(screen.getByLabelText('nav.attendance')).toBeTruthy();
@@ -61,9 +60,9 @@ describe('Sidebar teacher nav trim (autodrive-vh0.2)', () => {
     expect(screen.getByLabelText('nav.profile')).toBeTruthy();
   });
 
-  it('still hides the already-admin-only items for a teacher', () => {
+  it('still hides the already-admin-only items for a teacher', async () => {
     role = 'teacher';
-    renderSidebar();
+    await renderSidebar();
     expect(screen.queryByLabelText('nav.branches')).toBeNull();
     expect(screen.queryByLabelText('nav.courses')).toBeNull();
     expect(screen.queryByLabelText('nav.operators')).toBeNull();
@@ -73,27 +72,27 @@ describe('Sidebar teacher nav trim (autodrive-vh0.2)', () => {
   });
 
   // Regression: only teacher's nav should change (Slice A requirement).
-  it('still shows Payments for dev', () => {
+  it('still shows Payments for dev', async () => {
     role = 'dev';
-    renderSidebar();
+    await renderSidebar();
     expect(screen.getByLabelText('nav.payments')).toBeTruthy();
   });
 
-  it('still shows Payments for owner', () => {
+  it('still shows Payments for owner', async () => {
     role = 'owner';
-    renderSidebar();
+    await renderSidebar();
     expect(screen.getByLabelText('nav.payments')).toBeTruthy();
   });
 
-  it('still shows Payments for manager', () => {
+  it('still shows Payments for manager', async () => {
     role = 'manager';
-    renderSidebar();
+    await renderSidebar();
     expect(screen.getByLabelText('nav.payments')).toBeTruthy();
   });
 
-  it('still shows Payments for operator', () => {
+  it('still shows Payments for operator', async () => {
     role = 'operator';
-    renderSidebar();
+    await renderSidebar();
     expect(screen.getByLabelText('nav.payments')).toBeTruthy();
   });
 });

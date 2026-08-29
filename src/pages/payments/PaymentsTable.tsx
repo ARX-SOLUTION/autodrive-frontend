@@ -1,36 +1,56 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { PaginationState, SortingState } from '@tanstack/react-table';
 import { toast } from 'sonner';
 import { CreditCard, PencilSimple, Trash } from '@phosphor-icons/react';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { DataTable, type DataTableColumn } from '@/components/ui/DataTable';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { EmptyState } from '@/components/ui/EmptyState';
 import PaymentModal from '@/components/ui/PaymentModal';
+import { Skeleton } from '@/components/ui/skeleton';
+import { createDataGridColumnHelper, DataGrid } from '@/shared/ui/data-grid';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import { useCan } from '@/hooks/useCan';
 import { useDeletePayment, useUpdatePayment } from '@/services/paymentService';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { formatMoney } from '@/lib/money';
 import type { Payment } from '@/types/payment';
+import { PaymentMobileCard } from './PaymentsMobileList';
 import { courseTypeLabelKey, formatDate } from './paymentFormatters';
 
 interface PaymentsTableProps {
   payments: Payment[];
   isLoading: boolean;
-  startIndex: number;
+  isFetching: boolean;
+  isError: boolean;
+  onRetry: () => void;
+  currentPage: number;
+  pageSize: number;
+  totalPayments: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
   sortField: string;
   sortDir: 'asc' | 'desc';
-  onToggleSort: (field: string) => void;
+  onSortChange: (field: string, dir: 'asc' | 'desc') => void;
 }
 
-/** SECTION 4 (desktop): sortable payments table; rows navigate to the student. */
+const columnHelper = createDataGridColumnHelper<Payment>();
+const uzNumberFormatter = new Intl.NumberFormat('uz-UZ');
+
+/** SECTION 4: server-controlled payments grid with a mobile card renderer. */
 export const PaymentsTable = ({
   payments,
   isLoading,
-  startIndex,
+  isFetching,
+  isError,
+  onRetry,
+  currentPage,
+  pageSize,
+  totalPayments,
+  totalPages,
+  onPageChange,
   sortField,
   sortDir,
-  onToggleSort,
+  onSortChange,
 }: PaymentsTableProps) => {
   const { t } = useTranslation();
   const goToStudent = useViewTransitionNavigate();
@@ -74,136 +94,201 @@ export const PaymentsTable = ({
     });
   };
 
-  const columns: DataTableColumn<Payment>[] = [
-    {
-      key: 'index',
+  const startIndex = (currentPage - 1) * pageSize;
+  const columns = columnHelper.columns([
+    columnHelper.display({
+      id: 'index',
       header: '#',
-      align: 'center',
-      cellClassName: 'text-muted-foreground',
-      render: (_p, idx) => startIndex + idx + 1,
-    },
-    {
-      key: 'student_name',
+      cell: ({ row }) => startIndex + row.index + 1,
+      meta: {
+        align: 'center',
+        cellClassName: 'text-muted-foreground',
+      },
+    }),
+    columnHelper.accessor('student_name', {
       header: t('payments.student_name'),
-      sortable: true,
-      cellClassName: 'font-medium',
-      render: (p) => p.student_name,
-    },
-    {
-      key: 'branch',
+      cell: ({ getValue }) => getValue(),
+      enableSorting: true,
+      meta: { cellClassName: 'font-medium' },
+    }),
+    columnHelper.accessor('branch_name', {
       header: t('common.branch'),
-      cellClassName: 'text-muted-foreground',
-      render: (p) => p.branch_name,
-    },
-    {
-      key: 'course_type',
+      cell: ({ getValue }) => getValue(),
+      meta: { cellClassName: 'text-muted-foreground' },
+    }),
+    columnHelper.accessor('course_type', {
       header: t('common.course_type'),
-      cellClassName: 'text-xs',
-      render: (p) => t(courseTypeLabelKey(p.course_type)),
-    },
-    {
-      key: 'total_price',
+      cell: ({ getValue }) => t(courseTypeLabelKey(getValue())),
+      meta: { cellClassName: 'text-xs' },
+    }),
+    columnHelper.accessor('total_price', {
       header: t('payments.total_price'),
-      align: 'right',
-      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
-      render: (p) => new Intl.NumberFormat('uz-UZ').format(p.total_price),
-    },
-    {
-      key: 'amount_paid',
+      cell: ({ getValue }) => uzNumberFormatter.format(getValue()),
+      meta: {
+        align: 'right',
+        cellClassName: 'whitespace-nowrap tabular-nums font-mono',
+      },
+    }),
+    columnHelper.accessor('amount_paid', {
       header: t('payments.amount_paid'),
-      align: 'right',
-      sortable: true,
-      cellClassName:
-        'text-success font-medium whitespace-nowrap tabular-nums font-mono',
-      render: (p) => `+${new Intl.NumberFormat('uz-UZ').format(p.amount_paid)}`,
-    },
-    {
-      key: 'remaining_debt',
+      cell: ({ getValue }) => `+${uzNumberFormatter.format(getValue())}`,
+      enableSorting: true,
+      meta: {
+        align: 'right',
+        cellClassName:
+          'text-success font-medium whitespace-nowrap tabular-nums font-mono',
+      },
+    }),
+    columnHelper.accessor('remaining_debt', {
       header: t('payments.remaining_debt'),
-      align: 'right',
-      sortable: true,
-      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
-      render: (p) => (
-        <span
-          className={p.remaining_debt > 0 ? 'text-destructive' : 'text-success'}
-        >
-          {p.remaining_debt > 0
-            ? new Intl.NumberFormat('uz-UZ').format(p.remaining_debt)
-            : p.remaining_debt < 0
-              ? `${t('students.credit_label')}: ${new Intl.NumberFormat('uz-UZ').format(Math.abs(p.remaining_debt))}`
-              : t('payments.fully_paid')}
-        </span>
-      ),
-    },
-    {
-      key: 'date',
+      cell: ({ getValue }) => {
+        const debt = getValue();
+        return (
+          <span className={debt > 0 ? 'text-destructive' : 'text-success'}>
+            {debt > 0
+              ? uzNumberFormatter.format(debt)
+              : debt < 0
+                ? `${t('students.credit_label')}: ${uzNumberFormatter.format(Math.abs(debt))}`
+                : t('payments.fully_paid')}
+          </span>
+        );
+      },
+      enableSorting: true,
+      meta: {
+        align: 'right',
+        cellClassName: 'whitespace-nowrap tabular-nums font-mono',
+      },
+    }),
+    columnHelper.accessor('date', {
       header: t('common.date'),
-      sortable: true,
-      cellClassName: 'text-muted-foreground tabular-nums',
-      render: (p) => formatDate(p.date),
-    },
+      cell: ({ getValue }) => formatDate(getValue()),
+      enableSorting: true,
+      meta: {
+        cellClassName: 'text-muted-foreground tabular-nums',
+      },
+    }),
     ...(canManagePayments
       ? [
-          {
-            key: 'actions',
+          columnHelper.display({
+            id: 'actions',
             header: t('common.actions'),
-            align: 'center' as const,
-            render: (p: Payment) => (
-              <div className="flex items-center justify-center gap-1">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditTarget(p);
-                  }}
-                  aria-label={t('common.edit')}
-                  title={t('common.edit')}
-                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                >
-                  <PencilSimple className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDeleteTarget(p);
-                  }}
-                  aria-label={t('common.delete')}
-                  title={t('common.delete')}
-                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                >
-                  <Trash className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ),
-          },
+            cell: ({ row }) => {
+              const payment = row.original;
+              return (
+                <div className="flex items-center justify-center gap-1">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setEditTarget(payment);
+                    }}
+                    aria-label={t('common.edit')}
+                    title={t('common.edit')}
+                    className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    <PencilSimple className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setDeleteTarget(payment);
+                    }}
+                    aria-label={t('common.delete')}
+                    title={t('common.delete')}
+                    className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              );
+            },
+            meta: { align: 'center' },
+          }),
         ]
       : []),
-  ];
+  ]);
+
+  const handlePaginationChange = (pagination: PaginationState) => {
+    onPageChange(pagination.pageIndex + 1);
+  };
+
+  const handleSortingChange = (sorting: SortingState) => {
+    const nextSort = sorting[0];
+    if (!nextSort) return;
+    onSortChange(nextSort.id, nextSort.desc ? 'desc' : 'asc');
+  };
+
+  const openStudent = (payment: Payment, element: HTMLElement | null) =>
+    goToStudent(
+      `/students/${payment.student_id}?tab=payments`,
+      element,
+      `student-${payment.student_id}`,
+    );
+
+  const emptyState = (
+    <EmptyState
+      icon={CreditCard}
+      title={t('payments.not_found')}
+      description={t('payments.not_found_desc')}
+    />
+  );
 
   return (
     <>
-      <DataTable
+      <DataGrid
+        data={payments}
         columns={columns}
-        rows={payments}
-        keyExtractor={(p) => p.id}
-        onRowClick={(p, el) =>
-          goToStudent(
-            `/students/${p.student_id}?tab=payments`,
-            el,
-            `student-${p.student_id}`,
-          )
+        getRowId={(payment) => payment.id}
+        pagination={{
+          pageIndex: Math.max(0, currentPage - 1),
+          pageSize,
+          rowCount: totalPayments,
+          pageCount: totalPages,
+        }}
+        onPaginationChange={handlePaginationChange}
+        sorting={[{ id: sortField, desc: sortDir === 'desc' }]}
+        onSortingChange={handleSortingChange}
+        columnFilters={[]}
+        onColumnFiltersChange={() => undefined}
+        manualPagination
+        manualSorting
+        manualFiltering
+        isInitialLoading={isLoading}
+        isFetching={isFetching}
+        labels={{
+          table: t('payments.payment_list'),
+          loading: t('common.loading'),
+          fetching: t('common.loading'),
+          previousPage: t('common.previous'),
+          nextPage: t('common.next'),
+        }}
+        loadingState={
+          <div className="grid gap-3">
+            {Array.from({ length: 4 }, (_, index) => (
+              <Skeleton key={index} className="h-5 w-full" />
+            ))}
+          </div>
         }
-        isLoading={isLoading}
-        skeletonRowCount={4}
-        emptyState={
-          <EmptyState
-            icon={CreditCard}
-            title={t('payments.not_found')}
-            description={t('payments.not_found_desc')}
+        errorState={
+          isError ? (
+            <EmptyState
+              title={t('common.error')}
+              action={{ label: t('common.retry'), onClick: onRetry }}
+            />
+          ) : undefined
+        }
+        emptyState={emptyState}
+        renderMobileRow={({ row }) => (
+          <PaymentMobileCard
+            payment={row}
+            onActivate={(element) => openStudent(row, element)}
           />
-        }
-        sortField={sortField}
-        sortDir={sortDir}
-        onToggleSort={onToggleSort}
+        )}
+        onRowActivate={(payment, element) => openStudent(payment, element)}
+        getRowAriaLabel={(payment) => payment.student_name}
+        rowClassName={() => 'table-row-interactive'}
+        className="p-3 md:p-0"
       />
 
       <ConfirmDialog

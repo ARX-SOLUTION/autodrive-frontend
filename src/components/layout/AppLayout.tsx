@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
-import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
+import { Outlet, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
@@ -7,6 +7,7 @@ import { Breadcrumbs } from './Breadcrumbs';
 import { CommandPalette, useCommandPalette } from './CommandPalette';
 import { PageLoader } from './PageLoader';
 import { cn } from '@/lib/utils';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const DESKTOP_SIDEBAR_STORAGE_KEY = 'autodrive-sidebar-expanded';
 
@@ -27,46 +28,26 @@ export const AppLayout = () => {
     readDesktopSidebarExpanded,
   );
   const location = useLocation();
-  const navigationType = useNavigationType();
-  const prevPathnameRef = useRef(location.pathname);
+  const { pathname, href } = location;
+  const prevPathnameRef = useRef(pathname);
   const mainRef = useRef<HTMLElement>(null);
   const palette = useCommandPalette();
 
-  // Was the first line of the effect below (`setMobileSidebarOpen(false)`),
-  // unconditionally on every commit where pathname OR navigationType
-  // changed (react-hooks/set-state-in-effect). Moved to React's documented
-  // render-phase "reset state when a value changes" pattern -- same trigger
-  // condition (tracks both values, exactly mirroring the old effect's dep
-  // array), same unconditional close, just one render sooner.
-  const [committedNav, setCommittedNav] = useState(() => ({
-    pathname: location.pathname,
-    navigationType,
-  }));
-  if (
-    location.pathname !== committedNav.pathname ||
-    navigationType !== committedNav.navigationType
-  ) {
-    setCommittedNav({ pathname: location.pathname, navigationType });
+  // Match the previous router: any committed navigation (including a same-page
+  // query update) closes the mobile drawer without waiting for an effect.
+  const [committedHref, setCommittedHref] = useState(href);
+  if (href !== committedHref) {
+    setCommittedHref(href);
     setMobileSidebarOpen(false);
   }
 
   useEffect(() => {
-    // Scroll to top only on a real PATH change via forward/replace nav (link
-    // clicks). Skip POP (back/forward) so the browser restores the previous
-    // scroll position; skip same-path REPLACE updates — search/filter/
-    // pagination write query params via setSearchParams({ replace: true }),
-    // which must NOT yank the viewport to the top mid-interaction.
-    const pathChanged = location.pathname !== prevPathnameRef.current;
-    prevPathnameRef.current = location.pathname;
-    if (pathChanged && navigationType !== 'POP') {
-      window.scrollTo(0, 0);
-    }
-    // a11y: on a real route change move focus to <main> so screen readers
-    // announce the new page. preventScroll keeps POP scroll-restore intact.
+    const pathChanged = pathname !== prevPathnameRef.current;
+    prevPathnameRef.current = pathname;
     if (pathChanged) {
       mainRef.current?.focus({ preventScroll: true });
     }
-  }, [location.pathname, navigationType]);
+  }, [pathname]);
 
   const handleDesktopSidebarExpandedChange = (expanded: boolean) => {
     setDesktopSidebarExpanded(expanded);
@@ -81,46 +62,48 @@ export const AppLayout = () => {
   };
 
   return (
-    <div className="min-h-dvh bg-background">
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
-      >
-        {t('a11y.skip_to_content')}
-      </a>
-      <Sidebar
-        mobileOpen={mobileSidebarOpen}
-        onMobileOpenChange={setMobileSidebarOpen}
-        desktopExpanded={desktopSidebarExpanded}
-        onDesktopExpandedChange={handleDesktopSidebarExpandedChange}
-      />
-      <div
-        className={cn(
-          'flex min-h-dvh flex-col transition-[margin-left] duration-200 ease-out motion-reduce:transition-none',
-          desktopSidebarExpanded ? 'lg:ml-64' : 'lg:ml-[72px]',
-        )}
-      >
-        <Topbar
-          onMobileMenuClick={() => setMobileSidebarOpen(true)}
-          onCommandPaletteOpen={() => palette.setOpen(true)}
-        />
-        <main
-          ref={mainRef}
-          id="main-content"
-          tabIndex={-1}
-          className="flex-1 p-4 outline-none sm:p-6 md:p-8 lg:p-10"
+    <TooltipProvider>
+      <div className="min-h-dvh bg-background">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
         >
-          <div className="mx-auto w-full max-w-screen-2xl">
-            <Breadcrumbs />
-            <div>
-              <Suspense fallback={<PageLoader />}>
-                <Outlet />
-              </Suspense>
+          {t('a11y.skip_to_content')}
+        </a>
+        <Sidebar
+          mobileOpen={mobileSidebarOpen}
+          onMobileOpenChange={setMobileSidebarOpen}
+          desktopExpanded={desktopSidebarExpanded}
+          onDesktopExpandedChange={handleDesktopSidebarExpandedChange}
+        />
+        <div
+          className={cn(
+            'flex min-h-dvh flex-col transition-[margin-left] duration-200 ease-out motion-reduce:transition-none',
+            desktopSidebarExpanded ? 'lg:ml-64' : 'lg:ml-[72px]',
+          )}
+        >
+          <Topbar
+            onMobileMenuClick={() => setMobileSidebarOpen(true)}
+            onCommandPaletteOpen={() => palette.setOpen(true)}
+          />
+          <main
+            ref={mainRef}
+            id="main-content"
+            tabIndex={-1}
+            className="flex-1 p-4 outline-none sm:p-6 md:p-8 lg:p-10"
+          >
+            <div className="mx-auto w-full max-w-screen-2xl">
+              <Breadcrumbs />
+              <div>
+                <Suspense fallback={<PageLoader />}>
+                  <Outlet />
+                </Suspense>
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
+        <CommandPalette open={palette.open} onOpenChange={palette.setOpen} />
       </div>
-      <CommandPalette open={palette.open} onOpenChange={palette.setOpen} />
-    </div>
+    </TooltipProvider>
   );
 };

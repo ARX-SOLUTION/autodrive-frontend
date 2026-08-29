@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import type { ColumnFiltersState, SortingState } from '@tanstack/react-table';
+import { useNavigate } from '@/app/navigation';
 import { useTranslation } from 'react-i18next';
 import { useSearchSortFilters } from '@/hooks/useSearchSortFilters';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -10,15 +11,11 @@ import {
   MagnifyingGlass,
   PencilSimple,
   Trash,
-  CaretUp,
-  CaretDown,
-  CaretUpDown,
   UsersThree,
   CircleNotch,
 } from '@phosphor-icons/react';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import PaginationControls from '@/components/ui/PaginationControls';
 import { cn } from '@/lib/utils';
 import PersonModal, {
   type PersonFormPayload,
@@ -37,12 +34,16 @@ import { toast } from 'sonner';
 import { User } from '@/types/user';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { DataGrid, createDataGridColumnHelper } from '@/shared/ui/data-grid';
 
 // Backend GetUsersQueryDto caps limit at 100 -- large enough that a single
 // branch/company's teacher list never needs a second server page in
 // practice, while still being real pagination (not a silent truncation)
 // if it ever does.
 const SERVER_PAGE_SIZE = 100;
+const teacherColumnHelper = createDataGridColumnHelper<User>();
+const NO_COLUMN_FILTERS: ColumnFiltersState = [];
+const ignoreColumnFiltersChange = () => undefined;
 
 const TeachersPage = () => {
   const { t } = useTranslation();
@@ -78,41 +79,30 @@ const TeachersPage = () => {
   const updateMut = useUpdateTeacher();
   const deleteMut = useDeleteTeacher();
 
-  const specLabels: Record<Specialization, string> = {
-    THEORY: t('teachers.spec_theory'),
-    PRACTICE: t('teachers.spec_practice'),
-  };
+  const specLabels = useMemo<Record<Specialization, string>>(
+    () => ({
+      THEORY: t('teachers.spec_theory'),
+      PRACTICE: t('teachers.spec_practice'),
+    }),
+    [t],
+  );
 
-  // NOTE: never name a callback param `t` here — it shadows the i18n `t`
-  // and crashes the row render (the original TeachersPage production bug).
-  //
-  // MagnifyingGlass is server-side now (autodrive-b85.3) -- GET /users matches
-  // name/email/phone across the whole company (autodrive-3kl), not just the
-  // current page. Sort still applies client-side to the current server page
-  // only -- GET /users has no sortBy param.
-  const paginatedItems = useMemo(() => {
-    return [...teachers].sort((a, b) => {
-      const va = a[sortField as keyof typeof a];
-      const vb = b[sortField as keyof typeof b];
-      if (va == null && vb == null) return 0;
-      if (va == null) return 1;
-      if (vb == null) return -1;
-      if (typeof va === 'string' && typeof vb === 'string') {
-        return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-      }
-      return sortDir === 'asc'
-        ? va < vb
-          ? -1
-          : va > vb
-            ? 1
-            : 0
-        : va > vb
-          ? -1
-          : va < vb
-            ? 1
-            : 0;
-    });
-  }, [teachers, sortField, sortDir]);
+  // Search is server-owned. GET /users exposes no sort contract, so the
+  // controlled TanStack state below is intentionally limited to this page.
+  const activeSortField = sortField === 'phone' ? 'phone' : 'name';
+  const sorting = useMemo<SortingState>(
+    () => [{ id: activeSortField, desc: sortDir === 'desc' }],
+    [activeSortField, sortDir],
+  );
+
+  const handleSortingChange = (nextSorting: SortingState) => {
+    const nextSort = nextSorting[0];
+    if (!nextSort) return;
+    const nextDirection = nextSort.desc ? 'desc' : 'asc';
+    if (nextSort.id !== activeSortField || nextDirection !== sortDir) {
+      toggleSort(nextSort.id);
+    }
+  };
 
   // Out-of-range page (e.g. search narrowed results) -> reset.
   useEffect(() => {
@@ -184,6 +174,118 @@ const TeachersPage = () => {
 
   const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
   const teachersTitle = t('teachers.title');
+  const columns = useMemo(
+    () =>
+      teacherColumnHelper.columns([
+        teacherColumnHelper.display({
+          id: 'rowNumber',
+          header: '#',
+          meta: { align: 'center' },
+          cell: ({ row }) => startIndex + row.getDisplayIndex() + 1,
+        }),
+        teacherColumnHelper.accessor('name', {
+          header: t('teachers.first_name'),
+          enableSorting: true,
+          sortFn: 'text',
+          meta: { cellClassName: 'font-medium' },
+          cell: ({ getValue }) => getValue() || t('common.na'),
+        }),
+        teacherColumnHelper.accessor('phone', {
+          header: t('teachers.phone'),
+          enableSorting: true,
+          sortFn: 'text',
+          meta: { cellClassName: 'text-muted-foreground' },
+          cell: ({ getValue }) => getValue() || t('common.na'),
+        }),
+        teacherColumnHelper.accessor('specialization', {
+          header: t('teachers.specialization'),
+          meta: { cellClassName: 'text-muted-foreground' },
+          cell: ({ getValue }) => {
+            const specialization = getValue();
+            return specialization
+              ? specLabels[specialization] || specialization
+              : t('common.na');
+          },
+        }),
+        teacherColumnHelper.display({
+          id: 'branch',
+          header: t('teachers.branch'),
+          meta: { cellClassName: 'text-muted-foreground' },
+          cell: ({ row }) =>
+            row.original.branch_name ||
+            (branches || []).find(
+              (branch) => branch.id === row.original.branch_id,
+            )?.name ||
+            row.original.branch_id ||
+            t('common.na'),
+        }),
+        teacherColumnHelper.accessor('lesson_count', {
+          header: t('teachers.lesson_count'),
+          meta: {
+            align: 'center',
+            cellClassName: 'text-muted-foreground tabular-nums',
+          },
+          cell: ({ getValue }) => getValue() ?? t('common.na'),
+        }),
+        teacherColumnHelper.accessor('student_count', {
+          header: t('teachers.student_count'),
+          meta: {
+            align: 'center',
+            cellClassName: 'text-muted-foreground tabular-nums',
+          },
+          cell: ({ getValue }) => getValue() ?? t('common.na'),
+        }),
+        teacherColumnHelper.display({
+          id: 'status',
+          header: t('common.status'),
+          meta: { align: 'center' },
+          cell: ({ row }) => (
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${row.original.is_active !== false ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}
+            >
+              {row.original.is_active !== false
+                ? t('common.active')
+                : t('common.inactive')}
+            </span>
+          ),
+        }),
+        teacherColumnHelper.display({
+          id: 'actions',
+          header: t('common.actions'),
+          meta: { align: 'center' },
+          cell: ({ row }) => (
+            <div className="flex items-center justify-center gap-1">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setEditItem(row.original);
+                  setModalOpen(true);
+                }}
+                aria-label={t('common.edit')}
+                title={t('common.edit')}
+                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <PencilSimple className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setDeleteId(row.original.id);
+                }}
+                aria-label={t('common.delete')}
+                title={t('common.delete')}
+                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ),
+        }),
+      ]),
+    [branches, specLabels, startIndex, t],
+  );
 
   return (
     <div className="space-y-6">
@@ -213,261 +315,133 @@ const TeachersPage = () => {
             <CircleNotch className="h-6 w-6 animate-spin text-primary" />
           </div>
         )}
-        <div
+        <DataGrid
+          data={teachers}
+          columns={columns}
+          getRowId={(teacher) => teacher.id}
+          pagination={{
+            pageIndex: currentPage - 1,
+            pageSize: SERVER_PAGE_SIZE,
+            rowCount: total,
+            pageCount: totalPages,
+          }}
+          onPaginationChange={({ pageIndex }) => setCurrentPage(pageIndex + 1)}
+          sorting={sorting}
+          onSortingChange={handleSortingChange}
+          columnFilters={NO_COLUMN_FILTERS}
+          onColumnFiltersChange={ignoreColumnFiltersChange}
+          manualPagination
+          manualSorting={false}
+          manualFiltering
+          isInitialLoading={isLoading}
+          isFetching={isFetching}
+          labels={{
+            table: teachersTitle,
+            loading: t('common.loading'),
+            fetching: t('common.loading'),
+            previousPage: t('common.previous'),
+            nextPage: t('common.next'),
+          }}
+          loadingState={
+            <div className="space-y-3">
+              {[0, 1, 2].map((index) => (
+                <Skeleton key={index} className="h-5 w-full" />
+              ))}
+            </div>
+          }
+          errorState={
+            isError ? (
+              <EmptyState
+                title={t('common.error')}
+                action={{ label: t('common.retry'), onClick: () => refetch() }}
+              />
+            ) : undefined
+          }
+          emptyState={
+            <EmptyState icon={UsersThree} title={t('teachers.not_found')} />
+          }
+          renderMobileRow={({ row: teacher }) => (
+            <div className="px-3 py-1.5">
+              <DataCard
+                title={teacher.name || t('common.na')}
+                subtitle={teacher.phone}
+                onClick={() => navigate(`/users/${teacher.id}`)}
+                fields={[
+                  {
+                    label: t('teachers.specialization'),
+                    value: teacher.specialization
+                      ? specLabels[teacher.specialization] ||
+                        teacher.specialization
+                      : t('common.na'),
+                  },
+                  {
+                    label: t('teachers.email'),
+                    value: teacher.email || t('common.na'),
+                  },
+                  {
+                    label: t('teachers.branch'),
+                    value:
+                      teacher.branch_name ||
+                      getBranchName(teacher.branch_id || ''),
+                  },
+                  {
+                    label: t('teachers.lesson_count'),
+                    value: teacher.lesson_count ?? t('common.na'),
+                  },
+                  {
+                    label: t('teachers.student_count'),
+                    value: teacher.student_count ?? t('common.na'),
+                  },
+                  {
+                    label: t('operators.detail.created'),
+                    value: teacher.created_at
+                      ? new Date(teacher.created_at).toLocaleDateString('uz-UZ')
+                      : t('common.na'),
+                  },
+                ]}
+                actions={
+                  <>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openEdit(teacher);
+                      }}
+                      aria-label={t('common.edit')}
+                      title={t('common.edit')}
+                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                      <PencilSimple className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setDeleteId(teacher.id);
+                      }}
+                      aria-label={t('common.delete')}
+                      title={t('common.delete')}
+                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                }
+              />
+            </div>
+          )}
+          tableClassName="min-w-[900px]"
           className={cn(
             'glass-card overflow-hidden transition-opacity duration-200',
             isFetching && !isLoading && 'opacity-50',
           )}
-        >
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full min-w-[600px] text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    #
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    <button
-                      onClick={() => toggleSort('name')}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      {t('teachers.first_name')}
-                      {sortField === 'name' ? (
-                        sortDir === 'asc' ? (
-                          <CaretUp className="h-3 w-3" />
-                        ) : (
-                          <CaretDown className="h-3 w-3" />
-                        )
-                      ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    <button
-                      onClick={() => toggleSort('phone')}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      {t('teachers.phone')}
-                      {sortField === 'phone' ? (
-                        sortDir === 'asc' ? (
-                          <CaretUp className="h-3 w-3" />
-                        ) : (
-                          <CaretDown className="h-3 w-3" />
-                        )
-                      ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    {t('teachers.specialization')}
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    {t('teachers.branch')}
-                  </th>
-                  {/* autodrive-sgf.4 -- lifetime counts, no date filter on this page */}
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    {t('teachers.lesson_count')}
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    {t('teachers.student_count')}
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    {t('common.status')}
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    {t('common.actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading
-                  ? [...Array(3)].map((_, i) => (
-                      <tr key={i} className="border-b border-border/50">
-                        <td colSpan={9} className="p-4">
-                          <Skeleton className="h-5 w-full" />
-                        </td>
-                      </tr>
-                    ))
-                  : paginatedItems.map((teacher, idx) => (
-                      <tr
-                        key={teacher.id}
-                        className="table-row-interactive border-b border-border/50 cursor-pointer"
-                        onClick={() => {
-                          if (window.getSelection()?.toString()) return;
-                          navigate(`/users/${teacher.id}`);
-                        }}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter')
-                            navigate(`/users/${teacher.id}`);
-                          if (e.key === ' ') {
-                            e.preventDefault();
-                            navigate(`/users/${teacher.id}`);
-                          }
-                        }}
-                      >
-                        <td className="px-4 py-3 text-center text-muted-foreground">
-                          {startIndex + idx + 1}
-                        </td>
-                        <td className="px-4 py-3 font-medium">
-                          {teacher.name}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {teacher.phone}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {teacher.specialization
-                            ? specLabels[teacher.specialization] ||
-                              teacher.specialization
-                            : null}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {teacher.branch_name ||
-                            getBranchName(teacher.branch_id)}
-                        </td>
-                        <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
-                          {teacher.lesson_count ?? t('common.na')}
-                        </td>
-                        <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
-                          {teacher.student_count ?? t('common.na')}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${teacher.is_active !== false ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}
-                          >
-                            {teacher.is_active !== false
-                              ? t('common.active')
-                              : t('common.inactive')}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEdit(teacher);
-                              }}
-                              aria-label={t('common.edit')}
-                              title={t('common.edit')}
-                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                            >
-                              <PencilSimple className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteId(teacher.id);
-                              }}
-                              aria-label={t('common.delete')}
-                              title={t('common.delete')}
-                              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                            >
-                              <Trash className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="md:hidden grid gap-3 p-3">
-            {isLoading
-              ? [...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-28 w-full" />
-                ))
-              : paginatedItems.map((teacher) => (
-                  <DataCard
-                    key={teacher.id}
-                    title={teacher.name || t('common.na')}
-                    subtitle={teacher.phone}
-                    onClick={() => navigate(`/users/${teacher.id}`)}
-                    fields={[
-                      {
-                        label: t('teachers.specialization'),
-                        value: teacher.specialization
-                          ? specLabels[teacher.specialization] ||
-                            teacher.specialization
-                          : t('common.na'),
-                      },
-                      {
-                        label: t('teachers.email'),
-                        value: teacher.email || t('common.na'),
-                      },
-                      {
-                        label: t('teachers.branch'),
-                        value:
-                          teacher.branch_name ||
-                          getBranchName(teacher.branch_id || ''),
-                      },
-                      {
-                        label: t('teachers.lesson_count'),
-                        value: teacher.lesson_count ?? t('common.na'),
-                      },
-                      {
-                        label: t('teachers.student_count'),
-                        value: teacher.student_count ?? t('common.na'),
-                      },
-                      {
-                        label: t('operators.detail.created'),
-                        value: teacher.created_at
-                          ? new Date(teacher.created_at).toLocaleDateString(
-                              'uz-UZ',
-                            )
-                          : t('common.na'),
-                      },
-                    ]}
-                    actions={
-                      <>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEdit(teacher);
-                          }}
-                          aria-label={t('common.edit')}
-                          title={t('common.edit')}
-                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                        >
-                          <PencilSimple className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteId(teacher.id);
-                          }}
-                          aria-label={t('common.delete')}
-                          title={t('common.delete')}
-                          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                        >
-                          <Trash className="h-3.5 w-3.5" />
-                        </button>
-                      </>
-                    }
-                  />
-                ))}
-          </div>
-          {isError ? (
-            <EmptyState
-              title={t('common.error')}
-              action={{ label: t('common.retry'), onClick: () => refetch() }}
-            />
-          ) : (
-            total === 0 &&
-            !isLoading && (
-              <EmptyState icon={UsersThree} title={t('teachers.not_found')} />
-            )
-          )}
-        </div>
+          rowClassName={() => 'table-row-interactive'}
+          onRowActivate={(teacher) => navigate(`/users/${teacher.id}`)}
+          getRowAriaLabel={(teacher) =>
+            `${t('common.view')}: ${teacher.name || teacher.email}`
+          }
+        />
       </div>
-
-      <PaginationControls
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
 
       <PersonModal
         open={modalOpen}

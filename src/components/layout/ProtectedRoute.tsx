@@ -1,7 +1,8 @@
+import { useEffect } from 'react';
 import { useRestoreSession } from '@/services/authService';
 import { useAuthStore } from '@/store/authStore';
 import { CircleNotch } from '@phosphor-icons/react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useRouter } from '@tanstack/react-router';
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -9,7 +10,20 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const user = useAuthStore((s) => s.user);
   const { isLoading } = useRestoreSession();
-  const { pathname, search } = useLocation();
+  const { pathname, searchStr } = useLocation();
+  const router = useRouter();
+
+  // Route guards read the store outside React. Re-run them whenever restored
+  // identity or authorization changes so a revoked role cannot retain a page.
+  useEffect(() => {
+    void router.invalidate();
+  }, [
+    router,
+    hasHydrated,
+    isAuthenticated,
+    user?.role,
+    user?.must_change_password,
+  ]);
 
   if (!hasHydrated) {
     return (
@@ -37,7 +51,13 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // Preserve where the user was so LoginPage can send them back after
   // re-auth (session-expired 401 mid-app should not lose the current page).
   if (!isAuthenticated)
-    return <Navigate to="/login" state={{ from: pathname + search }} replace />;
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: pathname + searchStr } as never}
+        replace
+      />
+    );
 
   if (user?.must_change_password && pathname !== '/profile') {
     return <Navigate to="/profile" replace />;

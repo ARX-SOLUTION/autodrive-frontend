@@ -1,10 +1,10 @@
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { screen, cleanup, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import GroupDetailPage from '@/pages/GroupDetailPage';
 import { formatMoney } from '@/lib/money';
 import type { UserRole } from '@/types/user';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // Controllable per-test fixture for isLoading/isError/data-not-found split
 // below (autodrive-d4j). Starts undefined (vi.hoisted runs before GROUP is
@@ -61,14 +61,11 @@ const renderPage = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(
+  return renderWithRouter(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/groups/g1']}>
-        <Routes>
-          <Route path="/groups/:id" element={<GroupDetailPage />} />
-        </Routes>
-      </MemoryRouter>
+      <GroupDetailPage />
     </QueryClientProvider>,
+    { initialEntry: '/groups/g1', routePattern: '/groups/$id' },
   );
 };
 
@@ -84,18 +81,18 @@ afterEach(() => {
 // not-found -- distinct title/icon per EntityDetailShell's isError/
 // errorTitle/errorIcon props, same split AuditDetailPage already does.
 describe('GroupDetailPage error vs not-found (autodrive-d4j)', () => {
-  it('shows the not-found message when the group genuinely does not exist', () => {
+  it('shows the not-found message when the group genuinely does not exist', async () => {
     groupQuery.data = undefined;
     groupQuery.isError = false;
-    renderPage();
+    await renderPage();
     expect(screen.getByText('common.not_found')).toBeTruthy();
     expect(screen.queryByText('common.error')).toBeNull();
   });
 
-  it('shows the error message, not not-found, on a real fetch error', () => {
+  it('shows the error message, not not-found, on a real fetch error', async () => {
     groupQuery.data = undefined;
     groupQuery.isError = true;
-    renderPage();
+    await renderPage();
     expect(screen.getByText('common.error')).toBeTruthy();
     expect(screen.queryByText('common.not_found')).toBeNull();
   });
@@ -116,21 +113,21 @@ describe('GroupDetailPage students-tab payment gating (autodrive-vh0.2)', () => 
     debt: 500000,
   };
 
-  const openStudentsTab = (role: UserRole) => {
+  const openStudentsTab = async (role: UserRole) => {
     auth.role = role;
     groupQuery.data = { ...GROUP, students: [STUDENT] };
-    renderPage();
+    await renderPage();
     fireEvent.mouseDown(screen.getByText('students.title'));
   };
 
-  it('hides the debt field and edit button for a teacher', () => {
-    openStudentsTab('teacher');
+  it('hides the debt field and edit button for a teacher', async () => {
+    await openStudentsTab('teacher');
     expect(screen.queryByText('students.detail.debt')).toBeNull();
     expect(screen.queryByLabelText('common.edit')).toBeNull();
   });
 
-  it('shows the debt field and edit button for a manager (regression)', () => {
-    openStudentsTab('manager');
+  it('shows the debt field and edit button for a manager (regression)', async () => {
+    await openStudentsTab('manager');
     expect(screen.getByText('students.detail.debt')).toBeTruthy();
     expect(screen.getByLabelText('common.edit')).toBeTruthy();
   });
@@ -140,18 +137,18 @@ describe('GroupDetailPage students-tab payment gating (autodrive-vh0.2)', () => 
 // blank -- has_debt drives a badge in the same roster spot the amount Field
 // used to occupy for a payment-visible role, never an amount itself.
 describe('GroupDetailPage students-tab debt badge (autodrive-vh0.5)', () => {
-  const openStudentsTabWithStudent = (
+  const openStudentsTabWithStudent = async (
     role: UserRole,
     student: Record<string, unknown>,
   ) => {
     auth.role = role;
     groupQuery.data = { ...GROUP, students: [student] };
-    renderPage();
+    await renderPage();
     fireEvent.mouseDown(screen.getByText('students.title'));
   };
 
-  it('shows the owing badge for a teacher when has_debt is true', () => {
-    openStudentsTabWithStudent('teacher', {
+  it('shows the owing badge for a teacher when has_debt is true', async () => {
+    await openStudentsTabWithStudent('teacher', {
       id: 's1',
       last_name: 'Karimov',
       first_name: 'Aziz',
@@ -162,8 +159,8 @@ describe('GroupDetailPage students-tab debt badge (autodrive-vh0.5)', () => {
     expect(screen.getByText('students.debt_status_owed')).toBeTruthy();
   });
 
-  it('shows the paid badge for a teacher when has_debt is false', () => {
-    openStudentsTabWithStudent('teacher', {
+  it('shows the paid badge for a teacher when has_debt is false', async () => {
+    await openStudentsTabWithStudent('teacher', {
       id: 's1',
       last_name: 'Karimov',
       first_name: 'Aziz',
@@ -174,8 +171,8 @@ describe('GroupDetailPage students-tab debt badge (autodrive-vh0.5)', () => {
     expect(screen.getByText('students.debt_status_paid')).toBeTruthy();
   });
 
-  it('never renders a debt amount for a teacher even when has_debt is true', () => {
-    openStudentsTabWithStudent('teacher', {
+  it('never renders a debt amount for a teacher even when has_debt is true', async () => {
+    await openStudentsTabWithStudent('teacher', {
       id: 's1',
       last_name: 'Karimov',
       first_name: 'Aziz',
@@ -192,7 +189,7 @@ describe('GroupDetailPage students-tab debt badge (autodrive-vh0.5)', () => {
 // indistinguishable from "amount unknown". Distinct from the has_debt-driven
 // badge above, which was already correct.
 describe('GroupDetailPage students-tab debt amount at exactly 0 (autodrive-52v.6)', () => {
-  it('shows "paid", not N/A, for a manager when debt is exactly 0', () => {
+  it('shows "paid", not N/A, for a manager when debt is exactly 0', async () => {
     auth.role = 'manager';
     groupQuery.data = {
       ...GROUP,
@@ -206,7 +203,7 @@ describe('GroupDetailPage students-tab debt amount at exactly 0 (autodrive-52v.6
         },
       ],
     };
-    renderPage();
+    await renderPage();
     fireEvent.mouseDown(screen.getByText('students.title'));
 
     expect(screen.getByText('students.debt_status_paid')).toBeTruthy();
