@@ -60,7 +60,7 @@ jobs:
             ghcr.io/arx-solution/autodrive-frontend:latest
             ghcr.io/arx-solution/autodrive-frontend:sha-${{ steps.vars.outputs.sha_short }}
           build-args: |
-            VITE_API_BASE_URL=https://api.${{ vars.DEPLOY_DOMAIN }}
+            VITE_API_BASE_URL=https://api.${{ vars.DEPLOY_DOMAIN || 'automaktab.uz' }}
             VITE_UMAMI_SRC=${{ vars.VITE_UMAMI_SRC }}
             VITE_UMAMI_WEBSITE_ID=${{ vars.VITE_UMAMI_WEBSITE_ID }}
           cache-from: type=gha
