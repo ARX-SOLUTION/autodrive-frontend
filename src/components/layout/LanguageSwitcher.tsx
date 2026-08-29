@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SUPPORTED_LANGS } from '@/i18n';
+import { changeAppLanguage, SUPPORTED_LANGS } from '@/i18n';
 
 const labels: Record<string, string> = {
   uz: "O'zbek",
@@ -33,7 +33,7 @@ export const LanguageSwitcher = ({
         {SUPPORTED_LANGS.map((code) => (
           <DropdownMenuItem
             key={code}
-            onSelect={() => i18n.changeLanguage(code)}
+            onSelect={() => void changeAppLanguage(code)}
             className={current === code ? 'bg-accent' : ''}
           >
             <span className="mr-2 inline-block w-6 uppercase text-muted-foreground">

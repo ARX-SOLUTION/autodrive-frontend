@@ -153,6 +153,42 @@ describe('PaymentModal exceeds-debt confirmation', () => {
 // backend's idempotency guard collapses it into the original payment), but
 // must regenerate on a genuinely fresh open.
 describe('PaymentModal idempotency key retry safety', () => {
+  it('allows only one submit until the mutation settles', async () => {
+    const onSubmit = vi.fn();
+    const props = {
+      open: true,
+      onClose: vi.fn(),
+      onSubmit,
+      lockedStudentId: 's1',
+      lockedStudentName: 'Aziz Karimov',
+    };
+    const { rerender } = render(<PaymentModal {...props} />);
+
+    fillAmount('300000');
+    const submitButton = screen.getByText('common.add');
+    fireEvent.click(submitButton);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+
+    // RHF's short isSubmitting window has ended, but the caller has not yet
+    // reported that the monetary mutation settled. A second click in this
+    // gap must still be ignored.
+    rerender(<PaymentModal {...props} />);
+    expect(screen.getByText('common.add')).toBeDisabled();
+    fireEvent.click(submitButton);
+    await Promise.resolve();
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+
+    rerender(<PaymentModal {...props} loading />);
+    expect(screen.getByText('common.saving')).toBeDisabled();
+
+    rerender(<PaymentModal {...props} loading={false} />);
+    fireEvent.click(screen.getByText('common.add'));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(2));
+  });
+
   it('reuses the same key across a failed retry, but regenerates after close+reopen', async () => {
     const onSubmit = vi.fn();
     const props = {

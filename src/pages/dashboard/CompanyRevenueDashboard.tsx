@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from '@/app/navigation';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import {

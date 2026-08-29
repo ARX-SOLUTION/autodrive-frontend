@@ -1,13 +1,8 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  cleanup,
-  within,
-} from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import type { ComponentProps } from 'react';
+import { screen, fireEvent, cleanup, within } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach, beforeEach } from 'vitest';
 import { PaymentsTable } from '@/pages/payments/PaymentsTable';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 import type { Payment } from '@/types/payment';
 
 // Role-gated action column: PaymentsTable owns its own delete/edit mutations
@@ -78,18 +73,28 @@ const PAYMENT: Payment = {
   created_at: '2026-07-10T00:00:00.000Z',
 };
 
-const renderTable = (payments: Payment[] = [PAYMENT]) =>
-  render(
-    <MemoryRouter>
-      <PaymentsTable
-        payments={payments}
-        isLoading={false}
-        startIndex={0}
-        sortField="date"
-        sortDir="desc"
-        onToggleSort={vi.fn()}
-      />
-    </MemoryRouter>,
+const renderTable = (
+  payments: Payment[] = [PAYMENT],
+  overrides: Partial<ComponentProps<typeof PaymentsTable>> = {},
+) =>
+  renderWithRouter(
+    <PaymentsTable
+      payments={payments}
+      isLoading={false}
+      isFetching={false}
+      isError={false}
+      onRetry={vi.fn()}
+      currentPage={1}
+      pageSize={50}
+      totalPayments={payments.length}
+      totalPages={1}
+      onPageChange={vi.fn()}
+      sortField="date"
+      sortDir="desc"
+      onSortChange={vi.fn()}
+      {...overrides}
+    />,
+    { initialEntry: '/payments', routePattern: '/payments' },
   );
 
 beforeEach(() => {
@@ -105,24 +110,45 @@ afterEach(() => {
 // Matches the backend's PATCH/DELETE /payments/:id
 // @Roles(owner, dev, manager, operator) guard exactly.
 describe('PaymentsTable row actions role gating', () => {
-  it('shows edit/delete for an allowed role (manager)', () => {
+  it('shows edit/delete for an allowed role (manager)', async () => {
     h.role = 'manager';
-    renderTable();
+    await renderTable();
     expect(screen.getByLabelText('common.edit')).toBeInTheDocument();
     expect(screen.getByLabelText('common.delete')).toBeInTheDocument();
   });
 
-  it('hides edit/delete for a disallowed role (teacher, backend would 403)', () => {
+  it('hides edit/delete for a disallowed role (teacher, backend would 403)', async () => {
     h.role = 'teacher';
-    renderTable();
+    await renderTable();
     expect(screen.queryByLabelText('common.edit')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('common.delete')).not.toBeInTheDocument();
   });
 });
 
+describe('PaymentsTable server state', () => {
+  it('emits the next server page and resolved server sort direction', async () => {
+    const onPageChange = vi.fn();
+    const onSortChange = vi.fn();
+    await renderTable([PAYMENT], {
+      totalPayments: 101,
+      totalPages: 3,
+      onPageChange,
+      onSortChange,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.next' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'payments.amount_paid' }),
+    );
+
+    expect(onPageChange).toHaveBeenCalledWith(2);
+    expect(onSortChange).toHaveBeenCalledWith('amount_paid', 'asc');
+  });
+});
+
 describe('PaymentsTable delete action', () => {
-  it('confirms, then calls useDeletePayment.mutate with the row id', () => {
-    renderTable();
+  it('confirms, then calls useDeletePayment.mutate with the row id', async () => {
+    await renderTable();
 
     fireEvent.click(screen.getByLabelText('common.delete'));
     const dialog = screen
@@ -136,8 +162,8 @@ describe('PaymentsTable delete action', () => {
     expect(h.deleteMutate.mock.calls[0][0]).toBe('p1');
   });
 
-  it('does not call the mutation when the delete confirm is cancelled', () => {
-    renderTable();
+  it('does not call the mutation when the delete confirm is cancelled', async () => {
+    await renderTable();
 
     fireEvent.click(screen.getByLabelText('common.delete'));
     const dialog = screen
@@ -150,8 +176,8 @@ describe('PaymentsTable delete action', () => {
 });
 
 describe('PaymentsTable edit action', () => {
-  it('opens PaymentModal in edit mode with the clicked row', () => {
-    renderTable();
+  it('opens PaymentModal in edit mode with the clicked row', async () => {
+    await renderTable();
 
     fireEvent.click(screen.getByLabelText('common.edit'));
 
@@ -159,8 +185,8 @@ describe('PaymentsTable edit action', () => {
     expect(capturedModalProps.current?.payment).toEqual(PAYMENT);
   });
 
-  it('calls useUpdatePayment.mutate with the row id and the submitted payload', () => {
-    renderTable();
+  it('calls useUpdatePayment.mutate with the row id and the submitted payload', async () => {
+    await renderTable();
 
     fireEvent.click(screen.getByLabelText('common.edit'));
     fireEvent.click(screen.getByText('submit-edit'));

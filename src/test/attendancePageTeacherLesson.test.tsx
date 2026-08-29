@@ -1,10 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import AttendancePage from '@/pages/AttendancePage';
 import { useAuthStore } from '@/store/authStore';
 import { useCreateLesson, useUpdateLesson } from '@/services/attendanceService';
 import { Lesson } from '@/types/attendance';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-vh0.4: a teacher adds an ad-hoc lesson for their own
 // (server-scoped) group, and may delete/edit only a lesson they created
@@ -79,11 +79,10 @@ function renderAsRole(role: string, id = 'teacher-1', entry = '/attendance') {
     (selector: (s: Record<string, unknown>) => unknown) =>
       selector({ user: { role, id, branch_id: 'b1' } }),
   );
-  return render(
-    <MemoryRouter initialEntries={[entry]}>
-      <AttendancePage />
-    </MemoryRouter>,
-  );
+  return renderWithRouter(<AttendancePage />, {
+    initialEntry: entry,
+    routePattern: '/attendance',
+  });
 }
 
 beforeEach(() => {
@@ -98,26 +97,26 @@ beforeEach(() => {
 });
 
 describe('AttendancePage add-lesson affordance for a teacher (autodrive-vh0.4)', () => {
-  it('shows the add-lesson button for a teacher', () => {
-    renderAsRole('teacher');
+  it('shows the add-lesson button for a teacher', async () => {
+    await renderAsRole('teacher');
     expect(screen.getByText('attendance.add_lesson')).toBeInTheDocument();
   });
 
-  it('still shows the add-lesson button for operator (regression, manageSchedule unchanged)', () => {
-    renderAsRole('operator');
+  it('still shows the add-lesson button for operator (regression, manageSchedule unchanged)', async () => {
+    await renderAsRole('operator');
     expect(screen.getByText('attendance.add_lesson')).toBeInTheDocument();
   });
 });
 
 describe('AttendancePage delete-own-lesson for a teacher (autodrive-vh0.4)', () => {
-  it('shows delete only on the lesson the teacher created, not the other one', () => {
-    renderAsRole('teacher', 'teacher-1');
+  it('shows delete only on the lesson the teacher created, not the other one', async () => {
+    await renderAsRole('teacher', 'teacher-1');
     const deleteButtons = screen.getAllByLabelText('attendance.delete_title');
     expect(deleteButtons).toHaveLength(1);
   });
 
-  it('shows no delete button when the teacher created neither lesson', () => {
-    renderAsRole('teacher', 'someone-new');
+  it('shows no delete button when the teacher created neither lesson', async () => {
+    await renderAsRole('teacher', 'someone-new');
     expect(
       screen.queryByLabelText('attendance.delete_title'),
     ).not.toBeInTheDocument();
@@ -128,8 +127,8 @@ describe('AttendancePage delete-own-lesson for a teacher (autodrive-vh0.4)', () 
 // operator can create (manageSchedule) but must never get a delete button
 // for a lesson operator created themselves -- the backend does not grant it.
 describe('AttendancePage operator excluded from delete-own (autodrive-vh0.4)', () => {
-  it('hides delete for operator even on a lesson operator created', () => {
-    renderAsRole('operator', 'teacher-1'); // matches ownLesson.created_by_id
+  it('hides delete for operator even on a lesson operator created', async () => {
+    await renderAsRole('operator', 'teacher-1'); // matches ownLesson.created_by_id
     expect(
       screen.queryByLabelText('attendance.delete_title'),
     ).not.toBeInTheDocument();
@@ -139,14 +138,14 @@ describe('AttendancePage operator excluded from delete-own (autodrive-vh0.4)', (
 // SLICE B (autodrive-vh0.4): PATCH /lessons/:id, same ownership shape as
 // delete -- a teacher edits only a lesson they created for their own group.
 describe('AttendancePage edit-own-lesson for a teacher (autodrive-vh0.4)', () => {
-  it('shows edit only on the lesson the teacher created, not on others or a schedule-generated one', () => {
-    renderAsRole('teacher', 'teacher-1');
+  it('shows edit only on the lesson the teacher created, not on others or a schedule-generated one', async () => {
+    await renderAsRole('teacher', 'teacher-1');
     const editButtons = screen.getAllByLabelText('attendance.edit_title');
     expect(editButtons).toHaveLength(1);
   });
 
-  it('shows no edit button when the teacher created none of the lessons', () => {
-    renderAsRole('teacher', 'someone-new');
+  it('shows no edit button when the teacher created none of the lessons', async () => {
+    await renderAsRole('teacher', 'someone-new');
     expect(
       screen.queryByLabelText('attendance.edit_title'),
     ).not.toBeInTheDocument();
@@ -158,8 +157,8 @@ describe('AttendancePage edit-own-lesson for a teacher (autodrive-vh0.4)', () =>
 // @Roles(teacher) ONLY -- a non-teacher must never see edit, even on a
 // lesson they created themselves, or clicking it would 403.
 describe('AttendancePage non-teacher excluded from edit (autodrive-vh0.4)', () => {
-  it('hides edit for manager even on a lesson manager created (teacher-only endpoint)', () => {
-    renderAsRole('manager', 'teacher-1'); // matches ownLesson.created_by_id
+  it('hides edit for manager even on a lesson manager created (teacher-only endpoint)', async () => {
+    await renderAsRole('manager', 'teacher-1'); // matches ownLesson.created_by_id
     expect(
       screen.queryByLabelText('attendance.edit_title'),
     ).not.toBeInTheDocument();
@@ -173,7 +172,7 @@ describe('AttendancePage edit-lesson submit (autodrive-vh0.4)', () => {
       mutateAsync,
       isPending: false,
     } as unknown as ReturnType<typeof useUpdateLesson>);
-    renderAsRole('teacher', 'teacher-1');
+    await renderAsRole('teacher', 'teacher-1');
 
     fireEvent.click(screen.getByLabelText('attendance.edit_title'));
     // Pre-filled from ownLesson -- proves this is the same dialog/schema,
@@ -191,8 +190,8 @@ describe('AttendancePage edit-lesson submit (autodrive-vh0.4)', () => {
     expect(payload.date).toBe('2026-07-10T09:00:00.000Z');
   });
 
-  it('pre-fills lesson datetime in Asia/Tashkent wall time', () => {
-    renderAsRole('teacher', 'teacher-1');
+  it('pre-fills lesson datetime in Asia/Tashkent wall time', async () => {
+    await renderAsRole('teacher', 'teacher-1');
     fireEvent.click(screen.getByLabelText('attendance.edit_title'));
     expect(
       screen.getByLabelText('datetimepicker.time') as HTMLInputElement,
@@ -205,13 +204,13 @@ describe('AttendancePage edit-lesson submit (autodrive-vh0.4)', () => {
   // autodrive-vh0.6: the teacher dashboard's upcoming-lessons rows link to
   // /attendance?lesson=<id>. The page must open THAT lesson's drawer directly
   // (summary -> detail drilldown), not just land on the list.
-  it('opens the drawer for a lesson deep-linked via ?lesson=<id>', () => {
-    renderAsRole('teacher', 'teacher-1', '/attendance?lesson=l1');
+  it('opens the drawer for a lesson deep-linked via ?lesson=<id>', async () => {
+    await renderAsRole('teacher', 'teacher-1', '/attendance?lesson=l1');
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
-  it('opens no drawer when there is no deep-link param', () => {
-    renderAsRole('teacher', 'teacher-1');
+  it('opens no drawer when there is no deep-link param', async () => {
+    await renderAsRole('teacher', 'teacher-1');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

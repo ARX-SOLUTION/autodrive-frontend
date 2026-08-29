@@ -6,6 +6,13 @@ import i18n from '@/i18n';
 const RELOAD_AT_KEY = 'chunk-error-reload-at';
 const COOLDOWN_MS = 10_000;
 
+const translateOrFallback = (key: string, fallback: string) => {
+  const translated = i18n.t(key, { defaultValue: fallback });
+  return typeof translated === 'string' && translated.trim()
+    ? translated
+    : fallback;
+};
+
 // Stale chunk hash after a deploy: the already-loaded shell references an
 // asset URL the new build no longer has. One reload fetches the fresh
 // index.html; the cooldown stops a loop if the deploy is genuinely broken.
@@ -39,9 +46,9 @@ export class ChunkErrorBoundary extends Component<
         <div className="flex h-[50vh] items-center justify-center">
           <EmptyState
             icon={Warning}
-            title={i18n.t('common.error')}
+            title={translateOrFallback('common.error', 'Xatolik yuz berdi')}
             action={{
-              label: i18n.t('common.retry'),
+              label: translateOrFallback('common.retry', 'Qayta urinish'),
               onClick: () => window.location.reload(),
             }}
           />

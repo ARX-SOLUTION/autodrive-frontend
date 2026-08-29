@@ -1,15 +1,14 @@
 import {
-  render,
   screen,
   fireEvent,
   act,
   cleanup,
   within,
 } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, afterEach, beforeEach } from 'vitest';
 import GroupFormDialog from '@/pages/groups/GroupFormDialog';
 import type { Branch } from '@/types/branch';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-553: create-time duplicate check for group names, normalized
 // (trim + case-insensitive) and scoped to the currently-selected branch --
@@ -62,15 +61,14 @@ const pickBranch = (name: string) => {
 };
 
 const renderDialog = () =>
-  render(
-    <MemoryRouter>
-      <GroupFormDialog
-        open
-        editGroup={null}
-        branches={BRANCHES as Branch[]}
-        onClose={vi.fn()}
-      />
-    </MemoryRouter>,
+  renderWithRouter(
+    <GroupFormDialog
+      open
+      editGroup={null}
+      branches={BRANCHES as Branch[]}
+      onClose={vi.fn()}
+    />,
+    { initialEntry: '/groups', routePattern: '/groups' },
   );
 
 describe('GroupFormDialog create-time duplicate warning', () => {
@@ -84,8 +82,8 @@ describe('GroupFormDialog create-time duplicate warning', () => {
     vi.useRealTimers();
   });
 
-  it('debounces the group-name query by 300ms before it reaches useGroups', () => {
-    renderDialog();
+  it('debounces the group-name query by 300ms before it reaches useGroups', async () => {
+    await renderDialog();
     fireEvent.change(screen.getByLabelText(/groups\.name/), {
       target: { value: '11-guruh' },
     });
@@ -105,8 +103,8 @@ describe('GroupFormDialog create-time duplicate warning', () => {
     );
   });
 
-  it('warns when the same name already exists in the selected branch', () => {
-    renderDialog();
+  it('warns when the same name already exists in the selected branch', async () => {
+    await renderDialog();
     pickBranch('Yunusobod'); // b1 -- g1 lives here
     fireEvent.change(screen.getByLabelText(/groups\.name/), {
       target: { value: '11-guruh' },
@@ -120,8 +118,8 @@ describe('GroupFormDialog create-time duplicate warning', () => {
     expect(link).toHaveAttribute('href', '/groups/g1');
   });
 
-  it('does NOT warn for a same-named group in a different branch', () => {
-    renderDialog();
+  it('does NOT warn for a same-named group in a different branch', async () => {
+    await renderDialog();
     pickBranch('Chilonzor'); // b2 -- g1 belongs to b1, not b2
     fireEvent.change(screen.getByLabelText(/groups\.name/), {
       target: { value: '11-guruh' },
@@ -133,8 +131,8 @@ describe('GroupFormDialog create-time duplicate warning', () => {
     expect(screen.queryByText('groups.duplicate_warning.title')).toBeNull();
   });
 
-  it('shows no warning for a genuinely new name', () => {
-    renderDialog();
+  it('shows no warning for a genuinely new name', async () => {
+    await renderDialog();
     pickBranch('Yunusobod');
     fireEvent.change(screen.getByLabelText(/groups\.name/), {
       target: { value: 'Yangi guruh' },

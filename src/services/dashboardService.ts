@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useIsCrossTenant } from '@/hooks/useCan';
 import { CourseType } from '@/types/student';
@@ -28,14 +28,14 @@ export interface DashboardAnalytics {
   }[];
 }
 
-export const useDashboardAnalytics = (
+export const dashboardAnalyticsQueryOptions = (
   branchId?: string,
   courseType?: CourseType,
-) => {
-  const isCrossTenant = useIsCrossTenant();
-  return useQuery<DashboardAnalytics>({
+  enabled = true,
+) =>
+  queryOptions({
     queryKey: dashboardKeys.analytics({ branchId, courseType }),
-    enabled: !!branchId || isCrossTenant,
+    enabled,
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/dashboard/analytics', {
         params: { branch_id: branchId, course_type: courseType },
@@ -44,6 +44,19 @@ export const useDashboardAnalytics = (
       return parseItemEnvelope<DashboardAnalytics>(res, 'dashboard-analytics');
     },
   });
+
+export const useDashboardAnalytics = (
+  branchId?: string,
+  courseType?: CourseType,
+) => {
+  const isCrossTenant = useIsCrossTenant();
+  return useQuery(
+    dashboardAnalyticsQueryOptions(
+      branchId,
+      courseType,
+      !!branchId || isCrossTenant,
+    ),
+  );
 };
 
 export interface TeacherAnalytics {
@@ -52,8 +65,8 @@ export interface TeacherAnalytics {
   result_stats: { oqimoqda: number; topshirdi: number; yiqildi: number };
 }
 
-export const useTeacherAnalytics = () => {
-  return useQuery<TeacherAnalytics>({
+export const teacherAnalyticsQueryOptions = () =>
+  queryOptions({
     queryKey: dashboardKeys.teacherAnalytics(),
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get(
@@ -63,6 +76,9 @@ export const useTeacherAnalytics = () => {
       return parseItemEnvelope<TeacherAnalytics>(res, 'teacher-analytics');
     },
   });
+
+export const useTeacherAnalytics = () => {
+  return useQuery(teacherAnalyticsQueryOptions());
 };
 
 export interface CompanyOverviewQuery {
@@ -200,10 +216,11 @@ export interface CompanyOverview {
   };
 }
 
-export const useCompanyOverview = (query: CompanyOverviewQuery = {}) => {
-  const isCrossTenant = useIsCrossTenant();
-  const enabled = !!query.branchId || isCrossTenant || !!query.companyId;
-  return useQuery<CompanyOverview>({
+export const companyOverviewQueryOptions = (
+  query: CompanyOverviewQuery = {},
+  enabled = true,
+) =>
+  queryOptions({
     queryKey: dashboardKeys.company({ ...query }),
     enabled,
     queryFn: async ({ signal }) => {
@@ -225,4 +242,9 @@ export const useCompanyOverview = (query: CompanyOverviewQuery = {}) => {
     },
     staleTime: 30_000,
   });
+
+export const useCompanyOverview = (query: CompanyOverviewQuery = {}) => {
+  const isCrossTenant = useIsCrossTenant();
+  const enabled = !!query.branchId || isCrossTenant || !!query.companyId;
+  return useQuery(companyOverviewQueryOptions(query, enabled));
 };

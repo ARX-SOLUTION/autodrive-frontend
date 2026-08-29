@@ -89,12 +89,6 @@ export const examKeys = {
     ['exams', 'student', studentId] as const,
 };
 
-export const blogKeys = {
-  all: ['blog'] as const,
-  list: (filters: Filters = {}) => ['blog', 'list', filters] as const,
-  detail: (slug: string | undefined) => ['blog', 'detail', slug] as const,
-};
-
 export const searchKeys = {
   all: ['search'] as const,
   query: (term: string) => ['search', 'query', term] as const,

@@ -1,13 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import {
-  MemoryRouter,
-  Route,
-  Routes,
-  useLocation,
-  useSearchParams,
-} from 'react-router-dom';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import CompanyRevenueDashboard from '@/pages/dashboard/CompanyRevenueDashboard';
+import { formatMoney } from '@/lib/money';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 class ResizeObserverStub {
   observe() {}
@@ -139,35 +134,29 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+const renderDashboard = (initialEntry = '/dashboard') =>
+  renderWithRouter(<CompanyRevenueDashboard />, {
+    initialEntry,
+    routePattern: '/dashboard',
+  });
+
 describe('CompanyRevenueDashboard', () => {
-  it('shows a loading skeleton while overview data is fetching', () => {
+  it('shows a loading skeleton while overview data is fetching', async () => {
     overviewState.isLoading = true;
-    const { container } = render(
-      <MemoryRouter>
-        <CompanyRevenueDashboard />
-      </MemoryRouter>,
-    );
+    const { container } = await renderDashboard();
     expect(container.querySelector('.animate-pulse')).toBeTruthy();
   });
 
-  it('shows an error state with retry when overview fetch fails', () => {
+  it('shows an error state with retry when overview fetch fails', async () => {
     overviewState.isError = true;
-    render(
-      <MemoryRouter>
-        <CompanyRevenueDashboard />
-      </MemoryRouter>,
-    );
+    await renderDashboard();
     expect(screen.getByText('dashboard.v2.error_title')).toBeInTheDocument();
     fireEvent.click(screen.getByText('common.retry'));
     expect(overviewState.refetch).toHaveBeenCalled();
   });
 
-  it('renders Hierarchy B KPI strip (autodrive-9s5j dedupe)', () => {
-    render(
-      <MemoryRouter>
-        <CompanyRevenueDashboard />
-      </MemoryRouter>,
-    );
+  it('renders Hierarchy B KPI strip (autodrive-9s5j dedupe)', async () => {
+    await renderDashboard();
     expect(screen.getByTestId('dashboard-v2-kpi-strip')).toBeInTheDocument();
     expect(screen.getByText('dashboard.v2.today_revenue')).toBeInTheDocument();
     expect(screen.getByText('dashboard.v2.period_revenue')).toBeInTheDocument();
@@ -185,12 +174,8 @@ describe('CompanyRevenueDashboard', () => {
     ).toBeGreaterThanOrEqual(1);
   });
 
-  it('shows generated freshness without claiming the dashboard is live', () => {
-    render(
-      <MemoryRouter>
-        <CompanyRevenueDashboard />
-      </MemoryRouter>,
-    );
+  it('shows generated freshness without claiming the dashboard is live', async () => {
+    await renderDashboard();
 
     const freshness = screen.getByTestId('dashboard-freshness-caption');
     expect(freshness).toHaveTextContent('dashboard.v2.updated');
@@ -199,16 +184,12 @@ describe('CompanyRevenueDashboard', () => {
     expect(screen.queryByText('dashboard.live_label')).not.toBeInTheDocument();
   });
 
-  it('shows an older data-through timestamp when it adds freshness context', () => {
+  it('shows an older data-through timestamp when it adds freshness context', async () => {
     const originalDataThrough = overview.data.freshness.data_through;
     overview.data.freshness.data_through = '2026-07-09T08:30:00.000Z';
 
     try {
-      render(
-        <MemoryRouter>
-          <CompanyRevenueDashboard />
-        </MemoryRouter>,
-      );
+      await renderDashboard();
 
       const freshness = screen.getByTestId('dashboard-freshness-caption');
       expect(freshness).toHaveTextContent('dashboard.v2.to');
@@ -218,12 +199,8 @@ describe('CompanyRevenueDashboard', () => {
     }
   });
 
-  it('keeps manual refresh connected to the overview query', () => {
-    render(
-      <MemoryRouter>
-        <CompanyRevenueDashboard />
-      </MemoryRouter>,
-    );
+  it('keeps manual refresh connected to the overview query', async () => {
+    await renderDashboard();
 
     fireEvent.click(
       screen.getByRole('button', { name: 'dashboard.v2.refresh' }),
@@ -231,12 +208,8 @@ describe('CompanyRevenueDashboard', () => {
     expect(overviewState.refetch).toHaveBeenCalledTimes(1);
   });
 
-  it('uses DateRangePicker and granularity as the only period controls', () => {
-    render(
-      <MemoryRouter>
-        <CompanyRevenueDashboard />
-      </MemoryRouter>,
-    );
+  it('uses DateRangePicker and granularity as the only period controls', async () => {
+    await renderDashboard();
 
     expect(
       screen.queryByRole('group', { name: 'dashboard.v2.period' }),
@@ -258,12 +231,8 @@ describe('CompanyRevenueDashboard', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows period-over-period delta only on the PoP strip tile', () => {
-    render(
-      <MemoryRouter>
-        <CompanyRevenueDashboard />
-      </MemoryRouter>,
-    );
+  it('shows period-over-period delta only on the PoP strip tile', async () => {
+    await renderDashboard();
     const strip = screen.getByTestId('dashboard-v2-kpi-strip');
     // DeltaChip renders "+15.5%" for revenue.delta_percent
     const deltas = strip.querySelectorAll('[data-testid="kpi-delta"]');
@@ -271,27 +240,22 @@ describe('CompanyRevenueDashboard', () => {
     expect(deltas[0].textContent).toMatch(/15\.5/);
   });
 
-  it('renders revenue-control KPIs and the recovery queue', () => {
-    render(
-      <MemoryRouter>
-        <CompanyRevenueDashboard />
-      </MemoryRouter>,
-    );
+  it('renders revenue-control KPIs and the recovery queue', async () => {
+    await renderDashboard();
 
     expect(screen.getByText('dashboard.v2.today_revenue')).toBeInTheDocument();
     expect(screen.getByTestId('dashboard-v2-kpi-strip')).toBeInTheDocument();
     expect(screen.getByText('Ali Valiyev')).toBeInTheDocument();
+    expect(screen.getAllByText(formatMoney(69_300_000)).length).toBeGreaterThan(
+      0,
+    );
     expect(
       screen.getByText((content) => content.replace(/\D/g, '') === '5000000'),
     ).toBeInTheDocument();
   });
 
-  it('shows per-lesson revenue when lessons exist, and a no-lessons label when the count is 0', () => {
-    render(
-      <MemoryRouter>
-        <CompanyRevenueDashboard />
-      </MemoryRouter>,
-    );
+  it('shows per-lesson revenue when lessons exist, and a no-lessons label when the count is 0', async () => {
+    await renderDashboard();
 
     expect(
       screen.getByText('dashboard.v2.financial_block.per_lesson'),
@@ -301,24 +265,17 @@ describe('CompanyRevenueDashboard', () => {
     ).toBeInTheDocument();
   });
 
-  it('keeps dashboard filters in the URL', () => {
-    const LocationProbe = () => {
-      const [params] = useSearchParams();
-      return <output data-testid="location-search">{params.toString()}</output>;
-    };
-    render(
-      <MemoryRouter initialEntries={['/dashboard']}>
-        <CompanyRevenueDashboard />
-        <LocationProbe />
-      </MemoryRouter>,
-    );
+  it('keeps dashboard filters in the URL', async () => {
+    const { router } = await renderDashboard();
     // Radix TabsTrigger commits via mouseDown (button 0), not click.
     fireEvent.mouseDown(
       screen.getByRole('tab', { name: 'students.course_fast' }),
       { button: 0 },
     );
-    expect(screen.getByTestId('location-search')).toHaveTextContent(
-      'course_type=tezkor',
+    await waitFor(() =>
+      expect(
+        new URLSearchParams(router.state.location.searchStr).get('course_type'),
+      ).toBe('tezkor'),
     );
   });
 });
@@ -328,29 +285,6 @@ describe('CompanyRevenueDashboard', () => {
 // routes (students/payments/branches) and 404'd via the catch-all route.
 // These assert navigation actually lands on the real routes with filters
 // the destination page can consume.
-const DestinationProbe = () => {
-  const location = useLocation();
-  return (
-    <output data-testid="destination">
-      {location.pathname}|{location.search}
-    </output>
-  );
-};
-
-const renderDashboardWithRoutes = () =>
-  render(
-    <MemoryRouter initialEntries={['/dashboard']}>
-      <Routes>
-        <Route path="/dashboard" element={<CompanyRevenueDashboard />} />
-        <Route path="/payments" element={<DestinationProbe />} />
-        <Route path="/students" element={<DestinationProbe />} />
-        <Route path="/students/:id" element={<DestinationProbe />} />
-        <Route path="/branches" element={<DestinationProbe />} />
-        <Route path="/branches/:id" element={<DestinationProbe />} />
-      </Routes>
-    </MemoryRouter>,
-  );
-
 // Matches the component's own todayInUz() so the assertion doesn't hardcode
 // a date that drifts stale the day after this test is written.
 const todayInUz = () =>
@@ -359,67 +293,67 @@ const todayInUz = () =>
   );
 
 describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
-  it('today-revenue KPI navigates to /payments, not /tolovlar', () => {
-    renderDashboardWithRoutes();
+  it('today-revenue KPI navigates to /payments, not /tolovlar', async () => {
+    const { router } = await renderDashboard();
     fireEvent.click(screen.getByText('dashboard.v2.today_revenue'));
-    expect(screen.getByTestId('destination').textContent).toMatch(
-      /^\/payments\|/,
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/payments'),
     );
   });
 
-  it('debt KPI navigates to /students with status+has_debt, not /talabalar', () => {
-    renderDashboardWithRoutes();
+  it('debt KPI navigates to /students with status+has_debt, not /talabalar', async () => {
+    const { router } = await renderDashboard();
     fireEvent.click(screen.getByText('dashboard.v2.outstanding_debt'));
-    const [pathname, search] =
-      screen.getByTestId('destination').textContent?.split('|') ?? [];
-    expect(pathname).toBe('/students');
-    const params = new URLSearchParams(search);
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/students'),
+    );
+    const params = new URLSearchParams(router.state.location.searchStr);
     expect(params.get('status')).toBe('active');
     expect(params.get('has_debt')).toBe('true');
   });
 
-  it('recovery-queue row navigates to /students/:id, not a name-search', () => {
-    renderDashboardWithRoutes();
+  it('recovery-queue row navigates to /students/:id, not a name-search', async () => {
+    const { router } = await renderDashboard();
     fireEvent.click(screen.getByText('Ali Valiyev'));
-    expect(screen.getByTestId('destination').textContent).toBe(
-      '/students/student-1|',
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/students/student-1'),
     );
   });
 
   // overview-fixes-frontend — the 90+ day debt-aging bucket had no
   // click-through at all; it now links to the same debt filter as the
   // "Jami qarzdorlik" KPI (recovery queue's underlying data).
-  it('90+ day debt-aging card navigates to /students with status+has_debt', () => {
-    renderDashboardWithRoutes();
+  it('90+ day debt-aging card navigates to /students with status+has_debt', async () => {
+    const { router } = await renderDashboard();
     fireEvent.click(
       screen.getByText('dashboard.v2.financial_block.bucket_90_plus'),
     );
-    const [pathname, search] =
-      screen.getByTestId('destination').textContent?.split('|') ?? [];
-    expect(pathname).toBe('/students');
-    const params = new URLSearchParams(search);
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/students'),
+    );
+    const params = new URLSearchParams(router.state.location.searchStr);
     expect(params.get('status')).toBe('active');
     expect(params.get('has_debt')).toBe('true');
   });
 
-  it('"manage branches" link navigates to the /branches list, not /filiallar', () => {
-    renderDashboardWithRoutes();
+  it('"manage branches" link navigates to the /branches list, not /filiallar', async () => {
+    const { router } = await renderDashboard();
     fireEvent.click(screen.getByText('dashboard.v2.manage_branches'));
-    expect(screen.getByTestId('destination').textContent).toMatch(
-      /^\/branches\|/,
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/branches'),
     );
   });
 
-  it('a branch row navigates straight to /branches/:id, not a filtered list', () => {
-    renderDashboardWithRoutes();
+  it('a branch row navigates straight to /branches/:id, not a filtered list', async () => {
+    const { router } = await renderDashboard();
     const branchTargets = screen.getAllByText('Chorsu').filter((el) => {
       const btn = el.closest('button');
       return !!btn && !el.closest('ul') && btn.className.includes('w-full');
     });
     expect(branchTargets.length).toBeGreaterThan(0);
     fireEvent.click(branchTargets[0]);
-    expect(screen.getByTestId('destination').textContent).toBe(
-      '/branches/branch-1|',
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/branches/branch-1'),
     );
   });
 
@@ -431,22 +365,15 @@ describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
   // range filter was selected (e.g. "this month") instead of today's date;
   // it now always overrides date_from/date_to to today regardless of the
   // ambient from/to filter.
-  it('today-revenue KPI navigates to /payments with an explicit today date_from/date_to, not the ambient range', () => {
-    render(
-      <MemoryRouter
-        initialEntries={['/dashboard?from=2026-07-01&to=2026-07-10']}
-      >
-        <Routes>
-          <Route path="/dashboard" element={<CompanyRevenueDashboard />} />
-          <Route path="/payments" element={<DestinationProbe />} />
-        </Routes>
-      </MemoryRouter>,
+  it('today-revenue KPI navigates to /payments with an explicit today date_from/date_to, not the ambient range', async () => {
+    const { router } = await renderDashboard(
+      '/dashboard?from=2026-07-01&to=2026-07-10',
     );
     fireEvent.click(screen.getByText('dashboard.v2.today_revenue'));
-    const [pathname, search] =
-      screen.getByTestId('destination').textContent?.split('|') ?? [];
-    expect(pathname).toBe('/payments');
-    const params = new URLSearchParams(search);
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/payments'),
+    );
+    const params = new URLSearchParams(router.state.location.searchStr);
     expect(params.get('date_from')).toBe(todayInUz());
     expect(params.get('date_to')).toBe(todayInUz());
     expect(params.get('from')).toBeNull();
@@ -459,7 +386,7 @@ describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
 // must not divide by a zero `contract` denominator (NaN%/Infinity% in the
 // inline style would silently break the bar).
 describe('CompanyRevenueDashboard academic block (autodrive-sgf.3)', () => {
-  it('shows — for null academic metrics and guards funnel divide-by-zero', () => {
+  it('shows — for null academic metrics and guards funnel divide-by-zero', async () => {
     const original = overview.data.kpis;
     overview.data.kpis = {
       ...original,
@@ -475,11 +402,7 @@ describe('CompanyRevenueDashboard academic block (autodrive-sgf.3)', () => {
       },
     } as unknown as typeof original;
     try {
-      const { container } = render(
-        <MemoryRouter>
-          <CompanyRevenueDashboard />
-        </MemoryRouter>,
-      );
+      const { container } = await renderDashboard();
       // exec-dash 7: attendance_rate null renders '—' in the academic block
       // (3 placeholders when the KPI grid tile was removed from primary bands).
       expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(3);
@@ -502,26 +425,18 @@ describe('CompanyRevenueDashboard staff block (autodrive-sgf.4)', () => {
     });
   });
 
-  it('tones the on-time attendance KPI as success when the rate is >= 80', () => {
+  it('tones the on-time attendance KPI as success when the rate is >= 80', async () => {
     Object.assign(overview.data.kpis, { on_time_attendance_marking_rate: 92 });
-    render(
-      <MemoryRouter>
-        <CompanyRevenueDashboard />
-      </MemoryRouter>,
-    );
+    await renderDashboard();
     const card = screen
       .getByText('dashboard.v2.staff_block.on_time_attendance_label')
       .closest('[role="button"]');
     expect(card?.innerHTML).toContain('bg-success');
   });
 
-  it('tones the on-time attendance KPI as warning when the rate is < 80', () => {
+  it('tones the on-time attendance KPI as warning when the rate is < 80', async () => {
     Object.assign(overview.data.kpis, { on_time_attendance_marking_rate: 40 });
-    render(
-      <MemoryRouter>
-        <CompanyRevenueDashboard />
-      </MemoryRouter>,
-    );
+    await renderDashboard();
     const card = screen
       .getByText('dashboard.v2.staff_block.on_time_attendance_label')
       .closest('[role="button"]');

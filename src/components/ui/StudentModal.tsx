@@ -1,16 +1,10 @@
 import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link } from '@/app/navigation';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Warning, X } from '@phosphor-icons/react';
-import {
-  isValidUzPhone,
-  uzPhoneE164,
-  formatUzPhoneInput,
-  uzLocalDigits,
-} from '@/lib/phoneFormater';
+import { formatUzPhoneInput, uzLocalDigits } from '@/lib/phoneFormater';
 import { groupDigits } from '@/lib/money';
 import { DatePicker } from '@/components/ui/date-picker';
 import {
@@ -60,56 +54,16 @@ import { useCourses } from '@/services/courseService';
 import { useGroups } from '@/services/groupService';
 import { useStudentsPage } from '@/services/studentService';
 import { User } from '@/types/user';
+import {
+  getCreateStudentFormValues,
+  getEditStudentFormValues,
+  makeStudentFormSchema,
+  toCreateStudentPayload,
+  type CreateStudentPayload,
+  type StudentFormValues,
+} from './StudentModalForm';
 
-export interface CreateStudentPayload {
-  first_name: string;
-  last_name: string;
-  phone: string;
-  course_type: CourseType;
-  total_price: number;
-  amount_paid?: number;
-  initial_payment?: number;
-  payment_method?: PaymentMethod;
-  group_id?: string;
-  branch_id?: string;
-  completion_date?: string;
-  contract_number?: string;
-  o83?: boolean;
-  has_document?: boolean;
-  result?: ResultStatus;
-  notes?: string;
-  status?: StudentStatus;
-  registered_by?: string;
-}
-
-// Factory so the phone error can be localized via t(); other messages stay as
-// their existing literals (out of scope to translate here).
-const makeStudentFormSchema = (t: (key: string) => string) =>
-  z.object({
-    first_name: z.string().min(1, 'Required'),
-    last_name: z.string().min(1, 'Required'),
-    phone: z.string().refine(isValidUzPhone, t('students.phone_invalid')),
-    course_type: z.enum(['tezkor', 'avto_maktab']),
-    branch_id: z
-      .string()
-      .min(1, 'Branch not selected. Please select a branch.'),
-    payment_method: z.enum(['naqd', 'karta', 'perechisleniya']).optional(),
-    result: z.enum(['oqimoqda', 'topshirdi', 'yiqildi']).optional(),
-    has_document: z.boolean().optional(),
-    o83: z.boolean().optional(),
-    total_price: z.coerce.number().nonnegative('Required'),
-    amount_paid: z.coerce.number().nonnegative().optional(),
-    initial_payment: z.coerce.number().nonnegative().optional(),
-    group_id: z.string().optional(),
-    course_id: z.string().optional(),
-    completion_date: z.string().optional(),
-    contract_number: z.string().optional(),
-    notes: z.string().optional(),
-    status: z.enum(['active', 'completed', 'dropped', 'suspended']).optional(),
-    registered_by: z.string().optional(),
-  });
-
-type StudentFormValues = z.infer<ReturnType<typeof makeStudentFormSchema>>;
+export type { CreateStudentPayload } from './StudentModalForm';
 
 interface StudentModalProps {
   open: boolean;
@@ -153,29 +107,13 @@ const StudentModal = ({
 
   const branchList = branches || [];
 
-  const defaultFormValues = (): StudentFormValues => ({
-    first_name: '',
-    last_name: '',
-    phone: '+998',
-    course_type: courseType,
-    branch_id: canAssignBranch ? defaultBranchId || '' : user?.branch_id || '',
-    payment_method: 'naqd',
-    result: 'oqimoqda',
-    has_document: false,
-    o83: false,
-    // Real price comes from the selected Course (see courseList effect below);
-    // 0 until a course is picked/auto-selected.
-    total_price: 0,
-    amount_paid: 0,
-    initial_payment: 0,
-    group_id: '',
-    course_id: '',
-    completion_date: '',
-    contract_number: '',
-    notes: '',
-    status: 'active',
-    registered_by: '',
-  });
+  const defaultFormValues = () =>
+    getCreateStudentFormValues({
+      courseType,
+      canAssignBranch,
+      defaultBranchId,
+      userBranchId: user?.branch_id,
+    });
 
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
@@ -324,34 +262,7 @@ const StudentModal = ({
   useEffect(() => {
     if (open) {
       if (student) {
-        form.reset({
-          first_name: student.first_name,
-          last_name: student.last_name,
-          phone: student.phone,
-          course_type: student.course_type,
-          branch_id: student.branch_id,
-          // Student.payment_method can be null (never paid); the edit
-          // form's field is a required select, so fall back to a default.
-          payment_method: student.payment_method ?? 'naqd',
-          result: student.result,
-          has_document: student.has_document,
-          o83: student.o83,
-          total_price: student.total_price,
-          // For tezkor edit, amount_paid means "ADD new payment" (backend is additive) — default 0.
-          // For avto_maktab edit, initial_payment is ignored by backend update — keep historical for display.
-          amount_paid: 0,
-          initial_payment: student.initial_payment || 0,
-          group_id: student.group_id || '',
-          course_id: '',
-          completion_date:
-            student.completion_date === undefined
-              ? ''
-              : student.completion_date,
-          contract_number: student.contract_number || '',
-          notes: student.notes === undefined ? '' : student.notes,
-          status: student.status || 'active',
-          registered_by: student.registered_by_id || '',
-        });
+        form.reset(getEditStudentFormValues(student));
       } else {
         form.reset(defaultFormValues());
         // Focus first field after dialog animation settles
@@ -397,35 +308,7 @@ const StudentModal = ({
   }, [form, groupList, operatorList, watchedGroupId, watchedRegisteredBy]);
 
   const onFormValid = async (values: StudentFormValues) => {
-    const payload: CreateStudentPayload = {
-      first_name: values.first_name,
-      last_name: values.last_name,
-      phone: uzPhoneE164(values.phone),
-      course_type: courseType,
-      total_price: Number(values.total_price),
-      payment_method: values.payment_method || undefined,
-      branch_id: values.branch_id || undefined,
-      result: values.result,
-      has_document: values.has_document,
-      notes: values.notes || undefined,
-      status: values.status || 'active',
-      registered_by: values.registered_by || undefined,
-    };
-
-    if (courseType === 'tezkor') {
-      payload.amount_paid = Number(values.amount_paid) || 0;
-      payload.group_id = values.group_id || undefined;
-    } else {
-      payload.initial_payment = Number(values.initial_payment) || 0;
-      payload.group_id = values.group_id || undefined;
-      payload.completion_date = values.completion_date || undefined;
-      payload.contract_number = values.contract_number || undefined;
-      payload.o83 = values.o83;
-      // Edit-only: send additional payment for avto_maktab too (backend handles dto.amount_paid as additive on update)
-      if (student && (Number(values.amount_paid) || 0) > 0) {
-        payload.amount_paid = Number(values.amount_paid);
-      }
-    }
+    const payload = toCreateStudentPayload(values, courseType, !!student);
 
     const mode = submitModeRef.current;
     submitModeRef.current = 'close'; // reset for next submission

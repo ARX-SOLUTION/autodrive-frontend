@@ -14,8 +14,8 @@ export const useBranches = (enabled = true, includeDeleted = false) =>
   useQuery<Branch[]>({
     queryKey: branchKeys.list({ includeDeleted }),
     enabled,
-    // autodrive-6ef.17: branch list is org structure, rarely changes -- longer
-    // than the 30s global default (matches blogService's precedent).
+    // autodrive-6ef.17: branch lists are stable org structure, so they can use
+    // a longer stale window than the 30s global default.
     staleTime: 5 * 60_000,
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/branches', {

@@ -1,5 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect } from 'vitest';
 import { toast } from 'sonner';
 import SchedulePage from '@/pages/SchedulePage';
@@ -7,6 +6,7 @@ import { useGenerateLessons } from '@/services/scheduleService';
 import { useBatchAttendance } from '@/services/attendanceService';
 import { ScheduleTemplate, CalendarLesson } from '@/types/schedule';
 import { Group } from '@/types/group';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
@@ -81,19 +81,16 @@ vi.mock('@/services/attendanceService', () => ({
 }));
 
 describe('SchedulePage', () => {
-  it('renders the templates list without crashing when templates exist', () => {
+  it('renders the templates list without crashing when templates exist', async () => {
     vi.mocked(useGenerateLessons).mockReturnValue({
       mutateAsync: vi.fn(),
       isPending: false,
     } as unknown as ReturnType<typeof useGenerateLessons>);
 
-    expect(() =>
-      render(
-        <MemoryRouter>
-          <SchedulePage />
-        </MemoryRouter>,
-      ),
-    ).not.toThrow();
+    await renderWithRouter(<SchedulePage />, {
+      initialEntry: '/schedule',
+      routePattern: '/schedule',
+    });
     // Templates now live under the "Shablonlar" tab (autodrive-y5b).
     // Radix Tabs switches on mousedown, not click.
     fireEvent.mouseDown(screen.getByText('schedule.tab_templates'));
@@ -110,11 +107,10 @@ describe('SchedulePage', () => {
       isPending: false,
     } as unknown as ReturnType<typeof useGenerateLessons>);
 
-    render(
-      <MemoryRouter>
-        <SchedulePage />
-      </MemoryRouter>,
-    );
+    await renderWithRouter(<SchedulePage />, {
+      initialEntry: '/schedule',
+      routePattern: '/schedule',
+    });
 
     fireEvent.click(screen.getByText('schedule.generate_lessons'));
     // FormLabel's htmlFor ties to the Input's id (rhf + shadcn Form), so the
@@ -146,11 +142,10 @@ describe('SchedulePage', () => {
       isPending: false,
     } as unknown as ReturnType<typeof useGenerateLessons>);
 
-    render(
-      <MemoryRouter>
-        <SchedulePage />
-      </MemoryRouter>,
-    );
+    await renderWithRouter(<SchedulePage />, {
+      initialEntry: '/schedule',
+      routePattern: '/schedule',
+    });
 
     // genWeeks defaults to '4' -- submit as-is, no need to touch the field.
     fireEvent.click(screen.getByText('schedule.generate_lessons'));
@@ -175,11 +170,10 @@ describe('SchedulePage', () => {
       isPending: false,
     } as unknown as ReturnType<typeof useBatchAttendance>);
 
-    render(
-      <MemoryRouter>
-        <SchedulePage />
-      </MemoryRouter>,
-    );
+    await renderWithRouter(<SchedulePage />, {
+      initialEntry: '/schedule',
+      routePattern: '/schedule',
+    });
 
     fireEvent.click(screen.getByText('Group A'));
 

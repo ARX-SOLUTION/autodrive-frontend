@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import type { AxiosError } from 'axios';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
@@ -94,7 +94,7 @@ export const useLogout = () => {
     onSettled: () => {
       logout();
       queryClient.clear();
-      navigate('/login');
+      void navigate({ to: '/login' });
     },
   });
 };

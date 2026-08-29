@@ -1,13 +1,7 @@
-import {
-  render,
-  screen,
-  cleanup,
-  fireEvent,
-  within,
-} from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { screen, cleanup, fireEvent, within } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach, beforeEach } from 'vitest';
 import StudentDetailPage from '@/pages/StudentDetailPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // W15: the "To'lovlar" (payments) tab must be hidden for teachers — GET
 // /payments excludes teacher, so the tab is gated on the recordPayment
@@ -138,13 +132,10 @@ vi.mock('@/components/ui/StudentExamsTab', () => ({
 }));
 
 const renderPage = () =>
-  render(
-    <MemoryRouter initialEntries={['/students/s1']}>
-      <Routes>
-        <Route path="/students/:id" element={<StudentDetailPage />} />
-      </Routes>
-    </MemoryRouter>,
-  );
+  renderWithRouter(<StudentDetailPage />, {
+    initialEntry: '/students/s1',
+    routePattern: '/students/$id',
+  });
 
 afterEach(() => {
   studentQuery.data = STUDENT;
@@ -154,16 +145,16 @@ afterEach(() => {
 });
 
 describe('StudentDetailPage payments-tab gating', () => {
-  it('shows the payments tab for a manager', () => {
+  it('shows the payments tab for a manager', async () => {
     auth.role = 'manager';
-    renderPage();
+    await renderPage();
     expect(screen.getByText('Karimov Aziz')).toBeTruthy();
     expect(screen.getByText('students.detail.tab_payments')).toBeTruthy();
   });
 
-  it('hides the payments tab for a teacher', () => {
+  it('hides the payments tab for a teacher', async () => {
     auth.role = 'teacher';
-    renderPage();
+    await renderPage();
     expect(screen.getByText('Karimov Aziz')).toBeTruthy();
     expect(screen.queryByText('students.detail.tab_payments')).toBeNull();
   });
@@ -174,9 +165,9 @@ describe('StudentDetailPage payments-tab gating', () => {
 // tab's total_price/debt/payment_method/amount_paid Fields used to render
 // unconditionally regardless of canRecordPayment.
 describe('StudentDetailPage payment-amount gating (autodrive-vh0.2)', () => {
-  it('hides the header debt badge and info-tab money fields for a teacher', () => {
+  it('hides the header debt badge and info-tab money fields for a teacher', async () => {
     auth.role = 'teacher';
-    const { container } = renderPage();
+    const { container } = await renderPage();
 
     expect(screen.queryAllByText(/students\.detail\.debt/).length).toBe(0);
     expect(screen.queryByText('students.detail.total_price')).toBeNull();
@@ -190,9 +181,9 @@ describe('StudentDetailPage payment-amount gating (autodrive-vh0.2)', () => {
     expect(dtTexts).toContain('students.detail.group');
   });
 
-  it('still shows the header debt badge and info-tab money fields for a manager (regression)', () => {
+  it('still shows the header debt badge and info-tab money fields for a manager (regression)', async () => {
     auth.role = 'manager';
-    renderPage();
+    await renderPage();
 
     expect(
       screen.queryAllByText(/students\.detail\.debt/).length,
@@ -206,15 +197,15 @@ describe('StudentDetailPage payment-amount gating (autodrive-vh0.2)', () => {
 // autodrive-6ef.26: read-only attendance history tab, visible to every role
 // (unlike payments, which is gated on the recordPayment capability).
 describe('StudentDetailPage attendance history tab', () => {
-  it('shows the attendance tab for a teacher too', () => {
+  it('shows the attendance tab for a teacher too', async () => {
     auth.role = 'teacher';
-    renderPage();
+    await renderPage();
     expect(screen.getByText('students.detail.tab_attendance')).toBeTruthy();
   });
 
-  it('lists attendance records with date, group and status', () => {
+  it('lists attendance records with date, group and status', async () => {
     auth.role = 'manager';
-    renderPage();
+    await renderPage();
     // Radix Tabs switches on mousedown (see TabsTrigger), not click — a bare
     // fireEvent.click never fires the mousedown that triggers onValueChange.
     fireEvent.mouseDown(screen.getByText('students.detail.tab_attendance'));
@@ -226,9 +217,9 @@ describe('StudentDetailPage attendance history tab', () => {
 });
 
 describe('StudentDetailPage referrals_count Field', () => {
-  it('links the referral count to the filtered students list', () => {
+  it('links the referral count to the filtered students list', async () => {
     auth.role = 'manager';
-    renderPage();
+    await renderPage();
     const link = screen.getByText('2').closest('a');
     expect(link?.getAttribute('href')).toBe(
       '/students?referred_by_student_id=s1',
@@ -242,9 +233,9 @@ describe('StudentDetailPage referrals_count Field', () => {
 // blank with no compile-time warning for exactly this STUDENT fixture,
 // which has never set payment_method.
 describe('StudentDetailPage payment_method null-safety (autodrive-f9u.12)', () => {
-  it('shows a fallback instead of a blank value when payment_method is unset', () => {
+  it('shows a fallback instead of a blank value when payment_method is unset', async () => {
     auth.role = 'manager';
-    renderPage();
+    await renderPage();
     expect(screen.getAllByText('common.na').length).toBeGreaterThan(0);
   });
 });
@@ -253,37 +244,37 @@ describe('StudentDetailPage payment_method null-safety (autodrive-f9u.12)', () =
 // AuditLogPage's owner/dev-only OwnerRoute, per this task's decision), and
 // entries are client-filtered down to changes.group_id.
 describe('StudentDetailPage group history tab gating', () => {
-  it('shows the group history tab for a manager', () => {
+  it('shows the group history tab for a manager', async () => {
     auth.role = 'manager';
     auditMock.logs = [];
-    renderPage();
+    await renderPage();
     expect(screen.getByText('students.detail.tab_group_history')).toBeTruthy();
   });
 
-  it('shows the group history tab for an owner', () => {
+  it('shows the group history tab for an owner', async () => {
     auth.role = 'owner';
     auditMock.logs = [];
-    renderPage();
+    await renderPage();
     expect(screen.getByText('students.detail.tab_group_history')).toBeTruthy();
   });
 
-  it('hides the group history tab for an operator', () => {
+  it('hides the group history tab for an operator', async () => {
     auth.role = 'operator';
     auditMock.logs = [];
-    renderPage();
+    await renderPage();
     expect(screen.queryByText('students.detail.tab_group_history')).toBeNull();
   });
 
-  it('hides the group history tab for a teacher', () => {
+  it('hides the group history tab for a teacher', async () => {
     auth.role = 'teacher';
     auditMock.logs = [];
-    renderPage();
+    await renderPage();
     expect(screen.queryByText('students.detail.tab_group_history')).toBeNull();
   });
 });
 
 describe('StudentDetailPage group history tab content', () => {
-  it('resolves group names, ignores non-groupId changes, and falls back for no-group/deleted-group', () => {
+  it('resolves group names, ignores non-groupId changes, and falls back for no-group/deleted-group', async () => {
     auth.role = 'manager';
     auditMock.logs = [
       {
@@ -328,7 +319,7 @@ describe('StudentDetailPage group history tab content', () => {
         created_at: '2026-07-13T10:00:00.000Z',
       },
     ];
-    renderPage();
+    await renderPage();
     fireEvent.mouseDown(screen.getByText('students.detail.tab_group_history'));
 
     expect(screen.getByText('students.no_group → B-1')).toBeTruthy();
@@ -337,10 +328,10 @@ describe('StudentDetailPage group history tab content', () => {
     expect(screen.queryByText('2026-07-13')).toBeNull();
   });
 
-  it('shows the empty state when there is no group-change history', () => {
+  it('shows the empty state when there is no group-change history', async () => {
     auth.role = 'manager';
     auditMock.logs = [];
-    renderPage();
+    await renderPage();
     fireEvent.mouseDown(screen.getByText('students.detail.tab_group_history'));
     expect(
       screen.getByText('students.detail.group_history_empty'),
@@ -358,14 +349,14 @@ describe('StudentDetailPage payments-tab row actions', () => {
     capturedPaymentModalProps.current = null;
   });
 
-  const openPaymentsTab = () => {
+  const openPaymentsTab = async () => {
     auth.role = 'manager';
-    renderPage();
+    await renderPage();
     fireEvent.mouseDown(screen.getByText('students.detail.tab_payments'));
   };
 
-  it('confirms, then calls useDeletePayment.mutate with the row id', () => {
-    openPaymentsTab();
+  it('confirms, then calls useDeletePayment.mutate with the row id', async () => {
+    await openPaymentsTab();
 
     fireEvent.click(screen.getByLabelText('common.delete'));
     const dialog = screen
@@ -377,8 +368,8 @@ describe('StudentDetailPage payments-tab row actions', () => {
     expect(paymentMocks.deleteMutate.mock.calls[0][0]).toBe('p1');
   });
 
-  it('opens PaymentModal in edit mode with the clicked row', () => {
-    openPaymentsTab();
+  it('opens PaymentModal in edit mode with the clicked row', async () => {
+    await openPaymentsTab();
 
     fireEvent.click(screen.getByLabelText('common.edit'));
 
@@ -393,18 +384,18 @@ describe('StudentDetailPage payments-tab row actions', () => {
 // not-found -- distinct title (and icon) per EntityDetailShell's isError/
 // errorTitle/errorIcon props, same split AuditDetailPage already does.
 describe('StudentDetailPage error vs not-found (autodrive-d4j)', () => {
-  it('shows the not-found message when the student genuinely does not exist', () => {
+  it('shows the not-found message when the student genuinely does not exist', async () => {
     studentQuery.data = undefined;
     studentQuery.isError = false;
-    renderPage();
+    await renderPage();
     expect(screen.getByText('common.not_found')).toBeTruthy();
     expect(screen.queryByText('common.error')).toBeNull();
   });
 
-  it('shows the error message, not not-found, on a real fetch error', () => {
+  it('shows the error message, not not-found, on a real fetch error', async () => {
     studentQuery.data = undefined;
     studentQuery.isError = true;
-    renderPage();
+    await renderPage();
     expect(screen.getByText('common.error')).toBeTruthy();
     expect(screen.queryByText('common.not_found')).toBeNull();
   });

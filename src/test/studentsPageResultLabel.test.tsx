@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import StudentsPage from '@/pages/StudentsPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // Regression for autodrive-6cq.11.4: the table rendered the raw
 // ResultStatus enum value ('oqimoqda') instead of a localized label, so it
@@ -74,12 +74,11 @@ vi.mock('@/services/groupService', () => ({
   useGroups: () => ({ data: [], isLoading: false, refetch: vi.fn() }),
 }));
 describe('StudentsPage result status label', () => {
-  it('renders the localized label, not the raw enum value', () => {
-    render(
-      <MemoryRouter initialEntries={['/students']}>
-        <StudentsPage />
-      </MemoryRouter>,
-    );
+  it('renders the localized label, not the raw enum value', async () => {
+    await renderWithRouter(<StudentsPage />, {
+      initialEntry: '/students',
+      routePattern: '/students',
+    });
 
     // react-i18next is mocked (src/test/setup.ts) so t(key) === key.
     expect(screen.queryAllByText('oqimoqda').length).toBe(0);

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 
 /**
  * Keeps one navigation API for existing row/card callers. CRM navigation is
@@ -8,5 +8,5 @@ export function useViewTransitionNavigate() {
   const navigate = useNavigate();
 
   return (path: string, _el: HTMLElement | null, _transitionName: string) =>
-    navigate(path);
+    navigate({ to: path as never });
 }

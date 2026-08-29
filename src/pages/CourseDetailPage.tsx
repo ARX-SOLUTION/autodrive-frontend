@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from '@/app/navigation';
 import { useTranslation } from 'react-i18next';
 import { Warning, PencilSimple, ShieldCheck } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';

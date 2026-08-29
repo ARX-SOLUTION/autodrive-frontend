@@ -1,7 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { DataTable, type DataTableColumn } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DataGrid,
+  createDataGridColumnHelper,
+  type DataGridColumnDef,
+} from '@/shared/ui/data-grid';
 import {
   PencilSimple,
   Trash,
@@ -27,10 +32,15 @@ import {
 interface StudentsTableProps {
   students: Student[];
   isLoading: boolean;
+  isFetching: boolean;
   isError: boolean;
   onRetry: () => void;
   totalStudents: number;
   startIndex: number;
+  currentPage: number;
+  pageSize: number;
+  pageCount: number;
+  onPageChange: (page: number) => void;
   courseType: CourseTypeTab;
   sortField: string;
   sortDir: 'asc' | 'desc';
@@ -52,23 +62,20 @@ interface StudentsTableProps {
   onRestore: (id: string) => void;
 }
 
-// Money columns hidden entirely from any role without recordPayment
-// (teacher). `debt` is NOT in this set -- it stays visible for a teacher but
-// switches from an amount to a paid/owing badge (autodrive-vh0.5), it isn't
-// dropped like the pure-money breakdown columns below.
-const MONEY_COLUMN_KEYS = new Set([
-  'initial_payment',
-  'second_payment',
-  'third_payment',
-]);
+const columnHelper = createDataGridColumnHelper<Student>();
 
 export const StudentsTable = ({
   students,
   isLoading,
+  isFetching,
   isError,
   onRetry,
   totalStudents,
   startIndex,
+  currentPage,
+  pageSize,
+  pageCount,
+  onPageChange,
   courseType,
   sortField,
   sortDir,
@@ -132,156 +139,159 @@ export const StudentsTable = ({
     </span>
   );
 
-  const indexColumn: DataTableColumn<Student> = {
-    key: 'index',
+  const indexColumn = columnHelper.display({
+    id: 'index',
     header: '#',
-    align: 'center',
-    cellClassName: 'text-muted-foreground',
-    render: (_s, idx) => startIndex + idx + 1,
-  };
+    meta: {
+      align: 'center',
+      cellClassName: 'text-muted-foreground',
+    },
+    cell: ({ row }) => startIndex + row.index + 1,
+  });
 
-  const nameColumns: DataTableColumn<Student>[] = [
-    {
-      key: 'last_name',
+  const nameColumns = columnHelper.columns([
+    columnHelper.accessor('last_name', {
       header: t('students.last_name'),
-      sortable: true,
-      cellClassName: 'font-medium',
-      render: (s) => (
+      enableSorting: true,
+      meta: { cellClassName: 'font-medium' },
+      cell: ({ row }) => (
         <span className="inline-flex items-center gap-1.5">
-          {capitalize(s.last_name)}
-          {s.deleted_at && <DeletedBadge />}
+          {capitalize(row.original.last_name)}
+          {row.original.deleted_at && <DeletedBadge />}
         </span>
       ),
-    },
-    {
-      key: 'first_name',
+    }),
+    columnHelper.accessor('first_name', {
       header: t('students.first_name'),
-      sortable: true,
-      render: (s) => capitalize(s.first_name),
-    },
-    {
-      key: 'phone',
+      enableSorting: true,
+      cell: ({ getValue }) => capitalize(getValue()),
+    }),
+    columnHelper.accessor('phone', {
       header: t('students.phone'),
-      cellClassName: 'text-muted-foreground',
-      render: (s) => formatPhone(s.phone),
-    },
-  ];
+      meta: { cellClassName: 'text-muted-foreground' },
+      cell: ({ getValue }) => formatPhone(getValue()),
+    }),
+  ]);
 
   // Shared by both course types (was duplicated identically in each) --
   // switches from the amount to a paid/owing badge for a teacher instead of
   // being dropped, unlike the pure-money columns below (autodrive-vh0.5).
   // Sort disabled in the badge form: sorting the full list by the hidden
   // amount would leak relative debt ranking a teacher shouldn't have.
-  const debtColumn: DataTableColumn<Student> = {
-    key: 'debt',
+  const debtColumn = columnHelper.accessor('debt', {
     header: t('students.debt'),
-    align: canViewPayments ? 'right' : 'center',
-    sortable: canViewPayments,
-    cellClassName: canViewPayments
-      ? 'whitespace-nowrap tabular-nums font-mono'
-      : undefined,
-    render: (s) =>
+    enableSorting: canViewPayments,
+    meta: {
+      align: canViewPayments ? 'right' : 'center',
+      cellClassName: canViewPayments
+        ? 'whitespace-nowrap tabular-nums font-mono'
+        : undefined,
+    },
+    cell: ({ row }) =>
       canViewPayments ? (
-        debtCell(s.debt)
+        debtCell(row.original.debt)
       ) : (
-        <DebtStatusBadge hasDebt={s.has_debt} />
+        <DebtStatusBadge hasDebt={row.original.has_debt} />
       ),
-  };
+  });
 
-  const tezkorColumns: DataTableColumn<Student>[] = [
+  const tezkorColumns = columnHelper.columns([
     debtColumn,
-    {
-      key: 'group',
+    columnHelper.display({
+      id: 'group',
       header: t('students.group'),
-      cellClassName: 'text-muted-foreground',
-      render: (s) => s.group_name || t('common.na'),
-    },
-    {
-      key: 'result',
+      meta: { cellClassName: 'text-muted-foreground' },
+      cell: ({ row }) => row.original.group_name || t('common.na'),
+    }),
+    columnHelper.accessor('result', {
       header: t('students.result'),
-      align: 'center',
-      render: (s) => resultCell(s.result),
-    },
-  ];
+      meta: { align: 'center' },
+      cell: ({ getValue }) => resultCell(getValue()),
+    }),
+  ]);
 
-  const avtoMaktabColumns: DataTableColumn<Student>[] = [
-    {
-      key: 'initial_payment',
+  const paymentColumns = columnHelper.columns([
+    columnHelper.accessor('initial_payment', {
       header: t('students.initial_payment'),
-      align: 'right',
-      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
-      render: (s) => formatMoney(s.initial_payment || 0),
-    },
-    {
-      key: 'second_payment',
+      meta: {
+        align: 'right',
+        cellClassName: 'whitespace-nowrap tabular-nums font-mono',
+      },
+      cell: ({ getValue }) => formatMoney(getValue() || 0),
+    }),
+    columnHelper.accessor('second_payment', {
       header: `2-${t('students.payment').toLowerCase()}`,
-      align: 'right',
-      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
-      render: (s) => formatMoney(s.second_payment || 0),
-    },
-    {
-      key: 'third_payment',
+      meta: {
+        align: 'right',
+        cellClassName: 'whitespace-nowrap tabular-nums font-mono',
+      },
+      cell: ({ getValue }) => formatMoney(getValue() || 0),
+    }),
+    columnHelper.accessor('third_payment', {
       header: `3-${t('students.payment').toLowerCase()}`,
-      align: 'right',
-      cellClassName: 'whitespace-nowrap tabular-nums font-mono',
-      render: (s) => formatMoney(s.third_payment || 0),
-    },
+      meta: {
+        align: 'right',
+        cellClassName: 'whitespace-nowrap tabular-nums font-mono',
+      },
+      cell: ({ getValue }) => formatMoney(getValue() || 0),
+    }),
+  ]);
+
+  const avtoMaktabColumns = columnHelper.columns([
+    ...(canViewPayments ? paymentColumns : []),
     debtColumn,
-    {
-      key: 'group',
+    columnHelper.display({
+      id: 'group',
       header: t('students.group'),
-      render: (s) => s.group_name,
-    },
-    {
-      key: 'completion_date',
+      cell: ({ row }) => row.original.group_name,
+    }),
+    columnHelper.accessor('completion_date', {
       header: t('students.completion_date'),
-      cellClassName: 'text-muted-foreground tabular-nums',
-      render: (s) => formatDate(s.completion_date),
-    },
-    {
-      key: 'o83',
+      meta: { cellClassName: 'text-muted-foreground tabular-nums' },
+      cell: ({ getValue }) => formatDate(getValue()),
+    }),
+    columnHelper.accessor('o83', {
       header: t('students.o83'),
-      align: 'center',
-      render: (s) => (
-        <span className={s.o83 ? 'text-success' : 'text-destructive'}>
-          {s.o83 ? t('students.o83_yes') : t('students.o83_no')}
+      meta: { align: 'center' },
+      cell: ({ getValue }) => (
+        <span className={getValue() ? 'text-success' : 'text-destructive'}>
+          {getValue() ? t('students.o83_yes') : t('students.o83_no')}
         </span>
       ),
-    },
-    {
-      key: 'contract_number',
+    }),
+    columnHelper.accessor('contract_number', {
       header: t('students.contract_number'),
-      cellClassName: 'text-muted-foreground',
-      render: (s) => s.contract_number,
-    },
-    {
-      key: 'result',
+      meta: { cellClassName: 'text-muted-foreground' },
+      cell: ({ getValue }) => getValue(),
+    }),
+    columnHelper.accessor('result', {
       header: t('students.result'),
-      align: 'center',
-      render: (s) => resultCell(s.result),
-    },
-  ];
+      meta: { align: 'center' },
+      cell: ({ getValue }) => resultCell(getValue()),
+    }),
+  ]);
 
-  const tailColumns: DataTableColumn<Student>[] = [
-    {
-      key: 'created_at',
+  const tailColumns = columnHelper.columns([
+    columnHelper.accessor('created_at', {
       header: t('common.date'),
-      sortable: true,
-      cellClassName: 'text-muted-foreground whitespace-nowrap tabular-nums',
-      render: (s) => formatDateTime(s.created_at),
-    },
-    {
-      key: 'actions',
+      enableSorting: true,
+      meta: {
+        cellClassName: 'text-muted-foreground whitespace-nowrap tabular-nums',
+      },
+      cell: ({ getValue }) => formatDateTime(getValue()),
+    }),
+    columnHelper.display({
+      id: 'actions',
       header: t('common.actions'),
-      align: 'center',
-      render: (s) =>
-        s.deleted_at ? (
+      meta: { align: 'center' },
+      cell: ({ row }) =>
+        row.original.deleted_at ? (
           <div className="flex items-center justify-center gap-1">
             {canViewDeleted && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onRestore(s.id);
+                  onRestore(row.original.id);
                 }}
                 aria-label={t('common.restore')}
                 title={t('common.restore')}
@@ -297,7 +307,7 @@ export const StudentsTable = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onEdit(s);
+                  onEdit(row.original);
                 }}
                 aria-label={t('common.edit')}
                 title={t('common.edit')}
@@ -310,7 +320,7 @@ export const StudentsTable = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDelete(s.id);
+                  onDelete(row.original.id);
                 }}
                 aria-label={t('common.delete')}
                 title={t('common.delete')}
@@ -321,18 +331,17 @@ export const StudentsTable = ({
             )}
           </div>
         ),
-    },
-  ];
+    }),
+  ]);
 
-  const courseTypeColumn: DataTableColumn<Student> = {
-    key: 'course_type',
+  const courseTypeColumn = columnHelper.accessor('course_type', {
     header: t('students.course_type'),
-    cellClassName: 'text-muted-foreground',
-    render: (s) =>
-      s.course_type === 'tezkor'
+    meta: { cellClassName: 'text-muted-foreground' },
+    cell: ({ getValue }) =>
+      getValue() === 'tezkor'
         ? t('students.course_fast')
         : t('students.course_school'),
-  };
+  });
 
   const midColumns =
     courseType === 'tezkor'
@@ -341,49 +350,89 @@ export const StudentsTable = ({
         ? avtoMaktabColumns
         : [courseTypeColumn, ...tezkorColumns];
 
-  const columns: DataTableColumn<Student>[] = [
+  // TanStack columns intentionally carry different cell-value types.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const columns: DataGridColumnDef<Student, any>[] = [
     indexColumn,
     ...nameColumns,
     ...midColumns,
     ...tailColumns,
-  ].filter((c) => canViewPayments || !MONEY_COLUMN_KEYS.has(c.key));
+  ];
+
+  const emptyState =
+    totalStudents === 0 ? (
+      <EmptyState
+        icon={GraduationCap}
+        title={t('students.not_found')}
+        description={t('students.not_found_desc')}
+        action={
+          canManageStudents ? (
+            <Button size="sm" className="gap-2" onClick={onCreate}>
+              <Plus className="h-4 w-4" /> {t('students.add')}
+            </Button>
+          ) : undefined
+        }
+      />
+    ) : null;
 
   return (
-    <DataTable
+    <DataGrid
       columns={columns}
-      rows={students}
-      keyExtractor={(s) => s.id}
-      onRowClick={onOpenStudent}
-      isLoading={isLoading}
-      skeletonRowCount={5}
-      isError={isError}
-      errorState={
-        <EmptyState
-          icon={Warning}
-          title={t('common.error')}
-          action={{ label: t('common.retry'), onClick: onRetry }}
-        />
+      data={students}
+      getRowId={(student) => student.id}
+      pagination={{
+        pageIndex: currentPage - 1,
+        pageSize,
+        rowCount: totalStudents,
+        pageCount,
+      }}
+      onPaginationChange={({ pageIndex }) => onPageChange(pageIndex + 1)}
+      sorting={[{ id: sortField, desc: sortDir === 'desc' }]}
+      onSortingChange={(sorting) => {
+        const nextSort = sorting[0];
+        if (nextSort) toggleSort(nextSort.id);
+      }}
+      columnFilters={[]}
+      onColumnFiltersChange={() => undefined}
+      manualPagination
+      manualSorting
+      manualFiltering
+      isInitialLoading={isLoading}
+      isFetching={isFetching}
+      labels={{
+        table: t('students.title'),
+        loading: t('common.loading'),
+        fetching: t('common.loading'),
+        previousPage: t('common.previous'),
+        nextPage: t('common.next'),
+      }}
+      loadingState={
+        <div className="space-y-4">
+          {Array.from({ length: 5 }, (_, index) => (
+            <Skeleton key={index} className="h-5 w-full" />
+          ))}
+        </div>
       }
-      emptyState={
-        totalStudents === 0 ? (
+      errorState={
+        isError ? (
           <EmptyState
-            icon={GraduationCap}
-            title={t('students.not_found')}
-            description={t('students.not_found_desc')}
-            action={
-              canManageStudents ? (
-                <Button size="sm" className="gap-2" onClick={onCreate}>
-                  <Plus className="h-4 w-4" /> {t('students.add')}
-                </Button>
-              ) : undefined
-            }
+            icon={Warning}
+            title={t('common.error')}
+            action={{ label: t('common.retry'), onClick: onRetry }}
           />
         ) : undefined
       }
-      sortField={sortField}
-      sortDir={sortDir}
-      onToggleSort={toggleSort}
-      rowClassName={(s) => (s.deleted_at ? 'opacity-60' : undefined)}
+      emptyState={emptyState}
+      onRowActivate={onOpenStudent}
+      getRowAriaLabel={(student) =>
+        `${capitalize(student.first_name)} ${capitalize(student.last_name)}`
+      }
+      showPagination={false}
+      className="hidden md:block"
+      tableClassName="[&_thead>tr]:bg-muted/30"
+      rowClassName={(student) =>
+        cn('table-row-interactive', student.deleted_at && 'opacity-60')
+      }
     />
   );
 };

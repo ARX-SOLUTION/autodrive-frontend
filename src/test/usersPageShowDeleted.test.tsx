@@ -1,15 +1,14 @@
 import {
-  render,
   screen,
   fireEvent,
   cleanup,
   waitFor,
   within,
 } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import UsersPage from '@/pages/UsersPage';
 import type { User, UserRole } from '@/types/user';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-cg9: owner-only "show deleted" toggle + restore on UsersPage
 // (managers). Role-parameterized authStore mock (real permissions matrix),
@@ -63,12 +62,7 @@ vi.mock('@/services/branchService', () => ({
   useBranches: () => ({ data: [{ id: 'b1', name: 'Yunusobod' }] }),
 }));
 
-const renderPage = () =>
-  render(
-    <MemoryRouter>
-      <UsersPage />
-    </MemoryRouter>,
-  );
+const renderPage = () => renderWithRouter(<UsersPage />);
 
 const emptyResult = {
   data: {
@@ -96,33 +90,33 @@ afterEach(() => {
 });
 
 describe('UsersPage "show deleted" toggle visibility (autodrive-cg9)', () => {
-  it('is absent for a manager', () => {
+  it('is absent for a manager', async () => {
     role = 'manager';
     h.useUsersPage.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
     expect(screen.queryByRole('switch')).toBeNull();
   });
 
-  it('is absent for an operator', () => {
+  it('is absent for an operator', async () => {
     role = 'operator';
     h.useUsersPage.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
     expect(screen.queryByRole('switch')).toBeNull();
   });
 
-  it('is present for an owner', () => {
+  it('is present for an owner', async () => {
     role = 'owner';
     h.useUsersPage.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
     expect(screen.getByRole('switch')).toBeInTheDocument();
   });
 });
 
 describe('UsersPage "show deleted" toggle wiring (autodrive-cg9)', () => {
-  it('flips includeDeleted through to useUsersPage when switched on', () => {
+  it('flips includeDeleted through to useUsersPage when switched on', async () => {
     role = 'owner';
     h.useUsersPage.mockReturnValue(emptyResult);
-    renderPage();
+    await renderPage();
 
     fireEvent.click(screen.getByRole('switch'));
 
@@ -134,26 +128,26 @@ describe('UsersPage "show deleted" toggle wiring (autodrive-cg9)', () => {
 });
 
 describe('UsersPage deleted-row rendering (autodrive-cg9)', () => {
-  it('shows the deleted badge and restore action only on the deleted row', () => {
+  it('shows the deleted badge and restore action only on the deleted row', async () => {
     role = 'owner';
     h.useUsersPage.mockReturnValue({
       ...emptyResult,
       data: { ...emptyResult.data, data: [LIVE_USER, DELETED_USER] },
     });
-    renderPage();
+    await renderPage();
 
     expect(screen.getAllByText('common.deleted')).toHaveLength(2);
     expect(screen.getAllByLabelText('common.restore')).toHaveLength(2);
     expect(screen.getAllByLabelText('common.edit').length).toBeGreaterThan(0);
   });
 
-  it('hides the restore action for a non-owner even if a deleted row is present', () => {
+  it('hides the restore action for a non-owner even if a deleted row is present', async () => {
     role = 'manager';
     h.useUsersPage.mockReturnValue({
       ...emptyResult,
       data: { ...emptyResult.data, data: [DELETED_USER] },
     });
-    renderPage();
+    await renderPage();
 
     expect(screen.queryByLabelText('common.restore')).toBeNull();
   });
@@ -166,7 +160,7 @@ describe('UsersPage restore action (autodrive-cg9)', () => {
       ...emptyResult,
       data: { ...emptyResult.data, data: [DELETED_USER] },
     });
-    renderPage();
+    await renderPage();
 
     fireEvent.click(screen.getAllByLabelText('common.restore')[0]);
     const dialog = screen.getByRole('dialog');
@@ -192,18 +186,19 @@ describe('UsersPage restore action (autodrive-cg9)', () => {
 // requesting a page that no longer exists. Same clamp GroupsPage already
 // had; StudentsPage, PaymentsPage and UsersPage didn't.
 describe('UsersPage pagination clamp (autodrive-52v.3)', () => {
-  it('clamps currentPage back to 1 once totalPages shrinks below the URL page', () => {
+  it('clamps currentPage back to 1 once totalPages shrinks below the URL page', async () => {
     role = 'owner';
     // emptyResult.data.meta.totalPages is already 1 -- URL page=3 below is
     // the "shrunk after delete" case this clamp exists for.
     h.useUsersPage.mockReturnValue(emptyResult);
-    render(
-      <MemoryRouter initialEntries={['/users?page=3']}>
-        <UsersPage />
-      </MemoryRouter>,
-    );
+    await renderWithRouter(<UsersPage />, {
+      initialEntry: '/users?page=3',
+      routePattern: '/users',
+    });
 
-    const lastCall = h.useUsersPage.mock.calls.at(-1)!;
-    expect(lastCall[1]).toBe(1); // page (2nd positional arg), clamped from 3
+    await waitFor(() => {
+      const lastCall = h.useUsersPage.mock.calls.at(-1)!;
+      expect(lastCall[1]).toBe(1); // page (2nd positional arg), clamped from 3
+    });
   });
 });

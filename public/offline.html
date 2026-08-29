@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#092634" />
+    <title>Internet aloqasi yo‘q | Auto Maktab</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        background: #f9f9f9;
+        color: #092634;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+
+      main {
+        width: min(100%, 420px);
+        border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+        border-radius: 12px;
+        background: color-mix(in srgb, Canvas 96%, transparent);
+        padding: 28px;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: 24px;
+      }
+
+      p {
+        margin: 0 0 20px;
+        line-height: 1.55;
+        color: color-mix(in srgb, currentColor 72%, transparent);
+      }
+
+      button {
+        min-height: 44px;
+        width: 100%;
+        border: 0;
+        border-radius: 8px;
+        background: #004e72;
+        color: #f9f9f9;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:focus-visible {
+        outline: 3px solid #ff6e42;
+        outline-offset: 3px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          background: #092634;
+          color: #f9f9f9;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Internet aloqasi yo‘q</h1>
+      <p>
+        Tizim ma’lumotlarni offline saqlamaydi. Ulanishni tekshirib, sahifani
+        qayta yuklang.
+      </p>
+      <button type="button" onclick="window.location.reload()">
+        Qayta urinish
+      </button>
+    </main>
+  </body>
+</html>

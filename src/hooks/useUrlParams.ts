@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from '@/app/navigation';
 
 /**
  * List-page filter/sort/page state that lives in the URL, so reload, back

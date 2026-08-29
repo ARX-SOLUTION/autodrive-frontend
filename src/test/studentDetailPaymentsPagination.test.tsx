@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import StudentDetailPage from '@/pages/StudentDetailPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 import type { Payment } from '@/types/payment';
 
 const { useStudentPaymentsMock } = vi.hoisted(() => ({
@@ -117,13 +117,10 @@ describe('StudentDetailPage payments pagination', () => {
   });
 
   it('loads and renders the second ledger page when page 2 is clicked', async () => {
-    render(
-      <MemoryRouter initialEntries={['/students/student-1?tab=payments']}>
-        <Routes>
-          <Route path="/students/:id" element={<StudentDetailPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    await renderWithRouter(<StudentDetailPage />, {
+      initialEntry: '/students/student-1?tab=payments',
+      routePattern: '/students/$id',
+    });
 
     expect(screen.getByText('Page one operator')).toBeInTheDocument();
 
@@ -140,7 +137,7 @@ describe('StudentDetailPage payments pagination', () => {
     expect(screen.queryByText('Page one operator')).not.toBeInTheDocument();
   });
 
-  it('shows a retryable fetch error instead of the empty ledger state', () => {
+  it('shows a retryable fetch error instead of the empty ledger state', async () => {
     const refetch = vi.fn();
     useStudentPaymentsMock.mockReturnValue({
       data: undefined,
@@ -149,13 +146,10 @@ describe('StudentDetailPage payments pagination', () => {
       refetch,
     });
 
-    render(
-      <MemoryRouter initialEntries={['/students/student-1?tab=payments']}>
-        <Routes>
-          <Route path="/students/:id" element={<StudentDetailPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    await renderWithRouter(<StudentDetailPage />, {
+      initialEntry: '/students/student-1?tab=payments',
+      routePattern: '/students/$id',
+    });
 
     expect(screen.getByText('common.error')).toBeInTheDocument();
     expect(screen.queryByText('payments.empty')).not.toBeInTheDocument();

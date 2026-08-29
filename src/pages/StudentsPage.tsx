@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from '@/app/navigation';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
@@ -53,7 +53,7 @@ const StudentsPage = () => {
 
   // Filter state lives in the URL so reload / share / bookmark preserves
   // it (ROADMAP §2.2). `searchParams` is the source of truth; each
-  // setter rewrites the URL and React-Router re-renders. `replace: true`
+  // setter rewrites the URL and the router re-renders. `replace: true`
   // keeps the browser-history short — every keystroke in the search box
   // would otherwise push a history entry.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -64,6 +64,10 @@ const StudentsPage = () => {
         const next = new URLSearchParams(prev);
         if (!value) next.delete(key);
         else next.set(key, value);
+        // A filter change and its page reset must be one URL transaction.
+        // Keeping `page` only for page controls prevents a page-2 filter
+        // request from racing a later reset-to-page-1 navigation.
+        if (key !== 'page') next.delete('page');
         return next;
       },
       { replace: true },
@@ -114,6 +118,7 @@ const StudentsPage = () => {
         else next.set('date_from', toLocalDateStr(from));
         if (!to) next.delete('date_to');
         else next.set('date_to', toLocalDateStr(to));
+        next.delete('page');
         return next;
       },
       { replace: true },
@@ -163,6 +168,10 @@ const StudentsPage = () => {
   const currentPage = Number(searchParams.get('page')) || 1;
   const setCurrentPage = (p: number) =>
     setParam('page', p > 1 ? String(p) : undefined);
+  const changeIncludeDeleted = (value: boolean) => {
+    setIncludeDeleted(value);
+    setCurrentPage(1);
+  };
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -218,40 +227,22 @@ const StudentsPage = () => {
     activeListOptions,
   );
 
-  // setCurrentPage is a fresh closure each render (derived from setParam,
-  // which useUrlParams doesn't memoize) -- adding it here would fire this
-  // effect on every render instead of only on an actual filter change.
-  useEffect(() => {
-    setCurrentPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    courseType,
-    branchId,
-    operatorId,
-    debouncedSearch,
-    dateFrom,
-    dateTo,
-    sortField,
-    sortDir,
-    status,
-    hasDebt,
-    hasGroup,
-    referredByUserId,
-    referredByStudentId,
-    includeDeleted,
-  ]);
-
   const isLoading = isStudentsLoading;
   const sorted = studentsPage?.data ?? [];
   const totalStudents = studentsPage?.meta.total ?? sorted.length;
   const serverTotalPages = Math.max(1, studentsPage?.meta.totalPages ?? 1);
+  const hasLoadedStudentsPage = studentsPage !== undefined;
 
   // Deleting the last row of the last page leaves currentPage pointing past
   // the new totalPages -- clamp back, same fix as GroupsPage (autodrive-52v.3).
   useEffect(() => {
-    if (currentPage > serverTotalPages) setCurrentPage(1);
+    // Do not clamp against the fallback `1` before a deep-linked page has a
+    // response. Otherwise /students?page=2 requests page 1 during hydration.
+    if (hasLoadedStudentsPage && currentPage > serverTotalPages) {
+      setCurrentPage(1);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serverTotalPages]);
+  }, [currentPage, hasLoadedStudentsPage, serverTotalPages]);
 
   const createMutation = useCreateStudent();
   const createWithPaymentMutation = useCreateStudentWithPayment();
@@ -260,6 +251,7 @@ const StudentsPage = () => {
   const restoreMutation = useRestoreStudent();
 
   const toggleSort = (field: string) => {
+    setCurrentPage(1);
     if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     else {
       setSortField(field);
@@ -440,7 +432,7 @@ const StudentsPage = () => {
         setSearch={setSearch}
         canViewDeleted={canViewDeleted}
         includeDeleted={includeDeleted}
-        setIncludeDeleted={setIncludeDeleted}
+        setIncludeDeleted={changeIncludeDeleted}
       />
 
       {/* Table */}
@@ -459,10 +451,15 @@ const StudentsPage = () => {
           <StudentsTable
             students={sorted}
             isLoading={isLoading}
+            isFetching={isFetching}
             isError={isStudentsError}
             onRetry={() => refetchStudents()}
             totalStudents={totalStudents}
             startIndex={startIndex}
+            currentPage={currentPage}
+            pageSize={SERVER_PAGE_SIZE}
+            pageCount={serverTotalPages}
+            onPageChange={setCurrentPage}
             courseType={courseType}
             sortField={sortField}
             sortDir={sortDir}

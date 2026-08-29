@@ -1,7 +1,10 @@
 import * as React from 'react';
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { DayPicker } from 'react-day-picker';
-import { uz, ru, enUS, type Locale } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale/en-US';
+import { ru } from 'date-fns/locale/ru';
+import { uz } from 'date-fns/locale/uz';
+import type { Locale } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';

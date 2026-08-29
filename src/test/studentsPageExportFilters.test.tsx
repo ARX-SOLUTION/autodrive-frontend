@@ -1,8 +1,8 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import StudentsPage from '@/pages/StudentsPage';
 import type { Student } from '@/types/student';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 const h = vi.hoisted(() => ({
   fetchAllStudents: vi.fn(),
@@ -92,19 +92,15 @@ beforeEach(() => {
 
 describe('StudentsPage Excel export filters', () => {
   it('exports with the same active filters as the visible server-side list', async () => {
-    render(
-      <MemoryRouter
-        initialEntries={[
-          '/students?course_type=avto_maktab&branch_id=branch-9' +
-            '&operator_id=operator-7&q=aziz&date_from=2026-07-01' +
-            '&date_to=2026-07-31&status=active&has_debt=false' +
-            '&has_group=false&referred_by_user_id=user-ref' +
-            '&referred_by_student_id=student-ref',
-        ]}
-      >
-        <StudentsPage />
-      </MemoryRouter>,
-    );
+    await renderWithRouter(<StudentsPage />, {
+      initialEntry:
+        '/students?course_type=avto_maktab&branch_id=branch-9' +
+        '&operator_id=operator-7&q=aziz&date_from=2026-07-01' +
+        '&date_to=2026-07-31&status=active&has_debt=false' +
+        '&has_group=false&referred_by_user_id=user-ref' +
+        '&referred_by_student_id=student-ref',
+      routePattern: '/students',
+    });
 
     fireEvent.click(screen.getByRole('switch'));
     fireEvent.click(screen.getByRole('button', { name: 'common.date' }));

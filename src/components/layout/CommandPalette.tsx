@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { GraduationCap, Stack, UserGear } from '@phosphor-icons/react';
 import {
@@ -44,7 +44,7 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
 
   const go = (path: string) => {
     onOpenChange(false);
-    navigate(path);
+    void navigate({ to: path as never });
   };
 
   const handleOpenChange = (o: boolean) => {

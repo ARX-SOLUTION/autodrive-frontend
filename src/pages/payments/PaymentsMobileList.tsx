@@ -13,6 +13,37 @@ interface PaymentsMobileListProps {
   isLoading: boolean;
 }
 
+interface PaymentMobileCardProps {
+  payment: Payment;
+  onActivate: (element: HTMLElement) => void;
+}
+
+export const PaymentMobileCard = ({
+  payment,
+  onActivate,
+}: PaymentMobileCardProps) => {
+  const { t } = useTranslation();
+
+  return (
+    <DataCard
+      title={payment.student_name}
+      subtitle={payment.branch_name}
+      onClick={(event) => onActivate(event.currentTarget)}
+      fields={[
+        { label: t('common.date'), value: formatDate(payment.date) },
+        {
+          label: t('payments.amount'),
+          value: formatMoney(payment.amount_paid),
+        },
+        {
+          label: t('common.course_type'),
+          value: t(courseTypeLabelKey(payment.course_type)),
+        },
+      ]}
+    />
+  );
+};
+
 /** SECTION 4 (mobile): card list; cards navigate to the student. */
 export const PaymentsMobileList = ({
   payments,
@@ -29,28 +60,16 @@ export const PaymentsMobileList = ({
         ))
       ) : payments.length > 0 ? (
         payments.map((p) => (
-          <DataCard
+          <PaymentMobileCard
             key={p.id}
-            title={p.student_name}
-            subtitle={p.branch_name}
-            onClick={(e) =>
+            payment={p}
+            onActivate={(element) =>
               goToStudent(
                 `/students/${p.student_id}?tab=payments`,
-                e.currentTarget,
+                element,
                 `student-${p.student_id}`,
               )
             }
-            fields={[
-              { label: t('common.date'), value: formatDate(p.date) },
-              {
-                label: t('payments.amount'),
-                value: formatMoney(p.amount_paid),
-              },
-              {
-                label: t('common.course_type'),
-                value: t(courseTypeLabelKey(p.course_type)),
-              },
-            ]}
           />
         ))
       ) : (

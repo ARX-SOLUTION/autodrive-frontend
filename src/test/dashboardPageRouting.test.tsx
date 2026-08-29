@@ -1,7 +1,7 @@
-import { render, screen, cleanup } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, cleanup } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import DashboardPage from '@/pages/DashboardPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-vh0.6: TeacherDashboard was extracted out of DashboardPage.tsx
 // into its own module (dashboard/TeacherDashboard.tsx). This locks down that
@@ -75,18 +75,17 @@ afterEach(() => {
 });
 
 const renderDashboardPage = () =>
-  render(
-    <MemoryRouter initialEntries={['/dashboard']}>
-      <DashboardPage />
-    </MemoryRouter>,
-  );
+  renderWithRouter(<DashboardPage />, {
+    initialEntry: '/dashboard',
+    routePattern: '/dashboard',
+  });
 
 describe('DashboardPage role routing (autodrive-vh0.6 regression)', () => {
   // The sub-dashboards are now React.lazy, so the marker appears after the
   // Suspense boundary resolves — findBy* awaits that.
   it('routes a teacher to TeacherDashboard', async () => {
     user = { name: 'Teacher', role: 'teacher' };
-    renderDashboardPage();
+    await renderDashboardPage();
     expect(
       await screen.findByTestId('teacher-dashboard-marker'),
     ).toBeInTheDocument();
@@ -95,7 +94,7 @@ describe('DashboardPage role routing (autodrive-vh0.6 regression)', () => {
 
   it('routes a non-teacher role to CompanyRevenueDashboard, not TeacherDashboard', async () => {
     user = { name: 'Owner', role: 'owner' };
-    renderDashboardPage();
+    await renderDashboardPage();
     expect(
       await screen.findByTestId('company-revenue-dashboard-marker'),
     ).toBeInTheDocument();
@@ -111,7 +110,7 @@ describe('DashboardPage feature flag (company_dashboard_v2)', () => {
       branch_id: 'b1',
       company_features: { company_dashboard_v2: false },
     };
-    renderDashboardPage();
+    await renderDashboardPage();
     expect(
       await screen.findByText('dashboard.hero_today_revenue'),
     ).toBeInTheDocument();
@@ -120,7 +119,7 @@ describe('DashboardPage feature flag (company_dashboard_v2)', () => {
 
   it('renders CompanyRevenueDashboard when company_dashboard_v2 is unset (default v2)', async () => {
     user = { name: 'Owner', role: 'owner' };
-    renderDashboardPage();
+    await renderDashboardPage();
     expect(
       await screen.findByTestId('company-revenue-dashboard-marker'),
     ).toBeInTheDocument();
@@ -132,7 +131,7 @@ describe('DashboardPage feature flag (company_dashboard_v2)', () => {
       role: 'owner',
       company_features: { company_dashboard_v2: true },
     };
-    renderDashboardPage();
+    await renderDashboardPage();
     expect(
       await screen.findByTestId('company-revenue-dashboard-marker'),
     ).toBeInTheDocument();

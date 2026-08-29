@@ -1,9 +1,9 @@
 import { parseCalendarDate } from '@/lib/calendarDate';
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
 import AuditLogPage from '@/pages/AuditLogPage';
 import type { AuditLog } from '@/types/audit';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // Characterization tests for AuditLogPage (autodrive decomposition ticket):
 // pin current observable behavior before/after extracting src/pages/audit/*.
@@ -63,11 +63,10 @@ const queryResult = (logs: AuditLog[], total = logs.length) => ({
 });
 
 const renderPage = (url = '/audit') =>
-  render(
-    <MemoryRouter initialEntries={[url]}>
-      <AuditLogPage />
-    </MemoryRouter>,
-  );
+  renderWithRouter(<AuditLogPage />, {
+    initialEntry: url,
+    routePattern: '/audit',
+  });
 
 beforeEach(() => {
   mockUseAuditLogs.mockReset();
@@ -75,14 +74,14 @@ beforeEach(() => {
 });
 
 describe('AuditLogPage', () => {
-  it('renders rows (desktop table + mobile cards) from list data with total count', () => {
+  it('renders rows (desktop table + mobile cards) from list data with total count', async () => {
     mockUseAuditLogs.mockReturnValue(
       queryResult([
         makeLog({ id: 'log-1', user_name: 'Alice Aliyeva' }),
         makeLog({ id: 'log-2', user_name: 'Bobur Karimov', action: 'DELETE' }),
       ]),
     );
-    renderPage();
+    await renderPage();
 
     // Each log renders in both the desktop table and the mobile card list
     // (responsiveness is CSS-only), so names appear at least once each.
@@ -94,11 +93,11 @@ describe('AuditLogPage', () => {
     expect(screen.queryByText('audit.not_found')).not.toBeInTheDocument();
   });
 
-  it('drives the fetch from URL filter params (entity, action, dates, page, q->userId)', () => {
+  it('drives the fetch from URL filter params (entity, action, dates, page, q->userId)', async () => {
     mockUseAuditLogs.mockReturnValue(
       queryResult([makeLog({})], 120), // 120 total -> 3 pages of 50
     );
-    renderPage(
+    await renderPage(
       '/audit?entity=student&action=CREATE&q=Alice&date_from=2026-07-01&date_to=2026-07-10&page=2',
     );
 
@@ -119,22 +118,22 @@ describe('AuditLogPage', () => {
     expect(screen.getByText('2 / 3')).toBeInTheDocument();
   });
 
-  it('forces an empty result via sentinel userId when the name search is ambiguous', () => {
-    renderPage('/audit?q=Bob'); // matches Bobur AND Bobir
+  it('forces an empty result via sentinel userId when the name search is ambiguous', async () => {
+    await renderPage('/audit?q=Bob'); // matches Bobur AND Bobir
 
     const args = mockUseAuditLogs.mock.calls.at(-1)?.[0];
     expect(args.userId).toBe('__no_match__');
   });
 
-  it('renders the explicit empty state, not a blank table, when there are no logs', () => {
+  it('renders the explicit empty state, not a blank table, when there are no logs', async () => {
     mockUseAuditLogs.mockReturnValue(queryResult([]));
-    renderPage();
+    await renderPage();
 
     // Empty state appears in both desktop table and mobile list variants.
     expect(screen.getAllByText('audit.not_found').length).toBeGreaterThan(0);
   });
 
-  it('renders the error state with a retry action on query error', () => {
+  it('renders the error state with a retry action on query error', async () => {
     const refetch = vi.fn();
     mockUseAuditLogs.mockReturnValue({
       data: undefined,
@@ -142,7 +141,7 @@ describe('AuditLogPage', () => {
       isError: true,
       refetch,
     });
-    renderPage();
+    await renderPage();
 
     expect(screen.getAllByText('common.error').length).toBeGreaterThan(0);
     screen.getAllByText('common.retry')[0].click();

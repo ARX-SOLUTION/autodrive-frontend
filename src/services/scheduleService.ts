@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { useIsCrossTenant } from '@/hooks/useCan';
@@ -11,10 +16,11 @@ import {
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
 import { scheduleKeys, lessonKeys } from '@/lib/queryKeys';
 
-export const useScheduleTemplates = () => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
-  const isCrossTenant = useIsCrossTenant();
-  return useQuery<ScheduleTemplate[]>({
+export const scheduleTemplatesQueryOptions = (
+  branchId?: string,
+  enabled = true,
+) =>
+  queryOptions({
     queryKey: scheduleKeys.templates({ branchId }),
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/schedule/templates', {
@@ -23,8 +29,15 @@ export const useScheduleTemplates = () => {
       return parseListEnvelope<ScheduleTemplate>(res, 'schedule-templates')
         .data;
     },
-    enabled: !!branchId || isCrossTenant,
+    enabled,
   });
+
+export const useScheduleTemplates = () => {
+  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const isCrossTenant = useIsCrossTenant();
+  return useQuery(
+    scheduleTemplatesQueryOptions(branchId, !!branchId || isCrossTenant),
+  );
 };
 
 export const useCreateTemplate = () => {
@@ -66,18 +79,35 @@ export const useGenerateLessons = () => {
   });
 };
 
-export const useCalendarLessons = (dateFrom: string, dateTo: string) => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
-  const isCrossTenant = useIsCrossTenant();
-  return useQuery<CalendarLesson[]>({
-    queryKey: scheduleKeys.calendar({ dateFrom, dateTo, branchId }),
+export interface CalendarLessonsParams {
+  dateFrom: string;
+  dateTo: string;
+  branchId?: string;
+}
+
+export const calendarLessonsQueryOptions = (
+  params: CalendarLessonsParams,
+  enabled = true,
+) =>
+  queryOptions({
+    queryKey: scheduleKeys.calendar({ ...params }),
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get('/schedule/calendar', {
-        params: { date_from: dateFrom, date_to: dateTo },
+        params: { date_from: params.dateFrom, date_to: params.dateTo },
         signal,
       });
       return parseListEnvelope<CalendarLesson>(res, 'calendar-lessons').data;
     },
-    enabled: (!!branchId || isCrossTenant) && !!dateFrom && !!dateTo,
+    enabled,
   });
+
+export const useCalendarLessons = (dateFrom: string, dateTo: string) => {
+  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const isCrossTenant = useIsCrossTenant();
+  return useQuery(
+    calendarLessonsQueryOptions(
+      { dateFrom, dateTo, branchId },
+      (!!branchId || isCrossTenant) && !!dateFrom && !!dateTo,
+    ),
+  );
 };

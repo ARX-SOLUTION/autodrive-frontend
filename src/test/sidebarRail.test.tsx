@@ -1,9 +1,8 @@
-import { fireEvent, render, screen, cleanup } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { prefetchRoute } from '@/lib/routePrefetch';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // The desktop sidebar is a stable, full-label navigation surface. The active
 // marker must live in a reserved gutter so moving between routes never changes
@@ -15,7 +14,6 @@ vi.mock('@/hooks/useCan', () => ({ useCan: () => canGate }));
 vi.mock('@/services/authService', () => ({
   useLogout: () => ({ mutate: vi.fn() }),
 }));
-vi.mock('@/lib/routePrefetch', () => ({ prefetchRoute: vi.fn() }));
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
     selector({
@@ -31,7 +29,6 @@ vi.mock('@/store/authStore', () => ({
 afterEach(() => {
   canGate = true;
   localStorage.clear();
-  vi.mocked(prefetchRoute).mockClear();
   cleanup();
 });
 
@@ -41,29 +38,28 @@ const renderSidebar = (
   desktopExpanded = true,
   onDesktopExpandedChange = vi.fn(),
 ) =>
-  render(
-    <MemoryRouter initialEntries={[path]}>
-      <TooltipProvider>
-        <Sidebar
-          mobileOpen={mobileOpen}
-          onMobileOpenChange={vi.fn()}
-          desktopExpanded={desktopExpanded}
-          onDesktopExpandedChange={onDesktopExpandedChange}
-        />
-      </TooltipProvider>
-    </MemoryRouter>,
+  renderWithRouter(
+    <TooltipProvider>
+      <Sidebar
+        mobileOpen={mobileOpen}
+        onMobileOpenChange={vi.fn()}
+        desktopExpanded={desktopExpanded}
+        onDesktopExpandedChange={onDesktopExpandedChange}
+      />
+    </TooltipProvider>,
+    { initialEntry: path, routePattern: path },
   );
 
 describe('Sidebar navigation', () => {
-  it('renders full labels on desktop instead of relying on hover tooltips', () => {
-    renderSidebar();
+  it('renders full labels on desktop instead of relying on hover tooltips', async () => {
+    await renderSidebar();
     expect(screen.getByLabelText('nav.dashboard')).toBeTruthy();
     expect(screen.getByText('nav.dashboard')).toBeTruthy();
   });
 
-  it('exposes a 40px desktop toggle with its expanded state', () => {
+  it('exposes a 40px desktop toggle with its expanded state', async () => {
     const onDesktopExpandedChange = vi.fn();
-    renderSidebar(false, '/dashboard', true, onDesktopExpandedChange);
+    await renderSidebar(false, '/dashboard', true, onDesktopExpandedChange);
 
     const toggle = screen.getByRole('button', { name: 'actions.sidebar' });
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
@@ -78,8 +74,8 @@ describe('Sidebar navigation', () => {
     expect(onDesktopExpandedChange).toHaveBeenCalledWith(false);
   });
 
-  it('keeps collapsed desktop links labeled, recognizable, and prefetchable', async () => {
-    renderSidebar(false, '/dashboard', false);
+  it('keeps collapsed desktop links labeled, recognizable, and navigable', async () => {
+    const { router } = await renderSidebar(false, '/groups', false);
 
     const dashboard = screen.getByLabelText('nav.dashboard');
     expect(dashboard.className).toContain('justify-center');
@@ -87,41 +83,43 @@ describe('Sidebar navigation', () => {
     expect(screen.getByText('nav.dashboard').className).toContain('sr-only');
 
     fireEvent.focus(dashboard);
-    expect(prefetchRoute).toHaveBeenCalledWith('/dashboard');
     expect(await screen.findByRole('tooltip')).toHaveTextContent(
       'nav.dashboard',
     );
+
+    fireEvent.click(dashboard);
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/dashboard'),
+    );
   });
 
-  it('keeps pinned navigation present when the desktop sidebar collapses', () => {
-    const { rerender } = renderSidebar();
+  it('keeps pinned navigation present when the desktop sidebar collapses', async () => {
+    const { rerender } = await renderSidebar();
     fireEvent.click(screen.getAllByLabelText('actions.pin')[0]!);
 
     rerender(
-      <MemoryRouter initialEntries={['/dashboard']}>
-        <TooltipProvider>
-          <Sidebar
-            mobileOpen={false}
-            onMobileOpenChange={vi.fn()}
-            desktopExpanded={false}
-            onDesktopExpandedChange={vi.fn()}
-          />
-        </TooltipProvider>
-      </MemoryRouter>,
+      <TooltipProvider>
+        <Sidebar
+          mobileOpen={false}
+          onMobileOpenChange={vi.fn()}
+          desktopExpanded={false}
+          onDesktopExpandedChange={vi.fn()}
+        />
+      </TooltipProvider>,
     );
 
     expect(screen.getAllByLabelText('nav.dashboard')).toHaveLength(2);
     expect(screen.getByLabelText('nav_sections.pinned')).toBeTruthy();
   });
 
-  it('hides a capability-gated item when the capability check fails', () => {
+  it('hides a capability-gated item when the capability check fails', async () => {
     canGate = false;
-    renderSidebar();
+    await renderSidebar();
     expect(screen.queryByLabelText('nav.branches')).toBeNull();
   });
 
-  it('reserves a stable selection gutter for the active route', () => {
-    renderSidebar();
+  it('reserves a stable selection gutter for the active route', async () => {
+    await renderSidebar();
     const dashboard = screen.getByLabelText('nav.dashboard');
     expect(dashboard.getAttribute('data-sidebar-item')).toBe('true');
     expect(dashboard.className).toContain('h-10');
@@ -130,8 +128,8 @@ describe('Sidebar navigation', () => {
     expect(dashboard.getAttribute('data-active')).toBe('true');
   });
 
-  it('mobile sheet: stays a full-label drawer when desktop is collapsed', () => {
-    renderSidebar(true, '/dashboard', false);
+  it('mobile sheet: stays a full-label drawer when desktop is collapsed', async () => {
+    await renderSidebar(true, '/dashboard', false);
     const items = screen.getAllByLabelText('nav.dashboard');
     expect(items.length).toBe(2);
     expect(
@@ -152,8 +150,8 @@ describe('Sidebar navigation', () => {
     ).toBe(true);
   });
 
-  it('keeps the parent menu active on nested detail routes', () => {
-    renderSidebar(false, '/groups/group-42');
+  it('keeps the parent menu active on nested detail routes', async () => {
+    await renderSidebar(false, '/groups/group-42');
     expect(
       screen.getByLabelText('nav.groups').getAttribute('data-active'),
     ).toBe('true');

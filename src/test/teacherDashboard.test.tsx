@@ -1,8 +1,8 @@
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import TeacherDashboard from '@/pages/dashboard/TeacherDashboard';
 import { formatMoney } from '@/lib/money';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 import type { Lesson } from '@/types/attendance';
 import type { Student } from '@/types/student';
 
@@ -151,11 +151,10 @@ vi.mock('@/services/studentService', () => ({
 }));
 
 const renderDashboard = () =>
-  render(
-    <MemoryRouter initialEntries={['/dashboard']}>
-      <TeacherDashboard />
-    </MemoryRouter>,
-  );
+  renderWithRouter(<TeacherDashboard />, {
+    initialEntry: '/dashboard',
+    routePattern: '/dashboard',
+  });
 
 afterEach(() => {
   state.analytics = {
@@ -176,7 +175,7 @@ afterEach(() => {
 });
 
 describe('TeacherDashboard KPIs (autodrive-vh0.6)', () => {
-  it('renders the 4 scoped KPIs from mocked data', () => {
+  it('renders the 4 scoped KPIs from mocked data', async () => {
     state.lessons.data = {
       data: LESSONS,
       total: LESSONS.length,
@@ -184,7 +183,7 @@ describe('TeacherDashboard KPIs (autodrive-vh0.6)', () => {
       limit: 100,
     };
     state.students.data = STUDENTS;
-    renderDashboard();
+    await renderDashboard();
 
     expect(
       screen.getByText('dashboard.teacher.kpi_my_groups'),
@@ -206,7 +205,7 @@ describe('TeacherDashboard KPIs (autodrive-vh0.6)', () => {
     expect(screen.getByText('2')).toBeInTheDocument();
   });
 
-  it('renders no payment amount anywhere, only the owing COUNT', () => {
+  it('renders no payment amount anywhere, only the owing COUNT', async () => {
     state.lessons.data = {
       data: LESSONS,
       total: LESSONS.length,
@@ -214,7 +213,7 @@ describe('TeacherDashboard KPIs (autodrive-vh0.6)', () => {
       limit: 100,
     };
     state.students.data = STUDENTS;
-    renderDashboard();
+    await renderDashboard();
 
     expect(screen.queryByText(formatMoney(5_000_000))).toBeNull();
     expect(screen.queryByText(formatMoney(10_000_000))).toBeNull();
@@ -235,7 +234,7 @@ describe('TeacherDashboard KPIs (autodrive-vh0.6)', () => {
 });
 
 describe('TeacherDashboard upcoming lessons (autodrive-vh0.6)', () => {
-  it('renders the next 5 lessons soonest-first and caps at 5', () => {
+  it('renders the next 5 lessons soonest-first and caps at 5', async () => {
     state.lessons.data = {
       data: LESSONS,
       total: LESSONS.length,
@@ -243,7 +242,7 @@ describe('TeacherDashboard upcoming lessons (autodrive-vh0.6)', () => {
       limit: 100,
     };
     state.students.data = STUDENTS;
-    renderDashboard();
+    await renderDashboard();
 
     const titles = [
       'Morning theory',
@@ -266,7 +265,7 @@ describe('TeacherDashboard upcoming lessons (autodrive-vh0.6)', () => {
     expect(screen.queryByText('Day+4 lesson (should be cut)')).toBeNull();
   });
 
-  it('a row navigates to the attendance flow', () => {
+  it('a row navigates to the attendance flow', async () => {
     state.lessons.data = {
       data: LESSONS,
       total: LESSONS.length,
@@ -274,25 +273,16 @@ describe('TeacherDashboard upcoming lessons (autodrive-vh0.6)', () => {
       limit: 100,
     };
     state.students.data = STUDENTS;
-    const DestinationProbe = () => {
-      const location = useLocation();
-      return <output data-testid="destination">{location.pathname}</output>;
-    };
-    render(
-      <MemoryRouter initialEntries={['/dashboard']}>
-        <Routes>
-          <Route path="/dashboard" element={<TeacherDashboard />} />
-          <Route path="/attendance" element={<DestinationProbe />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    const { router } = await renderDashboard();
     fireEvent.click(screen.getByText('Morning theory'));
-    expect(screen.getByTestId('destination')).toHaveTextContent('/attendance');
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/attendance'),
+    );
   });
 
   // autodrive-vh0.6: drilldown -- the row must carry the lesson id so
   // AttendancePage can open that exact lesson's drawer, not just the list.
-  it('a row deep-links to the specific lesson it shows', () => {
+  it('a row deep-links to the specific lesson it shows', async () => {
     state.lessons.data = {
       data: LESSONS,
       total: LESSONS.length,
@@ -300,37 +290,24 @@ describe('TeacherDashboard upcoming lessons (autodrive-vh0.6)', () => {
       limit: 100,
     };
     state.students.data = STUDENTS;
-    const DestinationProbe = () => {
-      const location = useLocation();
-      return (
-        <output data-testid="destination">
-          {location.pathname + location.search}
-        </output>
-      );
-    };
-    render(
-      <MemoryRouter initialEntries={['/dashboard']}>
-        <Routes>
-          <Route path="/dashboard" element={<TeacherDashboard />} />
-          <Route path="/attendance" element={<DestinationProbe />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    const { router } = await renderDashboard();
     fireEvent.click(screen.getByText('Morning theory'));
-    expect(screen.getByTestId('destination')).toHaveTextContent(
-      '/attendance?lesson=l-today-early',
+    await waitFor(() =>
+      expect(
+        `${router.state.location.pathname}${router.state.location.searchStr}`,
+      ).toBe('/attendance?lesson=l-today-early'),
     );
   });
 });
 
 describe('TeacherDashboard empty states (autodrive-vh0.6)', () => {
-  it('renders a no-groups empty state and no KPI cards when active_groups is 0', () => {
+  it('renders a no-groups empty state and no KPI cards when active_groups is 0', async () => {
     state.analytics.data = {
       active_groups: 0,
       total_students: 0,
       result_stats: { oqimoqda: 0, topshirdi: 0, yiqildi: 0 },
     };
-    renderDashboard();
+    await renderDashboard();
 
     expect(
       screen.getByText('dashboard.teacher.no_groups_title'),
@@ -338,10 +315,10 @@ describe('TeacherDashboard empty states (autodrive-vh0.6)', () => {
     expect(screen.queryByText('dashboard.teacher.kpi_my_groups')).toBeNull();
   });
 
-  it('renders a no-upcoming-lessons empty state when groups exist but no lessons are scheduled', () => {
+  it('renders a no-upcoming-lessons empty state when groups exist but no lessons are scheduled', async () => {
     state.lessons.data = { data: [], total: 0, page: 1, limit: 100 };
     state.students.data = STUDENTS;
-    renderDashboard();
+    await renderDashboard();
 
     expect(
       screen.getByText('dashboard.teacher.upcoming_empty_title'),

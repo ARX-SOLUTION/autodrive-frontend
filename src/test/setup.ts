@@ -27,6 +27,7 @@ window.ResizeObserver = ResizeObserverStub;
 // jsdom has no layout engine, so scrollIntoView is unimplemented — cmdk
 // (CommandPalette) calls it when an item becomes selected.
 window.HTMLElement.prototype.scrollIntoView = () => {};
+window.scrollTo = () => {};
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

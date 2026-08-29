@@ -1,8 +1,8 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { vi, describe, it, expect } from 'vitest';
 import StudentsPage from '@/pages/StudentsPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // One "Yangi talaba qo'shish" button opens the add flow in QUICK mode; the
 // in-dialog "Batafsil" checkbox switches to the DETAILED dialog.
@@ -60,15 +60,14 @@ vi.mock('@/components/ui/AddStudentDialog', () => ({
 }));
 
 const renderPage = () =>
-  render(
-    <MemoryRouter initialEntries={['/students']}>
-      <StudentsPage />
-    </MemoryRouter>,
-  );
+  renderWithRouter(<StudentsPage />, {
+    initialEntry: '/students',
+    routePattern: '/students',
+  });
 
 describe('StudentsPage add flow toggle', () => {
-  it('opens quick mode, then switches to detailed via the checkbox', () => {
-    renderPage();
+  it('opens quick mode, then switches to detailed via the checkbox', async () => {
+    await renderPage();
     expect(screen.queryByTestId('quick-dialog')).toBeNull();
     expect(screen.queryByTestId('detailed-dialog')).toBeNull();
 

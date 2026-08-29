@@ -1,7 +1,7 @@
-import { render, screen, cleanup } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { screen, cleanup } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import UserDetailPage from '@/pages/UserDetailPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // Controllable per-test fixture for isLoading/isError/data-not-found split
 // below (autodrive-d4j). Starts undefined (vi.hoisted runs before USER is
@@ -29,13 +29,10 @@ const USER = {
 userQuery.data = USER;
 
 const renderPage = () =>
-  render(
-    <MemoryRouter initialEntries={['/users/u1']}>
-      <Routes>
-        <Route path="/users/:id" element={<UserDetailPage />} />
-      </Routes>
-    </MemoryRouter>,
-  );
+  renderWithRouter(<UserDetailPage />, {
+    routePattern: '/users/$id',
+    params: { id: 'u1' },
+  });
 
 afterEach(() => {
   userQuery.data = USER;
@@ -45,8 +42,8 @@ afterEach(() => {
 });
 
 describe('UserDetailPage referred_students_count Field', () => {
-  it('links the referred students count to the filtered students list', () => {
-    renderPage();
+  it('links the referred students count to the filtered students list', async () => {
+    await renderPage();
     const link = screen.getByText('3').closest('a');
     expect(link?.getAttribute('href')).toBe('/students?referred_by_user_id=u1');
   });
@@ -56,18 +53,18 @@ describe('UserDetailPage referred_students_count Field', () => {
 // not-found -- distinct title/icon per EntityDetailShell's isError/
 // errorTitle/errorIcon props, same split AuditDetailPage already does.
 describe('UserDetailPage error vs not-found (autodrive-d4j)', () => {
-  it('shows the not-found message when the user genuinely does not exist', () => {
+  it('shows the not-found message when the user genuinely does not exist', async () => {
     userQuery.data = undefined;
     userQuery.isError = false;
-    renderPage();
+    await renderPage();
     expect(screen.getByText('common.not_found')).toBeTruthy();
     expect(screen.queryByText('common.error')).toBeNull();
   });
 
-  it('shows the error message, not not-found, on a real fetch error', () => {
+  it('shows the error message, not not-found, on a real fetch error', async () => {
     userQuery.data = undefined;
     userQuery.isError = true;
-    renderPage();
+    await renderPage();
     expect(screen.getByText('common.error')).toBeTruthy();
     expect(screen.queryByText('common.not_found')).toBeNull();
   });

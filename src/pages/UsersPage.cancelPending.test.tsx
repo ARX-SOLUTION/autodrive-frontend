@@ -1,7 +1,7 @@
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent, cleanup } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import UsersPage from '@/pages/UsersPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // Regression (autodrive-6cq.11.1): Cancel used to close the create-manager
 // modal even while createMut was still in flight, because useConfirmedClose
@@ -50,12 +50,8 @@ vi.mock('@/services/branchService', () => ({
 afterEach(cleanup);
 
 describe('UsersPage cancel guard while saving', () => {
-  it('does not close the create modal when Cancel is clicked mid-save', () => {
-    render(
-      <MemoryRouter>
-        <UsersPage />
-      </MemoryRouter>,
-    );
+  it('does not close the create modal when Cancel is clicked mid-save', async () => {
+    await renderWithRouter(<UsersPage />);
 
     fireEvent.click(screen.getByText('users.add'));
     expect(screen.getByText('users.add_title')).toBeInTheDocument();

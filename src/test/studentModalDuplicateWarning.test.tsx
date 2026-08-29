@@ -1,13 +1,7 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  act,
-  cleanup,
-} from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach, beforeEach } from 'vitest';
 import StudentModal from '@/components/ui/StudentModal';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-553: create-time duplicate check -- a debounced search (phone
 // primarily, once enough digits are typed; last name secondarily) against
@@ -68,15 +62,14 @@ const q = (name: string) =>
   document.querySelector(`input[name="${name}"]`) as HTMLInputElement;
 
 const renderModal = () =>
-  render(
-    <MemoryRouter>
-      <StudentModal
-        open
-        onClose={vi.fn()}
-        onSubmit={vi.fn()}
-        courseType="tezkor"
-      />
-    </MemoryRouter>,
+  renderWithRouter(
+    <StudentModal
+      open
+      onClose={vi.fn()}
+      onSubmit={vi.fn()}
+      courseType="tezkor"
+    />,
+    { initialEntry: '/students', routePattern: '/students' },
   );
 
 describe('StudentModal create-time duplicate warning', () => {
@@ -90,8 +83,8 @@ describe('StudentModal create-time duplicate warning', () => {
     vi.useRealTimers();
   });
 
-  it('debounces the last-name query by 300ms before it reaches useStudentsPage', () => {
-    renderModal();
+  it('debounces the last-name query by 300ms before it reaches useStudentsPage', async () => {
+    await renderModal();
     fireEvent.change(q('last_name'), { target: { value: 'Karimov' } });
 
     act(() => {
@@ -105,8 +98,8 @@ describe('StudentModal create-time duplicate warning', () => {
     expect(searchSpy).toHaveBeenCalledWith('Karimov');
   });
 
-  it('shows a dismissible warning with a working link when the name matches an existing student', () => {
-    renderModal();
+  it('shows a dismissible warning with a working link when the name matches an existing student', async () => {
+    await renderModal();
     fireEvent.change(q('last_name'), { target: { value: 'Karimov' } });
     act(() => {
       vi.advanceTimersByTime(300);
@@ -120,8 +113,8 @@ describe('StudentModal create-time duplicate warning', () => {
     expect(screen.queryByText('students.duplicate_warning.title')).toBeNull();
   });
 
-  it('shows no warning for a genuinely new name', () => {
-    renderModal();
+  it('shows no warning for a genuinely new name', async () => {
+    await renderModal();
     fireEvent.change(q('last_name'), { target: { value: 'Yangi' } });
     act(() => {
       vi.advanceTimersByTime(300);
@@ -129,8 +122,8 @@ describe('StudentModal create-time duplicate warning', () => {
     expect(screen.queryByText('students.duplicate_warning.title')).toBeNull();
   });
 
-  it('searches by phone once enough digits are typed, even with no last name', () => {
-    renderModal();
+  it('searches by phone once enough digits are typed, even with no last name', async () => {
+    await renderModal();
     fireEvent.change(q('phone'), { target: { value: '901234567' } });
     act(() => {
       vi.advanceTimersByTime(300);

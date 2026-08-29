@@ -1124,11 +1124,7 @@
     "cta2_risk": "Birinchi oy bepul · o’rnatishsiz · istalgan vaqt bekor qilinadi",
     "demo_form_eyebrow": "Demo so’rov",
     "demo_form_title": "Demo qoldiring",
-    "demo_form_sub": "Ma’lumotlaringizni qoldiring — biz siz bilan bog’lanamiz",
-    "nav_blog": "Blog",
-    "blog_title": "Blogdan so’nggi maqolalar",
-    "blog_sub": "Avtomaktab egalari uchun maslahatlar va yangiliklar",
-    "blog_view_all": "Hammasini ko’rish"
+    "demo_form_sub": "Ma’lumotlaringizni qoldiring — biz siz bilan bog’lanamiz"
   },
   "demo_form": {
     "full_name_label": "To’liq ism va familiya",
@@ -1155,24 +1151,6 @@
       "phone_invalid": "To’g’ri telefon raqam kiriting (+998 XX XXX XX XX)",
       "region_required": "Viloyatni tanlash majburiy"
     }
-  },
-  "blog": {
-    "nav_back": "Bosh sahifa",
-    "hero_title": "Blog",
-    "hero_subtitle": "Avtomaktab egalari uchun maslahatlar va yangiliklar",
-    "search_placeholder": "Maqolalarni qidirish...",
-    "filter_all": "Barchasi",
-    "empty_title": "Maqolalar topilmadi",
-    "empty_desc": "Boshqa kalit so'z yoki teg bilan qidirib ko'ring",
-    "reading_time": "{{count}} daqiqa o'qish",
-    "views": "{{count}} marta o'qilgan",
-    "share": "Ulashish",
-    "share_copied": "Havola nusxalandi",
-    "share_telegram": "Telegram orqali ulashish",
-    "share_copy_link": "Havolani nusxalash",
-    "related_title": "O'xshash maqolalar",
-    "not_found_title": "Maqola topilmadi",
-    "not_found_desc": "Bu maqola mavjud emas yoki o'chirilgan"
   },
   "datetimepicker": {
     "placeholder": "Sana va vaqt",

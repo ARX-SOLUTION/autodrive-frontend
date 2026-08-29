@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
@@ -18,16 +18,20 @@ import { Plus, Stack, CircleNotch } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { cn } from '@/lib/utils';
-import PaginationControls from '@/components/ui/PaginationControls';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { EmptyState } from '@/components/ui/EmptyState';
 import GroupsBranchNav from './groups/GroupsBranchNav';
 import GroupsFilterBar from './groups/GroupsFilterBar';
 import GroupsTable from './groups/GroupsTable';
-import GroupsMobileList from './groups/GroupsMobileList';
 import GroupFormDialog from './groups/GroupFormDialog';
 import { groupDeleteDescArgs } from './groups/groupDeleteDescArgs';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { parseDataGridSearch } from '@/shared/lib/dataGridSearch';
+
+const GROUPS_GRID_SEARCH = {
+  sortKeys: ['name', 'course_type'] as const,
+  defaultSort: { key: 'name' as const, direction: 'asc' as const },
+};
 
 const GroupsPage = () => {
   const { t } = useTranslation();
@@ -41,12 +45,16 @@ const GroupsPage = () => {
   const { searchParams, setParam, setParams } = useUrlParams();
 
   const search = searchParams.get('q') ?? '';
-  const setSearch = (v: string) => setParam('q', v || undefined);
+  const setSearch = (v: string) =>
+    setParams({ q: v || undefined, page: undefined });
   const debouncedSearch = useDebounce(search, 300);
 
   const courseTypeFilter = searchParams.get('course_type') ?? 'all';
   const setCourseTypeFilter = (v: string) =>
-    setParam('course_type', v === 'all' ? undefined : v);
+    setParams({
+      course_type: v === 'all' ? undefined : v,
+      page: undefined,
+    });
 
   // Branch filter — owner/dev only (mirrors StudentsPage's cross-tenant
   // branch picker); manager/operator/teacher stay pinned to their own
@@ -55,17 +63,23 @@ const GroupsPage = () => {
     ? undefined
     : user?.branch_id || undefined;
   const branchId = searchParams.get('branch_id') ?? defaultBranchId;
-  const setBranchId = (v: string | undefined) => setParam('branch_id', v);
+  const setBranchId = (v: string | undefined) =>
+    setParams({ branch_id: v, page: undefined });
 
-  const sortField = searchParams.get('sort_by') ?? 'name';
-  const sortDir = (searchParams.get('sort_dir') as 'asc' | 'desc') ?? 'asc';
-  const setSort = (field: string, dir: 'asc' | 'desc') =>
+  const gridSearch = parseDataGridSearch(searchParams, GROUPS_GRID_SEARCH);
+  const sortField = gridSearch.sort.key;
+  const sortDir = gridSearch.sort.direction;
+  const setSort = (
+    field: (typeof GROUPS_GRID_SEARCH.sortKeys)[number],
+    dir: 'asc' | 'desc',
+  ) =>
     setParams({
       sort_by: field === 'name' ? undefined : field,
       sort_dir: dir === 'asc' ? undefined : dir,
+      page: undefined,
     });
 
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const currentPage = gridSearch.page;
   const setCurrentPage = (p: number) =>
     setParam('page', p > 1 ? String(p) : undefined);
 
@@ -106,64 +120,16 @@ const GroupsPage = () => {
   // Server already applied search/course_type/branch filters above.
   const filteredGroups = groups || [];
 
-  const toggleSort = (field: string) => {
-    if (sortField === field) setSort(field, sortDir === 'asc' ? 'desc' : 'asc');
-    else setSort(field, 'asc');
-  };
-
-  const sortedGroups = [...filteredGroups].sort((a, b) => {
-    const va = a[sortField as keyof typeof a];
-    const vb = b[sortField as keyof typeof b];
-    if (va == null && vb == null) return 0;
-    if (va == null) return 1;
-    if (vb == null) return -1;
-    if (typeof va === 'string' && typeof vb === 'string') {
-      return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-    }
-    return sortDir === 'asc'
-      ? va < vb
-        ? -1
-        : va > vb
-          ? 1
-          : 0
-      : va > vb
-        ? -1
-        : va < vb
-          ? 1
-          : 0;
-  });
-
   const GROUPS_PER_PAGE = 10;
   const totalPages = Math.max(
     1,
-    Math.ceil(sortedGroups.length / GROUPS_PER_PAGE),
+    Math.ceil(filteredGroups.length / GROUPS_PER_PAGE),
   );
-
-  // Reset to page 1 when a filter/sort actually changes — skip the first
-  // render so a deep link with ?page=N isn't stomped on load.
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    setCurrentPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, courseTypeFilter, branchId, sortField, sortDir, includeDeleted]);
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalPages]);
-
-  const filtered = useMemo(
-    () =>
-      sortedGroups.slice(
-        (currentPage - 1) * GROUPS_PER_PAGE,
-        currentPage * GROUPS_PER_PAGE,
-      ),
-    [sortedGroups, currentPage],
-  );
 
   const openCreate = () => {
     setEditGroup(null);
@@ -208,7 +174,6 @@ const GroupsPage = () => {
     groups?.find((g) => g.id === deleteId),
   );
 
-  const startIndex = (currentPage - 1) * 10;
   const groupsTitle = t('groups.title');
   // Sidebar only when multi-branch; otherwise keep the filter Select.
   const showBranchNav = isCrossTenant && (overview?.length ?? 0) > 1;
@@ -255,7 +220,10 @@ const GroupsPage = () => {
             branches={branchList}
             canViewDeleted={canViewDeleted}
             includeDeleted={includeDeleted}
-            setIncludeDeleted={setIncludeDeleted}
+            setIncludeDeleted={(value) => {
+              setIncludeDeleted(value);
+              setCurrentPage(1);
+            }}
             hideBranchSelectOnDesktop={showBranchNav}
           />
 
@@ -272,23 +240,15 @@ const GroupsPage = () => {
               )}
             >
               <GroupsTable
-                groups={filtered}
+                groups={filteredGroups}
                 isLoading={isLoading}
-                startIndex={startIndex}
+                isFetching={isFetching}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
                 sortField={sortField}
                 sortDir={sortDir}
-                onToggleSort={toggleSort}
-                getBranchName={getBranchName}
-                onNavigate={goToGroup}
-                onEdit={openEdit}
-                onDelete={setDeleteId}
-                canManageGroups={canManageGroups}
-                canViewDeleted={canViewDeleted}
-                onRestore={setRestoreId}
-              />
-              <GroupsMobileList
-                groups={filtered}
-                isLoading={isLoading}
+                onSortChange={setSort}
                 getBranchName={getBranchName}
                 onNavigate={goToGroup}
                 onEdit={openEdit}
@@ -313,12 +273,6 @@ const GroupsPage = () => {
               )}
             </div>
           </div>
-
-          <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
         </div>
       </div>
 

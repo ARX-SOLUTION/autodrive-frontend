@@ -1,7 +1,7 @@
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent, cleanup } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import UsersPage from '@/pages/UsersPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // Regression: a failed fetch (isError) used to fall through to the same
 // 'no users found' empty state as a genuinely empty result, since the page
@@ -43,12 +43,8 @@ vi.mock('@/services/branchService', () => ({
 afterEach(cleanup);
 
 describe('UsersPage fetch error state', () => {
-  it('renders a distinct error state (not the empty state) with a working retry button', () => {
-    render(
-      <MemoryRouter>
-        <UsersPage />
-      </MemoryRouter>,
-    );
+  it('renders a distinct error state (not the empty state) with a working retry button', async () => {
+    await renderWithRouter(<UsersPage />);
 
     expect(screen.getAllByText('common.error').length).toBeGreaterThan(0);
     expect(screen.queryByText('users.not_found')).not.toBeInTheDocument();

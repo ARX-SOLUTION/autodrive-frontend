@@ -1,8 +1,8 @@
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import CourseDetailPage from '@/pages/CourseDetailPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // TDD for CourseDetailPage (Courses had no detail route -- create/edit modal
 // only, violating the repo's "entity detail views: always a dedicated route
@@ -67,18 +67,11 @@ const renderPage = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(
+  return renderWithRouter(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/courses/c1']}>
-        <Routes>
-          <Route path="/courses/:id" element={<CourseDetailPage />} />
-          <Route
-            path="/students/:id"
-            element={<div>student-detail-page</div>}
-          />
-        </Routes>
-      </MemoryRouter>
+      <CourseDetailPage />
     </QueryClientProvider>,
+    { initialEntry: '/courses/c1', routePattern: '/courses/$id' },
   );
 };
 
@@ -96,39 +89,39 @@ afterEach(() => {
 });
 
 describe('CourseDetailPage error vs not-found', () => {
-  it('shows the not-found message when the course genuinely does not exist', () => {
+  it('shows the not-found message when the course genuinely does not exist', async () => {
     courseQuery.data = undefined;
     courseQuery.isError = false;
-    renderPage();
+    await renderPage();
     expect(screen.getByText('common.not_found')).toBeTruthy();
     expect(screen.queryByText('common.error')).toBeNull();
   });
 
-  it('shows the error message, not not-found, on a real fetch error', () => {
+  it('shows the error message, not not-found, on a real fetch error', async () => {
     courseQuery.data = undefined;
     courseQuery.isError = true;
-    renderPage();
+    await renderPage();
     expect(screen.getByText('common.error')).toBeTruthy();
     expect(screen.queryByText('common.not_found')).toBeNull();
   });
 });
 
 describe("CourseDetailPage Ma'lumot (info) tab", () => {
-  it('renders the course fields via useCourse', () => {
-    renderPage();
+  it('renders the course fields via useCourse', async () => {
+    await renderPage();
     expect(screen.getAllByText('Toyota kursi').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Yunusobod filiali').length).toBeGreaterThan(0);
   });
 });
 
 describe('CourseDetailPage Talabalar (students) tab', () => {
-  it('fetches the roster filtered by this course id', () => {
-    renderPage();
+  it('fetches the roster filtered by this course id', async () => {
+    await renderPage();
     const lastCall = useStudentsSpy.mock.calls.at(-1) as unknown[];
     expect(lastCall[5]).toMatchObject({ courseId: 'c1' });
   });
 
-  it('renders the enrolled-student roster and navigates to the student detail page on click', () => {
+  it('renders the enrolled-student roster and navigates to the student detail page on click', async () => {
     studentsQuery.data = [
       {
         id: 's1',
@@ -138,22 +131,24 @@ describe('CourseDetailPage Talabalar (students) tab', () => {
         status: 'active',
       },
     ];
-    renderPage();
+    const { router } = await renderPage();
     fireEvent.mouseDown(screen.getByText('students.title'));
     expect(screen.getByText('Karimov Aziz')).toBeTruthy();
 
     fireEvent.click(screen.getByText('Karimov Aziz'));
-    expect(screen.getByText('student-detail-page')).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/students/s1'),
+    );
   });
 
-  it('shows the empty state when the course has no enrolled students', () => {
+  it('shows the empty state when the course has no enrolled students', async () => {
     studentsQuery.data = [];
-    renderPage();
+    await renderPage();
     fireEvent.mouseDown(screen.getByText('students.title'));
     expect(screen.getByText('students.not_found')).toBeTruthy();
   });
 
-  it('never renders a debt/payment amount in the roster', () => {
+  it('never renders a debt/payment amount in the roster', async () => {
     studentsQuery.data = [
       {
         id: 's1',
@@ -165,7 +160,7 @@ describe('CourseDetailPage Talabalar (students) tab', () => {
         total_price: 767676,
       },
     ];
-    renderPage();
+    await renderPage();
     fireEvent.mouseDown(screen.getByText('students.title'));
     // Assert the real amounts are absent — not a translation key the roster
     // never renders. This is the actual teacher/payment-hiding guard: if the

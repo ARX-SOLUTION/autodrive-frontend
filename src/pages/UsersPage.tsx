@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import type { ColumnFiltersState, SortingState } from '@tanstack/react-table';
+import { useNavigate } from '@/app/navigation';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
@@ -33,11 +34,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { format } from 'date-fns';
-import PaginationControls from '@/components/ui/PaginationControls';
 import {
-  CaretUp,
-  CaretDown,
-  CaretUpDown,
   UserGear,
   Plus,
   MagnifyingGlass,
@@ -52,6 +49,7 @@ import { DeletedBadge } from '@/components/ui/DeletedBadge';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types/user';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { DataGrid, createDataGridColumnHelper } from '@/shared/ui/data-grid';
 
 const formatDate = (d?: string) => {
   if (!d) return '—';
@@ -67,6 +65,9 @@ const formatDate = (d?: string) => {
 // practice, while still being real pagination (not a silent truncation)
 // if it ever does.
 const SERVER_PAGE_SIZE = 100;
+const userColumnHelper = createDataGridColumnHelper<User>();
+const NO_COLUMN_FILTERS: ColumnFiltersState = [];
+const ignoreColumnFiltersChange = () => undefined;
 
 const UsersPage = () => {
   const { t } = useTranslation();
@@ -76,11 +77,13 @@ const UsersPage = () => {
 
   // Filter state lives in the URL (autodrive-b85.2), same pattern as
   // StudentsPage's searchParams/setParam.
-  const { searchParams, setParam } = useUrlParams();
+  const { searchParams, setParam, setParams } = useUrlParams();
   const search = searchParams.get('q') ?? '';
-  const setSearch = (v: string) => setParam('q', v || undefined);
+  const setSearch = (v: string) =>
+    setParams({ q: v || undefined, page: undefined });
   const branchId = searchParams.get('branch_id') ?? undefined;
-  const setBranchId = (v: string | undefined) => setParam('branch_id', v);
+  const setBranchId = (v: string | undefined) =>
+    setParams({ branch_id: v, page: undefined });
   const isActiveParam = searchParams.get('is_active') ?? undefined;
   const isActive =
     isActiveParam === 'true'
@@ -89,7 +92,10 @@ const UsersPage = () => {
         ? false
         : undefined;
   const setIsActive = (v: string) =>
-    setParam('is_active', v === 'all' ? undefined : v);
+    setParams({
+      is_active: v === 'all' ? undefined : v,
+      page: undefined,
+    });
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -102,14 +108,6 @@ const UsersPage = () => {
   const currentPage = Number(searchParams.get('page')) || 1;
   const setCurrentPage = (p: number) =>
     setParam('page', p > 1 ? String(p) : undefined);
-  // setCurrentPage is a fresh closure each render (derived from setParam,
-  // which useUrlParams doesn't memoize) -- adding it here would fire this
-  // effect on every render instead of only on an actual filter change.
-  useEffect(() => {
-    setCurrentPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, branchId, isActive, includeDeleted]);
-
   const {
     data: usersPage,
     isLoading,
@@ -139,8 +137,7 @@ const UsersPage = () => {
   const updateMut = useUpdateUser();
   const deleteMut = useDeleteUser();
   const restoreMut = useRestoreUser();
-  const [sortField, setSortField] = useState('name');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -226,44 +223,119 @@ const UsersPage = () => {
     });
   };
 
-  const toggleSort = (field: string) => {
-    if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else {
-      setSortField(field);
-      setSortDir('asc');
-    }
-  };
-
-  // Sorts only the current server page -- GET /users has no sortBy param,
-  // so a global sort across pages isn't available without a backend change.
-  // Fine in practice: SERVER_PAGE_SIZE (100) covers virtually every
-  // company's manager list in one page.
-  const paginatedItems = useMemo(() => {
-    return [...users].sort((a, b) => {
-      const va = a[sortField as keyof typeof a];
-      const vb = b[sortField as keyof typeof b];
-      if (va == null && vb == null) return 0;
-      if (va == null) return 1;
-      if (vb == null) return -1;
-      if (typeof va === 'string' && typeof vb === 'string') {
-        return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-      }
-      return sortDir === 'asc'
-        ? va < vb
-          ? -1
-          : va > vb
-            ? 1
-            : 0
-        : va > vb
-          ? -1
-          : va < vb
-            ? 1
-            : 0;
-    });
-  }, [users, sortField, sortDir]);
-
   const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
   const usersTitle = t('users.title');
+  const columns = useMemo(
+    () =>
+      userColumnHelper.columns([
+        userColumnHelper.display({
+          id: 'rowNumber',
+          header: '#',
+          meta: { align: 'center' },
+          cell: ({ row }) => startIndex + row.getDisplayIndex() + 1,
+        }),
+        userColumnHelper.accessor('email', {
+          header: t('common.email'),
+          enableSorting: true,
+          sortFn: 'text',
+          meta: { cellClassName: 'font-medium' },
+          cell: ({ row, getValue }) => (
+            <span className="inline-flex items-center gap-1.5">
+              {getValue()}
+              {row.original.deleted_at ? <DeletedBadge /> : null}
+            </span>
+          ),
+        }),
+        userColumnHelper.accessor('phone', {
+          header: t('users.detail.phone'),
+          enableSorting: true,
+          sortFn: 'text',
+          meta: { cellClassName: 'text-muted-foreground' },
+          cell: ({ getValue }) => getValue() || t('common.na'),
+        }),
+        userColumnHelper.accessor('branch_name', {
+          header: t('users.detail.branch'),
+          enableSorting: true,
+          sortFn: 'text',
+          meta: { cellClassName: 'text-muted-foreground' },
+          cell: ({ getValue }) => getValue() || t('common.na'),
+        }),
+        userColumnHelper.display({
+          id: 'status',
+          header: t('common.status'),
+          meta: { align: 'center' },
+          cell: ({ row }) => (
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${row.original.is_active ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}
+            >
+              {row.original.is_active
+                ? t('common.active')
+                : t('common.inactive')}
+            </span>
+          ),
+        }),
+        userColumnHelper.accessor('created_at', {
+          header: t('users.detail.created'),
+          enableSorting: true,
+          sortFn: 'datetime',
+          meta: { cellClassName: 'text-muted-foreground tabular-nums' },
+          cell: ({ getValue }) => formatDate(getValue()),
+        }),
+        userColumnHelper.display({
+          id: 'actions',
+          header: t('common.actions'),
+          meta: { align: 'center' },
+          cell: ({ row }) => {
+            const user = row.original;
+            return user.deleted_at ? (
+              canViewDeleted ? (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setRestoreId(user.id);
+                  }}
+                  aria-label={t('common.restore')}
+                  title={t('common.restore')}
+                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <ArrowCounterClockwise className="h-3.5 w-3.5" />
+                </button>
+              ) : null
+            ) : (
+              <div className="flex items-center justify-center gap-1">
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setEditItem(user);
+                    setModalOpen(true);
+                  }}
+                  aria-label={t('common.edit')}
+                  title={t('common.edit')}
+                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <PencilSimple className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setDeleteId(user.id);
+                  }}
+                  aria-label={t('common.delete')}
+                  title={t('common.delete')}
+                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            );
+          },
+        }),
+      ]),
+    [canViewDeleted, startIndex, t],
+  );
 
   return (
     <div className="space-y-6">
@@ -332,7 +404,10 @@ const UsersPage = () => {
             <Switch
               id="users-show-deleted"
               checked={includeDeleted}
-              onCheckedChange={setIncludeDeleted}
+              onCheckedChange={(checked) => {
+                setIncludeDeleted(checked);
+                setParam('page', undefined);
+              }}
             />
           </div>
         )}
@@ -344,289 +419,118 @@ const UsersPage = () => {
             <CircleNotch className="h-6 w-6 animate-spin text-primary" />
           </div>
         )}
-        <div
-          className={cn(
-            'hidden md:block glass-card overflow-hidden transition-opacity duration-200',
-            isFetching && !isLoading && 'opacity-50',
-          )}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    #
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    <button
-                      onClick={() => toggleSort('email')}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      Email
-                      {sortField === 'email' ? (
-                        sortDir === 'asc' ? (
-                          <CaretUp className="h-3 w-3" />
-                        ) : (
-                          <CaretDown className="h-3 w-3" />
-                        )
-                      ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    <button
-                      onClick={() => toggleSort('phone')}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      {t('users.detail.phone')}
-                      {sortField === 'phone' ? (
-                        sortDir === 'asc' ? (
-                          <CaretUp className="h-3 w-3" />
-                        ) : (
-                          <CaretDown className="h-3 w-3" />
-                        )
-                      ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    <button
-                      onClick={() => toggleSort('branch_name')}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      {t('users.detail.branch')}
-                      {sortField === 'branch_name' ? (
-                        sortDir === 'asc' ? (
-                          <CaretUp className="h-3 w-3" />
-                        ) : (
-                          <CaretDown className="h-3 w-3" />
-                        )
-                      ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    {t('common.status')}
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    <button
-                      onClick={() => toggleSort('created_at')}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      {t('users.detail.created')}
-                      {sortField === 'created_at' ? (
-                        sortDir === 'asc' ? (
-                          <CaretUp className="h-3 w-3" />
-                        ) : (
-                          <CaretDown className="h-3 w-3" />
-                        )
-                      ) : (
-                        <CaretUpDown className="h-3 w-3 text-muted-foreground/70" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">
-                    {t('common.actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading
-                  ? [...Array(3)].map((_, i) => (
-                      <tr key={i} className="border-b border-border/50">
-                        <td colSpan={7} className="p-4">
-                          <Skeleton className="h-5 w-full" />
-                        </td>
-                      </tr>
-                    ))
-                  : paginatedItems.map((u, idx) => (
-                      <tr
-                        key={u.id}
-                        className={cn(
-                          'table-row-interactive border-b border-border/50 cursor-pointer',
-                          u.deleted_at && 'opacity-60',
-                        )}
-                        onClick={() => {
-                          if (window.getSelection()?.toString()) return;
-                          navigate(`/users/${u.id}`);
-                        }}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') navigate(`/users/${u.id}`);
-                          if (e.key === ' ') {
-                            e.preventDefault();
-                            navigate(`/users/${u.id}`);
-                          }
-                        }}
-                      >
-                        <td className="px-4 py-3 text-center text-muted-foreground">
-                          {startIndex + idx + 1}
-                        </td>
-                        <td className="px-4 py-3 font-medium">
-                          <span className="inline-flex items-center gap-1.5">
-                            {u.email}
-                            {u.deleted_at && <DeletedBadge />}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {u.phone || t('common.na')}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {u.branch_name || t('common.na')}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${u.is_active ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}
-                          >
-                            {u.is_active
-                              ? t('common.active')
-                              : t('common.inactive')}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground tabular-nums">
-                          {formatDate(u.created_at)}
-                        </td>
-                        <td className="px-4 py-3">
-                          {u.deleted_at ? (
-                            <div className="flex items-center justify-center gap-1">
-                              {canViewDeleted && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setRestoreId(u.id);
-                                  }}
-                                  aria-label={t('common.restore')}
-                                  title={t('common.restore')}
-                                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                                >
-                                  <ArrowCounterClockwise className="h-3.5 w-3.5" />
-                                </button>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-center gap-1">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openEdit(u);
-                                }}
-                                aria-label={t('common.edit')}
-                                title={t('common.edit')}
-                                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                              >
-                                <PencilSimple className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteId(u.id);
-                                }}
-                                aria-label={t('common.delete')}
-                                title={t('common.delete')}
-                                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                              >
-                                <Trash className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-              </tbody>
-            </table>
-            {isError ? (
+        <DataGrid
+          data={users}
+          columns={columns}
+          getRowId={(user) => user.id}
+          pagination={{
+            pageIndex: currentPage - 1,
+            pageSize: SERVER_PAGE_SIZE,
+            rowCount: usersPage?.meta.total ?? users.length,
+            pageCount: totalPages,
+          }}
+          onPaginationChange={({ pageIndex }) => setCurrentPage(pageIndex + 1)}
+          sorting={sorting}
+          onSortingChange={setSorting}
+          columnFilters={NO_COLUMN_FILTERS}
+          onColumnFiltersChange={ignoreColumnFiltersChange}
+          manualPagination
+          // GET /users has no supported sort parameters. The grid therefore
+          // sorts only the current server page instead of faking global sort.
+          manualSorting={false}
+          manualFiltering
+          isInitialLoading={isLoading}
+          isFetching={isFetching}
+          labels={{
+            table: usersTitle,
+            loading: t('common.loading'),
+            fetching: t('common.loading'),
+            previousPage: t('common.previous'),
+            nextPage: t('common.next'),
+          }}
+          loadingState={
+            <div className="space-y-3">
+              {[0, 1, 2].map((index) => (
+                <Skeleton key={index} className="h-5 w-full" />
+              ))}
+            </div>
+          }
+          errorState={
+            isError ? (
               <EmptyState
                 title={t('common.error')}
                 action={{ label: t('common.retry'), onClick: () => refetch() }}
               />
-            ) : (
-              users.length === 0 &&
-              !isLoading && (
-                <EmptyState icon={UserGear} title={t('users.not_found')} />
-              )
-            )}
-          </div>
-        </div>
-
-        <div className="md:hidden grid gap-3">
-          {isLoading ? (
-            [...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-28 w-full" />
-            ))
-          ) : isError ? (
-            <EmptyState
-              title={t('common.error')}
-              action={{ label: t('common.retry'), onClick: () => refetch() }}
-            />
-          ) : paginatedItems.length === 0 ? (
+            ) : undefined
+          }
+          emptyState={
             <EmptyState icon={UserGear} title={t('users.not_found')} />
-          ) : (
-            paginatedItems.map((u) => (
+          }
+          renderMobileRow={({ row: user }) => (
+            <div className="px-3 py-1.5">
               <DataCard
-                key={u.id}
                 title={
                   <span className="inline-flex items-center gap-1.5">
-                    {u.name || u.email}
-                    {u.deleted_at && <DeletedBadge />}
+                    {user.name || user.email}
+                    {user.deleted_at ? <DeletedBadge /> : null}
                   </span>
                 }
-                subtitle={u.email}
-                onClick={() => navigate(`/users/${u.id}`)}
-                className={u.deleted_at ? 'opacity-60' : undefined}
+                subtitle={user.email}
+                onClick={() => navigate(`/users/${user.id}`)}
+                className={user.deleted_at ? 'opacity-60' : undefined}
                 fields={[
                   {
                     label: t('users.detail.branch'),
-                    value: u.branch_name ?? t('common.na'),
+                    value: user.branch_name ?? t('common.na'),
                   },
                   {
                     label: t('users.detail.phone'),
-                    value: u.phone ?? t('common.na'),
+                    value: user.phone ?? t('common.na'),
                   },
                   {
                     label: t('users.detail.created'),
-                    value: formatDate(u.created_at),
+                    value: formatDate(user.created_at),
                   },
                 ]}
                 actions={
-                  u.deleted_at ? (
-                    canViewDeleted && (
+                  user.deleted_at ? (
+                    canViewDeleted ? (
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setRestoreId(u.id);
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setRestoreId(user.id);
                         }}
                         aria-label={t('common.restore')}
                         title={t('common.restore')}
-                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                       >
                         <ArrowCounterClockwise className="h-3.5 w-3.5" />
                       </button>
-                    )
+                    ) : null
                   ) : (
                     <>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEdit(u);
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openEdit(user);
                         }}
                         aria-label={t('common.edit')}
                         title={t('common.edit')}
-                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                       >
                         <PencilSimple className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteId(u.id);
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setDeleteId(user.id);
                         }}
                         aria-label={t('common.delete')}
                         title={t('common.delete')}
-                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                       >
                         <Trash className="h-3.5 w-3.5" />
                       </button>
@@ -634,16 +538,22 @@ const UsersPage = () => {
                   )
                 }
               />
-            ))
+            </div>
           )}
-        </div>
+          tableClassName="min-w-[760px]"
+          className={cn(
+            'glass-card overflow-hidden transition-opacity duration-200',
+            isFetching && !isLoading && 'opacity-50',
+          )}
+          rowClassName={(user) =>
+            cn('table-row-interactive', user.deleted_at && 'opacity-60')
+          }
+          onRowActivate={(user) => navigate(`/users/${user.id}`)}
+          getRowAriaLabel={(user) =>
+            `${t('common.view')}: ${user.name || user.email}`
+          }
+        />
       </div>
-
-      <PaginationControls
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
 
       <PersonModal
         open={modalOpen}

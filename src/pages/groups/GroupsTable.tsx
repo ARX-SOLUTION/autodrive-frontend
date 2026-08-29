@@ -4,18 +4,31 @@ import {
   Trash,
   ArrowCounterClockwise,
 } from '@phosphor-icons/react';
-import { DataTable, type DataTableColumn } from '@/components/ui/DataTable';
+import type {
+  ColumnFiltersState,
+  PaginationState,
+  SortingState,
+} from '@tanstack/react-table';
+import { DataGrid, createDataGridColumnHelper } from '@/shared/ui/data-grid';
 import { DeletedBadge } from '@/components/ui/DeletedBadge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Group } from '@/types/group';
+import { cn } from '@/lib/utils';
 import { formatDate } from './formatDate';
+import { GroupMobileCard } from './GroupsMobileList';
+
+type GroupSortField = 'name' | 'course_type';
 
 interface GroupsTableProps {
   groups: Group[];
   isLoading: boolean;
-  startIndex: number;
-  sortField: string;
+  isFetching: boolean;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  sortField: GroupSortField;
   sortDir: 'asc' | 'desc';
-  onToggleSort: (field: string) => void;
+  onSortChange: (field: GroupSortField, dir: 'asc' | 'desc') => void;
   getBranchName: (branchId: string) => string;
   onNavigate: (path: string, el: HTMLElement | null, name: string) => void;
   onEdit: (g: Group) => void;
@@ -27,13 +40,21 @@ interface GroupsTableProps {
   onRestore: (id: string) => void;
 }
 
+const GROUPS_PER_PAGE = 10;
+const columnHelper = createDataGridColumnHelper<Group>();
+const noColumnFilters: ColumnFiltersState = [];
+const ignoreColumnFilters = () => undefined;
+
 const GroupsTable = ({
   groups,
   isLoading,
-  startIndex,
+  isFetching,
+  currentPage,
+  totalPages,
+  onPageChange,
   sortField,
   sortDir,
-  onToggleSort,
+  onSortChange,
   getBranchName,
   onNavigate,
   onEdit,
@@ -44,77 +65,80 @@ const GroupsTable = ({
 }: GroupsTableProps) => {
   const { t } = useTranslation();
 
-  const columns: DataTableColumn<Group>[] = [
-    {
-      key: 'index',
+  const columns = columnHelper.columns([
+    columnHelper.display({
+      id: 'index',
       header: '#',
-      align: 'center',
-      cellClassName: 'text-muted-foreground',
-      render: (_g, idx) => startIndex + idx + 1,
-    },
-    {
-      key: 'name',
+      meta: { align: 'center', cellClassName: 'text-muted-foreground' },
+      cell: ({ row, table }) => {
+        const pageRowIndex = table
+          .getRowModel()
+          .rows.findIndex((candidate) => candidate.id === row.id);
+        return (currentPage - 1) * GROUPS_PER_PAGE + pageRowIndex + 1;
+      },
+    }),
+    columnHelper.accessor('name', {
       header: t('groups.name'),
-      sortable: true,
-      cellClassName: 'font-medium',
-      render: (g) => (
+      enableSorting: true,
+      meta: { cellClassName: 'font-medium' },
+      cell: ({ row }) => (
         <span className="inline-flex items-center gap-1.5">
-          {g.name}
-          {g.deleted_at && <DeletedBadge />}
+          {row.original.name}
+          {row.original.deleted_at && <DeletedBadge />}
         </span>
       ),
-    },
-    {
-      key: 'branch',
+    }),
+    columnHelper.display({
+      id: 'branch',
       header: t('common.branch'),
-      cellClassName: 'text-muted-foreground',
-      render: (g) => g.branch_name || getBranchName(g.branch_id),
-    },
-    {
-      key: 'course_type',
+      meta: { cellClassName: 'text-muted-foreground' },
+      cell: ({ row }) =>
+        row.original.branch_name || getBranchName(row.original.branch_id),
+    }),
+    columnHelper.accessor('course_type', {
       header: t('groups.course_type'),
-      align: 'center',
-      sortable: true,
-      render: (g) => (
+      enableSorting: true,
+      meta: { align: 'center' },
+      cell: ({ getValue }) => (
         <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${g.course_type === 'avto_maktab' ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent-foreground'}`}
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getValue() === 'avto_maktab' ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent-foreground'}`}
         >
-          {g.course_type === 'avto_maktab'
+          {getValue() === 'avto_maktab'
             ? t('groups.course_school')
             : t('groups.course_fast')}
         </span>
       ),
-    },
-    {
-      key: 'student_count',
+    }),
+    columnHelper.accessor('active_students', {
+      id: 'student_count',
       header: t('groups.student_count'),
-      align: 'center',
-      render: (g) => g.active_students,
-    },
-    {
-      key: 'status',
+      meta: { align: 'center' },
+      cell: ({ getValue }) => getValue(),
+    }),
+    columnHelper.accessor('is_active', {
+      id: 'status',
       header: t('common.status'),
-      align: 'center',
-      render: (g) => (
+      meta: { align: 'center' },
+      cell: ({ getValue }) => (
         <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${g.is_active ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getValue() ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}
         >
-          {g.is_active ? t('common.active') : t('common.inactive')}
+          {getValue() ? t('common.active') : t('common.inactive')}
         </span>
       ),
-    },
-    {
-      key: 'created_at',
+    }),
+    columnHelper.accessor('created_at', {
       header: t('groups.created'),
-      cellClassName: 'text-muted-foreground tabular-nums',
-      render: (g) => formatDate(g.created_at),
-    },
-    {
-      key: 'actions',
+      meta: { cellClassName: 'text-muted-foreground tabular-nums' },
+      cell: ({ getValue }) => formatDate(getValue()),
+    }),
+    columnHelper.display({
+      id: 'actions',
       header: t('common.actions'),
-      align: 'center',
-      render: (g) =>
-        g.deleted_at ? (
+      meta: { align: 'center' },
+      cell: ({ row }) => {
+        const g = row.original;
+        return g.deleted_at ? (
           <div className="flex items-center justify-center gap-1">
             {canViewDeleted && (
               <button
@@ -157,22 +181,74 @@ const GroupsTable = ({
               </button>
             )}
           </div>
-        ),
-    },
-  ];
+        );
+      },
+    }),
+  ]);
+
+  const sorting: SortingState = [{ id: sortField, desc: sortDir === 'desc' }];
+
+  const handleSortingChange = (next: SortingState) => {
+    const sort = next[0];
+    if (sort?.id !== 'name' && sort?.id !== 'course_type') return;
+    onSortChange(sort.id, sort.desc ? 'desc' : 'asc');
+  };
+
+  const handlePaginationChange = (next: PaginationState) => {
+    if (next.pageIndex !== currentPage - 1) {
+      onPageChange(next.pageIndex + 1);
+    }
+  };
 
   return (
-    <DataTable
+    <DataGrid
+      data={groups}
       columns={columns}
-      rows={groups}
-      keyExtractor={(g) => g.id}
-      onRowClick={(g, el) => onNavigate(`/groups/${g.id}`, el, `group-${g.id}`)}
-      isLoading={isLoading}
-      skeletonRowCount={3}
-      sortField={sortField}
-      sortDir={sortDir}
-      onToggleSort={onToggleSort}
-      rowClassName={(g) => (g.deleted_at ? 'opacity-60' : undefined)}
+      getRowId={(group) => group.id}
+      pagination={{
+        pageIndex: currentPage - 1,
+        pageSize: GROUPS_PER_PAGE,
+        rowCount: groups.length,
+        pageCount: totalPages,
+      }}
+      onPaginationChange={handlePaginationChange}
+      sorting={sorting}
+      onSortingChange={handleSortingChange}
+      columnFilters={noColumnFilters}
+      onColumnFiltersChange={ignoreColumnFilters}
+      manualPagination={false}
+      manualSorting={false}
+      manualFiltering
+      isInitialLoading={isLoading}
+      isFetching={isFetching}
+      labels={{
+        table: t('groups.title'),
+        loading: t('common.loading'),
+        fetching: t('common.loading'),
+        previousPage: t('common.previous'),
+        nextPage: t('common.next'),
+      }}
+      loadingState={<Skeleton className="h-5 w-full" />}
+      emptyState={null}
+      renderMobileRow={({ row }) => (
+        <GroupMobileCard
+          group={row}
+          getBranchName={getBranchName}
+          onNavigate={onNavigate}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          canManageGroups={canManageGroups}
+          canViewDeleted={canViewDeleted}
+          onRestore={onRestore}
+        />
+      )}
+      onRowActivate={(group, element) =>
+        onNavigate(`/groups/${group.id}`, element, `group-${group.id}`)
+      }
+      getRowAriaLabel={(group) => group.name}
+      rowClassName={(group) =>
+        cn('table-row-interactive', group.deleted_at && 'opacity-60')
+      }
     />
   );
 };

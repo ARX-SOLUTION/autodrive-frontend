@@ -1,9 +1,9 @@
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
-import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import BranchDetailPage from '@/pages/BranchDetailPage';
 import { tashkentToday } from '@/lib/tashkentDate';
 import { toLocalDateStr } from '@/services/studentService';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-6ef.19: branch detail page renders header + analytics fields.
 // autodrive-6ef.20: all 4 stat cards drill down into filtered lists / inline
@@ -44,37 +44,10 @@ vi.mock('@/services/branchService', () => ({
 }));
 
 const renderPage = () =>
-  render(
-    <MemoryRouter initialEntries={['/branches/b1']}>
-      <Routes>
-        <Route path="/branches/:id" element={<BranchDetailPage />} />
-        <Route path="/branches" element={<div>branches-list-page</div>} />
-      </Routes>
-    </MemoryRouter>,
-  );
-
-// Same DestinationProbe convention as companyRevenueDashboard.test.tsx — read
-// the real pathname+search the drill-down link lands on.
-const DestinationProbe = () => {
-  const location = useLocation();
-  return (
-    <output data-testid="destination">
-      {location.pathname}|{location.search}
-    </output>
-  );
-};
-
-const renderPageWithRoutes = () =>
-  render(
-    <MemoryRouter initialEntries={['/branches/b1']}>
-      <Routes>
-        <Route path="/branches/:id" element={<BranchDetailPage />} />
-        <Route path="/students" element={<DestinationProbe />} />
-        <Route path="/students/:id" element={<DestinationProbe />} />
-        <Route path="/payments" element={<DestinationProbe />} />
-      </Routes>
-    </MemoryRouter>,
-  );
+  renderWithRouter(<BranchDetailPage />, {
+    initialEntry: '/branches/b1',
+    routePattern: '/branches/$id',
+  });
 
 afterEach(() => {
   branch.current = BRANCH;
@@ -83,8 +56,8 @@ afterEach(() => {
 });
 
 describe('BranchDetailPage', () => {
-  it('shows header fields and analytics', () => {
-    renderPage();
+  it('shows header fields and analytics', async () => {
+    await renderPage();
     expect(screen.getByText('Yunusobod filiali')).toBeTruthy();
     expect(screen.getByText('Toshkent')).toBeTruthy();
     expect(screen.getByText(/Aziz Karimov/)).toBeTruthy();
@@ -93,62 +66,68 @@ describe('BranchDetailPage', () => {
     expect(screen.getByText('branches.detail.today_payment')).toBeTruthy();
   });
 
-  it('back button navigates to the branches list', () => {
-    renderPage();
+  it('back button navigates to the branches list', async () => {
+    const { router } = await renderPage();
     fireEvent.click(screen.getByText('branches.title'));
-    expect(screen.getByText('branches-list-page')).toBeTruthy();
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/branches'),
+    );
   });
 });
 
 describe('BranchDetailPage drill-down navigation (autodrive-6ef.20)', () => {
-  it('students count links to /students filtered by branch_id', () => {
-    renderPageWithRoutes();
+  it('students count links to /students filtered by branch_id', async () => {
+    const { router } = await renderPage();
     fireEvent.click(screen.getByText('42'));
-    const [pathname, search] =
-      screen.getByTestId('destination').textContent?.split('|') ?? [];
-    expect(pathname).toBe('/students');
-    expect(new URLSearchParams(search).get('branch_id')).toBe('b1');
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/students'),
+    );
+    expect(
+      new URLSearchParams(router.state.location.searchStr).get('branch_id'),
+    ).toBe('b1');
   });
 
-  it("today's payment links to /payments filtered by branch_id + today's date", () => {
-    renderPageWithRoutes();
+  it("today's payment links to /payments filtered by branch_id + today's date", async () => {
+    const { router } = await renderPage();
     fireEvent.click(screen.getByText(/500 000/));
-    const [pathname, search] =
-      screen.getByTestId('destination').textContent?.split('|') ?? [];
-    expect(pathname).toBe('/payments');
-    const params = new URLSearchParams(search);
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/payments'),
+    );
+    const params = new URLSearchParams(router.state.location.searchStr);
     expect(params.get('branch_id')).toBe('b1');
     const today = toLocalDateStr(tashkentToday());
     expect(params.get('date_from')).toBe(today);
     expect(params.get('date_to')).toBe(today);
   });
 
-  it('shows the top-debtors preview list with a link to view all', () => {
-    renderPageWithRoutes();
+  it('shows the top-debtors preview list with a link to view all', async () => {
+    const { router } = await renderPage();
     expect(screen.getByText('Ali Valiyev')).toBeTruthy();
     fireEvent.click(screen.getByText('branches.detail.view_all_debtors'));
-    const [pathname, search] =
-      screen.getByTestId('destination').textContent?.split('|') ?? [];
-    expect(pathname).toBe('/students');
-    const params = new URLSearchParams(search);
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/students'),
+    );
+    const params = new URLSearchParams(router.state.location.searchStr);
     expect(params.get('branch_id')).toBe('b1');
     expect(params.get('has_debt')).toBe('true');
   });
 
-  it('a debtor row links straight to their student detail page', () => {
-    renderPageWithRoutes();
+  it('a debtor row links straight to their student detail page', async () => {
+    const { router } = await renderPage();
     fireEvent.click(screen.getByText('Ali Valiyev'));
-    expect(screen.getByTestId('destination').textContent).toBe('/students/s1|');
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/students/s1'),
+    );
   });
 
-  it('renders the 6-month revenue trend chart heading', () => {
-    renderPage();
+  it('renders the 6-month revenue trend chart heading', async () => {
+    await renderPage();
     expect(screen.getByText('branches.detail.revenue_trend')).toBeTruthy();
   });
 
-  it('falls back to a no-data state when monthly_revenue/top_debtors are absent', () => {
+  it('falls back to a no-data state when monthly_revenue/top_debtors are absent', async () => {
     branch.current = { ...BRANCH, monthly_revenue: [], top_debtors: [] };
-    renderPage();
+    await renderPage();
     expect(screen.getAllByText('common.no_data').length).toBe(2);
   });
 });
@@ -157,18 +136,18 @@ describe('BranchDetailPage drill-down navigation (autodrive-6ef.20)', () => {
 // not-found -- distinct title/icon per EntityDetailShell's isError/
 // errorTitle/errorIcon props, same split AuditDetailPage already does.
 describe('BranchDetailPage error vs not-found (autodrive-d4j)', () => {
-  it('shows the not-found message when the branch genuinely does not exist', () => {
+  it('shows the not-found message when the branch genuinely does not exist', async () => {
     branch.current = null;
     branch.isError = false;
-    renderPage();
+    await renderPage();
     expect(screen.getByText('common.not_found')).toBeTruthy();
     expect(screen.queryByText('common.error')).toBeNull();
   });
 
-  it('shows the error message, not not-found, on a real fetch error', () => {
+  it('shows the error message, not not-found, on a real fetch error', async () => {
     branch.current = null;
     branch.isError = true;
-    renderPage();
+    await renderPage();
     expect(screen.getByText('common.error')).toBeTruthy();
     expect(screen.queryByText('common.not_found')).toBeNull();
   });

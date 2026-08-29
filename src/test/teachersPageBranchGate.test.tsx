@@ -1,13 +1,7 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  cleanup,
-  within,
-} from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent, cleanup, within } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import TeachersPage from '@/pages/TeachersPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // Regression: a branch manager could not add a teacher because the create
 // form showed a branch <Select> whose options come from GET /branches --
@@ -60,12 +54,11 @@ vi.mock('@/services/branchService', () => ({
   }),
 }));
 
-function openCreateForm() {
-  render(
-    <MemoryRouter initialEntries={['/oqituvchilar']}>
-      <TeachersPage />
-    </MemoryRouter>,
-  );
+async function openCreateForm() {
+  await renderWithRouter(<TeachersPage />, {
+    initialEntry: '/oqituvchilar',
+    routePattern: '/oqituvchilar',
+  });
   // Before opening the modal there is exactly one "teachers.add" (the button).
   fireEvent.click(screen.getByText('teachers.add'));
 }
@@ -75,16 +68,16 @@ afterEach(cleanup);
 describe('TeachersPage branch selector gating', () => {
   // Scope to the create dialog: the list table also has a "teachers.branch"
   // column header, which is unrelated to the form gate.
-  it('hides the branch selector for a branch-scoped manager', () => {
+  it('hides the branch selector for a branch-scoped manager', async () => {
     auth.role = 'manager';
-    openCreateForm();
+    await openCreateForm();
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).queryByText('teachers.branch')).toBeNull();
   });
 
-  it('shows the branch selector for an owner', () => {
+  it('shows the branch selector for an owner', async () => {
     auth.role = 'owner';
-    openCreateForm();
+    await openCreateForm();
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByText('teachers.branch')).toBeTruthy();
   });

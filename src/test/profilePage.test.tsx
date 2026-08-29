@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen } from '@testing-library/react';
 import { vi, describe, it, expect } from 'vitest';
 import ProfilePage from '@/pages/ProfilePage';
 import { useAuthStore } from '@/store/authStore';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 vi.mock('@/store/authStore', () => ({ useAuthStore: vi.fn() }));
 vi.mock('@/services/authService', () => ({
@@ -26,7 +26,7 @@ vi.mock('@/services/telegramService', () => ({
   useTelegramDailyReport: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
-function renderAsRole(role: string) {
+async function renderAsRole(role: string) {
   (useAuthStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
     (selector: (s: Record<string, unknown>) => unknown) =>
       selector({
@@ -34,25 +34,24 @@ function renderAsRole(role: string) {
         setUser: vi.fn(),
       }),
   );
-  return render(
-    <MemoryRouter>
-      <ProfilePage />
-    </MemoryRouter>,
-  );
+  return renderWithRouter(<ProfilePage />, {
+    initialEntry: '/profile',
+    routePattern: '/profile',
+  });
 }
 
 // autodrive-cwe: the role badge must come from i18n (setup.ts mocks t() to echo
 // the key), never the old hardcoded Uzbek strings that mislabeled every
 // non-owner role as "Filial menejeri".
 describe('ProfilePage role badge', () => {
-  it('renders the i18n key for a non-owner role instead of hardcoded Uzbek', () => {
-    renderAsRole('teacher');
+  it('renders the i18n key for a non-owner role instead of hardcoded Uzbek', async () => {
+    await renderAsRole('teacher');
     expect(screen.getByText('roles.teacher')).toBeInTheDocument();
     expect(screen.queryByText('Filial menejeri')).toBeNull();
   });
 
-  it('renders the owner role via i18n as well', () => {
-    renderAsRole('owner');
+  it('renders the owner role via i18n as well', async () => {
+    await renderAsRole('owner');
     expect(screen.getByText('roles.owner')).toBeInTheDocument();
     expect(screen.queryByText('Biznes egasi')).toBeNull();
   });

@@ -1,10 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import AttendancePage from '@/pages/AttendancePage';
 import { useAuthStore } from '@/store/authStore';
 import { useCreateLesson } from '@/services/attendanceService';
 import { Lesson } from '@/types/attendance';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 vi.mock('@/store/authStore', () => ({ useAuthStore: vi.fn() }));
 
@@ -46,11 +46,10 @@ function renderAsRole(role: string) {
     (selector: (s: Record<string, unknown>) => unknown) =>
       selector({ user: { role, branch_id: 'b1' } }),
   );
-  return render(
-    <MemoryRouter>
-      <AttendancePage />
-    </MemoryRouter>,
-  );
+  return renderWithRouter(<AttendancePage />, {
+    initialEntry: '/attendance',
+    routePattern: '/attendance',
+  });
 }
 
 beforeEach(() => {
@@ -64,15 +63,15 @@ beforeEach(() => {
 // operator, but the backend's DELETE /lessons/:id is
 // @Roles(owner, manager) only -- operator always got a 403.
 describe('AttendancePage delete-lesson gate', () => {
-  it('hides the delete button for operator (backend would 403)', () => {
-    renderAsRole('operator');
+  it('hides the delete button for operator (backend would 403)', async () => {
+    await renderAsRole('operator');
     expect(
       screen.queryByLabelText('attendance.delete_title'),
     ).not.toBeInTheDocument();
   });
 
-  it('shows the delete button for manager (backend allows it)', () => {
-    renderAsRole('manager');
+  it('shows the delete button for manager (backend allows it)', async () => {
+    await renderAsRole('manager');
     expect(
       screen.getByLabelText('attendance.delete_title'),
     ).toBeInTheDocument();
@@ -83,7 +82,7 @@ describe('AttendancePage delete-lesson gate', () => {
 // with cards that open the same AttendanceDrawer SchedulePage uses.
 describe('AttendancePage card -> drawer', () => {
   it('opens the AttendanceDrawer when a lesson card is clicked', async () => {
-    renderAsRole('manager');
+    await renderAsRole('manager');
     fireEvent.click(screen.getByText('Theory 101'));
     expect(
       await screen.findByText('attendance.no_students'),
@@ -101,7 +100,7 @@ describe('AttendancePage create-lesson form validation', () => {
       mutateAsync,
       isPending: false,
     } as unknown as ReturnType<typeof useCreateLesson>);
-    renderAsRole('manager');
+    await renderAsRole('manager');
 
     fireEvent.click(screen.getByText('attendance.add_lesson'));
     fireEvent.click(screen.getByText('attendance.create'));

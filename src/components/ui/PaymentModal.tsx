@@ -146,6 +146,9 @@ const PaymentModal = ({
   // ponytail (M1): stable per modal-open, so a retried/double-clicked submit
   // reuses the same key; reopening the modal for a new payment gets a fresh one.
   const idempotencyKeyRef = useRef(crypto.randomUUID());
+  const submitLockedRef = useRef(false);
+  const wasLoadingRef = useRef(false);
+  const [submitLocked, setSubmitLocked] = useState(false);
 
   // Exceeds-debt confirm (bd 9e4.2): a payment amount above the student's
   // current debt is a deliberately supported credit-balance payment, but it
@@ -227,8 +230,32 @@ const PaymentModal = ({
     : (selectedStudent?.debt ??
       (lockedStudentId ? lockedStudentDebt : undefined));
 
+  useEffect(() => {
+    const mutationSettled = wasLoadingRef.current && !loading;
+    wasLoadingRef.current = !!loading;
+
+    if (!open || mutationSettled || submitError) {
+      submitLockedRef.current = false;
+      // The lock mirrors an external mutation lifecycle, so releasing it when
+      // that lifecycle settles is intentionally synchronized from this effect.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSubmitLocked(false);
+    }
+  }, [loading, open, submitError]);
+
   const doSubmit = (values: PaymentFormValues) => {
-    onSubmit({ ...values, idempotency_key: idempotencyKeyRef.current });
+    if (submitLockedRef.current) return;
+
+    submitLockedRef.current = true;
+    setSubmitLocked(true);
+
+    try {
+      onSubmit({ ...values, idempotency_key: idempotencyKeyRef.current });
+    } catch (error) {
+      submitLockedRef.current = false;
+      setSubmitLocked(false);
+      throw error;
+    }
   };
 
   // react-hooks/refs (surfaced once the incompatible-library fix above let
@@ -523,7 +550,9 @@ const PaymentModal = ({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={loading || form.formState.isSubmitting}
+                  disabled={
+                    loading || submitLocked || form.formState.isSubmitting
+                  }
                 >
                   {loading
                     ? t('common.saving')
