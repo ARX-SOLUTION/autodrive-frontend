@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
@@ -6,18 +6,30 @@ import { useLogout } from '@/services/authService';
 import { useCan } from '@/hooks/useCan';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import type { Capability } from '@/lib/permissions';
-import { SignOut, PushPin, PushPinSlash } from '@phosphor-icons/react';
+import {
+  SignOut,
+  PushPin,
+  PushPinSlash,
+  SidebarSimple,
+} from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/routePrefetch';
 import { NAV_ITEMS, NAV_SECTIONS, type NavItem } from '@/lib/navigation';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Brand } from './Brand';
 import { isNavActive } from '@/lib/navActive';
 
 interface SidebarProps {
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
+  desktopExpanded: boolean;
+  onDesktopExpandedChange: (expanded: boolean) => void;
 }
 
 const readPinnedPaths = (storageKey: string | null): string[] => {
@@ -33,7 +45,197 @@ const readPinnedPaths = (storageKey: string | null): string[] => {
   }
 };
 
-export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
+interface DesktopSidebarProps {
+  expanded: boolean;
+  onExpandedChange: (expanded: boolean) => void;
+  sidebarLabel: string;
+  branchLabel: string;
+  navigation: ReactNode;
+  initials: string;
+  userLabel?: string;
+  roleLabel: string;
+  logoutLabel: string;
+  onLogout: () => void;
+}
+
+const DesktopSidebar = ({
+  expanded,
+  onExpandedChange,
+  sidebarLabel,
+  branchLabel,
+  navigation,
+  initials,
+  userLabel,
+  roleLabel,
+  logoutLabel,
+  onLogout,
+}: DesktopSidebarProps) => (
+  <aside
+    data-state={expanded ? 'expanded' : 'collapsed'}
+    className={cn(
+      'fixed inset-y-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-sidebar-border bg-sidebar transition-[width] duration-200 ease-out motion-reduce:transition-none lg:flex',
+      expanded ? 'w-64' : 'w-[72px]',
+    )}
+  >
+    <div
+      className={cn(
+        'flex h-[85px] shrink-0 border-b border-sidebar-border',
+        expanded
+          ? 'items-start justify-between gap-2 px-3 py-3'
+          : 'items-center justify-center px-3',
+      )}
+    >
+      {expanded && (
+        <div className="min-w-0 pt-1">
+          <Brand size="sm" />
+          <p className="mt-2 truncate pl-3 text-xs font-medium text-muted-foreground">
+            {branchLabel}
+          </p>
+        </div>
+      )}
+      <button
+        type="button"
+        aria-label={sidebarLabel}
+        aria-controls="desktop-sidebar-navigation"
+        aria-expanded={expanded}
+        title={sidebarLabel}
+        onClick={() => onExpandedChange(!expanded)}
+        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar active:scale-[0.96]"
+      >
+        <SidebarSimple className="h-5 w-5" aria-hidden="true" />
+      </button>
+    </div>
+
+    <nav
+      id="desktop-sidebar-navigation"
+      aria-label={sidebarLabel}
+      className="app-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4"
+    >
+      {navigation}
+    </nav>
+
+    <div className="border-t border-sidebar-border p-3">
+      <div
+        className={cn(
+          'flex items-center gap-2',
+          expanded
+            ? 'rounded-xl bg-sidebar-accent/80 p-2 shadow-[0_1px_2px_hsl(var(--foreground)/0.05)]'
+            : 'flex-col',
+        )}
+      >
+        <Avatar className="h-9 w-9 shrink-0 rounded-[10px]">
+          <AvatarFallback className="rounded-[10px] bg-background text-xs font-semibold text-foreground">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        {expanded && (
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-sidebar-foreground">
+              {userLabel}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {roleLabel}
+            </p>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={onLogout}
+          aria-label={logoutLabel}
+          title={logoutLabel}
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-background hover:text-destructive active:scale-[0.96]"
+        >
+          <SignOut className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  </aside>
+);
+
+interface MobileSidebarProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  sidebarLabel: string;
+  branchLabel: string;
+  navigation: ReactNode;
+  initials: string;
+  userLabel?: string;
+  roleLabel: string;
+  logoutLabel: string;
+  onLogout: () => void;
+}
+
+const MobileSidebar = ({
+  open,
+  onOpenChange,
+  sidebarLabel,
+  branchLabel,
+  navigation,
+  initials,
+  userLabel,
+  roleLabel,
+  logoutLabel,
+  onLogout,
+}: MobileSidebarProps) => (
+  <Sheet open={open} onOpenChange={onOpenChange}>
+    <SheetContent
+      side="left"
+      className="w-80 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground"
+    >
+      <SheetTitle className="sr-only">{sidebarLabel}</SheetTitle>
+      <div className="flex h-full flex-col">
+        <div className="border-b border-sidebar-border px-5 py-4">
+          <Brand size="sm" />
+          <p className="mt-2 truncate pl-3 text-xs font-medium text-muted-foreground">
+            {branchLabel}
+          </p>
+        </div>
+
+        <nav
+          aria-label={sidebarLabel}
+          className="app-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4"
+        >
+          {navigation}
+        </nav>
+
+        <div className="border-t border-sidebar-border p-3">
+          <div className="flex items-center justify-between gap-2 rounded-xl bg-sidebar-accent/80 p-2 shadow-[0_1px_2px_hsl(var(--foreground)/0.05)]">
+            <div className="flex min-w-0 items-center gap-2">
+              <Avatar className="h-9 w-9 shrink-0 rounded-[10px]">
+                <AvatarFallback className="rounded-[10px] bg-background text-xs font-semibold text-foreground">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-sidebar-foreground">
+                  {userLabel}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {roleLabel}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onLogout}
+              aria-label={logoutLabel}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-background hover:text-destructive active:scale-[0.96]"
+            >
+              <SignOut className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </SheetContent>
+  </Sheet>
+);
+
+export const Sidebar = ({
+  mobileOpen,
+  onMobileOpenChange,
+  desktopExpanded,
+  onDesktopExpandedChange,
+}: SidebarProps) => {
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -87,6 +289,10 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
       .slice(0, 2)
       .map((part) => part[0]!.toUpperCase())
       .join('') || '?';
+  const sidebarLabel = t('actions.sidebar');
+  const branchLabel = user?.branch_name || t('nav.branches_all');
+  const logoutLabel = t('actions.logout', 'Chiqish');
+  const userLabel = user?.name || user?.email;
 
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
@@ -133,30 +339,54 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
     const pinned = pinnedPaths.includes(item.path);
     const isDesktop = variant === 'desktop';
 
-    return (
-      <div className="group relative" key={`${variant}-${item.path}`}>
-        <a
-          href={item.path}
-          onClick={(e) => handleNavClick(e, item.path, onNavigate)}
-          onMouseEnter={() => prefetchRoute(item.path)}
-          onFocus={() => prefetchRoute(item.path)}
-          aria-label={label}
-          aria-current={active ? 'page' : undefined}
-          data-sidebar-item="true"
-          data-active={String(active)}
+    const navLink = (
+      <a
+        href={item.path}
+        onClick={(e) => handleNavClick(e, item.path, onNavigate)}
+        onMouseEnter={() => prefetchRoute(item.path)}
+        onFocus={() => prefetchRoute(item.path)}
+        aria-label={label}
+        aria-current={active ? 'page' : undefined}
+        data-sidebar-item="true"
+        data-active={String(active)}
+        className={cn(
+          'before:absolute before:left-1.5 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-full before:bg-primary before:transition-[opacity,scale] before:duration-150 before:ease-out',
+          'relative flex h-10 w-full items-center gap-3 rounded-[10px] py-0 pl-4 pr-3 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 ease-out',
+          active
+            ? 'before:scale-100 before:opacity-100 bg-sidebar-accent text-sidebar-foreground shadow-[0_1px_2px_hsl(var(--foreground)/0.05)]'
+            : 'before:scale-75 before:opacity-0 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground',
+          isDesktop &&
+            !desktopExpanded &&
+            'justify-center gap-0 px-0 before:left-0.5',
+          isDesktop && desktopExpanded && item.pinnable !== false && 'pr-12',
+          !isDesktop && 'h-11 text-[0.95rem]',
+        )}
+      >
+        <item.icon className="h-[18px] w-[18px] shrink-0" />
+        <span
           className={cn(
-            'before:absolute before:left-1.5 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-full before:bg-primary before:transition-[opacity,scale] before:duration-150 before:ease-out',
-            'relative flex h-10 w-full items-center gap-3 rounded-[10px] py-0 pl-4 pr-3 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 ease-out',
-            active
-              ? 'before:scale-100 before:opacity-100 bg-sidebar-accent text-sidebar-foreground shadow-[0_1px_2px_hsl(var(--foreground)/0.05)]'
-              : 'before:scale-75 before:opacity-0 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground',
-            !isDesktop && 'h-11 text-[0.95rem]',
+            'min-w-0 flex-1 truncate',
+            isDesktop && !desktopExpanded && 'sr-only',
           )}
         >
-          <item.icon className="h-[18px] w-[18px] shrink-0" />
-          <span className="min-w-0 flex-1 truncate">{label}</span>
-        </a>
-        {isDesktop && item.pinnable !== false && (
+          {label}
+        </span>
+      </a>
+    );
+
+    return (
+      <div className="group relative" key={`${variant}-${item.path}`}>
+        {isDesktop && !desktopExpanded ? (
+          <Tooltip>
+            <TooltipTrigger asChild>{navLink}</TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8}>
+              {label}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          navLink
+        )}
+        {isDesktop && desktopExpanded && item.pinnable !== false && (
           <button
             type="button"
             aria-label={t(pinned ? 'actions.unpin' : 'actions.pin', {
@@ -185,139 +415,90 @@ export const Sidebar = ({ mobileOpen, onMobileOpenChange }: SidebarProps) => {
   const renderNavGroups = (
     variant: 'desktop' | 'mobile',
     onNavigate?: () => void,
-  ) => (
-    <>
-      {pinnedItems.length > 0 && (
-        <section className="mb-5" aria-label={t('nav_sections.pinned')}>
-          <p className="px-3 pb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-            {t('nav_sections.pinned')}
-          </p>
-          <div className="space-y-1">
-            {pinnedItems.map((item) =>
-              renderNavItem(item, variant, onNavigate),
-            )}
-          </div>
-        </section>
-      )}
+  ) => {
+    const collapsedDesktop = variant === 'desktop' && !desktopExpanded;
 
-      {visibleSections.map((section) => (
-        <section
-          className="mb-5 last:mb-0"
-          key={section.id}
-          aria-label={t(section.labelKey)}
-        >
-          <p className="px-3 pb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-            {t(section.labelKey)}
-          </p>
-          <div className="space-y-1">
-            {section.items.map((item) =>
-              renderNavItem(item, variant, onNavigate),
+    return (
+      <>
+        {pinnedItems.length > 0 && (
+          <section
+            className={cn('mb-5', collapsedDesktop && 'mb-3')}
+            aria-label={t('nav_sections.pinned')}
+          >
+            {collapsedDesktop ? (
+              <div
+                aria-hidden="true"
+                className="mx-2 mb-2 border-t border-sidebar-border"
+              />
+            ) : (
+              <p className="px-3 pb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                {t('nav_sections.pinned')}
+              </p>
             )}
-          </div>
-        </section>
-      ))}
-    </>
-  );
+            <div className="space-y-1">
+              {pinnedItems.map((item) =>
+                renderNavItem(item, variant, onNavigate),
+              )}
+            </div>
+          </section>
+        )}
+
+        {visibleSections.map((section) => (
+          <section
+            className={cn('mb-5 last:mb-0', collapsedDesktop && 'mb-3')}
+            key={section.id}
+            aria-label={t(section.labelKey)}
+          >
+            {collapsedDesktop ? (
+              <div
+                aria-hidden="true"
+                className="mx-2 mb-2 border-t border-sidebar-border"
+              />
+            ) : (
+              <p className="px-3 pb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                {t(section.labelKey)}
+              </p>
+            )}
+            <div className="space-y-1">
+              {section.items.map((item) =>
+                renderNavItem(item, variant, onNavigate),
+              )}
+            </div>
+          </section>
+        ))}
+      </>
+    );
+  };
 
   return (
     <>
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
-        <div className="border-b border-sidebar-border px-4 py-4">
-          <Brand size="sm" />
-          <p className="mt-2 truncate pl-3 text-xs font-medium text-muted-foreground">
-            {user?.branch_name || t('nav.branches_all')}
-          </p>
-        </div>
-
-        <nav
-          aria-label={t('actions.sidebar')}
-          className="app-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4"
-        >
-          {renderNavGroups('desktop')}
-        </nav>
-
-        <div className="border-t border-sidebar-border p-3">
-          <div className="flex items-center gap-2 rounded-xl bg-sidebar-accent/80 p-2 shadow-[0_1px_2px_hsl(var(--foreground)/0.05)]">
-            <Avatar className="h-9 w-9 shrink-0 rounded-[10px]">
-              <AvatarFallback className="rounded-[10px] bg-background text-xs font-semibold text-foreground">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-sidebar-foreground">
-                {user?.name || user?.email}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {roleLabel}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => logoutMutation.mutate()}
-              aria-label={t('actions.logout', 'Chiqish')}
-              title={t('actions.logout', 'Chiqish')}
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-background hover:text-destructive active:scale-[0.96]"
-            >
-              <SignOut className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
-        <SheetContent
-          side="left"
-          className="w-80 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground"
-        >
-          <SheetTitle className="sr-only">{t('actions.sidebar')}</SheetTitle>
-          <div className="flex h-full flex-col">
-            <div className="border-b border-sidebar-border px-5 py-4">
-              <Brand size="sm" />
-              <p className="mt-2 truncate pl-3 text-xs font-medium text-muted-foreground">
-                {user?.branch_name || t('nav.branches_all')}
-              </p>
-            </div>
-
-            <nav
-              aria-label={t('actions.sidebar')}
-              className="app-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4"
-            >
-              {renderNavGroups('mobile', () => onMobileOpenChange(false))}
-            </nav>
-
-            <div className="border-t border-sidebar-border p-3">
-              <div className="flex items-center justify-between gap-2 rounded-xl bg-sidebar-accent/80 p-2 shadow-[0_1px_2px_hsl(var(--foreground)/0.05)]">
-                <div className="flex min-w-0 items-center gap-2">
-                  <Avatar className="h-9 w-9 shrink-0 rounded-[10px]">
-                    <AvatarFallback className="rounded-[10px] bg-background text-xs font-semibold text-foreground">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-sidebar-foreground">
-                      {user?.name || user?.email}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {roleLabel}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onMobileOpenChange(false);
-                    logoutMutation.mutate();
-                  }}
-                  aria-label={t('actions.logout', 'Chiqish')}
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-background hover:text-destructive active:scale-[0.96]"
-                >
-                  <SignOut className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+      <DesktopSidebar
+        expanded={desktopExpanded}
+        onExpandedChange={onDesktopExpandedChange}
+        sidebarLabel={sidebarLabel}
+        branchLabel={branchLabel}
+        navigation={renderNavGroups('desktop')}
+        initials={initials}
+        userLabel={userLabel}
+        roleLabel={roleLabel}
+        logoutLabel={logoutLabel}
+        onLogout={() => logoutMutation.mutate()}
+      />
+      <MobileSidebar
+        open={mobileOpen}
+        onOpenChange={onMobileOpenChange}
+        sidebarLabel={sidebarLabel}
+        branchLabel={branchLabel}
+        navigation={renderNavGroups('mobile', () => onMobileOpenChange(false))}
+        initials={initials}
+        userLabel={userLabel}
+        roleLabel={roleLabel}
+        logoutLabel={logoutLabel}
+        onLogout={() => {
+          onMobileOpenChange(false);
+          logoutMutation.mutate();
+        }}
+      />
     </>
   );
 };

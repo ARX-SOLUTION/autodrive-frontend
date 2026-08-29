@@ -6,10 +6,26 @@ import { Topbar } from './Topbar';
 import { Breadcrumbs } from './Breadcrumbs';
 import { CommandPalette, useCommandPalette } from './CommandPalette';
 import { PageLoader } from './PageLoader';
+import { cn } from '@/lib/utils';
+
+const DESKTOP_SIDEBAR_STORAGE_KEY = 'autodrive-sidebar-expanded';
+
+const readDesktopSidebarExpanded = () => {
+  if (typeof window === 'undefined') return true;
+
+  try {
+    return window.localStorage.getItem(DESKTOP_SIDEBAR_STORAGE_KEY) !== 'false';
+  } catch {
+    return true;
+  }
+};
 
 export const AppLayout = () => {
   const { t } = useTranslation();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [desktopSidebarExpanded, setDesktopSidebarExpanded] = useState(
+    readDesktopSidebarExpanded,
+  );
   const location = useLocation();
   const navigationType = useNavigationType();
   const prevPathnameRef = useRef(location.pathname);
@@ -52,6 +68,18 @@ export const AppLayout = () => {
     }
   }, [location.pathname, navigationType]);
 
+  const handleDesktopSidebarExpandedChange = (expanded: boolean) => {
+    setDesktopSidebarExpanded(expanded);
+    try {
+      window.localStorage.setItem(
+        DESKTOP_SIDEBAR_STORAGE_KEY,
+        String(expanded),
+      );
+    } catch {
+      // Storage can be unavailable in private/restricted browser contexts.
+    }
+  };
+
   return (
     <div className="min-h-dvh bg-background">
       <a
@@ -63,8 +91,15 @@ export const AppLayout = () => {
       <Sidebar
         mobileOpen={mobileSidebarOpen}
         onMobileOpenChange={setMobileSidebarOpen}
+        desktopExpanded={desktopSidebarExpanded}
+        onDesktopExpandedChange={handleDesktopSidebarExpandedChange}
       />
-      <div className="flex min-h-dvh flex-col lg:ml-64">
+      <div
+        className={cn(
+          'flex min-h-dvh flex-col transition-[margin-left] duration-200 ease-out motion-reduce:transition-none',
+          desktopSidebarExpanded ? 'lg:ml-64' : 'lg:ml-[72px]',
+        )}
+      >
         <Topbar
           onMobileMenuClick={() => setMobileSidebarOpen(true)}
           onCommandPaletteOpen={() => palette.setOpen(true)}
