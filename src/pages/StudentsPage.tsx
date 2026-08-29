@@ -170,20 +170,8 @@ const StudentsPage = () => {
   const { data: operators } = useOperators();
 
   const SERVER_PAGE_SIZE = 50;
-
-  const {
-    data: studentsPage,
-    isLoading: isStudentsLoading,
-    isFetching,
-    isError: isStudentsError,
-    refetch: refetchStudents,
-  } = useStudentsPage(
-    courseTypeFilter,
-    branchId,
-    currentPage,
-    SERVER_PAGE_SIZE,
-    operatorId,
-    {
+  const activeListOptions = useMemo(
+    () => ({
       search: debouncedSearch,
       dateFrom,
       dateTo,
@@ -198,7 +186,36 @@ const StudentsPage = () => {
       // let a stray true reach the request for anyone else (403 on the
       // wire, per the contract).
       includeDeleted: canViewDeleted && includeDeleted,
-    },
+    }),
+    [
+      debouncedSearch,
+      dateFrom,
+      dateTo,
+      sortField,
+      sortDir,
+      status,
+      hasDebt,
+      hasGroup,
+      referredByUserId,
+      referredByStudentId,
+      canViewDeleted,
+      includeDeleted,
+    ],
+  );
+
+  const {
+    data: studentsPage,
+    isLoading: isStudentsLoading,
+    isFetching,
+    isError: isStudentsError,
+    refetch: refetchStudents,
+  } = useStudentsPage(
+    courseTypeFilter,
+    branchId,
+    currentPage,
+    SERVER_PAGE_SIZE,
+    operatorId,
+    activeListOptions,
   );
 
   // setCurrentPage is a fresh closure each render (derived from setParam,
@@ -258,11 +275,7 @@ const StudentsPage = () => {
         courseType: courseTypeFilter,
         branchId,
         operatorId,
-        search: debouncedSearch,
-        dateFrom,
-        dateTo,
-        sortBy: sortField,
-        sortOrder: sortDir,
+        ...activeListOptions,
       });
       const rows = exportRows.map((s, idx) => ({
         '#': idx + 1,

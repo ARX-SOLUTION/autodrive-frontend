@@ -161,8 +161,12 @@ const PaymentsPage = () => {
     },
   );
   const hasDateFilter = !!dateFrom || !!dateTo;
-  const { data: snapshot, isLoading: isSnapshotLoading } =
-    usePaymentSnapshot(branchId);
+  const {
+    data: snapshot,
+    isLoading: isSnapshotLoading,
+    isError: isSnapshotError,
+    refetch: refetchSnapshot,
+  } = usePaymentSnapshot(branchId);
   const { data: branches } = useBranches();
   const createPayment = useCreatePayment();
 
@@ -200,10 +204,12 @@ const PaymentsPage = () => {
     courseTypeFilter !== 'all' ||
     !!debouncedSearch;
 
-  const { data: summary } = usePaymentSummary(
-    paymentQueryFilters,
-    canQueryPayments && hasAnyFilter,
-  );
+  const {
+    data: summary,
+    isLoading: isSummaryLoading,
+    isError: isSummaryError,
+    refetch: refetchSummary,
+  } = usePaymentSummary(paymentQueryFilters, canQueryPayments && hasAnyFilter);
 
   const visiblePayments = paymentsPage?.data ?? [];
   const totalPayments = paymentsPage?.meta.total ?? visiblePayments.length;
@@ -215,12 +221,6 @@ const PaymentsPage = () => {
     if (currentPage > totalPages) setCurrentPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalPages]);
-
-  const displayedSummary = summary ?? {
-    period_collected: 0,
-    period_payments_count: 0,
-    period_debt: 0,
-  };
 
   const toggleSort = (field: string) => {
     if (sortField === field) setSort(field, sortDir === 'asc' ? 'desc' : 'asc');
@@ -278,7 +278,12 @@ const PaymentsPage = () => {
         onAddPayment={() => setModalOpen(true)}
       />
 
-      <PaymentSnapshotCards snapshot={snapshot} isLoading={isSnapshotLoading} />
+      <PaymentSnapshotCards
+        snapshot={snapshot}
+        isLoading={isSnapshotLoading}
+        isError={isSnapshotError}
+        onRetry={() => void refetchSnapshot()}
+      />
 
       <PaymentsFilterBar
         isCrossTenant={isCrossTenant}
@@ -303,8 +308,11 @@ const PaymentsPage = () => {
 
       {hasAnyFilter && (
         <PaymentPeriodSummary
-          summary={displayedSummary}
+          summary={summary}
           totalPayments={totalPayments}
+          isLoading={isSummaryLoading}
+          isError={isSummaryError}
+          onRetry={() => void refetchSummary()}
         />
       )}
 

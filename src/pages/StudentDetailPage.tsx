@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
+import PaginationControls from '@/components/ui/PaginationControls';
 import { StudentExamsTab } from '@/components/ui/StudentExamsTab';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import StudentModal, {
@@ -453,8 +454,23 @@ const PaymentsTab = ({
   };
 }) => {
   const { t } = useTranslation();
-  const { data, isLoading } = useStudentPayments(studentId);
+  const [pagination, setPagination] = useState({ studentId, page: 1 });
+  const currentPage = pagination.studentId === studentId ? pagination.page : 1;
+  const { data, isLoading, isError, refetch } = useStudentPayments(
+    studentId,
+    currentPage,
+    20,
+  );
   const rows = data?.data ?? [];
+  const totalPages = Math.max(1, data?.meta?.totalPages ?? 1);
+
+  // Reset before committing a render for another student, and clamp before an
+  // out-of-range response can be mistaken for a genuinely empty ledger.
+  if (pagination.studentId !== studentId) {
+    setPagination({ studentId, page: 1 });
+  } else if (data && currentPage > totalPages) {
+    setPagination({ studentId, page: totalPages });
+  }
 
   return (
     <div className="glass-card overflow-hidden">
@@ -467,6 +483,17 @@ const PaymentsTab = ({
         <div className="space-y-2 p-4">
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-full" />
+        </div>
+      ) : isError ? (
+        <div className="p-6">
+          <EmptyState
+            icon={Warning}
+            title={t('common.error')}
+            action={{
+              label: t('common.retry'),
+              onClick: () => void refetch(),
+            }}
+          />
         </div>
       ) : rows.length === 0 ? (
         <div className="p-6">
@@ -529,6 +556,13 @@ const PaymentsTab = ({
               ))}
             </tbody>
           </table>
+          <div className="px-4 pb-4">
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => setPagination({ studentId, page })}
+            />
+          </div>
         </div>
       )}
     </div>
