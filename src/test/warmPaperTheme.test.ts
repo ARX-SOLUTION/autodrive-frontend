@@ -72,13 +72,23 @@ describe('AutoDrive brand theme override', () => {
     expect(extractVar(root, 'primary')).toBe('var(--brand-orange)');
     expect(extractVar(root, 'primary-foreground')).toBe('var(--brand-navy)');
     expect(extractVar(root, 'ring')).toBe('var(--brand-orange)');
-    expect(extractVar(root, 'radius')).toBe('0.875rem');
+    expect(extractVar(root, 'radius')).toBe('0.5rem');
   });
 
   it('maps legacy utility color names to semantic brand tokens', () => {
     expect(css).toContain('--color-white: hsl(var(--brand-white));');
     expect(css).toContain('--color-cyan-400: hsl(var(--brand-blue));');
     expect(css).toContain('--color-amber-400: hsl(var(--brand-orange));');
+  });
+
+  it('keeps controls precise with compact radii and pointer affordance', () => {
+    expect(css).toContain('--radius-md: 0.375rem;');
+    expect(css).toContain('--radius-lg: 0.5rem;');
+    expect(css).toContain('--radius-2xl: 0.75rem;');
+    expect(css).toContain(
+      ":where(button, [role='button']):not(:disabled):not([aria-disabled='true'])",
+    );
+    expect(css).toMatch(/cursor:\s*pointer;/);
   });
 
   it('mirrors the light brand color onto the sidebar primary tokens', () => {

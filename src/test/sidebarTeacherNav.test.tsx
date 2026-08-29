@@ -33,7 +33,12 @@ const renderSidebar = () =>
   render(
     <MemoryRouter initialEntries={['/dashboard']}>
       <TooltipProvider>
-        <Sidebar mobileOpen={false} onMobileOpenChange={vi.fn()} />
+        <Sidebar
+          mobileOpen={false}
+          onMobileOpenChange={vi.fn()}
+          desktopExpanded
+          onDesktopExpandedChange={vi.fn()}
+        />
       </TooltipProvider>
     </MemoryRouter>,
   );

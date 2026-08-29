@@ -8,8 +8,25 @@ import { AppLayout } from './AppLayout';
 // opening the mobile drawer then navigating still closes it.
 
 vi.mock('./Sidebar', () => ({
-  Sidebar: ({ mobileOpen }: { mobileOpen: boolean }) => (
-    <div data-testid="mobile-open">{String(mobileOpen)}</div>
+  Sidebar: ({
+    mobileOpen,
+    desktopExpanded,
+    onDesktopExpandedChange,
+  }: {
+    mobileOpen: boolean;
+    desktopExpanded: boolean;
+    onDesktopExpandedChange: (expanded: boolean) => void;
+  }) => (
+    <div>
+      <div data-testid="mobile-open">{String(mobileOpen)}</div>
+      <div data-testid="desktop-expanded">{String(desktopExpanded)}</div>
+      <button
+        onClick={() => onDesktopExpandedChange(!desktopExpanded)}
+        type="button"
+      >
+        toggle-desktop
+      </button>
+    </div>
   ),
 }));
 vi.mock('./Topbar', () => ({
@@ -24,7 +41,10 @@ vi.mock('./CommandPalette', () => ({
 }));
 vi.mock('./PageLoader', () => ({ PageLoader: () => null }));
 
-afterEach(cleanup);
+afterEach(() => {
+  localStorage.clear();
+  cleanup();
+});
 
 const Page = ({ label }: { label: string }) => <Link to="/other">{label}</Link>;
 
@@ -46,5 +66,46 @@ describe('AppLayout mobile sidebar auto-close on navigation', () => {
 
     fireEvent.click(screen.getByText('go'));
     expect(screen.getByTestId('mobile-open').textContent).toBe('false');
+  });
+
+  it('reclaims desktop content width and persists the collapsed preference', () => {
+    render(
+      <MemoryRouter initialEntries={['/home']}>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/home" element={<Page label="go" />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const contentShell = screen.getByRole('main').parentElement!;
+    expect(screen.getByTestId('desktop-expanded')).toHaveTextContent('true');
+    expect(contentShell.className).toContain('lg:ml-64');
+
+    fireEvent.click(screen.getByText('toggle-desktop'));
+
+    expect(screen.getByTestId('desktop-expanded')).toHaveTextContent('false');
+    expect(contentShell.className).toContain('lg:ml-[72px]');
+    expect(localStorage.getItem('autodrive-sidebar-expanded')).toBe('false');
+  });
+
+  it('restores the persisted desktop preference during initial render', () => {
+    localStorage.setItem('autodrive-sidebar-expanded', 'false');
+
+    render(
+      <MemoryRouter initialEntries={['/home']}>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/home" element={<Page label="go" />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId('desktop-expanded')).toHaveTextContent('false');
+    expect(screen.getByRole('main').parentElement!.className).toContain(
+      'lg:ml-[72px]',
+    );
   });
 });
