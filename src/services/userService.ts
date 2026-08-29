@@ -7,8 +7,21 @@ import type { ListResponse } from '@/types/list';
 import { parseListResponse } from '@/lib/listResponse';
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
 import { userKeys } from '@/lib/queryKeys';
+import type {
+  CreateUserRequest,
+  UpdateUserRequest,
+  UsersQuery,
+} from '@/shared/api/contract';
 
-export const useUsers = (role?: string) => {
+// The generated schema marks specialization required, but the backend DTO
+// accepts it only when supplied and the manager UI intentionally has no such
+// field. Keep the role-specific request equal to the real manager payload.
+type ManagerCreateRequest = Pick<
+  CreateUserRequest,
+  'fullName' | 'email' | 'password' | 'phone' | 'branchId' | 'role'
+>;
+
+export const useUsers = (role?: UsersQuery['role']) => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
@@ -17,8 +30,8 @@ export const useUsers = (role?: string) => {
     // a longer stale window than the 30s global default.
     staleTime: 5 * 60_000,
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get('/users', {
-        params: role ? { role } : {},
+      const { data: res } = await axiosInstance.get<unknown>('/users', {
+        params: role ? ({ role } satisfies UsersQuery) : {},
         signal,
       });
       return parseListEnvelope<User>(res, 'users').data;
@@ -31,7 +44,7 @@ export const useUsers = (role?: string) => {
 // defaults to limit=10; UsersPage was fetching once via useUsers and
 // paginating client-side over that truncated result.
 export const useUsersPage = (
-  role: string,
+  role: NonNullable<UsersQuery['role']>,
   page: number,
   limit: number,
   filters?: {
@@ -55,7 +68,7 @@ export const useUsersPage = (
       ...filters,
     }),
     queryFn: async ({ signal }) => {
-      const { data } = await axiosInstance.get('/users', {
+      const { data } = await axiosInstance.get<unknown>('/users', {
         params: {
           role,
           page,
@@ -64,7 +77,7 @@ export const useUsersPage = (
           branchId: filters?.branchId,
           isActive: filters?.isActive,
           include_deleted: filters?.includeDeleted || undefined,
-        },
+        } satisfies UsersQuery,
         signal,
       });
       return parseListResponse<User>(data, page, limit);
@@ -78,7 +91,7 @@ export const useUser = (id?: string) =>
     queryKey: userKeys.detail(id),
     enabled: !!id,
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get(`/users/${id}`, {
+      const { data: res } = await axiosInstance.get<unknown>(`/users/${id}`, {
         signal,
       });
       return parseItemEnvelope<User>(res, 'user');
@@ -95,10 +108,11 @@ export const useCreateManager = () => {
       phone?: string;
       branchId: string;
     }) => {
-      const { data } = await axiosInstance.post('/users', {
+      const request: ManagerCreateRequest = {
         ...m,
         role: 'manager',
-      });
+      };
+      const { data } = await axiosInstance.post<unknown>('/users', request);
       return parseItemEnvelope<User>(data, 'user');
     },
     onSuccess: () => {
@@ -110,17 +124,8 @@ export const useCreateManager = () => {
 export const useUpdateUser = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      ...op
-    }: {
-      id: string;
-      fullName?: string;
-      phone?: string;
-      branchId?: string;
-      specialization?: 'THEORY' | 'PRACTICE';
-    }) => {
-      const { data } = await axiosInstance.patch(`/users/${id}`, op);
+    mutationFn: async ({ id, ...op }: { id: string } & UpdateUserRequest) => {
+      const { data } = await axiosInstance.patch<unknown>(`/users/${id}`, op);
       return parseItemEnvelope<User>(data, 'user');
     },
     onSuccess: () => {

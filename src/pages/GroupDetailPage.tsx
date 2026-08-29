@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from '@/app/navigation';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { Warning, PencilSimple, ShieldCheck } from '@phosphor-icons/react';
@@ -18,6 +18,7 @@ import { useUpdateStudent } from '@/services/studentService';
 import { useOperators } from '@/services/operatorService';
 import { useCan } from '@/hooks/useCan';
 import { extractErrorMessage } from '@/lib/errors';
+import { groupKeys } from '@/lib/queryKeys';
 import { DAY_LABELS } from '@/types/schedule';
 import { formatMoney } from '@/lib/money';
 import { DebtStatusBadge } from '@/components/ui/DebtStatusBadge';
@@ -31,7 +32,7 @@ const EDIT_DISABLED_FIELDS = [
 ];
 
 const GroupDetailPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -57,7 +58,7 @@ const GroupDetailPage = () => {
           setEditStudent(null);
           // useUpdateStudent invalidates students/payments/dashboard but not
           // this group's own query — group membership can change on edit.
-          qc.invalidateQueries({ queryKey: ['groups'] });
+          qc.invalidateQueries({ queryKey: groupKeys.all });
         },
         onError: (err) =>
           toast.error(extractErrorMessage(err, t('common.error'))),
@@ -68,7 +69,7 @@ const GroupDetailPage = () => {
   if (isLoading || isError || !group) {
     return (
       <EntityDetailShell
-        onBack={() => navigate('/groups')}
+        onBack={() => navigate({ to: '/groups' })}
         backLabel={t('groups.title')}
         isLoading={isLoading}
         isError={isError || !group}
@@ -86,7 +87,7 @@ const GroupDetailPage = () => {
 
   return (
     <EntityDetailShell
-      onBack={() => navigate('/groups')}
+      onBack={() => navigate({ to: '/groups' })}
       backLabel={t('groups.title')}
       isLoading={false}
       isError={false}
@@ -149,7 +150,9 @@ const GroupDetailPage = () => {
                   key={s.id}
                   title={`${s.last_name} ${s.first_name}`.trim()}
                   subtitle={s.phone}
-                  onClick={() => navigate(`/students/${s.id}`)}
+                  onClick={() =>
+                    navigate({ to: '/students/$id', params: { id: s.id } })
+                  }
                   actions={
                     canManageStudents ? (
                       <Button

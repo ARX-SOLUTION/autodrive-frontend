@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from '@/app/navigation';
+import { Link } from '@tanstack/react-router';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Warning, X } from '@phosphor-icons/react';
@@ -1090,7 +1090,8 @@ const StudentModal = ({
                             {dupMatches.map((m) => (
                               <li key={m.id}>
                                 <Link
-                                  to={`/students/${m.id}`}
+                                  to="/students/$id"
+                                  params={{ id: m.id }}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-primary hover:underline"

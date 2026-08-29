@@ -7,6 +7,11 @@ import type { ListResponse } from '@/types/list';
 import { parseListResponse } from '@/lib/listResponse';
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
 import { teacherKeys, userKeys } from '@/lib/queryKeys';
+import type {
+  CreateUserRequest,
+  UpdateUserRequest,
+  UsersQuery,
+} from '@/shared/api/contract';
 
 export type Specialization = 'THEORY' | 'PRACTICE';
 
@@ -19,8 +24,8 @@ export const useTeachers = () => {
     // use a longer stale window than the 30s global default.
     staleTime: 5 * 60_000,
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get('/users', {
-        params: { role: 'teacher' },
+      const { data: res } = await axiosInstance.get<unknown>('/users', {
+        params: { role: 'teacher' } satisfies UsersQuery,
         signal,
       });
       return parseListEnvelope<User>(res, 'teachers').data;
@@ -43,8 +48,13 @@ export const useTeachersPage = (
   return useQuery<ListResponse<User>>({
     queryKey: teacherKeys.page({ branchId, page, limit, search }),
     queryFn: async ({ signal }) => {
-      const { data } = await axiosInstance.get('/users', {
-        params: { role: 'teacher', page, limit, search: search || undefined },
+      const { data } = await axiosInstance.get<unknown>('/users', {
+        params: {
+          role: 'teacher',
+          page,
+          limit,
+          search: search || undefined,
+        } satisfies UsersQuery,
         signal,
       });
       return parseListResponse<User>(data, page, limit);
@@ -62,10 +72,14 @@ export const useCreateTeacher = () => {
       specialization: Specialization;
       branchId?: string;
     }) => {
-      const { data } = await axiosInstance.post('/users', {
+      const request: Pick<
+        CreateUserRequest,
+        'fullName' | 'phone' | 'branchId' | 'specialization'
+      > & { role: 'teacher' } = {
         ...t,
         role: 'teacher',
-      });
+      };
+      const { data } = await axiosInstance.post<unknown>('/users', request);
       return parseItemEnvelope<User>(data, 'teacher');
     },
     onSuccess: () => {
@@ -77,17 +91,8 @@ export const useCreateTeacher = () => {
 export const useUpdateTeacher = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      ...t
-    }: {
-      id: string;
-      fullName?: string;
-      phone?: string;
-      specialization?: Specialization;
-      branchId?: string;
-    }) => {
-      const { data } = await axiosInstance.patch(`/users/${id}`, t);
+    mutationFn: async ({ id, ...t }: { id: string } & UpdateUserRequest) => {
+      const { data } = await axiosInstance.patch<unknown>(`/users/${id}`, t);
       return parseItemEnvelope<User>(data, 'teacher');
     },
     // UserDetailPage (/users/:id) reads via userKeys.detail(id), a root

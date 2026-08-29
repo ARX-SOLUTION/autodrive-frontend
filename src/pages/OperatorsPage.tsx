@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { ColumnFiltersState, SortingState } from '@tanstack/react-table';
-import { useNavigate } from '@/app/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useSearchSortFilters } from '@/hooks/useSearchSortFilters';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -357,7 +357,9 @@ const OperatorsPage = () => {
               <DataCard
                 title={operator.name || t('common.na')}
                 subtitle={formatPhone(operator.phone)}
-                onClick={() => navigate(`/users/${operator.id}`)}
+                onClick={() =>
+                  navigate({ to: '/users/$id', params: { id: operator.id } })
+                }
                 fields={[
                   {
                     label: t('operators.detail.email'),
@@ -433,7 +435,9 @@ const OperatorsPage = () => {
             isFetching && !isLoading && 'opacity-50',
           )}
           rowClassName={() => 'table-row-interactive'}
-          onRowActivate={(operator) => navigate(`/users/${operator.id}`)}
+          onRowActivate={(operator) =>
+            navigate({ to: '/users/$id', params: { id: operator.id } })
+          }
           getRowAriaLabel={(operator) =>
             `${t('common.view')}: ${operator.name || operator.email}`
           }

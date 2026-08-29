@@ -9,6 +9,7 @@ import type {
   PaginationState,
   SortingState,
 } from '@tanstack/react-table';
+import type { NavigateOptions } from '@tanstack/react-router';
 import { DataGrid, createDataGridColumnHelper } from '@/shared/ui/data-grid';
 import { DeletedBadge } from '@/components/ui/DeletedBadge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,7 +31,11 @@ interface GroupsTableProps {
   sortDir: 'asc' | 'desc';
   onSortChange: (field: GroupSortField, dir: 'asc' | 'desc') => void;
   getBranchName: (branchId: string) => string;
-  onNavigate: (path: string, el: HTMLElement | null, name: string) => void;
+  onNavigate: (
+    options: NavigateOptions,
+    el: HTMLElement | null,
+    name: string,
+  ) => void;
   onEdit: (g: Group) => void;
   onDelete: (id: string) => void;
   canManageGroups: boolean;
@@ -243,7 +248,11 @@ const GroupsTable = ({
         />
       )}
       onRowActivate={(group, element) =>
-        onNavigate(`/groups/${group.id}`, element, `group-${group.id}`)
+        onNavigate(
+          { to: '/groups/$id', params: { id: group.id } },
+          element,
+          `group-${group.id}`,
+        )
       }
       getRowAriaLabel={(group) => group.name}
       rowClassName={(group) =>

@@ -49,13 +49,11 @@ import {
 } from '@/components/ui/form';
 import { CourseType, PaymentMethod } from '@/types/student';
 import type { Payment } from '@/types/payment';
+import type { CreatePaymentRequest } from '@/shared/api/contract';
 
-export interface CreatePaymentPayload {
-  student_id: string;
-  amount: number;
-  payment_method: PaymentMethod;
+export type CreatePaymentPayload = CreatePaymentRequest & {
   idempotency_key: string;
-}
+};
 
 interface Student {
   id: string;

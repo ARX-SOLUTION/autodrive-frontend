@@ -65,7 +65,11 @@ export const PaymentsMobileList = ({
             payment={p}
             onActivate={(element) =>
               goToStudent(
-                `/students/${p.student_id}?tab=payments`,
+                {
+                  to: '/students/$id',
+                  params: { id: p.student_id },
+                  search: { tab: 'payments' },
+                },
                 element,
                 `student-${p.student_id}`,
               )

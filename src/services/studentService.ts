@@ -19,9 +19,23 @@ import {
   dashboardKeys,
   groupKeys,
 } from '@/lib/queryKeys';
+import type {
+  CreateStudentRequest,
+  StudentsQuery,
+  UpdateStudentRequest,
+} from '@/shared/api/contract';
 
 export const toLocalDateStr = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const toStudentSortBy = (value?: string): StudentsQuery['sort_by'] =>
+  value === 'first_name' ||
+  value === 'last_name' ||
+  value === 'total_price' ||
+  value === 'debt' ||
+  value === 'created_at'
+    ? value
+    : undefined;
 
 export interface StudentListOptions {
   enabled?: boolean;
@@ -70,7 +84,7 @@ const toStudentQueryParams = ({
   referredByStudentId,
   includeDeleted,
   courseId,
-}: StudentListParams) => ({
+}: StudentListParams): StudentsQuery => ({
   course_type: courseType,
   branch_id: branchId,
   page,
@@ -79,7 +93,7 @@ const toStudentQueryParams = ({
   search: search?.trim() || undefined,
   date_from: dateFrom ? toLocalDateStr(dateFrom) : undefined,
   date_to: dateTo ? toLocalDateStr(dateTo) : undefined,
-  sort_by: sortBy,
+  sort_by: toStudentSortBy(sortBy),
   sort_order: sortOrder,
   has_debt: hasDebt,
   has_group: hasGroup,
@@ -94,7 +108,7 @@ export const fetchStudentsPage = async (
   params: StudentListParams,
   signal?: AbortSignal,
 ): Promise<ListResponse<Student>> => {
-  const { data } = await axiosInstance.get('/students', {
+  const { data } = await axiosInstance.get<unknown>('/students', {
     params: toStudentQueryParams(params),
     signal,
   });
@@ -182,7 +196,9 @@ export const studentDetailQueryOptions = (id?: string, enabled = !!id) =>
     queryKey: studentKeys.detail(id),
     enabled,
     queryFn: async ({ signal }) => {
-      const { data } = await axiosInstance.get(`/students/${id}`, { signal });
+      const { data } = await axiosInstance.get<unknown>(`/students/${id}`, {
+        signal,
+      });
       return parseItemEnvelope<Student>(data, 'student');
     },
   });
@@ -194,7 +210,7 @@ export const useCreateStudent = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (student: CreateStudentPayload) => {
-      const { data } = await axiosInstance.post('/students', student);
+      const { data } = await axiosInstance.post<unknown>('/students', student);
       return parseItemEnvelope<Student>(data, 'student');
     },
     onSuccess: () => {
@@ -212,8 +228,11 @@ export const useUpdateStudent = () => {
     mutationFn: async ({
       id,
       ...student
-    }: Partial<CreateStudentPayload> & { id: string }) => {
-      const { data } = await axiosInstance.patch(`/students/${id}`, student);
+    }: UpdateStudentRequest & { id: string }) => {
+      const { data } = await axiosInstance.patch<unknown>(
+        `/students/${id}`,
+        student,
+      );
       return parseItemEnvelope<Student>(data, 'student');
     },
     onSuccess: () => {
@@ -251,7 +270,7 @@ export const useRestoreStudent = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      await axiosInstance.patch(`/students/${id}/restore`);
+      await axiosInstance.patch<unknown>(`/students/${id}/restore`);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: studentKeys.all });
@@ -279,7 +298,7 @@ export const useCreateStudentWithPayment = () => {
 
       // Student creation records the initial payment atomically in backend.
       // Referral fields are optional — undefined keys are dropped by JSON.
-      const { data: studentData } = await axiosInstance.post('/students', {
+      const request: CreateStudentRequest = {
         first_name: payload.first_name,
         last_name: payload.last_name,
         phone: payload.phone,
@@ -305,7 +324,11 @@ export const useCreateStudentWithPayment = () => {
         lead_source_other: payload.lead_source_other,
         referred_by_student_id: payload.referred_by_student_id,
         referred_by_user_id: payload.referred_by_user_id,
-      });
+      };
+      const { data: studentData } = await axiosInstance.post<unknown>(
+        '/students',
+        request,
+      );
 
       return parseItemEnvelope<Student>(studentData, 'student');
     },

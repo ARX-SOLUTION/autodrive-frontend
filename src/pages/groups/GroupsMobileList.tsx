@@ -4,6 +4,7 @@ import {
   Trash,
   ArrowCounterClockwise,
 } from '@phosphor-icons/react';
+import type { NavigateOptions } from '@tanstack/react-router';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataCard } from '@/components/ui/DataCard';
 import { DeletedBadge } from '@/components/ui/DeletedBadge';
@@ -14,7 +15,11 @@ interface GroupsMobileListProps {
   groups: Group[];
   isLoading: boolean;
   getBranchName: (branchId: string) => string;
-  onNavigate: (path: string, el: HTMLElement | null, name: string) => void;
+  onNavigate: (
+    options: NavigateOptions,
+    el: HTMLElement | null,
+    name: string,
+  ) => void;
   onEdit: (g: Group) => void;
   onDelete: (id: string) => void;
   canManageGroups: boolean;
@@ -53,7 +58,11 @@ export const GroupMobileCard = ({
       }
       subtitle={g.branch_name || getBranchName(g.branch_id)}
       onClick={(e) =>
-        onNavigate(`/groups/${g.id}`, e.currentTarget, `group-${g.id}`)
+        onNavigate(
+          { to: '/groups/$id', params: { id: g.id } },
+          e.currentTarget,
+          `group-${g.id}`,
+        )
       }
       className={g.deleted_at ? 'opacity-60' : undefined}
       fields={[

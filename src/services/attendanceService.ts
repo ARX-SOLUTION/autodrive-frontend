@@ -20,6 +20,10 @@ import { track } from '@/lib/umami';
 import { parseListResponse } from '@/lib/listResponse';
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
 import { lessonKeys, attendanceKeys, scheduleKeys } from '@/lib/queryKeys';
+import type {
+  AttendanceHistoryQuery,
+  LessonsQuery,
+} from '@/shared/api/contract';
 
 export interface LessonsPageParams {
   branchId?: string;
@@ -31,8 +35,8 @@ export const fetchLessonsPage = async (
   { page, limit }: LessonsPageParams,
   signal?: AbortSignal,
 ): Promise<PaginatedLessons> => {
-  const { data: res } = await axiosInstance.get('/lessons', {
-    params: { page, limit },
+  const { data: res } = await axiosInstance.get<unknown>('/lessons', {
+    params: { page, limit } satisfies LessonsQuery,
     signal,
   });
   const { data } = parseListResponse<Lesson>(res, page, limit);
@@ -74,8 +78,11 @@ export const attendanceHistoryQueryOptions = (
   queryOptions({
     queryKey: attendanceKeys.history(studentId, { limit }),
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get('/attendance', {
-        params: { student_id: studentId, limit },
+      const { data: res } = await axiosInstance.get<unknown>('/attendance', {
+        params: {
+          student_id: studentId!,
+          limit,
+        } satisfies AttendanceHistoryQuery,
         signal,
       });
       return parseListEnvelope<AttendanceHistoryRecord>(res, 'attendance').data;
@@ -90,7 +97,9 @@ export const lessonDetailQueryOptions = (id?: string, enabled = !!id) =>
   queryOptions({
     queryKey: lessonKeys.detail(id),
     queryFn: async ({ signal }) => {
-      const { data } = await axiosInstance.get(`/lessons/${id}`, { signal });
+      const { data } = await axiosInstance.get<unknown>(`/lessons/${id}`, {
+        signal,
+      });
       return parseItemEnvelope<Lesson>(data, 'lesson');
     },
     enabled,
@@ -103,7 +112,7 @@ export const useCreateLesson = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CreateLessonPayload) => {
-      const { data } = await axiosInstance.post('/lessons', payload);
+      const { data } = await axiosInstance.post<unknown>('/lessons', payload);
       return parseItemEnvelope<Lesson>(data, 'lesson');
     },
     onSuccess: () => {
@@ -123,7 +132,10 @@ export const useUpdateLesson = () => {
       id,
       ...payload
     }: UpdateLessonPayload & { id: string }) => {
-      const { data } = await axiosInstance.patch(`/lessons/${id}`, payload);
+      const { data } = await axiosInstance.patch<unknown>(
+        `/lessons/${id}`,
+        payload,
+      );
       return parseItemEnvelope<Lesson>(data, 'lesson');
     },
     onSuccess: () => {
@@ -140,7 +152,10 @@ export const useBatchAttendance = () => {
     // when two drawers save against the same cache in quick succession.
     scope: { id: 'attendance-batch' },
     mutationFn: async (payload: BatchAttendancePayload) => {
-      const { data } = await axiosInstance.post('/attendance/batch', payload);
+      const { data } = await axiosInstance.post<unknown>(
+        '/attendance/batch',
+        payload,
+      );
       return parseItemEnvelope(data, 'attendance-batch');
     },
     onMutate: async (variables) => {

@@ -4,13 +4,17 @@ import { useNavigate } from '@tanstack/react-router';
 import type { AxiosError } from 'axios';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
-import { AuthResponse, LoginCredentials, User } from '@/types/user';
+import { AuthResponse, User } from '@/types/user';
 import { track } from '@/lib/umami';
 import { parseItemEnvelope } from '@/lib/apiEnvelope';
 import { authKeys } from '@/lib/queryKeys';
+import type {
+  ChangePasswordRequest,
+  LoginRequest,
+} from '@/shared/api/contract';
 
-const loginApi = async (creds: LoginCredentials): Promise<AuthResponse> => {
-  const { data } = await axiosInstance.post('/auth/login', creds);
+const loginApi = async (creds: LoginRequest): Promise<AuthResponse> => {
+  const { data } = await axiosInstance.post<unknown>('/auth/login', creds);
   return parseItemEnvelope<AuthResponse>(data, 'auth');
 };
 
@@ -43,7 +47,7 @@ export const useRestoreSession = () => {
   const query = useQuery<User>({
     queryKey: authKeys.me(),
     queryFn: async ({ signal }) => {
-      const { data } = await axiosInstance.get('/auth/me', { signal });
+      const { data } = await axiosInstance.get<unknown>('/auth/me', { signal });
       return parseItemEnvelope<User>(data, 'auth-me');
     },
     enabled: isAuthenticated,
@@ -68,11 +72,11 @@ export const useChangePassword = () => {
   const queryClient = useQueryClient();
   const setAuth = useAuthStore((s) => s.setAuth);
   return useMutation({
-    mutationFn: async (dto: {
-      currentPassword: string;
-      newPassword: string;
-    }): Promise<AuthResponse> => {
-      const { data } = await axiosInstance.post('/auth/change-password', dto);
+    mutationFn: async (dto: ChangePasswordRequest): Promise<AuthResponse> => {
+      const { data } = await axiosInstance.post<unknown>(
+        '/auth/change-password',
+        dto,
+      );
       return parseItemEnvelope<AuthResponse>(data, 'auth');
     },
     onSuccess: (data) => {

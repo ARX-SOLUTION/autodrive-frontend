@@ -1,4 +1,8 @@
 import { LessonType } from './attendance';
+import type {
+  CreateTemplateRequest,
+  GenerateLessonsRequest,
+} from '@/shared/api/contract';
 
 export interface ScheduleTemplate {
   id: string;
@@ -12,13 +16,8 @@ export interface ScheduleTemplate {
   teacher_name?: string;
 }
 
-export interface CreateTemplatePayload {
-  groupId: string;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  lessonType: LessonType;
-}
+export type CreateTemplatePayload = CreateTemplateRequest;
+export type GenerateLessonPayload = GenerateLessonsRequest;
 
 export interface CalendarLesson {
   id: string;

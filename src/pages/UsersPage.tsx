@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { ColumnFiltersState, SortingState } from '@tanstack/react-table';
-import { useNavigate } from '@/app/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
@@ -476,7 +476,9 @@ const UsersPage = () => {
                   </span>
                 }
                 subtitle={user.email}
-                onClick={() => navigate(`/users/${user.id}`)}
+                onClick={() =>
+                  navigate({ to: '/users/$id', params: { id: user.id } })
+                }
                 className={user.deleted_at ? 'opacity-60' : undefined}
                 fields={[
                   {
@@ -548,7 +550,9 @@ const UsersPage = () => {
           rowClassName={(user) =>
             cn('table-row-interactive', user.deleted_at && 'opacity-60')
           }
-          onRowActivate={(user) => navigate(`/users/${user.id}`)}
+          onRowActivate={(user) =>
+            navigate({ to: '/users/$id', params: { id: user.id } })
+          }
           getRowAriaLabel={(user) =>
             `${t('common.view')}: ${user.name || user.email}`
           }

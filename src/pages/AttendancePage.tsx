@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from '@/app/navigation';
+import { useNavigate } from '@tanstack/react-router';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
@@ -252,7 +253,7 @@ const AttendancePage = () => {
     null,
   );
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, setSearchParams } = useUrlParams();
 
   const form = useForm<CreateLessonFormValues>({
     resolver: zodResolver(createLessonSchema),
@@ -416,7 +417,12 @@ const AttendancePage = () => {
                 onOpen={() => openLesson(lesson)}
                 onEdit={() => openEdit(lesson)}
                 onDelete={() => setDeleteId(lesson.id)}
-                onNavigateGroup={() => navigate(`/groups/${lesson.group_id}`)}
+                onNavigateGroup={() =>
+                  navigate({
+                    to: '/groups/$id',
+                    params: { id: lesson.group_id },
+                  })
+                }
               />
             ))}
           </div>

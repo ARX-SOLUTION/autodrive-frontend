@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from '@/app/navigation';
+import { useNavigate, useParams } from '@tanstack/react-router';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import { useTranslation } from 'react-i18next';
 import { Warning, PencilSimple, ShieldCheck } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
@@ -23,12 +24,11 @@ import type { StudentStatus } from '@/types/student';
 // TeacherDashboard already uses (STUDENTS_FETCH_LIMIT); add real pagination
 // if a single course ever enrolls more than this.
 const STUDENTS_FETCH_LIMIT = 200;
-
 const CourseDetailPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const { searchParams } = useUrlParams();
   const isCrossTenant = useIsCrossTenant();
   const authUser = useAuthStore((s) => s.user);
 
@@ -61,7 +61,7 @@ const CourseDetailPage = () => {
   if (isLoading || isError || !course) {
     return (
       <EntityDetailShell
-        onBack={() => navigate('/courses')}
+        onBack={() => navigate({ to: '/courses' })}
         backLabel={t('courses.title')}
         isLoading={isLoading}
         isError={isError || !course}
@@ -81,7 +81,7 @@ const CourseDetailPage = () => {
 
   return (
     <EntityDetailShell
-      onBack={() => navigate('/courses')}
+      onBack={() => navigate({ to: '/courses' })}
       backLabel={t('courses.title')}
       isLoading={false}
       isError={false}
@@ -162,7 +162,9 @@ const CourseDetailPage = () => {
                   key={s.id}
                   title={`${s.last_name} ${s.first_name}`.trim()}
                   subtitle={s.group_name ?? t('common.na')}
-                  onClick={() => navigate(`/students/${s.id}`)}
+                  onClick={() =>
+                    navigate({ to: '/students/$id', params: { id: s.id } })
+                  }
                   fields={[
                     {
                       label: t('students.status'),

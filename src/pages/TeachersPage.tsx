@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { ColumnFiltersState, SortingState } from '@tanstack/react-table';
-import { useNavigate } from '@/app/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useSearchSortFilters } from '@/hooks/useSearchSortFilters';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -365,7 +365,9 @@ const TeachersPage = () => {
               <DataCard
                 title={teacher.name || t('common.na')}
                 subtitle={teacher.phone}
-                onClick={() => navigate(`/users/${teacher.id}`)}
+                onClick={() =>
+                  navigate({ to: '/users/$id', params: { id: teacher.id } })
+                }
                 fields={[
                   {
                     label: t('teachers.specialization'),
@@ -436,7 +438,9 @@ const TeachersPage = () => {
             isFetching && !isLoading && 'opacity-50',
           )}
           rowClassName={() => 'table-row-interactive'}
-          onRowActivate={(teacher) => navigate(`/users/${teacher.id}`)}
+          onRowActivate={(teacher) =>
+            navigate({ to: '/users/$id', params: { id: teacher.id } })
+          }
           getRowAriaLabel={(teacher) =>
             `${t('common.view')}: ${teacher.name || teacher.email}`
           }

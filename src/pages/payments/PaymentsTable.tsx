@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { createDataGridColumnHelper, DataGrid } from '@/shared/ui/data-grid';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import { useCan } from '@/hooks/useCan';
+import type { PaymentMethod } from '@/types/student';
 import { useDeletePayment, useUpdatePayment } from '@/services/paymentService';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { formatMoney } from '@/lib/money';
@@ -76,7 +77,7 @@ export const PaymentsTable = ({
 
   const handleEditSubmit = (data: {
     amount: number;
-    payment_method: string;
+    payment_method: PaymentMethod;
   }) => {
     if (!editTarget) return;
     const payload = {
@@ -221,7 +222,11 @@ export const PaymentsTable = ({
 
   const openStudent = (payment: Payment, element: HTMLElement | null) =>
     goToStudent(
-      `/students/${payment.student_id}?tab=payments`,
+      {
+        to: '/students/$id',
+        params: { id: payment.student_id },
+        search: { tab: 'payments' },
+      },
       element,
       `student-${payment.student_id}`,
     );

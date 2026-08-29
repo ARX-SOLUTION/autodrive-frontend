@@ -15,6 +15,8 @@ import {
 } from '@/types/schedule';
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
 import { scheduleKeys, lessonKeys } from '@/lib/queryKeys';
+import type { CalendarLessonsQuery } from '@/shared/api/contract';
+import type { GenerateLessonPayload } from '@/types/schedule';
 
 export const scheduleTemplatesQueryOptions = (
   branchId?: string,
@@ -23,9 +25,12 @@ export const scheduleTemplatesQueryOptions = (
   queryOptions({
     queryKey: scheduleKeys.templates({ branchId }),
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get('/schedule/templates', {
-        signal,
-      });
+      const { data: res } = await axiosInstance.get<unknown>(
+        '/schedule/templates',
+        {
+          signal,
+        },
+      );
       return parseListEnvelope<ScheduleTemplate>(res, 'schedule-templates')
         .data;
     },
@@ -44,7 +49,10 @@ export const useCreateTemplate = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CreateTemplatePayload) => {
-      const { data } = await axiosInstance.post('/schedule/templates', payload);
+      const { data } = await axiosInstance.post<unknown>(
+        '/schedule/templates',
+        payload,
+      );
       return parseItemEnvelope<ScheduleTemplate>(data, 'schedule-template');
     },
     onSuccess: () => {
@@ -68,8 +76,11 @@ export const useDeleteTemplate = () => {
 export const useGenerateLessons = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { weeks: number; groupId?: string }) => {
-      const { data } = await axiosInstance.post('/schedule/generate', payload);
+    mutationFn: async (payload: GenerateLessonPayload) => {
+      const { data } = await axiosInstance.post<unknown>(
+        '/schedule/generate',
+        payload,
+      );
       return parseItemEnvelope<GenerateResult>(data, 'schedule-generate');
     },
     onSuccess: () => {
@@ -92,10 +103,16 @@ export const calendarLessonsQueryOptions = (
   queryOptions({
     queryKey: scheduleKeys.calendar({ ...params }),
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get('/schedule/calendar', {
-        params: { date_from: params.dateFrom, date_to: params.dateTo },
-        signal,
-      });
+      const { data: res } = await axiosInstance.get<unknown>(
+        '/schedule/calendar',
+        {
+          params: {
+            date_from: params.dateFrom,
+            date_to: params.dateTo,
+          } satisfies CalendarLessonsQuery,
+          signal,
+        },
+      );
       return parseListEnvelope<CalendarLesson>(res, 'calendar-lessons').data;
     },
     enabled,

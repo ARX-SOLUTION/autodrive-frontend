@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from '@/app/navigation';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
@@ -56,7 +56,7 @@ const StudentsPage = () => {
   // setter rewrites the URL and the router re-renders. `replace: true`
   // keeps the browser-history short — every keystroke in the search box
   // would otherwise push a history entry.
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, setSearchParams } = useUrlParams();
   const goToStudent = useViewTransitionNavigate();
   const setParam = (key: string, value: string | undefined) => {
     setSearchParams(
@@ -396,7 +396,11 @@ const StudentsPage = () => {
   };
 
   const openStudent = (s: Student, el: HTMLElement) =>
-    goToStudent(`/students/${s.id}`, el, `student-${s.id}`);
+    goToStudent(
+      { to: '/students/$id', params: { id: s.id } },
+      el,
+      `student-${s.id}`,
+    );
 
   const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
 

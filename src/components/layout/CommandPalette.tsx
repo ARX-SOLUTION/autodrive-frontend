@@ -44,7 +44,7 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
 
   const go = (path: string) => {
     onOpenChange(false);
-    void navigate({ to: path as never });
+    void navigate({ to: path });
   };
 
   const handleOpenChange = (o: boolean) => {

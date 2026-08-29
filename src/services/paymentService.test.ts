@@ -24,8 +24,8 @@ describe('payment page request contract', () => {
     ).toEqual({
       branch_id: 'branch-1',
       course_type: 'tezkor',
-      startDate: '2026-07-01',
-      endDate: '2026-07-09',
+      start_date: '2026-07-01',
+      end_date: '2026-07-09',
       page: 3,
       limit: 50,
       search: 'Aziz',

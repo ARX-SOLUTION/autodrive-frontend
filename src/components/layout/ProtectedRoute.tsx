@@ -54,7 +54,10 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return (
       <Navigate
         to="/login"
-        state={{ from: pathname + searchStr } as never}
+        state={(current) => ({
+          ...current,
+          from: pathname + searchStr,
+        })}
         replace
       />
     );

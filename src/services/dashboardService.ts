@@ -4,6 +4,10 @@ import { useIsCrossTenant } from '@/hooks/useCan';
 import { CourseType } from '@/types/student';
 import { parseItemEnvelope } from '@/lib/apiEnvelope';
 import { dashboardKeys } from '@/lib/queryKeys';
+import type {
+  CompanyOverviewQuery as ApiCompanyOverviewQuery,
+  DashboardQuery,
+} from '@/shared/api/contract';
 
 export interface DashboardAnalytics {
   total_students: number;
@@ -37,10 +41,16 @@ export const dashboardAnalyticsQueryOptions = (
     queryKey: dashboardKeys.analytics({ branchId, courseType }),
     enabled,
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get('/dashboard/analytics', {
-        params: { branch_id: branchId, course_type: courseType },
-        signal,
-      });
+      const { data: res } = await axiosInstance.get<unknown>(
+        '/dashboard/analytics',
+        {
+          params: {
+            branch_id: branchId,
+            course_type: courseType,
+          } satisfies DashboardQuery,
+          signal,
+        },
+      );
       return parseItemEnvelope<DashboardAnalytics>(res, 'dashboard-analytics');
     },
   });
@@ -69,7 +79,7 @@ export const teacherAnalyticsQueryOptions = () =>
   queryOptions({
     queryKey: dashboardKeys.teacherAnalytics(),
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get(
+      const { data: res } = await axiosInstance.get<unknown>(
         '/dashboard/teacher-analytics',
         { signal },
       );
@@ -234,7 +244,7 @@ export const companyOverviewQueryOptions = (
             from: query.from,
             to: query.to,
             granularity: query.granularity,
-          },
+          } satisfies ApiCompanyOverviewQuery,
           signal,
         },
       );
