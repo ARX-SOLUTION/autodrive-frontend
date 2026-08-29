@@ -1,4 +1,4 @@
-import { useNavigate } from '@/app/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { AuditLog } from '@/types/audit';
 import {
@@ -97,7 +97,12 @@ export const AuditTable = ({
       columns={columns}
       rows={logs}
       keyExtractor={(log) => log.id}
-      onRowClick={(log) => navigate(`/audit/${log.id}`, { state: { log } })}
+      onRowClick={(log) =>
+        navigate({
+          to: '/audit/$id',
+          params: { id: log.id },
+        })
+      }
       isLoading={isLoading}
       skeletonRowCount={5}
       isError={isError}

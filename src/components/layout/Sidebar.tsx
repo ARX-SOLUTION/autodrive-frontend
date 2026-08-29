@@ -263,7 +263,8 @@ export const Sidebar = ({
   const canSee = (item: NavItem) => !item.cap || gate[item.cap] === true;
   const visibleItems = NAV_ITEMS.filter(canSee);
   const itemByPath = useMemo(
-    () => new Map(visibleItems.map((item) => [item.path, item])),
+    () =>
+      new Map<string, NavItem>(visibleItems.map((item) => [item.path, item])),
     [visibleItems],
   );
   const visibleSections = NAV_SECTIONS.map((section) => ({
@@ -314,7 +315,7 @@ export const Sidebar = ({
 
     const navLink = (
       <Link
-        to={item.path as never}
+        to={item.path}
         preload="intent"
         onClick={onNavigate}
         aria-label={label}

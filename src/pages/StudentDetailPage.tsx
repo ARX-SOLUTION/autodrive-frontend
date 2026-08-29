@@ -1,10 +1,6 @@
 import { useState } from 'react';
-import {
-  Link,
-  useParams,
-  useNavigate,
-  useSearchParams,
-} from '@/app/navigation';
+import { Link, useNavigate, useParams } from '@tanstack/react-router';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import { useTranslation } from 'react-i18next';
 import {
   Warning,
@@ -50,10 +46,10 @@ import type { Payment } from '@/types/payment';
 import type { AuditLog } from '@/types/audit';
 
 const StudentDetailPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const { searchParams } = useUrlParams();
 
   const { data: student, isLoading, isError } = useStudent(id);
   const canRecordPayment = useCan('recordPayment');
@@ -144,7 +140,7 @@ const StudentDetailPage = () => {
   if (isLoading || isError || !student) {
     return (
       <EntityDetailShell
-        onBack={() => navigate('/students')}
+        onBack={() => navigate({ to: '/students' })}
         backLabel={t('students.title')}
         isLoading={isLoading}
         isError={isError || !student}
@@ -162,7 +158,7 @@ const StudentDetailPage = () => {
 
   return (
     <EntityDetailShell
-      onBack={() => navigate('/students')}
+      onBack={() => navigate({ to: '/students' })}
       backLabel={t('students.title')}
       isLoading={false}
       isError={false}
@@ -306,7 +302,7 @@ const StudentDetailPage = () => {
             <Field
               label={t('students.detail.referrals_count')}
               value={String(student.referrals_count ?? 0)}
-              to={`/students?referred_by_student_id=${student.id}`}
+              referredByStudentId={student.id}
             />
           </dl>
         </TabsContent>
@@ -401,20 +397,21 @@ const StudentDetailPage = () => {
 const Field = ({
   label,
   value,
-  to,
+  referredByStudentId,
 }: {
   label: string;
   value: React.ReactNode;
-  to?: string;
+  referredByStudentId?: string;
 }) => (
   <div className="flex flex-col gap-0.5">
     <dt className="text-xs uppercase tracking-wide text-muted-foreground">
       {label}
     </dt>
     <dd>
-      {to ? (
+      {referredByStudentId ? (
         <Link
-          to={to}
+          to="/students"
+          search={{ referred_by_student_id: referredByStudentId }}
           className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {value}

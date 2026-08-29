@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from '@/app/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -176,7 +176,7 @@ const ProfilePage = () => {
       onSuccess: () => {
         toast.success(t('profile.update_password_success'));
         pwForm.reset({ currentPassword: '', newPassword: '' });
-        if (wasForced) navigate('/dashboard');
+        if (wasForced) void navigate({ to: '/dashboard' });
       },
       onError: (error) =>
         mutationErrorToast(error, t, () => changePasswordMut.mutate(payload)),

@@ -128,6 +128,8 @@ export dependencies are deferred to the routes that use them.
 - Run `pnpm run api:types` with runtime-only `OPENAPI_TOKEN` or `OPENAPI_USERNAME`/`OPENAPI_PASSWORD` to regenerate `src/shared/api/schema.d.ts`.
 - Run `pnpm run api:check` in CI to fail when the committed generated contract is stale.
 - `VITE_*` variables are browser-visible; OpenAPI credentials must never use that prefix or be bundled into the app.
+- Feature services import request/query aliases from `src/shared/api/contract.ts`; response payloads remain `unknown` until the backend publishes response schemas and are normalized by `src/lib/apiEnvelope.ts`.
+- Route pages use TanStack Router links, typed params, and route search validators. There is no navigation compatibility wrapper.
 
 ## Cross-Repo Relationships
 

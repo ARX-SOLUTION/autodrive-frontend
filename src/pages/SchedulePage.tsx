@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from '@/app/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { addDays, startOfWeek, format, parseISO, isSameDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
@@ -484,7 +484,12 @@ const SchedulePage = () => {
                         {lessonTypeLabel[tpl.lesson_type]}
                       </span>
                       <button
-                        onClick={() => navigate(`/groups/${tpl.group_id}`)}
+                        onClick={() =>
+                          navigate({
+                            to: '/groups/$id',
+                            params: { id: tpl.group_id },
+                          })
+                        }
                         className="text-sm text-muted-foreground hover:text-primary hover:underline"
                       >
                         {tpl.group_name}

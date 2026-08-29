@@ -1,4 +1,4 @@
-import { Link, useParams, useNavigate } from '@/app/navigation';
+import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Warning, ShieldCheck } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
@@ -10,13 +10,16 @@ import { useUser } from '@/services/userService';
 
 // Which list page a given role's users are managed from — used for the back
 // link and the row-click origin, since one UserDetailPage serves all three.
-const backTargetByRole: Record<string, { path: string; labelKey: string }> = {
+const backTargetByRole: Record<
+  string,
+  { path: '/teachers' | '/operators' | '/users'; labelKey: string }
+> = {
   teacher: { path: '/teachers', labelKey: 'teachers.title' },
   operator: { path: '/operators', labelKey: 'operators.title' },
 };
 
 const UserDetailPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -32,7 +35,7 @@ const UserDetailPage = () => {
   if (isLoading || isError || !user) {
     return (
       <EntityDetailShell
-        onBack={() => navigate(backTarget.path)}
+        onBack={() => navigate({ to: backTarget.path })}
         backLabel={t(backTarget.labelKey)}
         isLoading={isLoading}
         isError={isError || !user}
@@ -44,7 +47,7 @@ const UserDetailPage = () => {
 
   return (
     <EntityDetailShell
-      onBack={() => navigate(backTarget.path)}
+      onBack={() => navigate({ to: backTarget.path })}
       backLabel={t(backTarget.labelKey)}
       isLoading={false}
       isError={false}
@@ -105,7 +108,7 @@ const UserDetailPage = () => {
             <Field
               label={t('users.detail.referred_students_count')}
               value={String(user.referred_students_count ?? 0)}
-              to={`/students?referred_by_user_id=${user.id}`}
+              referredByUserId={user.id}
             />
           </dl>
         </TabsContent>
@@ -120,7 +123,12 @@ const UserDetailPage = () => {
                   <DataCard
                     key={g.id}
                     title={g.name}
-                    onClick={() => navigate(`/groups/${g.id}`)}
+                    onClick={() =>
+                      navigate({
+                        to: '/groups/$id',
+                        params: { id: g.id },
+                      })
+                    }
                   />
                 ))}
               </div>
@@ -138,7 +146,12 @@ const UserDetailPage = () => {
                   <DataCard
                     key={s.id}
                     title={s.name}
-                    onClick={() => navigate(`/students/${s.id}`)}
+                    onClick={() =>
+                      navigate({
+                        to: '/students/$id',
+                        params: { id: s.id },
+                      })
+                    }
                   />
                 ))}
               </div>
@@ -153,20 +166,21 @@ const UserDetailPage = () => {
 const Field = ({
   label,
   value,
-  to,
+  referredByUserId,
 }: {
   label: string;
   value: React.ReactNode;
-  to?: string;
+  referredByUserId?: string;
 }) => (
   <div className="flex flex-col gap-0.5">
     <dt className="text-xs uppercase tracking-wide text-muted-foreground">
       {label}
     </dt>
     <dd>
-      {to ? (
+      {referredByUserId ? (
         <Link
-          to={to}
+          to="/students"
+          search={{ referred_by_user_id: referredByUserId }}
           className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {value}

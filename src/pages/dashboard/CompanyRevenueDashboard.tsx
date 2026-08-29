@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from '@/app/navigation';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import {
@@ -750,7 +751,7 @@ const CompanyRevenueDashboard = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const canViewAllBranches = useCan('viewAllBranches');
-  const [params, setParams] = useSearchParams();
+  const { searchParams: params, setSearchParams: setParams } = useUrlParams();
   const [branchSort, setBranchSort] = useState<
     'revenue' | 'active_students' | 'outstanding_debt' | 'collection_rate'
   >('revenue');
@@ -806,22 +807,13 @@ const CompanyRevenueDashboard = () => {
     next.set('granularity', 'day');
     setParams(next, { replace: true });
   };
-  const dashboardContext = new URLSearchParams();
-  if (query.branchId) dashboardContext.set('branch_id', query.branchId);
-  if (query.courseType) dashboardContext.set('course_type', query.courseType);
-  // /payments and /students read date_from/date_to (see useUrlParams), not
-  // from/to — using the wrong keys here silently drops the date filter on
-  // drill-down navigation.
-  if (query.from) dashboardContext.set('date_from', query.from);
-  if (query.to) dashboardContext.set('date_to', query.to);
-  if (query.granularity) dashboardContext.set('granularity', query.granularity);
-  const withContext = (
-    path: string,
-    overrides: Record<string, string> = {},
-  ) => {
-    const next = new URLSearchParams(dashboardContext);
-    Object.entries(overrides).forEach(([key, value]) => next.set(key, value));
-    return `${path}?${next.toString()}`;
+  // Keep dashboard drill-downs as typed route searches. The destination
+  // pages use date_from/date_to; the dashboard's own filter names are from/to.
+  const listSearch = {
+    branch_id: query.branchId,
+    course_type: query.courseType,
+    date_from: query.from,
+    date_to: query.to,
   };
   const comparisonRange =
     kpis.revenue.previous_period_from &&
@@ -862,7 +854,8 @@ const CompanyRevenueDashboard = () => {
           {(
             [
               {
-                to: '/payments?action=create',
+                to: '/payments',
+                search: { action: 'create' },
                 icon: Wallet,
                 // ponytail: full static class strings, not `bg-${tone}` —
                 // Tailwind's scanner only picks up literal class text, so an
@@ -874,7 +867,8 @@ const CompanyRevenueDashboard = () => {
                 ),
               },
               {
-                to: '/students?action=create',
+                to: '/students',
+                search: { action: 'create' },
                 icon: UserPlus,
                 tileClass: 'bg-info/[14%] text-info',
                 label: t(
@@ -884,6 +878,7 @@ const CompanyRevenueDashboard = () => {
               },
               {
                 to: '/attendance',
+                search: {},
                 icon: UsersThree,
                 tileClass: 'bg-success/[14%] text-success',
                 label: t(
@@ -896,6 +891,7 @@ const CompanyRevenueDashboard = () => {
             <Link
               key={action.to}
               to={action.to}
+              search={action.search}
               className="flex items-center gap-2 rounded-xl border border-border bg-card px-[15px] py-[11px] text-[13.5px] font-semibold motion-safe:transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span
@@ -930,12 +926,14 @@ const CompanyRevenueDashboard = () => {
         <button
           type="button"
           onClick={() =>
-            navigate(
-              withContext('/payments', {
+            navigate({
+              to: '/payments',
+              search: {
+                ...listSearch,
                 date_from: todayInUz(),
                 date_to: todayInUz(),
-              }),
-            )
+              },
+            })
           }
           className="rounded-xl border border-border bg-card p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
@@ -972,7 +970,10 @@ const CompanyRevenueDashboard = () => {
         <button
           type="button"
           onClick={() =>
-            navigate(withContext('/students', { status: 'active' }))
+            navigate({
+              to: '/students',
+              search: { ...listSearch, status: 'active' },
+            })
           }
           className="rounded-xl border border-border bg-card p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
@@ -990,12 +991,10 @@ const CompanyRevenueDashboard = () => {
         <button
           type="button"
           onClick={() =>
-            navigate(
-              withContext('/students', {
-                status: 'active',
-                has_debt: 'true',
-              }),
-            )
+            navigate({
+              to: '/students',
+              search: { ...listSearch, status: 'active', has_debt: true },
+            })
           }
           className="rounded-xl border border-border bg-card p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
@@ -1053,11 +1052,19 @@ const CompanyRevenueDashboard = () => {
                 return (
                   <li
                     key={student.student_id}
-                    onClick={() => navigate(`/students/${student.student_id}`)}
+                    onClick={() =>
+                      navigate({
+                        to: '/students/$id',
+                        params: { id: student.student_id },
+                      })
+                    }
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
-                        navigate(`/students/${student.student_id}`);
+                        void navigate({
+                          to: '/students/$id',
+                          params: { id: student.student_id },
+                        });
                       }
                     }}
                     role="button"
@@ -1096,7 +1103,8 @@ const CompanyRevenueDashboard = () => {
           )}
           {data.recovery_queue.length > 0 && (
             <Link
-              to={withContext('/payments')}
+              to="/payments"
+              search={listSearch}
               className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
             >
               {t('dashboard.v2.view_all_debtors', 'Barcha qarzdorlar')}
@@ -1115,7 +1123,7 @@ const CompanyRevenueDashboard = () => {
           )}
           action={
             <Link
-              to={withContext('/branches')}
+              to="/branches"
               className="text-xs font-semibold text-primary hover:underline"
             >
               {t('dashboard.v2.manage_branches', 'Filiallar')}{' '}
@@ -1164,7 +1172,12 @@ const CompanyRevenueDashboard = () => {
                   <button
                     key={branch.id}
                     type="button"
-                    onClick={() => navigate(`/branches/${branch.id}`)}
+                    onClick={() =>
+                      navigate({
+                        to: '/branches/$id',
+                        params: { id: branch.id },
+                      })
+                    }
                     className="w-full rounded-lg border border-border/60 bg-background/30 p-3 text-left motion-safe:transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -1230,11 +1243,19 @@ const CompanyRevenueDashboard = () => {
                         key={branch.id}
                         tabIndex={0}
                         role="button"
-                        onClick={() => navigate(`/branches/${branch.id}`)}
+                        onClick={() =>
+                          navigate({
+                            to: '/branches/$id',
+                            params: { id: branch.id },
+                          })
+                        }
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') {
                             event.preventDefault();
-                            navigate(`/branches/${branch.id}`);
+                            void navigate({
+                              to: '/branches/$id',
+                              params: { id: branch.id },
+                            });
                           }
                         }}
                         className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -1461,12 +1482,10 @@ const CompanyRevenueDashboard = () => {
               icon={Warning}
               tone="warning"
               onClick={() =>
-                navigate(
-                  withContext('/students', {
-                    status: 'active',
-                    has_debt: 'true',
-                  }),
-                )
+                navigate({
+                  to: '/students',
+                  search: { ...listSearch, status: 'active', has_debt: true },
+                })
               }
             />
             <KpiCard
@@ -1712,7 +1731,7 @@ const CompanyRevenueDashboard = () => {
               )}
               icon={GraduationCap}
               tone="primary"
-              onClick={() => navigate(withContext('/teachers'))}
+              onClick={() => navigate({ to: '/teachers' })}
             />
             <KpiCard
               label={t(
@@ -1734,7 +1753,7 @@ const CompanyRevenueDashboard = () => {
                   ? 'success'
                   : 'warning'
               }
-              onClick={() => navigate(withContext('/attendance'))}
+              onClick={() => navigate({ to: '/attendance' })}
             />
             <KpiCard
               label={t(
@@ -1752,7 +1771,7 @@ const CompanyRevenueDashboard = () => {
               )}
               icon={UserCheck}
               tone="info"
-              onClick={() => navigate(withContext('/operators'))}
+              onClick={() => navigate({ to: '/operators' })}
             />
           </div>
         </DashboardCard>

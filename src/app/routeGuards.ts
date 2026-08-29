@@ -18,7 +18,10 @@ export function requireAuthenticated(location: GuardLocation): void {
     throw redirect({
       to: '/login',
       replace: true,
-      state: { from: location.pathname + location.searchStr } as never,
+      state: (current) => ({
+        ...current,
+        from: location.pathname + location.searchStr,
+      }),
     });
   }
 

@@ -1,4 +1,4 @@
-import { useNavigate } from '@/app/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { AuditLog } from '@/types/audit';
 import {
@@ -44,7 +44,12 @@ export const AuditMobileList = ({
         logs.map((log) => (
           <DataCard
             key={log.id}
-            onClick={() => navigate(`/audit/${log.id}`, { state: { log } })}
+            onClick={() =>
+              navigate({
+                to: '/audit/$id',
+                params: { id: log.id },
+              })
+            }
             title={`${formatAuditAction(log.action, t)} · ${formatAuditEntity(log.entity, t)}`}
             subtitle={log.user_name || t('common.na')}
             fields={[

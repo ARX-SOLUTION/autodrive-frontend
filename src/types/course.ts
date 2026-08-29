@@ -1,3 +1,8 @@
+import type {
+  CreateCourseRequest,
+  UpdateCourseRequest,
+} from '@/shared/api/contract';
+
 export interface Course {
   id: string;
   name: string;
@@ -10,10 +15,5 @@ export interface Course {
   created_at: string;
 }
 
-export interface CreateCoursePayload {
-  name: string;
-  branch_id: string;
-  course_type: 'tezkor' | 'avto_maktab';
-  price: number;
-  duration_days: number;
-}
+export type CreateCoursePayload = CreateCourseRequest;
+export type UpdateCoursePayload = UpdateCourseRequest;

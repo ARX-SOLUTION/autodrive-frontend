@@ -1,4 +1,4 @@
-import { Link, useParams, useNavigate } from '@/app/navigation';
+import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Warning, MapPin, Phone, ShieldCheck } from '@phosphor-icons/react';
 import {
@@ -28,7 +28,7 @@ const AXIS_PROPS = {
 };
 
 const BranchDetailPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -38,7 +38,7 @@ const BranchDetailPage = () => {
   if (isLoading || isError || !branch) {
     return (
       <EntityDetailShell
-        onBack={() => navigate('/branches')}
+        onBack={() => navigate({ to: '/branches' })}
         backLabel={t('branches.title')}
         isLoading={isLoading}
         isError={isError || !branch}
@@ -50,7 +50,7 @@ const BranchDetailPage = () => {
 
   return (
     <EntityDetailShell
-      onBack={() => navigate('/branches')}
+      onBack={() => navigate({ to: '/branches' })}
       backLabel={t('branches.title')}
       isLoading={false}
       isError={false}
@@ -82,7 +82,7 @@ const BranchDetailPage = () => {
         <Field
           label={t('branches.students')}
           value={String(branch.active_students)}
-          to={`/students?branch_id=${branch.id}`}
+          link={{ type: 'students', branchId: branch.id }}
         />
         <Field
           label={t('branches.detail.revenue')}
@@ -95,7 +95,7 @@ const BranchDetailPage = () => {
         <Field
           label={t('branches.detail.today_payment')}
           value={formatMoney(branch.today_payment)}
-          to={`/payments?branch_id=${branch.id}&date_from=${today}&date_to=${today}`}
+          link={{ type: 'payments', branchId: branch.id, date: today }}
         />
       </dl>
 
@@ -112,7 +112,7 @@ const BranchDetailPage = () => {
           </h2>
           <TopDebtorsList
             debtors={branch.top_debtors}
-            viewAllLink={`/students?branch_id=${branch.id}&has_debt=true`}
+            viewAllBranchId={branch.id}
           />
         </div>
       </div>
@@ -192,10 +192,10 @@ const RevenueTrendChart = ({
 
 const TopDebtorsList = ({
   debtors,
-  viewAllLink,
+  viewAllBranchId,
 }: {
   debtors?: { id: string; name: string; debt: number }[];
-  viewAllLink: string;
+  viewAllBranchId: string;
 }) => {
   const { t } = useTranslation();
   if (!debtors || debtors.length === 0) {
@@ -206,7 +206,8 @@ const TopDebtorsList = ({
       {debtors.map((debtor) => (
         <Link
           key={debtor.id}
-          to={`/students/${debtor.id}`}
+          to="/students/$id"
+          params={{ id: debtor.id }}
           className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2 text-sm hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="truncate">{debtor.name}</span>
@@ -216,7 +217,8 @@ const TopDebtorsList = ({
         </Link>
       ))}
       <Link
-        to={viewAllLink}
+        to="/students"
+        search={{ branch_id: viewAllBranchId, has_debt: true }}
         className="block pt-1 text-xs font-semibold text-primary hover:underline"
       >
         {t('branches.detail.view_all_debtors')}
@@ -228,20 +230,35 @@ const TopDebtorsList = ({
 const Field = ({
   label,
   value,
-  to,
+  link,
 }: {
   label: string;
   value: string;
-  to?: string;
+  link?:
+    | { type: 'students'; branchId: string }
+    | { type: 'payments'; branchId: string; date: string };
 }) => (
   <div className="flex flex-col gap-0.5">
     <dt className="text-xs uppercase tracking-wide text-muted-foreground">
       {label}
     </dt>
     <dd>
-      {to ? (
+      {link?.type === 'students' ? (
         <Link
-          to={to}
+          to="/students"
+          search={{ branch_id: link.branchId }}
+          className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {value}
+        </Link>
+      ) : link?.type === 'payments' ? (
+        <Link
+          to="/payments"
+          search={{
+            branch_id: link.branchId,
+            date_from: link.date,
+            date_to: link.date,
+          }}
           className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {value}

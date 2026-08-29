@@ -1,3 +1,9 @@
+import type {
+  BatchAttendanceRequest,
+  CreateLessonRequest,
+  UpdateLessonRequest,
+} from '@/shared/api/contract';
+
 export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
 export type LessonType = 'theory' | 'practice';
 
@@ -24,27 +30,14 @@ export interface Lesson {
   attendance: AttendanceRecord[];
 }
 
-export interface CreateLessonPayload {
-  title: string;
-  date: string;
-  lessonType: LessonType;
-  groupId: string;
-}
+export type CreateLessonPayload = CreateLessonRequest;
 
 // SLICE B (autodrive-vh0.4): mirrors the backend's UpdateLessonDto
 // (PartialType(OmitType(CreateLessonDto, ['groupId']))) -- groupId is
 // deliberately not editable.
-export type UpdateLessonPayload = Partial<Omit<CreateLessonPayload, 'groupId'>>;
+export type UpdateLessonPayload = UpdateLessonRequest;
 
-export interface BatchAttendancePayload {
-  lessonId: string;
-  records: {
-    lessonId: string;
-    studentId: string;
-    status: AttendanceStatus;
-    notes?: string;
-  }[];
-}
+export type BatchAttendancePayload = BatchAttendanceRequest;
 
 export interface PaginatedLessons {
   data: Lesson[];

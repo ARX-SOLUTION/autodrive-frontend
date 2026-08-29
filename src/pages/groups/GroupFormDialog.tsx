@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from '@/app/navigation';
+import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { Warning, X } from '@phosphor-icons/react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -309,7 +309,8 @@ const GroupFormDialog = ({
                       {dupMatches.map((g) => (
                         <li key={g.id}>
                           <Link
-                            to={`/groups/${g.id}`}
+                            to="/groups/$id"
+                            params={{ id: g.id }}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-primary hover:underline"

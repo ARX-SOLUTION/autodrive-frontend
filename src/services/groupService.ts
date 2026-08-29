@@ -11,6 +11,39 @@ import { Group, GroupOverview } from '@/types/group';
 import { track } from '@/lib/umami';
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
 import { groupKeys, studentKeys } from '@/lib/queryKeys';
+import type {
+  CreateGroupRequest,
+  GroupsQuery,
+  UpdateGroupRequest,
+} from '@/shared/api/contract';
+
+const toGroupCourseType = (
+  value: string,
+): NonNullable<GroupsQuery['course_type']> => {
+  if (value === 'tezkor' || value === 'avto_maktab') return value;
+  throw new Error(`Unsupported group course type: ${value}`);
+};
+
+const toOptionalGroupCourseType = (
+  value?: string,
+): GroupsQuery['course_type'] =>
+  value === 'tezkor' || value === 'avto_maktab' ? value : undefined;
+
+type GroupCreateRequest = Omit<
+  CreateGroupRequest,
+  'teacherId' | 'courseType'
+> & {
+  courseType: NonNullable<GroupsQuery['course_type']>;
+  teacherId?: string | null;
+};
+
+type GroupUpdateRequest = Omit<
+  Partial<UpdateGroupRequest>,
+  'teacherId' | 'courseType'
+> & {
+  courseType?: NonNullable<GroupsQuery['course_type']>;
+  teacherId?: string | null;
+};
 
 export interface GroupListParams {
   search?: string;
@@ -29,13 +62,13 @@ export const fetchGroups = async (
   params: GroupListParams,
   signal?: AbortSignal,
 ): Promise<Group[]> => {
-  const { data: res } = await axiosInstance.get('/groups', {
+  const { data: res } = await axiosInstance.get<unknown>('/groups', {
     params: {
       search: params.search || undefined,
       branch_id: params.branchId || undefined,
-      course_type: params.courseType || undefined,
+      course_type: toOptionalGroupCourseType(params.courseType),
       include_deleted: params.includeDeleted || undefined,
-    },
+    } satisfies GroupsQuery,
     signal,
   });
   return parseListEnvelope<Group>(res, 'groups').data;
@@ -79,9 +112,12 @@ export const groupsOverviewQueryOptions = (branchId?: string, enabled = true) =>
   queryOptions({
     queryKey: groupKeys.overview({ branchId }),
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get('/groups/overview', {
-        signal,
-      });
+      const { data: res } = await axiosInstance.get<unknown>(
+        '/groups/overview',
+        {
+          signal,
+        },
+      );
       return parseListEnvelope<GroupOverview>(res, 'groups-overview').data;
     },
     enabled,
@@ -99,7 +135,9 @@ export const groupDetailQueryOptions = (id?: string, enabled = !!id) =>
   queryOptions({
     queryKey: groupKeys.detail(id),
     queryFn: async ({ signal }) => {
-      const { data } = await axiosInstance.get(`/groups/${id}`, { signal });
+      const { data } = await axiosInstance.get<unknown>(`/groups/${id}`, {
+        signal,
+      });
       return parseItemEnvelope<Group>(data, 'group');
     },
     enabled,
@@ -116,7 +154,11 @@ export const useCreateGroup = () => {
       courseType: string;
       teacherId?: string | null;
     }) => {
-      const { data } = await axiosInstance.post('/groups', group);
+      const request: GroupCreateRequest = {
+        ...group,
+        courseType: toGroupCourseType(group.courseType),
+      };
+      const { data } = await axiosInstance.post<unknown>('/groups', request);
       return parseItemEnvelope<Group>(data, 'group');
     },
     onSuccess: () => {
@@ -139,7 +181,16 @@ export const useUpdateGroup = () => {
       courseType?: string;
       teacherId?: string | null;
     }) => {
-      const { data } = await axiosInstance.patch(`/groups/${id}`, group);
+      const request: GroupUpdateRequest = {
+        ...group,
+        courseType: group.courseType
+          ? toGroupCourseType(group.courseType)
+          : undefined,
+      };
+      const { data } = await axiosInstance.patch<unknown>(
+        `/groups/${id}`,
+        request,
+      );
       return parseItemEnvelope<Group>(data, 'group');
     },
     onSuccess: () => {
@@ -158,7 +209,7 @@ export const useRestoreGroup = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      await axiosInstance.patch(`/groups/${id}/restore`);
+      await axiosInstance.patch<unknown>(`/groups/${id}/restore`);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: groupKeys.all });

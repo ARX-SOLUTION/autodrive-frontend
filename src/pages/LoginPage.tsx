@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from '@tanstack/react-router';
+import { useLocation, useRouter } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,7 +32,7 @@ type LoginFormValues = z.infer<ReturnType<typeof makeLoginFormSchema>>;
 const LoginPage = () => {
   const { t } = useTranslation();
   const [formError, setFormError] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const router = useRouter();
   const location = useLocation();
   const login = useLogin();
   const logout = useAuthStore((s) => s.logout);
@@ -72,7 +72,10 @@ const LoginPage = () => {
   const onSuccess = () => {
     toast.success(t('login.success'));
     // Return to the page a session-expiry redirect came from, if any.
-    const from = (location.state as { from?: string } | null)?.from;
+    const from =
+      'from' in location.state && typeof location.state.from === 'string'
+        ? location.state.from
+        : undefined;
     const target = from && from !== '/login' ? from : '/dashboard';
     if (isRootDomain()) {
       // automaktab.uz has no app UI of its own -- hand off to app. with a
@@ -80,7 +83,7 @@ const LoginPage = () => {
       navigateFullPage(rootDomainAppUrl(target));
       return;
     }
-    void navigate({ to: target as never });
+    void router.navigate({ href: target });
   };
 
   const onValid = (values: LoginFormValues) => {

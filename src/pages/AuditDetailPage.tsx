@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useLocation } from '@/app/navigation';
+import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { ShieldCheck, Warning } from '@phosphor-icons/react';
 import { useAuditLogById } from '@/services/auditService';
@@ -172,7 +172,7 @@ const AuditChangesView = (
 };
 
 const AuditDetailPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
@@ -194,7 +194,7 @@ const AuditDetailPage = () => {
   if (effectiveLoading || !log) {
     return (
       <EntityDetailShell
-        onBack={() => navigate('/audit')}
+        onBack={() => navigate({ to: '/audit' })}
         backLabel={t('audit.title')}
         isLoading={effectiveLoading}
         isError={!effectiveLoading}
@@ -208,7 +208,7 @@ const AuditDetailPage = () => {
 
   return (
     <EntityDetailShell
-      onBack={() => navigate('/audit')}
+      onBack={() => navigate({ to: '/audit' })}
       backLabel={t('audit.title')}
       isLoading={false}
       isError={false}
@@ -264,7 +264,29 @@ const AuditDetailPage = () => {
               value={
                 entityLink ? (
                   <button
-                    onClick={() => navigate(`${entityLink}/${log.entity_id}`)}
+                    onClick={() => {
+                      if (log.entity === 'student') {
+                        void navigate({
+                          to: '/students/$id',
+                          params: { id: log.entity_id },
+                        });
+                      } else if (log.entity === 'branch') {
+                        void navigate({
+                          to: '/branches/$id',
+                          params: { id: log.entity_id },
+                        });
+                      } else if (log.entity === 'group') {
+                        void navigate({
+                          to: '/groups/$id',
+                          params: { id: log.entity_id },
+                        });
+                      } else if (log.entity === 'user') {
+                        void navigate({
+                          to: '/users/$id',
+                          params: { id: log.entity_id },
+                        });
+                      }
+                    }}
                     className="font-mono text-xs text-primary hover:underline"
                   >
                     {log.entity_id}

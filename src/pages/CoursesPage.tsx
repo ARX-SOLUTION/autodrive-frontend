@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from '@/app/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { useCourses, useDeleteCourse } from '@/services/courseService';
 import { useBranches } from '@/services/branchService';
 import { Course } from '@/types/course';
@@ -78,7 +78,9 @@ const CoursesPage = () => {
             courses={courses || []}
             isLoading={isLoading}
             isFetching={isFetching}
-            onNavigate={(course) => navigate(`/courses/${course.id}`)}
+            onNavigate={(course) =>
+              navigate({ to: '/courses/$id', params: { id: course.id } })
+            }
             onCreate={openCreate}
             onEdit={openEdit}
             onDelete={setDeleteId}

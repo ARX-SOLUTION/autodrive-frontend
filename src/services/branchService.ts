@@ -3,6 +3,11 @@ import axiosInstance from '@/api/axiosInstance';
 import { Branch } from '@/types/branch';
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
 import { branchKeys } from '@/lib/queryKeys';
+import type {
+  BranchesQuery,
+  CreateBranchRequest,
+  UpdateBranchRequest,
+} from '@/shared/api/contract';
 
 // autodrive-cg9: includeDeleted is a second positional param (not folded
 // into an options object) so every existing zero-arg/one-arg call site
@@ -18,8 +23,10 @@ export const useBranches = (enabled = true, includeDeleted = false) =>
     // a longer stale window than the 30s global default.
     staleTime: 5 * 60_000,
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get('/branches', {
-        params: { include_deleted: includeDeleted || undefined },
+      const { data: res } = await axiosInstance.get<unknown>('/branches', {
+        params: {
+          include_deleted: includeDeleted || undefined,
+        } satisfies BranchesQuery,
         signal,
       });
       return parseListEnvelope<Branch>(res, 'branches').data;
@@ -31,9 +38,12 @@ export const useBranch = (id?: string) =>
     queryKey: branchKeys.detail(id),
     enabled: !!id,
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get(`/branches/${id}`, {
-        signal,
-      });
+      const { data: res } = await axiosInstance.get<unknown>(
+        `/branches/${id}`,
+        {
+          signal,
+        },
+      );
       return parseItemEnvelope<Branch>(res, 'branch');
     },
   });
@@ -41,12 +51,8 @@ export const useBranch = (id?: string) =>
 export const useCreateBranch = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (b: {
-      name: string;
-      location: string;
-      phone?: string;
-    }) => {
-      const { data } = await axiosInstance.post('/branches', b);
+    mutationFn: async (b: CreateBranchRequest) => {
+      const { data } = await axiosInstance.post<unknown>('/branches', b);
       return parseItemEnvelope<Branch>(data, 'branch');
     },
     onSuccess: () => {
@@ -58,16 +64,8 @@ export const useCreateBranch = () => {
 export const useUpdateBranch = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      ...b
-    }: {
-      id: string;
-      name?: string;
-      location?: string;
-      phone?: string;
-    }) => {
-      const { data } = await axiosInstance.patch(`/branches/${id}`, b);
+    mutationFn: async ({ id, ...b }: { id: string } & UpdateBranchRequest) => {
+      const { data } = await axiosInstance.patch<unknown>(`/branches/${id}`, b);
       return parseItemEnvelope<Branch>(data, 'branch');
     },
     onSuccess: () => {

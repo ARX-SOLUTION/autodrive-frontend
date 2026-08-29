@@ -12,9 +12,30 @@ import type { ListResponse } from '@/types/list';
 import { parseListResponse } from '@/lib/listResponse';
 import { parseItemEnvelope } from '@/lib/apiEnvelope';
 import { paymentKeys, studentKeys, dashboardKeys } from '@/lib/queryKeys';
+import type {
+  CreatePaymentRequest,
+  PaymentsQuery,
+  UpdatePaymentRequest,
+} from '@/shared/api/contract';
 
 const toLocalDateStr = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const toPaymentCourseType = (value?: string): PaymentsQuery['course_type'] =>
+  value === 'tezkor' || value === 'avto_maktab' ? value : undefined;
+
+const toPaymentMethod = (value?: string): PaymentsQuery['payment_method'] =>
+  value === 'naqd' || value === 'karta' || value === 'perechisleniya'
+    ? value
+    : undefined;
+
+const toPaymentSortBy = (value?: string): PaymentsQuery['sort_by'] =>
+  value === 'student_name' ||
+  value === 'amount_paid' ||
+  value === 'remaining_debt' ||
+  value === 'date'
+    ? value
+    : undefined;
 
 export interface PaymentListFilters {
   branchId?: string;
@@ -24,7 +45,7 @@ export interface PaymentListFilters {
   page?: number;
   limit?: number;
   search?: string;
-  paymentStatus?: 'paid' | 'unpaid';
+  paymentStatus?: PaymentsQuery['payment_status'];
   paymentMethod?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
@@ -44,17 +65,17 @@ export const toPaymentQueryParams = ({
   sortBy,
   sortOrder,
   studentId,
-}: PaymentListFilters) => ({
+}: PaymentListFilters): PaymentsQuery => ({
   branch_id: branchId,
-  course_type: courseType,
-  startDate: startDate ? toLocalDateStr(startDate) : undefined,
-  endDate: endDate ? toLocalDateStr(endDate) : undefined,
+  course_type: toPaymentCourseType(courseType),
+  start_date: startDate ? toLocalDateStr(startDate) : undefined,
+  end_date: endDate ? toLocalDateStr(endDate) : undefined,
   page,
   limit,
   search: search?.trim() || undefined,
   payment_status: paymentStatus,
-  payment_method: paymentMethod,
-  sort_by: sortBy,
+  payment_method: toPaymentMethod(paymentMethod),
+  sort_by: toPaymentSortBy(sortBy),
   sort_order: sortOrder,
   student_id: studentId,
 });
@@ -63,7 +84,7 @@ export const fetchPaymentsPage = async (
   filters: PaymentListFilters,
   signal?: AbortSignal,
 ): Promise<ListResponse<Payment>> => {
-  const { data } = await axiosInstance.get('/payments', {
+  const { data } = await axiosInstance.get<unknown>('/payments', {
     params: toPaymentQueryParams(filters),
     signal,
   });
@@ -155,10 +176,13 @@ export const usePaymentSnapshot = (branchId?: string) => {
     queryKey: paymentKeys.snapshot(branchId),
     enabled: !!branchId || isCrossTenant,
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get('/payments/snapshot', {
-        params: { branch_id: branchId },
-        signal,
-      });
+      const { data: res } = await axiosInstance.get<unknown>(
+        '/payments/snapshot',
+        {
+          params: { branch_id: branchId },
+          signal,
+        },
+      );
       return parseItemEnvelope<PaymentSnapshot>(res, 'payment-snapshot');
     },
   });
@@ -176,10 +200,13 @@ export const usePaymentSummary = (
     queryKey: paymentKeys.summary({ ...filters }),
     enabled: enabled && (!!filters.branchId || isCrossTenant),
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get('/payments/summary', {
-        params: toPaymentQueryParams(filters),
-        signal,
-      });
+      const { data: res } = await axiosInstance.get<unknown>(
+        '/payments/summary',
+        {
+          params: toPaymentQueryParams(filters),
+          signal,
+        },
+      );
       return parseItemEnvelope<PaymentSummary>(res, 'payment-summary');
     },
   });
@@ -191,10 +218,11 @@ export const useCreatePayment = () => {
     mutationFn: async (payment: {
       student_id: string;
       amount: number;
-      payment_method: string;
+      payment_method: CreatePaymentRequest['payment_method'];
       idempotency_key: string;
     }) => {
-      const { data } = await axiosInstance.post('/payments', payment);
+      const request: CreatePaymentRequest = payment;
+      const { data } = await axiosInstance.post<unknown>('/payments', request);
       return parseItemEnvelope<Payment>(data, 'payment');
     },
     onSuccess: () => {
@@ -214,12 +242,11 @@ export const useUpdatePayment = () => {
     mutationFn: async ({
       id,
       ...payment
-    }: {
-      id: string;
-      amount?: number;
-      payment_method?: string;
-    }) => {
-      const { data } = await axiosInstance.patch(`/payments/${id}`, payment);
+    }: { id: string } & UpdatePaymentRequest) => {
+      const { data } = await axiosInstance.patch<unknown>(
+        `/payments/${id}`,
+        payment,
+      );
       return parseItemEnvelope<Payment>(data, 'payment');
     },
     onSuccess: () => {

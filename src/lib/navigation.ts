@@ -17,8 +17,23 @@ import type { Capability } from '@/lib/permissions';
 
 export type NavSectionId = 'workspace' | 'learning' | 'team' | 'system';
 
+export type AppRoutePath =
+  | '/dashboard'
+  | '/schedule'
+  | '/attendance'
+  | '/groups'
+  | '/courses'
+  | '/students'
+  | '/payments'
+  | '/branches'
+  | '/operators'
+  | '/teachers'
+  | '/users'
+  | '/audit'
+  | '/profile';
+
 export type NavItem = {
-  path: string;
+  path: AppRoutePath;
   labelKey: string;
   icon: typeof SquaresFour;
   section: NavSectionId;

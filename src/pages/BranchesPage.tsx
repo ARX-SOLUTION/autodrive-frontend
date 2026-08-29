@@ -270,7 +270,7 @@ const BranchesPage = () => {
                   key={b.id}
                   onClick={(e) =>
                     goToBranch(
-                      `/branches/${b.id}`,
+                      { to: '/branches/$id', params: { id: b.id } },
                       e.currentTarget,
                       `branch-${b.id}`,
                     )
@@ -281,7 +281,7 @@ const BranchesPage = () => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       goToBranch(
-                        `/branches/${b.id}`,
+                        { to: '/branches/$id', params: { id: b.id } },
                         e.currentTarget,
                         `branch-${b.id}`,
                       );
@@ -397,7 +397,7 @@ const BranchesPage = () => {
               subtitle={b.location}
               onClick={(e) =>
                 goToBranch(
-                  `/branches/${b.id}`,
+                  { to: '/branches/$id', params: { id: b.id } },
                   e.currentTarget,
                   `branch-${b.id}`,
                 )

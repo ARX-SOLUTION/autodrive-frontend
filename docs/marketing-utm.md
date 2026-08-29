@@ -8,7 +8,7 @@ Umami auto-captures `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, a
 
 ## SPA auto-tracking note
 
-Umami monkey-patches `history.pushState` and `history.replaceState` at init, so every React Router `<Link>` click and `navigate()` call fires a pageview automatically. No manual RouteTracker component is needed.
+Umami monkey-patches `history.pushState` and `history.replaceState` at init, so every TanStack Router `<Link>` click and `navigate()` call fires a pageview automatically. No manual RouteTracker component is needed.
 
 **Caveat:** Browser back/forward buttons (`popstate`) are NOT tracked by umami. If that matters, add: `window.addEventListener('popstate', () => window.umami?.track('pageview'))`.
 

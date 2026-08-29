@@ -23,8 +23,8 @@
  * Domains whose queries don't fit list/page/detail (aggregates, sub-
  * resources) get extra named members instead -- see each domain below.
  *
- * This module is additive-only: no existing `queryKey` array in
- * src/services/*.ts is touched. A later stage migrates callers over.
+ * Services should use these factories for every query key and invalidation;
+ * this keeps cache identity stable across route loaders and feature hooks.
  */
 
 type Filters = Record<string, unknown>;

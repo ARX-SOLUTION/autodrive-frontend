@@ -1,6 +1,7 @@
 import { CaretRight, House } from '@phosphor-icons/react';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import type { AppRoutePath } from '@/lib/navigation';
 
 /** Slug → translation key. Unknown slugs fall back to title-cased slug. */
 const SEGMENT_KEYS: Record<string, string> = {
@@ -19,6 +20,21 @@ const SEGMENT_KEYS: Record<string, string> = {
   attendance: 'nav.attendance',
 };
 
+const ROOT_PATHS: Record<string, AppRoutePath> = {
+  dashboard: '/dashboard',
+  branches: '/branches',
+  groups: '/groups',
+  students: '/students',
+  payments: '/payments',
+  operators: '/operators',
+  teachers: '/teachers',
+  users: '/users',
+  audit: '/audit',
+  profile: '/profile',
+  schedule: '/schedule',
+  attendance: '/attendance',
+};
+
 const titleCase = (s: string) =>
   s.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -30,7 +46,7 @@ export const Breadcrumbs = () => {
   if (segments.length < 2 || segments[0] === 'login') return null;
 
   const crumbs = segments.map((segment, idx) => {
-    const href = '/' + segments.slice(0, idx + 1).join('/');
+    const href = idx === 0 ? ROOT_PATHS[segment] : undefined;
     const key = SEGMENT_KEYS[segment];
     return { segment, href, label: key ? t(key) : titleCase(segment) };
   });
@@ -51,18 +67,23 @@ export const Breadcrumbs = () => {
       {crumbs.map((c, i) => {
         const isLast = i === crumbs.length - 1;
         return (
-          <span key={c.href} className="inline-flex items-center gap-1">
+          <span
+            key={`${c.segment}-${i}`}
+            className="inline-flex items-center gap-1"
+          >
             <CaretRight className="h-3.5 w-3.5 text-muted-foreground/60" />
             {isLast ? (
               <span className="font-medium text-foreground">{c.label}</span>
-            ) : (
+            ) : c.href ? (
               <Link
-                to={c.href as never}
+                to={c.href}
                 preload="intent"
                 className="text-muted-foreground hover:text-foreground"
               >
                 {c.label}
               </Link>
+            ) : (
+              <span className="text-muted-foreground">{c.label}</span>
             )}
           </span>
         );

@@ -1,33 +1,9 @@
 import { z } from 'zod';
 import { isValidUzPhone, uzPhoneE164 } from '@/lib/phoneFormater';
-import type {
-  CourseType,
-  PaymentMethod,
-  ResultStatus,
-  Student,
-  StudentStatus,
-} from '@/types/student';
+import type { CreateStudentRequest } from '@/shared/api/contract';
+import type { CourseType, Student } from '@/types/student';
 
-export interface CreateStudentPayload {
-  first_name: string;
-  last_name: string;
-  phone: string;
-  course_type: CourseType;
-  total_price: number;
-  amount_paid?: number;
-  initial_payment?: number;
-  payment_method?: PaymentMethod;
-  group_id?: string;
-  branch_id?: string;
-  completion_date?: string;
-  contract_number?: string;
-  o83?: boolean;
-  has_document?: boolean;
-  result?: ResultStatus;
-  notes?: string;
-  status?: StudentStatus;
-  registered_by?: string;
-}
+export type CreateStudentPayload = CreateStudentRequest;
 
 export const makeStudentFormSchema = (t: (key: string) => string) =>
   z.object({

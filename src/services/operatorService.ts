@@ -7,6 +7,11 @@ import type { ListResponse } from '@/types/list';
 import { parseListResponse } from '@/lib/listResponse';
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
 import { operatorKeys, userKeys } from '@/lib/queryKeys';
+import type {
+  CreateUserRequest,
+  UpdateUserRequest,
+  UsersQuery,
+} from '@/shared/api/contract';
 
 export const useOperators = () => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
@@ -17,8 +22,8 @@ export const useOperators = () => {
     // use a longer stale window than the 30s global default.
     staleTime: 5 * 60_000,
     queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get('/users', {
-        params: { role: 'operator' },
+      const { data: res } = await axiosInstance.get<unknown>('/users', {
+        params: { role: 'operator' } satisfies UsersQuery,
         signal,
       });
       return parseListEnvelope<User>(res, 'operators').data;
@@ -41,13 +46,13 @@ export const useOperatorsPage = (
   return useQuery<ListResponse<User>>({
     queryKey: operatorKeys.page({ branchId, page, limit, search }),
     queryFn: async ({ signal }) => {
-      const { data } = await axiosInstance.get('/users', {
+      const { data } = await axiosInstance.get<unknown>('/users', {
         params: {
           role: 'operator',
           page,
           limit,
           search: search || undefined,
-        },
+        } satisfies UsersQuery,
         signal,
       });
       return parseListResponse<User>(data, page, limit);
@@ -65,10 +70,16 @@ export const useCreateOperator = () => {
       // matches backend CreateUserDto: branchId is @IsOptional()
       branchId?: string;
     }) => {
-      const { data } = await axiosInstance.post('/users', {
+      const request: Pick<
+        CreateUserRequest,
+        'fullName' | 'phone' | 'branchId'
+      > & {
+        role: 'operator';
+      } = {
         ...op,
         role: 'operator',
-      });
+      };
+      const { data } = await axiosInstance.post<unknown>('/users', request);
       return parseItemEnvelope<User>(data, 'operator');
     },
     onSuccess: () => {
@@ -80,16 +91,8 @@ export const useCreateOperator = () => {
 export const useUpdateOperator = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      ...op
-    }: {
-      id: string;
-      fullName?: string;
-      phone?: string;
-      branchId?: string;
-    }) => {
-      const { data } = await axiosInstance.patch(`/users/${id}`, op);
+    mutationFn: async ({ id, ...op }: { id: string } & UpdateUserRequest) => {
+      const { data } = await axiosInstance.patch<unknown>(`/users/${id}`, op);
       return parseItemEnvelope<User>(data, 'operator');
     },
     // UserDetailPage (/users/:id) reads via userKeys.detail(id), a root

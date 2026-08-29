@@ -3,8 +3,8 @@ import { vi, describe, it, expect, afterEach } from 'vitest';
 import { createRouterTestWrapper } from '@/test/utils/renderWithRouter';
 import { useViewTransitionNavigate } from './useViewTransitionNavigate';
 
-// CRM navigation is deliberately plain: callers keep the old three-argument
-// API, but no browser snapshot or element style mutation should run.
+// CRM navigation is deliberately plain: callers use TanStack's typed options,
+// but no browser snapshot or element style mutation should run.
 
 const renderNavigateHook = async () => {
   const { router, wrapper } = await createRouterTestWrapper({
@@ -28,10 +28,19 @@ describe('useViewTransitionNavigate', () => {
     const { result, navigateSpy } = await renderNavigateHook();
     const el = document.createElement('div');
 
-    await act(() => result.current('/students/1', el, 'student-1'));
+    await act(() =>
+      result.current(
+        { to: '/students/$id', params: { id: '1' } },
+        el,
+        'student-1',
+      ),
+    );
 
     expect(navigateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ to: '/students/1' }),
+      expect.objectContaining({
+        to: '/students/$id',
+        params: { id: '1' },
+      }),
     );
     expect(el.style.viewTransitionName).toBe('');
   });
@@ -43,10 +52,19 @@ describe('useViewTransitionNavigate', () => {
     const { result, navigateSpy } = await renderNavigateHook();
     const el = document.createElement('div');
 
-    await act(() => result.current('/students/1', el, 'student-1'));
+    await act(() =>
+      result.current(
+        { to: '/students/$id', params: { id: '1' } },
+        el,
+        'student-1',
+      ),
+    );
 
     expect(navigateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ to: '/students/1' }),
+      expect.objectContaining({
+        to: '/students/$id',
+        params: { id: '1' },
+      }),
     );
     expect(document.startViewTransition).not.toHaveBeenCalled();
   });
@@ -57,7 +75,7 @@ describe('useViewTransitionNavigate', () => {
 
     const { result, navigateSpy } = await renderNavigateHook();
 
-    await act(() => result.current('/dashboard', null, ''));
+    await act(() => result.current({ to: '/dashboard' }, null, ''));
 
     expect(navigateSpy).toHaveBeenCalledWith(
       expect.objectContaining({ to: '/dashboard' }),
@@ -72,11 +90,20 @@ describe('useViewTransitionNavigate', () => {
     const { result, navigateSpy } = await renderNavigateHook();
     const el = document.createElement('div');
 
-    await act(() => result.current('/students/1', el, 'student-1'));
+    await act(() =>
+      result.current(
+        { to: '/students/$id', params: { id: '1' } },
+        el,
+        'student-1',
+      ),
+    );
 
     expect(navigateSpy).toHaveBeenCalledTimes(1);
     expect(navigateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ to: '/students/1' }),
+      expect.objectContaining({
+        to: '/students/$id',
+        params: { id: '1' },
+      }),
     );
     expect(el.style.viewTransitionName).toBe('');
     expect(document.startViewTransition).not.toHaveBeenCalled();

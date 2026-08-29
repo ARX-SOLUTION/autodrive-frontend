@@ -6,14 +6,19 @@ import {
 } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { useIsCrossTenant } from '@/hooks/useCan';
-import { Course, CreateCoursePayload } from '@/types/course';
+import {
+  Course,
+  CreateCoursePayload,
+  UpdateCoursePayload,
+} from '@/types/course';
 import { track } from '@/lib/umami';
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
 import { courseKeys } from '@/lib/queryKeys';
+import type { CoursesQuery } from '@/shared/api/contract';
 
 export interface CourseListParams {
   branchId?: string;
-  courseType?: string;
+  courseType?: CoursesQuery['course_type'];
   search?: string;
 }
 
@@ -21,12 +26,12 @@ export const fetchCourses = async (
   params: CourseListParams = {},
   signal?: AbortSignal,
 ): Promise<Course[]> => {
-  const { data: res } = await axiosInstance.get('/courses', {
+  const { data: res } = await axiosInstance.get<unknown>('/courses', {
     params: {
       branch_id: params.branchId || undefined,
       course_type: params.courseType || undefined,
       search: params.search || undefined,
-    },
+    } satisfies CoursesQuery,
     signal,
   });
   return parseListEnvelope<Course>(res, 'courses').data;
@@ -57,7 +62,9 @@ export const courseDetailQueryOptions = (id?: string, enabled = !!id) =>
   queryOptions({
     queryKey: courseKeys.detail(id),
     queryFn: async ({ signal }) => {
-      const { data } = await axiosInstance.get(`/courses/${id}`, { signal });
+      const { data } = await axiosInstance.get<unknown>(`/courses/${id}`, {
+        signal,
+      });
       return parseItemEnvelope<Course>(data, 'course');
     },
     enabled,
@@ -70,7 +77,7 @@ export const useCreateCourse = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (course: CreateCoursePayload) => {
-      const { data } = await axiosInstance.post('/courses', course);
+      const { data } = await axiosInstance.post<unknown>('/courses', course);
       return parseItemEnvelope<Course>(data, 'course');
     },
     onSuccess: () => {
@@ -86,8 +93,11 @@ export const useUpdateCourse = () => {
     mutationFn: async ({
       id,
       ...course
-    }: Partial<CreateCoursePayload> & { id: string }) => {
-      const { data } = await axiosInstance.patch(`/courses/${id}`, course);
+    }: { id: string } & UpdateCoursePayload) => {
+      const { data } = await axiosInstance.patch<unknown>(
+        `/courses/${id}`,
+        course,
+      );
       return parseItemEnvelope<Course>(data, 'course');
     },
     onSuccess: () => {
