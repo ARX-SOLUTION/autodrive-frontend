@@ -2,7 +2,7 @@
 
 ## Overview
 
-React 18 + Vite + TypeScript frontend for a Uzbek driving school CRM. Tenant-facing application serving managers, operators, and teachers across driving school branches. Built with shadcn/ui, TanStack Query, Zustand, and a tenant-local **Warm Paper** visual system (warm off-white surfaces, rust accent). Shared `@autodrive/design-tokens` remain the package default; the tenant CRM overrides palette in `src/index.css` so the admin panel stays unchanged.
+React 19 + Vite + TypeScript frontend for an Uzbek driving school CRM. Tenant-facing application serving owners, managers, operators, and teachers across driving school branches. Built with shadcn/ui, TanStack Router, TanStack Query, Zustand, and a tenant-local **Warm Paper** visual system (warm off-white surfaces, rust accent). Shared `@autodrive/design-tokens` remain the package default; the tenant CRM overrides palette in `src/index.css` so the admin panel stays unchanged.
 
 ## Product boundaries
 
@@ -41,7 +41,7 @@ _Avoid_: CRM, tenant app
 - **Components:** shadcn/ui Radix primitives in `src/components/ui/`.
 - **Layout:** Collapsible sidebar + topbar shell; owner dashboard uses an asymmetric Variant B hierarchy (oversized metrics, ≤2 primary charts).
 - **Dates:** Calendar-only single days use shared `DatePicker` (`YYYY-MM-DD`). Filter Date Ranges use `DateRangePicker` (one trigger, range calendar). Lesson/exam instants use `DateTimePicker` in Asia/Tashkent wall time → ISO. Default range `max` is Tashkent today.
-- **i18n:** Uzbek (uz), Russian (ru), English (en). Detection via `navigator.language` + `localStorage`. Files in `src/i18n/`.
+- **i18n:** Uzbek (uz), Russian (ru), English (en). The saved language is read from `localStorage`; resources live in `src/i18n/locales/`.
 
 ---
 
@@ -56,7 +56,7 @@ _Avoid_: CRM, tenant app
 ### Query patterns
 
 - `staleTime: 30_000` (30s) on most queries.
-- Query keys include `branchId` for tenant isolation: `['students', branchId, { page, search }]`.
+- Query keys are domain-scoped and include tenant filters: `['students', 'page', { branchId, page, search }]`.
 - Mutations: `mutationFn` via `axiosInstance` → `onSuccess` invalidates related keys → `toast.success()` → `disabled={mutation.isPending}` on submit button.
 - Branch switch → `queryClient.invalidateQueries()` clears stale tenant cache.
 - Logout → `queryClient.clear()` prevents data leakage to next session.
@@ -69,24 +69,25 @@ _Avoid_: CRM, tenant app
 
 ---
 
-## Route Map (Uzbek path names)
+## Route Map (canonical app paths)
 
-| Path                | Page                                                | Access            |
-| ------------------- | --------------------------------------------------- | ----------------- |
-| `/dashboard`        | Analytics dashboard with Recharts (bar, pie charts) | All authenticated |
-| `/filiallar`        | Branch management CRUD                              | Owner only        |
-| `/jadval`           | Schedule calendar + template management             | Manager, operator |
-| `/davomat`          | Lesson attendance tracking                          | Teacher, operator |
-| `/guruhlar`         | Group CRUD                                          | Manager, operator |
-| `/talabalar`        | Student CRUD with payment data                      | Operator, manager |
-| `/tolovlar`         | Payment list + debt management                      | Operator, manager |
-| `/operatorlar`      | Operator staff management                           | Manager           |
-| `/oqituvchilar`     | Teacher staff management                            | Manager           |
-| `/foydalanuvchilar` | User management                                     | Manager           |
-| `/audit`            | Audit log viewer                                    | Owner only        |
-| `/profile`          | User profile / settings                             | All authenticated |
+| Path          | Page                                                | Access            |
+| ------------- | --------------------------------------------------- | ----------------- |
+| `/dashboard`  | Analytics dashboard with Recharts (bar, pie charts) | All authenticated |
+| `/branches`   | Branch management CRUD                              | Owner only        |
+| `/schedule`   | Schedule calendar + template management             | Manager, operator |
+| `/attendance` | Lesson attendance tracking                          | Teacher, operator |
+| `/groups`     | Group CRUD                                          | Manager, operator |
+| `/students`   | Student CRUD with payment data                      | Operator, manager |
+| `/payments`   | Payment list + debt management                      | Operator, manager |
+| `/operators`  | Operator staff management                           | Manager           |
+| `/teachers`   | Teacher staff management                            | Manager           |
+| `/users`      | User management                                     | Manager           |
+| `/audit`      | Audit log viewer                                    | Owner only        |
+| `/profile`    | User profile / settings                             | All authenticated |
 
-All route pages use `React.lazy()` for code splitting.
+TanStack Router compiles file routes into route-local chunks; heavy chart and
+export dependencies are deferred to the routes that use them.
 
 ---
 
@@ -94,15 +95,15 @@ All route pages use `React.lazy()` for code splitting.
 
 | Category      | Technology                                   |
 | ------------- | -------------------------------------------- |
-| Framework     | React 18, Vite 6, TypeScript 5.8             |
+| Framework     | React 19, Vite 6, TypeScript 6               |
 | Styling       | Tailwind CSS, shadcn/ui, Radix UI primitives |
 | Server state  | TanStack Query 5                             |
 | Client state  | Zustand 5                                    |
-| Routing       | react-router-dom 6                           |
+| Routing       | TanStack Router (file routes)                |
 | Forms         | react-hook-form + zod resolver               |
 | HTTP          | axios (shared `axiosInstance`)               |
 | Charts        | Recharts                                     |
-| Icons         | lucide-react                                 |
+| Icons         | @phosphor-icons/react                        |
 | Notifications | sonner                                       |
 | Testing       | Vitest                                       |
 | PWA           | vite-plugin-pwa                              |
@@ -111,15 +112,22 @@ All route pages use `React.lazy()` for code splitting.
 
 ## Key Architectural Patterns
 
-1. **Code splitting:** `React.lazy()` for every route page. Heavy dependencies (Recharts, date libraries) loaded on demand.
+1. **Code splitting:** TanStack Router route chunks plus deferred heavy dependencies (Recharts, date libraries, XLSX).
 2. **Tenant isolation:** Query keys include `branchId`. Cache cleared on logout and branch switch.
-3. **Optimistic updates:** Not yet standard — evaluate per mutation (high-confidence mutations like toggles benefit most).
+3. **Optimistic updates:** Only reversible attendance/status interactions use optimistic updates; financial mutations stay server-authoritative.
 4. **Error boundaries:** Route-level error boundaries catch render crashes. API errors handled by TanStack Query error states and sonner toasts.
 5. **Empty/loading states:** shadcn `<Skeleton>` for loading. Explicit empty states (not blank tables) for zero-data views.
 6. **Confirm before destroy:** `ConfirmDialog` component for all destructive actions. No silent deletes.
 7. **Forms:** react-hook-form + zod schema validation. Errors via shadcn `<FormMessage />`. Submit handlers are async and await the mutation.
 
 ---
+
+## API contract
+
+- Backend is the source for the authenticated OpenAPI document at `/api/openapi.json`.
+- Run `pnpm run api:types` with runtime-only `OPENAPI_TOKEN` or `OPENAPI_USERNAME`/`OPENAPI_PASSWORD` to regenerate `src/shared/api/schema.d.ts`.
+- Run `pnpm run api:check` in CI to fail when the committed generated contract is stale.
+- `VITE_*` variables are browser-visible; OpenAPI credentials must never use that prefix or be bundled into the app.
 
 ## Cross-Repo Relationships
 
@@ -138,6 +146,6 @@ The **autodrive-admin-panel** is a separate React app for platform-level adminis
 - 3 languages: Uzbek (uz), Russian (ru), English (en).
 - Primary detection: `navigator.language` on first visit.
 - Override: stored in `localStorage` key `lang`.
-- Translation files: `src/i18n/{uz,ru,en}/`.
+- Translation files: `src/i18n/locales/{uz,ru,en}.json`.
 - UI strings only — API data (student names, group names) stored in whatever language the operator entered.
 - Date/number formatting via `Intl` API respecting the active locale.
