@@ -22,7 +22,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useTeacherAnalytics } from '@/services/dashboardService';
 import { useLessons } from '@/services/attendanceService';
-import { useStudents } from '@/services/studentService';
+import { useStudentsPage } from '@/services/studentService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import {
@@ -67,12 +67,8 @@ const RESULT_COLORS = [
   'hsl(var(--destructive))',
 ];
 
-// ponytail: fixed page-size ceilings, not full pagination -- a single
-// teacher's own (server-scoped) roster/lesson list is small. GetLessonsQueryDto
-// caps limit at 100 server-side, so 100 is also the real max here. Upgrade
-// path if a teacher ever exceeds these: useStudentsPage + { hasDebt: true }
-// + meta.total for an exact count instead of a client-side filter/length.
-const STUDENTS_FETCH_LIMIT = 200;
+// GetLessonsQueryDto caps limit at 100 server-side, so 100 is the real max.
+// The owing KPI uses a one-row, server-filtered page and reads meta.total.
 const LESSONS_FETCH_LIMIT = 100;
 const UPCOMING_LESSONS_SHOWN = 5;
 
@@ -85,12 +81,10 @@ const TeacherDashboard = () => {
     1,
     LESSONS_FETCH_LIMIT,
   );
-  const { data: students, isLoading: studentsLoading } = useStudents(
-    undefined,
-    user?.branch_id,
-    1,
-    STUDENTS_FETCH_LIMIT,
-  );
+  const { data: owingStudentsPage, isLoading: studentsLoading } =
+    useStudentsPage(undefined, user?.branch_id, 1, 1, undefined, {
+      hasDebt: true,
+    });
 
   const todayUZ = uzNumericDateFormatter.format(new Date());
   const lessons = useMemo(() => lessonsPage?.data ?? [], [lessonsPage]);
@@ -99,31 +93,28 @@ const TeacherDashboard = () => {
   // today's already-past-clock-time lessons -- a teacher may still need to
   // mark attendance for an earlier-today lesson, so it shouldn't vanish from
   // the list at the stroke of its own start time.
-  const upcomingLessons = useMemo(
-    () =>
-      lessons
-        .filter(
-          (l) => uzNumericDateFormatter.format(new Date(l.date)) >= todayUZ,
-        )
-        .sort(
-          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-        ),
-    [lessons, todayUZ],
-  );
-  const todayLessonsCount = useMemo(
-    () =>
-      lessons.filter(
-        (l) => uzNumericDateFormatter.format(new Date(l.date)) === todayUZ,
-      ).length,
-    [lessons, todayUZ],
-  );
+  const { upcomingLessons, todayLessonsCount } = useMemo(() => {
+    const timedLessons = lessons.map((lesson) => {
+      const parsedDate = new Date(lesson.date);
+      return {
+        lesson,
+        timestamp: parsedDate.getTime(),
+        dayKey: uzNumericDateFormatter.format(parsedDate),
+      };
+    });
+
+    return {
+      upcomingLessons: timedLessons
+        .filter(({ dayKey }) => dayKey >= todayUZ)
+        .sort((a, b) => a.timestamp - b.timestamp),
+      todayLessonsCount: timedLessons.filter(({ dayKey }) => dayKey === todayUZ)
+        .length,
+    };
+  }, [lessons, todayUZ]);
   // Binary paid/owing signal only (autodrive-vh0.5 hard rule): count rows
   // where has_debt === true, never a debt amount. See src/types/student.ts
   // and DebtStatusBadge for the same convention.
-  const owingStudentsCount = useMemo(
-    () => (students ?? []).filter((s) => s.has_debt === true).length,
-    [students],
-  );
+  const owingStudentsCount = owingStudentsPage?.meta.total ?? 0;
 
   if (analyticsLoading || lessonsLoading || studentsLoading || !analytics) {
     return (
@@ -229,7 +220,7 @@ const TeacherDashboard = () => {
               <ul className="divide-y divide-border">
                 {upcomingLessons
                   .slice(0, UPCOMING_LESSONS_SHOWN)
-                  .map((lesson) => (
+                  .map(({ lesson, timestamp }) => (
                     <li key={lesson.id}>
                       <Link
                         to="/attendance"
@@ -237,7 +228,7 @@ const TeacherDashboard = () => {
                         className="group flex items-center gap-3 rounded-lg py-2.5 motion-safe:transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         <span className="w-24 shrink-0 font-mono text-xs font-semibold tabular-nums text-muted-foreground">
-                          {format(new Date(lesson.date), 'dd.MM, HH:mm')}
+                          {format(timestamp, 'dd.MM, HH:mm')}
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-semibold">

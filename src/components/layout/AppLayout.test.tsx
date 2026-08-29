@@ -69,6 +69,7 @@ describe('AppLayout mobile sidebar auto-close on navigation', () => {
     const contentShell = screen.getByRole('main').parentElement!;
     expect(screen.getByTestId('desktop-expanded')).toHaveTextContent('true');
     expect(contentShell.className).toContain('lg:ml-64');
+    expect(contentShell.className).not.toContain('transition-[margin-left]');
 
     fireEvent.click(screen.getByText('toggle-desktop'));
 

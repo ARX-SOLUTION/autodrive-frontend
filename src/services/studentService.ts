@@ -118,12 +118,15 @@ export const fetchStudentsPage = async (
 export const studentsPageQueryOptions = (
   params: StudentListParams,
   enabled = true,
-) =>
-  queryOptions({
-    queryKey: studentKeys.page({ ...params }),
+) => {
+  const queryParams = toStudentQueryParams(params);
+
+  return queryOptions({
+    queryKey: studentKeys.page(queryParams),
     enabled,
     queryFn: ({ signal }) => fetchStudentsPage(params, signal),
   });
+};
 
 export const fetchAllStudents = async (
   params: StudentListParams,
@@ -171,21 +174,19 @@ export const useStudents = (
 ) => {
   const isCrossTenant = useIsCrossTenant();
   const baseEnabled = !!branchId || isCrossTenant;
+  const { enabled: optionEnabled = true, ...listOptions } = options ?? {};
+  const params: StudentListParams = {
+    courseType,
+    branchId,
+    page,
+    limit,
+    operatorId,
+    ...listOptions,
+  };
   return useQuery<ListResponse<Student>, Error, Student[]>({
-    queryKey: studentKeys.list({
-      courseType,
-      branchId,
-      page,
-      limit,
-      operatorId,
-      ...options,
-    }),
-    enabled: (options?.enabled ?? true) && baseEnabled,
-    queryFn: ({ signal }) =>
-      fetchStudentsPage(
-        { courseType, branchId, page, limit, operatorId, ...options },
-        signal,
-      ),
+    queryKey: studentKeys.list(toStudentQueryParams(params)),
+    enabled: optionEnabled && baseEnabled,
+    queryFn: ({ signal }) => fetchStudentsPage(params, signal),
     select: (result) => result.data,
   });
 };

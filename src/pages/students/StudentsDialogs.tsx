@@ -87,29 +87,33 @@ export const StudentsDialogs = ({
 
   return (
     <>
-      <StudentModal
-        open={modalOpen && !detailed}
-        onClose={onModalClose}
-        onSubmit={onModalSubmit}
-        onSaveAndAdd={!editStudent ? onSaveAndAdd : undefined}
-        loading={modalLoading}
-        student={editStudent}
-        courseType={courseType}
-        operators={operators}
-        defaultBranchId={branchId}
-        detailedToggle={editStudent ? undefined : detailedToggle}
-        onDirtyChange={editStudent ? undefined : setCreateFormDirty}
-      />
+      {modalOpen && !detailed ? (
+        <StudentModal
+          open
+          onClose={onModalClose}
+          onSubmit={onModalSubmit}
+          onSaveAndAdd={!editStudent ? onSaveAndAdd : undefined}
+          loading={modalLoading}
+          student={editStudent}
+          courseType={courseType}
+          operators={operators}
+          defaultBranchId={branchId}
+          detailedToggle={editStudent ? undefined : detailedToggle}
+          onDirtyChange={editStudent ? undefined : setCreateFormDirty}
+        />
+      ) : null}
 
-      <AddStudentDialog
-        open={modalOpen && detailed}
-        onClose={onAddFlowClose}
-        onSubmit={onAddStudentSubmit}
-        loading={addFlowLoading}
-        defaultBranchId={branchId}
-        detailedToggle={detailedToggle}
-        onDirtyChange={setCreateFormDirty}
-      />
+      {modalOpen && detailed ? (
+        <AddStudentDialog
+          open
+          onClose={onAddFlowClose}
+          onSubmit={onAddStudentSubmit}
+          loading={addFlowLoading}
+          defaultBranchId={branchId}
+          detailedToggle={detailedToggle}
+          onDirtyChange={setCreateFormDirty}
+        />
+      ) : null}
 
       <ConfirmDialog
         open={!!deleteId}

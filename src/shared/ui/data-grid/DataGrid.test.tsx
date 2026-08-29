@@ -5,9 +5,15 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-import { DataGrid } from './DataGrid';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DataGrid, type DataGridMobileRowContext } from './DataGrid';
 import { createDataGridColumnHelper } from './dataGridFeatures';
+
+const viewport = vi.hoisted(() => ({ isMobile: false }));
+
+vi.mock('@/hooks/use-mobile', () => ({
+  useIsMobile: () => viewport.isMobile,
+}));
 
 interface Person {
   id: string;
@@ -55,6 +61,10 @@ const baseProps = {
   labels,
   emptyState: <p>No people</p>,
 };
+
+beforeEach(() => {
+  viewport.isMobile = false;
+});
 
 describe('DataGrid', () => {
   it('renders the supplied current-page rows through TanStack column definitions', () => {
@@ -251,26 +261,37 @@ describe('DataGrid', () => {
     expect(within(table).queryByText('Zara')).not.toBeInTheDocument();
   });
 
-  it('provides current-page metadata to the optional mobile renderer', () => {
-    const { container } = render(
-      <DataGrid
-        {...baseProps}
-        data={[people[0]]}
-        pagination={{
-          pageIndex: 2,
-          pageSize: 25,
-          rowCount: 60,
-          pageCount: 3,
-        }}
-        renderMobileRow={({ row, absoluteRowIndex }) => (
-          <article>
-            Mobile {row.name} at {absoluteRowIndex}
-          </article>
-        )}
-      />,
+  it('mounts only the active responsive row tree', () => {
+    const responsiveProps = {
+      data: [people[0]],
+      pagination: {
+        pageIndex: 2,
+        pageSize: 25,
+        rowCount: 60,
+        pageCount: 3,
+      },
+      renderMobileRow: ({
+        row,
+        absoluteRowIndex,
+      }: DataGridMobileRowContext<Person>) => (
+        <article>
+          Mobile {row.name} at {absoluteRowIndex}
+        </article>
+      ),
+    };
+
+    const { container, rerender } = render(
+      <DataGrid {...baseProps} {...responsiveProps} />,
     );
+
+    expect(screen.getByRole('table', { name: 'People' })).toBeInTheDocument();
+    expect(container.querySelector('[data-data-grid-mobile]')).toBeNull();
+
+    viewport.isMobile = true;
+    rerender(<DataGrid {...baseProps} {...responsiveProps} />);
 
     const mobile = container.querySelector('[data-data-grid-mobile]');
     expect(mobile).toHaveTextContent('Mobile Zara at 50');
+    expect(screen.queryByRole('table', { name: 'People' })).toBeNull();
   });
 });

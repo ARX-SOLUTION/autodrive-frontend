@@ -19,11 +19,8 @@ import { useAuthStore } from '@/store/authStore';
 import { formatMoney } from '@/lib/money';
 import type { StudentStatus } from '@/types/student';
 
-// ponytail: this is a read-only roster tab, not the paginated StudentsPage --
-// one generous page instead of adding pagination controls here. Same ceiling
-// TeacherDashboard already uses (STUDENTS_FETCH_LIMIT); add real pagination
-// if a single course ever enrolls more than this.
-const STUDENTS_FETCH_LIMIT = 200;
+// This read-only roster stays bounded; full pagination lives on StudentsPage.
+const STUDENTS_FETCH_LIMIT = 50;
 const CourseDetailPage = () => {
   const { id } = useParams({ strict: false });
   const navigate = useNavigate();
@@ -31,6 +28,9 @@ const CourseDetailPage = () => {
   const { searchParams } = useUrlParams();
   const isCrossTenant = useIsCrossTenant();
   const authUser = useAuthStore((s) => s.user);
+  const initialTab =
+    searchParams.get('tab') === 'students' ? 'students' : 'info';
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   const { data: course, isLoading, isError } = useCourse(id);
   const { data: branches } = useBranches();
@@ -48,7 +48,7 @@ const CourseDetailPage = () => {
     isError: studentsError,
   } = useStudents(undefined, branchId, 1, STUDENTS_FETCH_LIMIT, undefined, {
     courseId: id,
-    enabled: !!id,
+    enabled: !!id && activeTab === 'students',
   });
 
   const statusLabels: Record<StudentStatus, string> = {
@@ -75,9 +75,6 @@ const CourseDetailPage = () => {
     course.course_type === 'tezkor'
       ? t('courses.type_tezkor')
       : t('courses.type_avto_maktab');
-
-  const initialTab =
-    searchParams.get('tab') === 'students' ? 'students' : 'info';
 
   return (
     <EntityDetailShell
@@ -112,7 +109,12 @@ const CourseDetailPage = () => {
         </div>
       }
     >
-      <Tabs defaultValue={initialTab}>
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) =>
+          setActiveTab(value === 'students' ? 'students' : 'info')
+        }
+      >
         <TabsList>
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
           <TabsTrigger value="students">{t('students.title')}</TabsTrigger>

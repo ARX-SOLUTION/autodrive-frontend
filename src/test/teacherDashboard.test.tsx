@@ -131,8 +131,36 @@ const state = vi.hoisted(() => ({
     data: { data: [] as Lesson[], total: 0, page: 1, limit: 100 },
     isLoading: false,
   },
-  students: { data: [] as Student[], isLoading: false },
+  students: {
+    data: {
+      data: [] as Student[],
+      meta: {
+        total: 0,
+        page: 1,
+        limit: 1,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    },
+    isLoading: false,
+  },
+  useStudentsPage: vi.fn(),
 }));
+
+const setStudentsPage = (total: number, data: Student[] = []) => {
+  state.students.data = {
+    data,
+    meta: {
+      total,
+      page: 1,
+      limit: 1,
+      totalPages: total > 0 ? total : 0,
+      hasNextPage: total > 1,
+      hasPreviousPage: false,
+    },
+  };
+};
 
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
@@ -147,7 +175,10 @@ vi.mock('@/services/attendanceService', () => ({
   useLessons: () => state.lessons,
 }));
 vi.mock('@/services/studentService', () => ({
-  useStudents: () => state.students,
+  useStudentsPage: (...args: unknown[]) => {
+    state.useStudentsPage(...args);
+    return state.students;
+  },
 }));
 
 const renderDashboard = () =>
@@ -169,7 +200,8 @@ afterEach(() => {
     data: { data: [], total: 0, page: 1, limit: 100 },
     isLoading: false,
   };
-  state.students = { data: [], isLoading: false };
+  setStudentsPage(0);
+  state.students.isLoading = false;
   vi.clearAllMocks();
   cleanup();
 });
@@ -182,8 +214,17 @@ describe('TeacherDashboard KPIs (autodrive-vh0.6)', () => {
       page: 1,
       limit: 100,
     };
-    state.students.data = STUDENTS;
+    setStudentsPage(3, [STUDENTS[0]]);
     await renderDashboard();
+
+    expect(state.useStudentsPage).toHaveBeenLastCalledWith(
+      undefined,
+      'b1',
+      1,
+      1,
+      undefined,
+      { hasDebt: true },
+    );
 
     expect(
       screen.getByText('dashboard.teacher.kpi_my_groups'),
@@ -196,7 +237,7 @@ describe('TeacherDashboard KPIs (autodrive-vh0.6)', () => {
     expect(
       screen.getByText('dashboard.teacher.kpi_owing_students'),
     ).toBeInTheDocument();
-    // 3 of 5 fixture students have has_debt: true.
+    // The server-filtered page reports the exact owing count via meta.total.
     expect(screen.getByText('3')).toBeInTheDocument();
     expect(
       screen.getByText('dashboard.teacher.kpi_today_lessons'),
@@ -212,7 +253,7 @@ describe('TeacherDashboard KPIs (autodrive-vh0.6)', () => {
       page: 1,
       limit: 100,
     };
-    state.students.data = STUDENTS;
+    setStudentsPage(3, [STUDENTS[0]]);
     await renderDashboard();
 
     expect(screen.queryByText(formatMoney(5_000_000))).toBeNull();
@@ -241,7 +282,7 @@ describe('TeacherDashboard upcoming lessons (autodrive-vh0.6)', () => {
       page: 1,
       limit: 100,
     };
-    state.students.data = STUDENTS;
+    setStudentsPage(3, [STUDENTS[0]]);
     await renderDashboard();
 
     const titles = [
@@ -272,7 +313,7 @@ describe('TeacherDashboard upcoming lessons (autodrive-vh0.6)', () => {
       page: 1,
       limit: 100,
     };
-    state.students.data = STUDENTS;
+    setStudentsPage(3, [STUDENTS[0]]);
     const { router } = await renderDashboard();
     fireEvent.click(screen.getByText('Morning theory'));
     await waitFor(() =>
@@ -289,7 +330,7 @@ describe('TeacherDashboard upcoming lessons (autodrive-vh0.6)', () => {
       page: 1,
       limit: 100,
     };
-    state.students.data = STUDENTS;
+    setStudentsPage(3, [STUDENTS[0]]);
     const { router } = await renderDashboard();
     fireEvent.click(screen.getByText('Morning theory'));
     await waitFor(() =>
@@ -317,7 +358,7 @@ describe('TeacherDashboard empty states (autodrive-vh0.6)', () => {
 
   it('renders a no-upcoming-lessons empty state when groups exist but no lessons are scheduled', async () => {
     state.lessons.data = { data: [], total: 0, page: 1, limit: 100 };
-    state.students.data = STUDENTS;
+    setStudentsPage(3, [STUDENTS[0]]);
     await renderDashboard();
 
     expect(

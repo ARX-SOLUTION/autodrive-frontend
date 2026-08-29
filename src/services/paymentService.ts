@@ -94,12 +94,15 @@ export const fetchPaymentsPage = async (
 export const paymentsPageQueryOptions = (
   filters: PaymentListFilters,
   enabled = true,
-) =>
-  queryOptions({
-    queryKey: paymentKeys.page({ ...filters }),
+) => {
+  const queryParams = toPaymentQueryParams(filters);
+
+  return queryOptions({
+    queryKey: paymentKeys.page(queryParams),
     enabled,
     queryFn: ({ signal }) => fetchPaymentsPage(filters, signal),
   });
+};
 
 export const fetchAllPayments = async (
   filters: PaymentListFilters,
@@ -146,11 +149,16 @@ export const usePayments = (
   endDate?: Date,
 ) => {
   const isCrossTenant = useIsCrossTenant();
+  const filters: PaymentListFilters = {
+    branchId,
+    courseType,
+    startDate,
+    endDate,
+  };
   return useQuery<ListResponse<Payment>, Error, Payment[]>({
-    queryKey: paymentKeys.list({ branchId, courseType, startDate, endDate }),
+    queryKey: paymentKeys.list(toPaymentQueryParams(filters)),
     enabled: !!branchId || isCrossTenant,
-    queryFn: ({ signal }) =>
-      fetchPaymentsPage({ branchId, courseType, startDate, endDate }, signal),
+    queryFn: ({ signal }) => fetchPaymentsPage(filters, signal),
     select: (result) => result.data,
   });
 };
@@ -197,7 +205,7 @@ export const usePaymentSummary = (
 ) => {
   const isCrossTenant = useIsCrossTenant();
   return useQuery<PaymentSummary>({
-    queryKey: paymentKeys.summary({ ...filters }),
+    queryKey: paymentKeys.summary(toPaymentQueryParams(filters)),
     enabled: enabled && (!!filters.branchId || isCrossTenant),
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get<unknown>(

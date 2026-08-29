@@ -8,6 +8,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import {
   dataGridFeatures,
@@ -136,6 +137,8 @@ export function DataGrid<TData extends RowData>({
   onRowActivate,
   getRowAriaLabel,
 }: DataGridProps<TData>) {
+  const isMobile = useIsMobile();
+  const showMobileRows = renderMobileRow !== undefined && isMobile;
   const paginationState: PaginationState = {
     pageIndex: pagination.pageIndex,
     pageSize: pagination.pageSize,
@@ -178,6 +181,7 @@ export function DataGrid<TData extends RowData>({
   const hasErrorState = errorState !== undefined && errorState !== null;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const virtualizationEnabled =
+    !showMobileRows &&
     virtualizeCurrentPage !== undefined &&
     !isInitialLoading &&
     !hasErrorState &&
@@ -302,8 +306,8 @@ export function DataGrid<TData extends RowData>({
         </span>
       ) : null}
 
-      {renderMobileRow ? (
-        <div className="grid gap-3 md:hidden" data-data-grid-mobile="">
+      {showMobileRows ? (
+        <div className="grid gap-3" data-data-grid-mobile="">
           {isInitialLoading ? (
             <div role="status" aria-live="polite">
               {loadingState ?? labels.loading}
@@ -328,115 +332,116 @@ export function DataGrid<TData extends RowData>({
         </div>
       ) : null}
 
-      <div
-        ref={scrollContainerRef}
-        className={cn(
-          virtualizeCurrentPage ? 'overflow-auto' : 'overflow-x-auto',
-          renderMobileRow && 'hidden md:block',
-        )}
-        style={
-          virtualizeCurrentPage
-            ? { maxHeight: virtualizeCurrentPage.viewportHeight }
-            : undefined
-        }
-      >
-        <table
-          className={cn(
-            'w-full text-sm',
-            virtualizeCurrentPage && 'table-fixed',
-            tableClassName,
-          )}
-          aria-label={labels.table}
+      {!showMobileRows ? (
+        <div
+          ref={scrollContainerRef}
+          className={
+            virtualizeCurrentPage ? 'overflow-auto' : 'overflow-x-auto'
+          }
+          style={
+            virtualizeCurrentPage
+              ? { maxHeight: virtualizeCurrentPage.viewportHeight }
+              : undefined
+          }
         >
-          <thead
+          <table
             className={cn(
-              virtualizeCurrentPage && 'sticky top-0 z-10 bg-background',
+              'w-full text-sm',
+              virtualizeCurrentPage && 'table-fixed',
+              tableClassName,
             )}
+            aria-label={labels.table}
           >
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-border">
-                {headerGroup.headers.map((header) => {
-                  const align = header.column.columnDef.meta?.align ?? 'left';
-                  const canSort = header.column.getCanSort();
-                  const sorted = header.column.getIsSorted();
+            <thead
+              className={cn(
+                virtualizeCurrentPage && 'sticky top-0 z-10 bg-background',
+              )}
+            >
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id} className="border-b border-border">
+                  {headerGroup.headers.map((header) => {
+                    const align = header.column.columnDef.meta?.align ?? 'left';
+                    const canSort = header.column.getCanSort();
+                    const sorted = header.column.getIsSorted();
 
-                  return (
-                    <th
-                      key={header.id}
-                      colSpan={header.colSpan}
-                      rowSpan={header.rowSpan || undefined}
-                      aria-sort={canSort ? getAriaSort(sorted) : undefined}
-                      className={cn(
-                        'px-4 py-3 font-medium text-muted-foreground',
-                        ALIGN_CLASS[align],
-                        header.column.columnDef.meta?.headerClassName,
-                      )}
-                    >
-                      {header.isPlaceholder ? null : canSort ? (
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
+                    return (
+                      <th
+                        key={header.id}
+                        colSpan={header.colSpan}
+                        rowSpan={header.rowSpan || undefined}
+                        aria-sort={canSort ? getAriaSort(sorted) : undefined}
+                        className={cn(
+                          'px-4 py-3 font-medium text-muted-foreground',
+                          ALIGN_CLASS[align],
+                          header.column.columnDef.meta?.headerClassName,
+                        )}
+                      >
+                        {header.isPlaceholder ? null : canSort ? (
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onClick={header.column.getToggleSortingHandler()}
+                          >
+                            <table.FlexRender header={header} />
+                            <span aria-hidden="true">
+                              {getSortIndicator(sorted)}
+                            </span>
+                          </button>
+                        ) : (
                           <table.FlexRender header={header} />
-                          <span aria-hidden="true">
-                            {getSortIndicator(sorted)}
-                          </span>
-                        </button>
-                      ) : (
-                        <table.FlexRender header={header} />
-                      )}
-                    </th>
-                  );
-                })}
-              </tr>
-            ))}
-          </thead>
-          <tbody
-            data-virtualized-row-count={
-              virtualizationEnabled ? rows.length : undefined
-            }
-            style={
-              virtualizationEnabled
-                ? {
-                    display: 'grid',
-                    height: rowVirtualizer.getTotalSize(),
-                    position: 'relative',
-                  }
-                : undefined
-            }
-          >
-            {isInitialLoading ? (
-              <tr>
-                <td colSpan={leafColumnCount} className="p-4">
-                  <div role="status" aria-live="polite">
-                    {loadingState ?? labels.loading}
-                  </div>
-                </td>
-              </tr>
-            ) : hasErrorState ? (
-              <tr>
-                <td colSpan={leafColumnCount} className="p-4">
-                  {errorState}
-                </td>
-              </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td colSpan={leafColumnCount} className="p-4">
-                  {emptyState}
-                </td>
-              </tr>
-            ) : virtualizationEnabled ? (
-              rowVirtualizer.getVirtualItems().map((virtualItem) => {
-                const row = rows[virtualItem.index];
-                return row ? renderTableRow(row, virtualItem) : null;
-              })
-            ) : (
-              rows.map((row) => renderTableRow(row))
-            )}
-          </tbody>
-        </table>
-      </div>
+                        )}
+                      </th>
+                    );
+                  })}
+                </tr>
+              ))}
+            </thead>
+            <tbody
+              data-virtualized-row-count={
+                virtualizationEnabled ? rows.length : undefined
+              }
+              style={
+                virtualizationEnabled
+                  ? {
+                      display: 'grid',
+                      height: rowVirtualizer.getTotalSize(),
+                      position: 'relative',
+                    }
+                  : undefined
+              }
+            >
+              {isInitialLoading ? (
+                <tr>
+                  <td colSpan={leafColumnCount} className="p-4">
+                    <div role="status" aria-live="polite">
+                      {loadingState ?? labels.loading}
+                    </div>
+                  </td>
+                </tr>
+              ) : hasErrorState ? (
+                <tr>
+                  <td colSpan={leafColumnCount} className="p-4">
+                    {errorState}
+                  </td>
+                </tr>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan={leafColumnCount} className="p-4">
+                    {emptyState}
+                  </td>
+                </tr>
+              ) : virtualizationEnabled ? (
+                rowVirtualizer.getVirtualItems().map((virtualItem) => {
+                  const row = rows[virtualItem.index];
+                  return row ? renderTableRow(row, virtualItem) : null;
+                })
+              ) : (
+                rows.map((row) => renderTableRow(row))
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
 
       {hasPagination ? (
         <nav

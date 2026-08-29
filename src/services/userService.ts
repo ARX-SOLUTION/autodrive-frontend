@@ -25,13 +25,13 @@ export const useUsers = (role?: UsersQuery['role']) => {
   const branchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
-    queryKey: userKeys.list({ branchId, role }),
+    queryKey: userKeys.list({ branchId, role, page: 1, limit: 100 }),
     // autodrive-6ef.17: user lists are stable org structure, so they can use
     // a longer stale window than the 30s global default.
     staleTime: 5 * 60_000,
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get<unknown>('/users', {
-        params: role ? ({ role } satisfies UsersQuery) : {},
+        params: { role, page: 1, limit: 100 } satisfies UsersQuery,
         signal,
       });
       return parseListEnvelope<User>(res, 'users').data;

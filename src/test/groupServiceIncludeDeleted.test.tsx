@@ -2,7 +2,11 @@ import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { useGroups, useRestoreGroup } from '@/services/groupService';
+import {
+  groupsListQueryOptions,
+  useGroups,
+  useRestoreGroup,
+} from '@/services/groupService';
 import axiosInstance from '@/api/axiosInstance';
 import { groupKeys, studentKeys } from '@/lib/queryKeys';
 
@@ -32,6 +36,22 @@ const makeWrapper = (queryClient: QueryClient) => {
 };
 
 describe('useGroups includeDeleted (autodrive-cg9)', () => {
+  it('normalizes list cache keys exactly like request filters', () => {
+    const raw = groupsListQueryOptions({
+      authBranchId: 'b1',
+      branchId: '',
+      search: '  Registon  ',
+      courseType: 'unsupported',
+      includeDeleted: false,
+    });
+    const normalized = groupsListQueryOptions({
+      authBranchId: 'b1',
+      search: 'Registon',
+    });
+
+    expect(raw.queryKey).toEqual(normalized.queryKey);
+  });
+
   it('sends include_deleted=true on the wire when the toggle is on', async () => {
     (axiosInstance.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       data: { data: [] },
@@ -41,7 +61,12 @@ describe('useGroups includeDeleted (autodrive-cg9)', () => {
     });
 
     const { result } = renderHook(
-      () => useGroups({ branchId: 'b1', includeDeleted: true }),
+      () =>
+        useGroups({
+          branchId: 'b1',
+          search: '  Registon  ',
+          includeDeleted: true,
+        }),
       { wrapper: makeWrapper(queryClient) },
     );
 
@@ -50,7 +75,10 @@ describe('useGroups includeDeleted (autodrive-cg9)', () => {
     expect(axiosInstance.get).toHaveBeenCalledWith(
       '/groups',
       expect.objectContaining({
-        params: expect.objectContaining({ include_deleted: true }),
+        params: expect.objectContaining({
+          search: 'Registon',
+          include_deleted: true,
+        }),
       }),
     );
   });

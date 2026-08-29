@@ -110,39 +110,54 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
     }));
   }, [detail, group]);
 
-  const statusFor = (studentId: string): AttendanceStatus | null =>
-    changes[studentId] ??
-    roster.find((r) => r.studentId === studentId)?.status ??
-    null;
+  const lessonId = lesson?.id;
+  const { statusByStudentId, markedCount, summaryCounts, saveRecords } =
+    useMemo(() => {
+      const statuses = new Map<string, AttendanceStatus | null>();
+      const counts: Record<AttendanceStatus, number> = {
+        present: 0,
+        late: 0,
+        absent: 0,
+        excused: 0,
+      };
+      const records: Array<{
+        lessonId: string;
+        studentId: string;
+        status: AttendanceStatus;
+      }> = [];
+      let marked = 0;
 
-  const markedCount = roster.filter(
-    (r) => statusFor(r.studentId) !== null,
-  ).length;
+      for (const row of roster) {
+        const status = changes[row.studentId] ?? row.status ?? null;
+        statuses.set(row.studentId, status);
+        if (!status) continue;
 
-  // exec-dash 8: per-status counts for the summary-chips row -- same
-  // read-only-derive pattern as markedCount above, not a new query/mutation.
-  const summaryCounts: Record<AttendanceStatus, number> = {
-    present: 0,
-    late: 0,
-    absent: 0,
-    excused: 0,
-  };
-  for (const row of roster) {
-    const status = statusFor(row.studentId);
-    if (status) summaryCounts[status] += 1;
-  }
+        marked += 1;
+        counts[status] += 1;
+        if (lessonId) {
+          records.push({
+            lessonId,
+            studentId: row.studentId,
+            status,
+          });
+        }
+      }
+
+      return {
+        statusByStudentId: statuses,
+        markedCount: marked,
+        summaryCounts: counts,
+        saveRecords: records,
+      };
+    }, [changes, lessonId, roster]);
 
   const handleSave = async () => {
     if (!lesson) return;
-    const records = roster
-      .filter((r) => statusFor(r.studentId) !== null)
-      .map((r) => ({
-        lessonId: lesson.id,
-        studentId: r.studentId,
-        status: statusFor(r.studentId) as AttendanceStatus,
-      }));
     try {
-      await batchAttendance.mutateAsync({ lessonId: lesson.id, records });
+      await batchAttendance.mutateAsync({
+        lessonId: lesson.id,
+        records: saveRecords,
+      });
       toast.success(t('attendance.saved'));
       onClose();
     } catch (err) {
@@ -222,7 +237,7 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
                   </span>
                 </span>
                 <AttendanceStatusToggle
-                  value={statusFor(row.studentId)}
+                  value={statusByStudentId.get(row.studentId) ?? null}
                   onChange={(status) =>
                     setChanges((prev) => ({
                       ...prev,

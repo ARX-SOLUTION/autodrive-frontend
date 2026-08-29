@@ -114,10 +114,9 @@ afterEach(cleanup);
 describe('GroupsPage rendering', () => {
   it('renders a table row and a mobile card per group', async () => {
     await renderPage();
-    // jsdom applies no media queries, so the desktop table AND the mobile
-    // DataCard list both render — each group name appears at least twice.
-    expect(screen.getAllByText('Alpha guruh').length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText('Beta guruh').length).toBeGreaterThanOrEqual(2);
+    // DataGrid mounts only the active responsive representation.
+    expect(screen.getAllByText('Alpha guruh')).toHaveLength(1);
+    expect(screen.getAllByText('Beta guruh')).toHaveLength(1);
     expect(screen.getAllByText('Chilonzor filiali').length).toBeGreaterThan(0);
     // Header count reflects the full (unpaginated) list.
     expect(screen.getByText('groups.count')).toBeTruthy();
@@ -164,7 +163,7 @@ describe('GroupsPage rendering', () => {
 
     // A01 arrived as row 11 from the endpoint. Client-owned sorting must run
     // over all returned rows before the 10-row page is selected.
-    expect(screen.getAllByText('A01 guruh')).toHaveLength(2);
+    expect(screen.getAllByText('A01 guruh')).toHaveLength(1);
     expect(screen.queryByText('B10 guruh')).toBeNull();
   });
 });

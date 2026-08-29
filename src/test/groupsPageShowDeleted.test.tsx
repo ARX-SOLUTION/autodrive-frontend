@@ -144,10 +144,9 @@ describe('GroupsPage deleted-row rendering (autodrive-cg9)', () => {
     });
     await renderPage();
 
-    // Desktop table + mobile list both mount in jsdom -- 2 renders for the
-    // ONE deleted group.
-    expect(screen.getAllByText('common.deleted')).toHaveLength(2);
-    expect(screen.getAllByLabelText('common.restore')).toHaveLength(2);
+    // DataGrid mounts only the active responsive representation.
+    expect(screen.getAllByText('common.deleted')).toHaveLength(1);
+    expect(screen.getAllByLabelText('common.restore')).toHaveLength(1);
     expect(screen.getAllByLabelText('common.edit').length).toBeGreaterThan(0);
   });
 
