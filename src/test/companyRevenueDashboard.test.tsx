@@ -184,7 +184,7 @@ describe('CompanyRevenueDashboard', () => {
       screen.getByText('dashboard.hero_active_students'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('dashboard.v2.outstanding_debt'),
+      within(strip).getByText('dashboard.v2.outstanding_debt'),
     ).toBeInTheDocument();
     expect(
       screen.getAllByText('dashboard.v2.academic_block.attendance_rate').length,
@@ -284,9 +284,11 @@ describe('CompanyRevenueDashboard', () => {
     );
     const paymentMetric = screen.getByTestId('chart-metric-payments');
     expect(paymentMetric).toHaveAttribute('aria-pressed', 'true');
+    expect(paymentMetric).toHaveClass('border-primary');
 
     fireEvent.click(paymentMetric);
     expect(paymentMetric).toHaveAttribute('aria-pressed', 'false');
+    expect(paymentMetric).toHaveClass('border-transparent');
     expect(
       screen.getByText('dashboard.v2.average_payment'),
     ).toBeInTheDocument();
@@ -333,6 +335,37 @@ describe('CompanyRevenueDashboard', () => {
       ).toBe('tezkor'),
     );
   });
+
+  it('shows one clearly selected detail view at a time', async () => {
+    await renderDashboard();
+
+    const financial = screen.getByRole('button', {
+      name: 'dashboard.v2.financial_block.title',
+    });
+    const academic = screen.getByRole('button', {
+      name: 'dashboard.v2.academic_block.title',
+    });
+
+    expect(financial).toHaveAttribute('aria-pressed', 'true');
+    expect(academic).toHaveAttribute('aria-pressed', 'false');
+    expect(
+      screen.getByText('dashboard.v2.financial_block.debt_age_title'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('dashboard.v2.academic_block.dropout_rate'),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(academic);
+
+    expect(financial).toHaveAttribute('aria-pressed', 'false');
+    expect(academic).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByText('dashboard.v2.academic_block.dropout_rate'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('dashboard.v2.financial_block.debt_age_title'),
+    ).not.toBeInTheDocument();
+  });
 });
 
 // autodrive-ls5 — every dashboard click used to build uz-named paths
@@ -358,7 +391,11 @@ describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
 
   it('debt KPI navigates to /students with status+has_debt, not /talabalar', async () => {
     const { router } = await renderDashboard();
-    fireEvent.click(screen.getByText('dashboard.v2.outstanding_debt'));
+    fireEvent.click(
+      within(screen.getByTestId('dashboard-v2-kpi-strip')).getByText(
+        'dashboard.v2.outstanding_debt',
+      ),
+    );
     await waitFor(() =>
       expect(router.state.location.pathname).toBe('/students'),
     );
@@ -377,22 +414,6 @@ describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
     await waitFor(() =>
       expect(router.state.location.pathname).toBe('/students/student-1'),
     );
-  });
-
-  // overview-fixes-frontend — the 90+ day debt-aging bucket had no
-  // click-through at all; it now links to the same debt filter as the
-  // "Jami qarzdorlik" KPI (recovery queue's underlying data).
-  it('90+ day debt-aging card navigates to /students with status+has_debt', async () => {
-    const { router } = await renderDashboard();
-    fireEvent.click(
-      screen.getByText('dashboard.v2.financial_block.bucket_90_plus'),
-    );
-    await waitFor(() =>
-      expect(router.state.location.pathname).toBe('/students'),
-    );
-    const params = new URLSearchParams(router.state.location.searchStr);
-    expect(params.get('status')).toBe('active');
-    expect(params.get('has_debt')).toBe('true');
   });
 
   it('"manage branches" link navigates to the /branches list, not /filiallar', async () => {
@@ -462,6 +483,11 @@ describe('CompanyRevenueDashboard academic block (autodrive-sgf.3)', () => {
     } as unknown as typeof original;
     try {
       const { container } = await renderDashboard();
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'dashboard.v2.academic_block.title',
+        }),
+      );
       // exec-dash 7: attendance_rate null renders '—' in the academic block
       // (3 placeholders when the KPI grid tile was removed from primary bands).
       expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(3);
@@ -487,6 +513,11 @@ describe('CompanyRevenueDashboard staff block (autodrive-sgf.4)', () => {
   it('tones the on-time attendance KPI as success when the rate is >= 80', async () => {
     Object.assign(overview.data.kpis, { on_time_attendance_marking_rate: 92 });
     await renderDashboard();
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'dashboard.v2.staff_block.title',
+      }),
+    );
     const card = screen
       .getByText('dashboard.v2.staff_block.on_time_attendance_label')
       .closest('[role="button"]');
@@ -496,6 +527,11 @@ describe('CompanyRevenueDashboard staff block (autodrive-sgf.4)', () => {
   it('tones the on-time attendance KPI as warning when the rate is < 80', async () => {
     Object.assign(overview.data.kpis, { on_time_attendance_marking_rate: 40 });
     await renderDashboard();
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'dashboard.v2.staff_block.title',
+      }),
+    );
     const card = screen
       .getByText('dashboard.v2.staff_block.on_time_attendance_label')
       .closest('[role="button"]');

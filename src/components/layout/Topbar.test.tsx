@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 import { Topbar } from './Topbar';
@@ -67,6 +73,11 @@ describe('Topbar dashboard branch scope', () => {
       name: 'dashboard.v2.branch',
     });
     expect(trigger).toHaveTextContent('Samarqand Registon');
+    expect(trigger).toHaveClass('cursor-pointer');
+    expect(
+      within(trigger).getByText('dashboard.v2.branch'),
+    ).toBeInTheDocument();
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
 
     fireEvent.pointerDown(trigger, { button: 0 });
     fireEvent.click(

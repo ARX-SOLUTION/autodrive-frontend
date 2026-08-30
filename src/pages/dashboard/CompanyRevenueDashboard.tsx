@@ -208,18 +208,14 @@ export const KpiCard = ({
   meta,
   icon: Icon,
   tone,
-  delta,
   onClick,
-  lead = false,
 }: {
   label: string;
   value: string;
   meta: string;
   icon: typeof Wallet;
   tone: 'primary' | 'warning' | 'success' | 'info';
-  delta?: number | null;
   onClick?: () => void;
-  lead?: boolean;
 }) => {
   const toneClasses = {
     primary: 'bg-primary/[14%] text-primary',
@@ -230,11 +226,9 @@ export const KpiCard = ({
   return (
     <Card
       className={cn(
-        // exec-dash 7: flat token surface, no glass/shadow — hover reads via
-        // a background tint (Design.md's row-hover convention), not lift.
-        'relative overflow-hidden border-border bg-card p-5 shadow-none',
+        'relative overflow-hidden border-border bg-card p-4 shadow-none',
         onClick &&
-          'cursor-pointer motion-safe:transition-colors hover:bg-muted hover:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          'cursor-pointer motion-safe:transition-[background-color,border-color,scale] hover:border-primary/40 hover:bg-muted active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       )}
       onClick={onClick}
       onKeyDown={(event) => {
@@ -247,12 +241,12 @@ export const KpiCard = ({
       tabIndex={onClick ? 0 : undefined}
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="text-xs font-semibold leading-snug text-muted-foreground">
           {label}
         </p>
         <span
           className={cn(
-            'grid h-9 w-9 shrink-0 place-items-center rounded-lg',
+            'grid h-8 w-8 shrink-0 place-items-center rounded-md',
             toneClasses[tone],
           )}
           aria-hidden="true"
@@ -260,18 +254,12 @@ export const KpiCard = ({
           <Icon className="h-4 w-4" />
         </span>
       </div>
-      <p
-        className={cn(
-          'num mt-4 font-bold font-mono',
-          lead ? 'text-4xl' : 'text-2xl',
-        )}
-      >
+      <p className="num mt-2 font-mono text-xl font-bold leading-tight">
         {value}
       </p>
-      <div className="mt-3 flex min-h-5 items-center justify-between gap-2 text-xs text-muted-foreground">
-        <span>{meta}</span>
-        {delta !== undefined && delta !== null && <DeltaChip delta={delta} />}
-      </div>
+      <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+        {meta}
+      </p>
     </Card>
   );
 };
@@ -328,7 +316,7 @@ const FilterBar = ({
   const from = params.get('from') || startOfMonthInUz();
   const to = params.get('to') || today;
   const controlClassName =
-    'h-10 rounded-md border border-border bg-card px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+    'h-10 cursor-pointer rounded-md border border-border bg-card px-2.5 text-sm transition-[background-color,border-color] duration-150 hover:border-primary/40 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
   return (
     <div className="flex flex-wrap items-center gap-2 border-y border-hair py-3">
       <DateRangePicker
@@ -574,6 +562,9 @@ const CompanyRevenueDashboard = () => {
   const [branchSort, setBranchSort] = useState<
     'revenue' | 'active_students' | 'outstanding_debt' | 'collection_rate'
   >('revenue');
+  const [detailView, setDetailView] = useState<
+    'financial' | 'academic' | 'staff'
+  >('financial');
   const { data: branches = [] } = useBranches(canViewAllBranches);
   const query = useMemo(
     () =>
@@ -648,6 +639,76 @@ const CompanyRevenueDashboard = () => {
   const trendPeriodTo = kpis.revenue.period_to_inclusive || data.filters.to;
   const trendEnd = uzDateParts(trendPeriodTo);
   const trendRangeCaption = `${format(new Date(data.filters.from), 'dd')} — ${trendEnd.day} ${trendEnd.month} ${trendEnd.year} · ${t(data.filters.granularity === 'week' ? 'dashboard.v2.weekly' : 'dashboard.v2.daily').toUpperCase()}`;
+  const debtAgingTotal = Object.values(kpis.debt_aging).reduce(
+    (sum, value) => sum + value,
+    0,
+  );
+  const debtAgingBuckets = [
+    {
+      key: 'bucket_0_30',
+      label: t('dashboard.v2.financial_block.bucket_0_30', '0–30 kun'),
+      value: kpis.debt_aging.bucket_0_30,
+      barClassName: 'bg-info',
+    },
+    {
+      key: 'bucket_31_60',
+      label: t('dashboard.v2.financial_block.bucket_31_60', '31–60 kun'),
+      value: kpis.debt_aging.bucket_31_60,
+      barClassName: 'bg-primary',
+    },
+    {
+      key: 'bucket_61_90',
+      label: t('dashboard.v2.financial_block.bucket_61_90', '61–90 kun'),
+      value: kpis.debt_aging.bucket_61_90,
+      barClassName: 'bg-warning',
+    },
+    {
+      key: 'bucket_90_plus',
+      label: t('dashboard.v2.financial_block.bucket_90_plus', '90+ kun'),
+      value: kpis.debt_aging.bucket_90_plus,
+      barClassName: 'bg-destructive',
+    },
+  ] as const;
+  const detailViews: Array<{
+    key: typeof detailView;
+    label: string;
+    buttonLabel: string;
+    description: string;
+    icon: typeof Wallet;
+  }> = [
+    {
+      key: 'financial',
+      label: t('dashboard.v2.financial_block.title', 'Moliya va qarzdorlik'),
+      buttonLabel: t('dashboard.v2.analysis_financial', 'Moliya'),
+      description: t(
+        'dashboard.v2.financial_block.subtitle',
+        'Qarz muddati, tushum sifati va kurslar kesimi.',
+      ),
+      icon: Wallet,
+    },
+    {
+      key: 'academic',
+      label: t('dashboard.v2.academic_block.title', 'O‘quv jarayoni'),
+      buttonLabel: t('dashboard.v2.analysis_academic', 'O‘quv'),
+      description: t(
+        'dashboard.v2.academic_block.subtitle',
+        'Davomat, imtihon va bitirish holati.',
+      ),
+      icon: GraduationCap,
+    },
+    {
+      key: 'staff',
+      label: t('dashboard.v2.staff_block.title', 'Jamoa samaradorligi'),
+      buttonLabel: t('dashboard.v2.analysis_staff', 'Jamoa'),
+      description: t(
+        'dashboard.v2.staff_block.subtitle',
+        'O‘qituvchi yuklamasi va ishlarning o‘z vaqtida bajarilishi.',
+      ),
+      icon: UsersThree,
+    },
+  ];
+  const activeDetailView =
+    detailViews.find((view) => view.key === detailView) ?? detailViews[0];
   return (
     <div className="space-y-5 pb-8">
       <header className="flex flex-col gap-4 border-b border-hair pb-5 xl:flex-row xl:items-end xl:justify-between">
@@ -730,7 +791,7 @@ const CompanyRevenueDashboard = () => {
               key={action.to}
               to={action.to}
               search={action.search}
-              className="flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-[13px] font-semibold motion-safe:transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-border bg-card px-3 text-[13px] font-semibold motion-safe:transition-[background-color,border-color,scale] hover:border-primary/40 hover:bg-muted active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span
                 className={cn(
@@ -777,7 +838,7 @@ const CompanyRevenueDashboard = () => {
                 },
               })
             }
-            className="min-h-24 bg-card p-3 text-left motion-safe:transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            className="min-h-24 cursor-pointer bg-card p-3 text-left motion-safe:transition-[background-color,box-shadow] hover:bg-muted/80 hover:shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.24)] active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           >
             <p className="text-[11px] text-muted-foreground">
               {t('dashboard.v2.today_revenue', 'Bugungi tushum')}
@@ -817,7 +878,7 @@ const CompanyRevenueDashboard = () => {
                 search: { ...listSearch, status: 'active' },
               })
             }
-            className="min-h-24 bg-card p-3 text-left motion-safe:transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            className="min-h-24 cursor-pointer bg-card p-3 text-left motion-safe:transition-[background-color,box-shadow] hover:bg-muted/80 hover:shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.24)] active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           >
             <p className="text-[11px] text-muted-foreground">
               {t('dashboard.hero_active_students')}
@@ -838,7 +899,7 @@ const CompanyRevenueDashboard = () => {
                 search: { ...listSearch, status: 'active', has_debt: true },
               })
             }
-            className="min-h-24 bg-card p-3 text-left motion-safe:transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            className="min-h-24 cursor-pointer bg-card p-3 text-left motion-safe:transition-[background-color,box-shadow] hover:bg-muted/80 hover:shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.24)] active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           >
             <p className="text-[11px] text-muted-foreground">
               {t('dashboard.v2.outstanding_debt', 'Jami qarzdorlik')}
@@ -883,7 +944,7 @@ const CompanyRevenueDashboard = () => {
           </div>
           {data.revenue_trend.length ? (
             <Suspense
-              fallback={<Skeleton className="h-[28rem] w-full rounded-md" />}
+              fallback={<Skeleton className="h-[22rem] w-full rounded-md" />}
             >
               <RevenueTrendChart data={data.revenue_trend} />
             </Suspense>
@@ -899,7 +960,7 @@ const CompanyRevenueDashboard = () => {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <section className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <DashboardCard
           title={t('dashboard.v2.recovery', 'Qarzdorlik navbati')}
           description={t(
@@ -925,7 +986,7 @@ const CompanyRevenueDashboard = () => {
                         "Ko'rish: {{name}}",
                         { name: student.student_name },
                       )}
-                      className="flex items-center justify-between gap-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="-mx-2 flex cursor-pointer items-center justify-between gap-4 rounded-md px-2 py-3 transition-colors hover:bg-muted/70 active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-semibold">
@@ -957,7 +1018,7 @@ const CompanyRevenueDashboard = () => {
             <Link
               to="/payments"
               search={listSearch}
-              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+              className="mt-3 inline-flex h-9 cursor-pointer items-center gap-1 rounded-md px-2 text-xs font-semibold text-primary transition-[background-color,scale] hover:bg-primary/10 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {t('dashboard.v2.view_all_debtors', 'Barcha qarzdorlar')}
               <CaretRight className="h-3 w-3" aria-hidden="true" />
@@ -965,16 +1026,16 @@ const CompanyRevenueDashboard = () => {
           )}
         </DashboardCard>
         <DashboardCard
-          title={t('dashboard.v2.operations', 'Operational follow-through')}
+          title={t('dashboard.v2.operations', 'Bugungi vazifalar')}
           description={t(
             'dashboard.v2.operations_subtitle',
-            'Revenue qaroridan keyingi bajariladigan ishlar.',
+            'Dars jadvali va davomat bo‘yicha bajariladigan ishlar.',
           )}
         >
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
             <Link
               to="/schedule"
-              className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-colors duration-150 hover:bg-muted/60"
+              className="group flex min-h-16 cursor-pointer items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-[background-color,border-color,scale] duration-150 hover:border-primary/40 hover:bg-muted/60 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span className="flex items-center gap-3">
                 <CalendarDot
@@ -997,7 +1058,7 @@ const CompanyRevenueDashboard = () => {
             </Link>
             <Link
               to="/attendance"
-              className="group flex min-h-16 items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-colors duration-150 hover:bg-muted/60"
+              className="group flex min-h-16 cursor-pointer items-center justify-between rounded-lg border border-border/60 bg-background/30 p-3 motion-safe:transition-[background-color,border-color,scale] duration-150 hover:border-primary/40 hover:bg-muted/60 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span className="flex items-center gap-3">
                 <Clock className="h-5 w-5 text-warning" aria-hidden="true" />
@@ -1022,12 +1083,12 @@ const CompanyRevenueDashboard = () => {
               ([status, count]) => (
                 <span
                   key={status}
-                  className="rounded-full border border-border px-2.5 py-1"
+                  className="rounded-md border border-border bg-muted/30 px-2.5 py-1"
                 >
                   <span className="font-semibold text-foreground tabular-nums">
                     {count}
                   </span>{' '}
-                  {status}
+                  {t(`attendance.status_${status}`, status)}
                 </span>
               ),
             )}
@@ -1040,7 +1101,7 @@ const CompanyRevenueDashboard = () => {
         </DashboardCard>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <section className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(300px,0.75fr)]">
         <DashboardCard
           hidden={!canViewAllBranches}
           title={t('dashboard.v2.branch_performance', 'Filial performance')}
@@ -1051,7 +1112,7 @@ const CompanyRevenueDashboard = () => {
           action={
             <Link
               to="/branches"
-              className="text-xs font-semibold text-primary hover:underline"
+              className="inline-flex h-9 cursor-pointer items-center rounded-md px-2 text-xs font-semibold text-primary transition-[background-color,scale] hover:bg-primary/10 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {t('dashboard.v2.manage_branches', 'Filiallar')}{' '}
               <CaretRight className="ml-1 inline h-3 w-3" aria-hidden="true" />
@@ -1069,13 +1130,16 @@ const CompanyRevenueDashboard = () => {
                     ['revenue', t('dashboard.top_branches_revenue', 'Tushum')],
                     [
                       'active_students',
-                      t('dashboard.top_branches_students', 'Active'),
+                      t('dashboard.top_branches_students', 'Faol talabalar'),
                     ],
                     [
                       'outstanding_debt',
                       t('dashboard.cards.total_debt', 'Qarz'),
                     ],
-                    ['collection_rate', t('dashboard.v2.coverage', 'Coverage')],
+                    [
+                      'collection_rate',
+                      t('dashboard.v2.coverage', 'To‘liq to‘laganlar'),
+                    ],
                   ] as const
                 ).map(([key, label]) => (
                   <button
@@ -1084,10 +1148,10 @@ const CompanyRevenueDashboard = () => {
                     onClick={() => setBranchSort(key)}
                     aria-pressed={branchSort === key}
                     className={cn(
-                      'rounded-full border px-2.5 py-1 motion-safe:transition-[background-color,color]',
+                      'min-h-9 cursor-pointer rounded-md border px-3 py-1.5 font-semibold motion-safe:transition-[background-color,border-color,color,scale] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                       branchSort === key
-                        ? 'border-primary/40 bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground hover:bg-muted',
+                        ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                        : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-muted hover:text-foreground',
                     )}
                   >
                     {label}
@@ -1128,13 +1192,13 @@ const CompanyRevenueDashboard = () => {
                         </strong>
                       </span>
                       <span>
-                        {t('dashboard.top_branches_students', 'Active')}{' '}
+                        {t('dashboard.top_branches_students', 'Faol talabalar')}{' '}
                         <strong className="block text-foreground tabular-nums">
                           {branch.active_students}
                         </strong>
                       </span>
                       <span>
-                        {t('dashboard.v2.coverage', 'Coverage')}{' '}
+                        {t('dashboard.v2.coverage', 'To‘liq to‘laganlar')}{' '}
                         <strong className="block text-foreground tabular-nums">
                           {branch.collection_rate}%
                         </strong>
@@ -1144,7 +1208,7 @@ const CompanyRevenueDashboard = () => {
                 ))}
               </div>
               <div className="hidden overflow-x-auto sm:block">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted-foreground">
                       <th className="py-2">
@@ -1154,13 +1218,13 @@ const CompanyRevenueDashboard = () => {
                         {t('dashboard.top_branches_revenue', 'Tushum')}
                       </th>
                       <th className="py-2 text-right">
-                        {t('dashboard.top_branches_students', 'Active')}
+                        {t('dashboard.v2.active_short', 'Faol')}
                       </th>
                       <th className="py-2 text-right">
                         {t('dashboard.cards.total_debt', 'Qarz')}
                       </th>
                       <th className="py-2 text-right">
-                        {t('dashboard.v2.coverage', 'Coverage')}
+                        {t('dashboard.v2.coverage_short', 'To‘liq')}
                       </th>
                     </tr>
                   </thead>
@@ -1231,7 +1295,7 @@ const CompanyRevenueDashboard = () => {
           title={t('dashboard.v2.collection_status', 'To‘lov holati')}
           description={t(
             'dashboard.v2.collection_subtitle',
-            'Active studentlar bo‘yicha joriy coverage.',
+            'Faol talabalar bo‘yicha joriy to‘lov holati.',
           )}
         >
           {statusTotal ? (
@@ -1266,366 +1330,444 @@ const CompanyRevenueDashboard = () => {
         </DashboardCard>
       </section>
 
-      <section
-        className="grid grid-cols-1 gap-4"
-        aria-label={t(
-          'dashboard.v2.financial_block.title',
-          'Moliyaviy ko‘rsatkichlar',
-        )}
-      >
-        <DashboardCard
-          title={t(
-            'dashboard.v2.financial_block.title',
-            'Moliyaviy ko‘rsatkichlar',
-          )}
-          description={t(
-            'dashboard.v2.financial_block.subtitle',
-            'Qarzdorlik yoshi, ARPU va kurs turi bo‘yicha daromad.',
-          )}
-        >
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
-              label={t('dashboard.v2.financial_block.bucket_0_30', '0–30 kun')}
-              value={formatMoney(kpis.debt_aging.bucket_0_30)}
-              meta={t(
-                'dashboard.v2.financial_block.debt_aging_meta',
-                'Qarzdorlik yoshi',
-              )}
-              icon={Clock}
-              tone="info"
-            />
-            <KpiCard
-              label={t(
-                'dashboard.v2.financial_block.bucket_31_60',
-                '31–60 kun',
-              )}
-              value={formatMoney(kpis.debt_aging.bucket_31_60)}
-              meta={t(
-                'dashboard.v2.financial_block.debt_aging_meta',
-                'Qarzdorlik yoshi',
-              )}
-              icon={Clock}
-              tone="info"
-            />
-            <KpiCard
-              label={t(
-                'dashboard.v2.financial_block.bucket_61_90',
-                '61–90 kun',
-              )}
-              value={formatMoney(kpis.debt_aging.bucket_61_90)}
-              meta={t(
-                'dashboard.v2.financial_block.debt_aging_meta',
-                'Qarzdorlik yoshi',
-              )}
-              icon={Clock}
-              tone="info"
-            />
-            <KpiCard
-              label={t(
-                'dashboard.v2.financial_block.bucket_90_plus',
-                '90+ kun',
-              )}
-              value={formatMoney(kpis.debt_aging.bucket_90_plus)}
-              meta={t(
-                'dashboard.v2.financial_block.debt_aging_meta_urgent',
-                'Diqqat talab qiladi',
-              )}
-              icon={Warning}
-              tone="warning"
-              onClick={() =>
-                navigate({
-                  to: '/students',
-                  search: { ...listSearch, status: 'active', has_debt: true },
-                })
-              }
-            />
-            <KpiCard
-              label={t('dashboard.v2.financial_block.arpu', 'ARPU')}
-              value={formatMoney(kpis.arpu)}
-              meta={t(
-                'dashboard.v2.financial_block.arpu_meta',
-                'Faol talabaga o‘rtacha',
-              )}
-              icon={UsersThree}
-              tone="primary"
-            />
-            <KpiCard
-              label={t(
-                'dashboard.v2.financial_block.cash_collection',
-                'Naqd yig‘ish darajasi',
-              )}
-              value={`${kpis.cash_collection_rate}%`}
-              meta={t(
-                'dashboard.v2.financial_block.cash_collection_meta',
-                'Faol talabalar bo‘yicha',
-              )}
-              icon={PiggyBank}
-              tone={kpis.cash_collection_rate >= 80 ? 'success' : 'warning'}
-            />
-          </div>
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {(['tezkor', 'avto_maktab'] as const).map((courseType) => {
-              const entry = kpis.revenue_by_course_type[courseType];
-              return (
-                <div
-                  key={courseType}
-                  className="rounded-lg border border-border/60 bg-background/30 p-3"
-                >
-                  <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                    {t(`students.course.${courseType}`, courseType)}
-                  </p>
-                  <p className="mt-2 text-lg font-bold tabular-nums">
-                    {formatMoney(entry.revenue)}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {entry.per_lesson !== null
-                      ? t(
-                          'dashboard.v2.financial_block.per_lesson',
-                          '{{value}} / dars',
-                          { value: formatMoney(Math.round(entry.per_lesson)) },
-                        )
-                      : t(
-                          'dashboard.v2.financial_block.no_lessons',
-                          'Dars yo‘q',
-                        )}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </DashboardCard>
-      </section>
-
-      <section className="grid grid-cols-1 gap-4">
-        <DashboardCard
-          title={t('dashboard.v2.academic_block.title', "O'quv jarayoni")}
-          description={t(
-            'dashboard.v2.academic_block.subtitle',
-            'Davomat, sinov natijalari va bitirish statistikasi.',
-          )}
-        >
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
-              label={t(
-                'dashboard.v2.academic_block.attendance_rate',
-                'Davomat',
-              )}
-              value={
-                kpis.attendance_rate != null ? `${kpis.attendance_rate}%` : '—'
-              }
-              meta={t(
-                'dashboard.v2.academic_block.attendance_meta',
-                'Tanlangan davr bo‘yicha',
-              )}
-              icon={CheckCircle}
-              tone={
-                kpis.attendance_rate == null
-                  ? 'info'
-                  : kpis.attendance_rate >= 90
-                    ? 'success'
-                    : kpis.attendance_rate >= 75
-                      ? 'warning'
-                      : 'info'
-              }
-            />
-            <KpiCard
-              label={t(
-                'dashboard.v2.academic_block.dropout_rate',
-                'Tashlab ketish darajasi',
-              )}
-              value={`${kpis.dropout_rate ?? 0}%`}
-              meta={t(
-                'dashboard.v2.academic_block.suspended_meta',
-                '+{{count}} e’tibor talab qiladi',
-                { count: kpis.students.suspended ?? 0 },
-              )}
-              icon={UserMinus}
-              tone={(kpis.dropout_rate ?? 0) > 15 ? 'warning' : 'info'}
-            />
-            <KpiCard
-              label={t(
-                'dashboard.v2.academic_block.exam_pass_rate',
-                'Birinchi urinishda topshirish',
-              )}
-              value={
-                kpis.exam_first_attempt_pass_rate != null
-                  ? `${kpis.exam_first_attempt_pass_rate}%`
-                  : '—'
-              }
-              meta={t(
-                'dashboard.v2.academic_block.exam_pass_meta',
-                'Birinchi imtihon urinishi',
-              )}
-              icon={ClipboardText}
-              tone="info"
-            />
-            <KpiCard
-              label={t(
-                'dashboard.v2.academic_block.completion_time',
-                "O'rtacha bitirish muddati",
-              )}
-              value={
-                kpis.completion_time_median_days != null
-                  ? t(
-                      'dashboard.v2.academic_block.days_value',
-                      '{{count}} kun',
-                      {
-                        count: kpis.completion_time_median_days,
-                      },
-                    )
-                  : '—'
-              }
-              meta={t(
-                'dashboard.v2.academic_block.completion_meta',
-                'Bitirgan talabalar mediana',
-              )}
-              icon={Hourglass}
-              tone="primary"
-            />
-          </div>
-          {kpis.enrollment_funnel && (
-            <div className="mt-5 space-y-3 rounded-lg border border-border/60 bg-background/30 p-4">
-              <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+      <section aria-labelledby="dashboard-detail-title">
+        <Card className="overflow-hidden border-border bg-card p-0 shadow-none">
+          <div className="flex flex-col gap-4 border-b border-border p-4 sm:p-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
+              <h2
+                id="dashboard-detail-title"
+                className="text-lg font-bold tracking-tight"
+              >
+                {t('dashboard.v2.analysis_title', 'Batafsil tahlil')}
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">
                 {t(
-                  'dashboard.v2.academic_block.funnel_title',
-                  'Ro‘yxatdan bitirishgacha',
+                  'dashboard.v2.analysis_subtitle',
+                  'Yo‘nalishni tanlab, natija ortidagi sabablarni ko‘ring.',
                 )}
-              </p>
-              {(
-                [
-                  [
-                    'contract',
-                    t(
-                      'dashboard.v2.academic_block.funnel_contract',
-                      'Shartnoma',
-                    ),
-                    kpis.enrollment_funnel.contract,
-                    'bg-primary',
-                  ],
-                  [
-                    'active',
-                    t('dashboard.v2.academic_block.funnel_active', 'Faol'),
-                    kpis.enrollment_funnel.active,
-                    'bg-info',
-                  ],
-                  [
-                    'graduated',
-                    t(
-                      'dashboard.v2.academic_block.funnel_graduated',
-                      'Bitirgan',
-                    ),
-                    kpis.enrollment_funnel.graduated,
-                    'bg-success',
-                  ],
-                ] as const
-              ).map(([key, label, value, barClassName]) => (
-                <div key={key} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{label}</span>
-                    <span className="font-semibold tabular-nums">{value}</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className={cn('h-full', barClassName)}
-                      style={{
-                        width: `${
-                          kpis.enrollment_funnel!.contract
-                            ? (value / kpis.enrollment_funnel!.contract) * 100
-                            : 0
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-              <p className="pt-1 text-xs text-muted-foreground">
-                {t(
-                  'dashboard.v2.academic_block.funnel_dropped',
-                  'Tashlab ketgan / to‘xtatilgan',
-                )}
-                :{' '}
-                <span className="font-semibold text-foreground tabular-nums">
-                  {kpis.enrollment_funnel.dropped_or_suspended}
-                </span>
               </p>
             </div>
-          )}
-        </DashboardCard>
-      </section>
-
-      <section className="grid grid-cols-1 gap-4">
-        <DashboardCard
-          title={t('dashboard.v2.staff_block.title', 'Xodim samaradorligi')}
-          description={t(
-            'dashboard.v2.staff_block.subtitle',
-            'O‘qituvchi yuklamasi, davomat va operator samaradorligi.',
-          )}
-        >
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <KpiCard
-              label={t(
-                'dashboard.v2.staff_block.teacher_load_label',
-                'O‘qituvchi yuklamasi',
+            <div
+              role="group"
+              aria-label={t(
+                'dashboard.v2.analysis_tabs_label',
+                'Tahlil yo‘nalishi',
               )}
-              value={
-                kpis.teacher_load?.avg_lessons_per_active_teacher != null
-                  ? `${kpis.teacher_load.avg_lessons_per_active_teacher} ${t('dashboard.v2.staff_block.teacher_load_unit', 'dars/o‘qituvchi')}`
-                  : t('dashboard.v2.staff_block.no_data', 'Maʼlumot yo‘q')
-              }
-              meta={t(
-                'dashboard.v2.staff_block.teacher_load_meta',
-                '{{teachers}} faol o‘qituvchi · {{students}} student/o‘qituvchi',
-                {
-                  teachers: kpis.teacher_load?.active_teacher_count ?? 0,
-                  students: kpis.teacher_load?.avg_students_per_teacher ?? 0,
-                },
-              )}
-              icon={GraduationCap}
-              tone="primary"
-              onClick={() => navigate({ to: '/teachers' })}
-            />
-            <KpiCard
-              label={t(
-                'dashboard.v2.staff_block.on_time_attendance_label',
-                'Vaqtida davomat belgilash',
-              )}
-              value={
-                kpis.on_time_attendance_marking_rate != null
-                  ? `${kpis.on_time_attendance_marking_rate}%`
-                  : t('dashboard.v2.staff_block.no_data', 'Maʼlumot yo‘q')
-              }
-              meta={t(
-                'dashboard.v2.staff_block.on_time_attendance_meta',
-                'Dars kuni ichida belgilangan davomatlar ulushi',
-              )}
-              icon={Clock}
-              tone={
-                (kpis.on_time_attendance_marking_rate ?? 0) >= 80
-                  ? 'success'
-                  : 'warning'
-              }
-              onClick={() => navigate({ to: '/attendance' })}
-            />
-            <KpiCard
-              label={t(
-                'dashboard.v2.staff_block.operator_follow_through_label',
-                'Operator to‘lov davomiyligi',
-              )}
-              value={
-                kpis.avg_operator_payment_follow_through_rate != null
-                  ? `${kpis.avg_operator_payment_follow_through_rate}%`
-                  : t('dashboard.v2.staff_block.no_data', 'Maʼlumot yo‘q')
-              }
-              meta={t(
-                'dashboard.v2.staff_block.operator_follow_through_meta',
-                'Ro‘yxatdan o‘tgan studentlardan to‘lov qilganlar ulushi',
-              )}
-              icon={UserCheck}
-              tone="info"
-              onClick={() => navigate({ to: '/operators' })}
-            />
+              className="grid w-full grid-cols-3 gap-1 rounded-lg border border-border bg-muted/50 p-1 lg:w-auto lg:min-w-[520px]"
+            >
+              {detailViews.map((view) => (
+                <button
+                  key={view.key}
+                  type="button"
+                  aria-label={view.label}
+                  aria-pressed={detailView === view.key}
+                  onClick={() => setDetailView(view.key)}
+                  className={cn(
+                    'flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md border px-2.5 text-xs font-semibold transition-[background-color,border-color,color,box-shadow,scale] duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm',
+                    detailView === view.key
+                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                      : 'border-transparent text-muted-foreground hover:border-border hover:bg-card hover:text-foreground',
+                  )}
+                >
+                  <view.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>{view.buttonLabel}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </DashboardCard>
+
+          <div
+            role="region"
+            aria-label={activeDetailView.label}
+            className="p-4 sm:p-5"
+          >
+            <div className="mb-4">
+              <h3 className="text-base font-bold">{activeDetailView.label}</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {activeDetailView.description}
+              </p>
+            </div>
+
+            {detailView === 'financial' && (
+              <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+                <div className="rounded-lg border border-border/70 bg-background/30 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h4 className="text-sm font-bold">
+                        {t(
+                          'dashboard.v2.financial_block.debt_age_title',
+                          'Qarz muddati',
+                        )}
+                      </h4>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {t(
+                          'dashboard.v2.financial_block.debt_age_description',
+                          'So‘nggi to‘lovdan beri o‘tgan vaqt bo‘yicha.',
+                        )}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {t('dashboard.v2.outstanding_debt', 'Jami qarzdorlik')}
+                      </p>
+                      <p className="mt-1 font-mono text-sm font-bold tabular-nums">
+                        {formatMoney(debtAgingTotal)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 divide-y divide-border/70">
+                    {debtAgingBuckets.map((bucket) => {
+                      const share = debtAgingTotal
+                        ? Math.round((bucket.value / debtAgingTotal) * 1000) /
+                          10
+                        : 0;
+                      return (
+                        <div
+                          key={bucket.key}
+                          className="grid grid-cols-[64px_minmax(72px,1fr)_auto] items-center gap-3 py-2.5"
+                        >
+                          <span className="text-xs font-semibold">
+                            {bucket.label}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className={cn(
+                                  'h-full rounded-full',
+                                  bucket.barClassName,
+                                )}
+                                style={{ width: `${share}%` }}
+                              />
+                            </div>
+                            <span className="w-10 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
+                              {share}%
+                            </span>
+                          </div>
+                          <span className="font-mono text-xs font-bold tabular-nums sm:text-sm">
+                            {formatMoney(bucket.value)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-3 border-t border-border/70 pt-3 text-[11px] leading-relaxed text-muted-foreground">
+                    {t(
+                      'dashboard.v2.financial_block.debt_age_source',
+                      'To‘lov bo‘lmagan talabada muddat ro‘yxatdan o‘tgan kundan hisoblanadi.',
+                    )}
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                  <KpiCard
+                    label={t(
+                      'dashboard.v2.financial_block.arpu',
+                      'Faol talaba boshiga tushum',
+                    )}
+                    value={formatMoney(kpis.arpu)}
+                    meta={t(
+                      'dashboard.v2.financial_block.arpu_meta',
+                      'Tanlangan davr tushumi ÷ faol talabalar',
+                    )}
+                    icon={UsersThree}
+                    tone="primary"
+                  />
+                  <KpiCard
+                    label={t(
+                      'dashboard.v2.financial_block.cash_collection',
+                      'To‘lov undirish darajasi',
+                    )}
+                    value={`${kpis.cash_collection_rate}%`}
+                    meta={t(
+                      'dashboard.v2.financial_block.cash_collection_meta',
+                      'Faol talabalar shartnoma summasining to‘langan qismi',
+                    )}
+                    icon={PiggyBank}
+                    tone={
+                      kpis.cash_collection_rate >= 80 ? 'success' : 'warning'
+                    }
+                  />
+                  <div className="rounded-lg border border-border/70 bg-background/30 p-4 sm:col-span-2 xl:col-span-1">
+                    <h4 className="text-sm font-bold">
+                      {t(
+                        'dashboard.v2.financial_block.course_revenue',
+                        'Kurslar bo‘yicha tushum',
+                      )}
+                    </h4>
+                    <div className="mt-2 divide-y divide-border/70">
+                      {(['tezkor', 'avto_maktab'] as const).map(
+                        (courseType) => {
+                          const entry = kpis.revenue_by_course_type[courseType];
+                          return (
+                            <div
+                              key={courseType}
+                              className="flex items-center justify-between gap-4 py-2.5"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-xs font-semibold">
+                                  {t(
+                                    `students.course.${courseType}`,
+                                    courseType,
+                                  )}
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                  {entry.per_lesson !== null
+                                    ? t(
+                                        'dashboard.v2.financial_block.per_lesson',
+                                        '{{value}} har bir darsga',
+                                        {
+                                          value: formatMoney(
+                                            Math.round(entry.per_lesson),
+                                          ),
+                                        },
+                                      )
+                                    : t(
+                                        'dashboard.v2.financial_block.no_lessons',
+                                        'Dars maʼlumoti yo‘q',
+                                      )}
+                                </p>
+                              </div>
+                              <p className="shrink-0 font-mono text-sm font-bold tabular-nums">
+                                {formatMoney(entry.revenue)}
+                              </p>
+                            </div>
+                          );
+                        },
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {detailView === 'academic' && (
+              <>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <KpiCard
+                    label={t(
+                      'dashboard.v2.academic_block.attendance_rate',
+                      'Davomat',
+                    )}
+                    value={
+                      kpis.attendance_rate != null
+                        ? `${kpis.attendance_rate}%`
+                        : '—'
+                    }
+                    meta={t(
+                      'dashboard.v2.academic_block.attendance_meta',
+                      'Tanlangan davrdagi darslar bo‘yicha',
+                    )}
+                    icon={CheckCircle}
+                    tone={
+                      kpis.attendance_rate == null
+                        ? 'info'
+                        : kpis.attendance_rate >= 90
+                          ? 'success'
+                          : kpis.attendance_rate >= 75
+                            ? 'warning'
+                            : 'info'
+                    }
+                  />
+                  <KpiCard
+                    label={t(
+                      'dashboard.v2.academic_block.dropout_rate',
+                      'O‘qishni to‘xtatganlar ulushi',
+                    )}
+                    value={
+                      kpis.dropout_rate != null ? `${kpis.dropout_rate}%` : '—'
+                    }
+                    meta={t(
+                      'dashboard.v2.academic_block.suspended_meta',
+                      '{{count}} talaba alohida e’tibor talab qiladi',
+                      { count: kpis.students.suspended ?? 0 },
+                    )}
+                    icon={UserMinus}
+                    tone={(kpis.dropout_rate ?? 0) > 15 ? 'warning' : 'info'}
+                  />
+                  <KpiCard
+                    label={t(
+                      'dashboard.v2.academic_block.exam_pass_rate',
+                      'Birinchi urinishda topshirganlar',
+                    )}
+                    value={
+                      kpis.exam_first_attempt_pass_rate != null
+                        ? `${kpis.exam_first_attempt_pass_rate}%`
+                        : '—'
+                    }
+                    meta={t(
+                      'dashboard.v2.academic_block.exam_pass_meta',
+                      'Birinchi imtihon natijasi bo‘yicha',
+                    )}
+                    icon={ClipboardText}
+                    tone="info"
+                  />
+                  <KpiCard
+                    label={t(
+                      'dashboard.v2.academic_block.completion_time',
+                      'Bitirish muddati medianasi',
+                    )}
+                    value={
+                      kpis.completion_time_median_days != null
+                        ? t(
+                            'dashboard.v2.academic_block.days_value',
+                            '{{count}} kun',
+                            { count: kpis.completion_time_median_days },
+                          )
+                        : '—'
+                    }
+                    meta={t(
+                      'dashboard.v2.academic_block.completion_meta',
+                      'Bitirganlarning yarmi bundan tezroq yakunlagan',
+                    )}
+                    icon={Hourglass}
+                    tone="primary"
+                  />
+                </div>
+                {kpis.enrollment_funnel && (
+                  <div className="mt-4 space-y-3 rounded-lg border border-border/70 bg-background/30 p-4">
+                    <p className="text-xs font-bold">
+                      {t(
+                        'dashboard.v2.academic_block.funnel_title',
+                        'Ro‘yxatdan bitirishgacha',
+                      )}
+                    </p>
+                    {(
+                      [
+                        [
+                          'contract',
+                          t(
+                            'dashboard.v2.academic_block.funnel_contract',
+                            'Shartnoma',
+                          ),
+                          kpis.enrollment_funnel.contract,
+                          'bg-primary',
+                        ],
+                        [
+                          'active',
+                          t(
+                            'dashboard.v2.academic_block.funnel_active',
+                            'Faol',
+                          ),
+                          kpis.enrollment_funnel.active,
+                          'bg-info',
+                        ],
+                        [
+                          'graduated',
+                          t(
+                            'dashboard.v2.academic_block.funnel_graduated',
+                            'Bitirgan',
+                          ),
+                          kpis.enrollment_funnel.graduated,
+                          'bg-success',
+                        ],
+                      ] as const
+                    ).map(([key, label, value, barClassName]) => (
+                      <div key={key} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">{label}</span>
+                          <span className="font-semibold tabular-nums">
+                            {value}
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className={cn('h-full', barClassName)}
+                            style={{
+                              width: `${
+                                kpis.enrollment_funnel!.contract
+                                  ? (value / kpis.enrollment_funnel!.contract) *
+                                    100
+                                  : 0
+                              }%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <p className="pt-1 text-xs text-muted-foreground">
+                      {t(
+                        'dashboard.v2.academic_block.funnel_dropped',
+                        'O‘qishni to‘xtatgan yoki vaqtincha chetlatilgan',
+                      )}
+                      :{' '}
+                      <span className="font-semibold text-foreground tabular-nums">
+                        {kpis.enrollment_funnel.dropped_or_suspended}
+                      </span>
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {detailView === 'staff' && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <KpiCard
+                  label={t(
+                    'dashboard.v2.staff_block.teacher_load_label',
+                    'O‘qituvchi yuklamasi',
+                  )}
+                  value={
+                    kpis.teacher_load?.avg_lessons_per_active_teacher != null
+                      ? `${kpis.teacher_load.avg_lessons_per_active_teacher} ${t('dashboard.v2.staff_block.teacher_load_unit', 'dars/o‘qituvchi')}`
+                      : t('dashboard.v2.staff_block.no_data', 'Maʼlumot yo‘q')
+                  }
+                  meta={t(
+                    'dashboard.v2.staff_block.teacher_load_meta',
+                    '{{teachers}} faol o‘qituvchi · har biriga {{students}} talaba',
+                    {
+                      teachers: kpis.teacher_load?.active_teacher_count ?? 0,
+                      students:
+                        kpis.teacher_load?.avg_students_per_teacher ?? 0,
+                    },
+                  )}
+                  icon={GraduationCap}
+                  tone="primary"
+                  onClick={() => navigate({ to: '/teachers' })}
+                />
+                <KpiCard
+                  label={t(
+                    'dashboard.v2.staff_block.on_time_attendance_label',
+                    'Davomatni dars kunida belgilash',
+                  )}
+                  value={
+                    kpis.on_time_attendance_marking_rate != null
+                      ? `${kpis.on_time_attendance_marking_rate}%`
+                      : t('dashboard.v2.staff_block.no_data', 'Maʼlumot yo‘q')
+                  }
+                  meta={t(
+                    'dashboard.v2.staff_block.on_time_attendance_meta',
+                    'Dars o‘tgan kunning o‘zida kiritilgan davomatlar',
+                  )}
+                  icon={Clock}
+                  tone={
+                    (kpis.on_time_attendance_marking_rate ?? 0) >= 80
+                      ? 'success'
+                      : 'warning'
+                  }
+                  onClick={() => navigate({ to: '/attendance' })}
+                />
+                <KpiCard
+                  label={t(
+                    'dashboard.v2.staff_block.operator_follow_through_label',
+                    'Ro‘yxatdan to‘lovgacha',
+                  )}
+                  value={
+                    kpis.avg_operator_payment_follow_through_rate != null
+                      ? `${kpis.avg_operator_payment_follow_through_rate}%`
+                      : t('dashboard.v2.staff_block.no_data', 'Maʼlumot yo‘q')
+                  }
+                  meta={t(
+                    'dashboard.v2.staff_block.operator_follow_through_meta',
+                    'Operator ro‘yxatdan o‘tkazganlar ichida to‘lov qilganlar',
+                  )}
+                  icon={UserCheck}
+                  tone="info"
+                  onClick={() => navigate({ to: '/operators' })}
+                />
+              </div>
+            )}
+          </div>
+        </Card>
       </section>
     </div>
   );
