@@ -39,3 +39,9 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+export const resetAuthSessionState = (client: QueryClient = queryClient) => {
+  void client.cancelQueries({ type: 'all' });
+  client.removeQueries({ type: 'all' });
+  client.getMutationCache().clear();
+};

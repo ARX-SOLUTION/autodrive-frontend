@@ -75,8 +75,11 @@ const UPCOMING_LESSONS_SHOWN = 5;
 const TeacherDashboard = () => {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const { data: analytics, isLoading: analyticsLoading } =
-    useTeacherAnalytics();
+  const {
+    data: analytics,
+    isLoading: analyticsLoading,
+    isError: analyticsError,
+  } = useTeacherAnalytics();
   const { data: lessonsPage, isLoading: lessonsLoading } = useLessons(
     1,
     LESSONS_FETCH_LIMIT,
@@ -116,7 +119,13 @@ const TeacherDashboard = () => {
   // and DebtStatusBadge for the same convention.
   const owingStudentsCount = owingStudentsPage?.meta.total ?? 0;
 
-  if (analyticsLoading || lessonsLoading || studentsLoading || !analytics) {
+  if (
+    analyticsLoading ||
+    lessonsLoading ||
+    studentsLoading ||
+    !analytics ||
+    analyticsError
+  ) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -138,15 +147,15 @@ const TeacherDashboard = () => {
   const resultData = [
     {
       name: t('dashboard.result_studying'),
-      value: analytics.result_stats.oqimoqda,
+      value: analytics.result_stats?.oqimoqda ?? 0,
     },
     {
       name: t('dashboard.result_passed'),
-      value: analytics.result_stats.topshirdi,
+      value: analytics.result_stats?.topshirdi ?? 0,
     },
     {
       name: t('dashboard.result_failed'),
-      value: analytics.result_stats.yiqildi,
+      value: analytics.result_stats?.yiqildi ?? 0,
     },
   ];
 
