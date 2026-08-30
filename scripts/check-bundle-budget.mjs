@@ -55,6 +55,36 @@ const largestRoute = routeChunks
   .sort((left, right) => right.bytes - left.bytes)[0];
 assertBudget(`Route chunk ${largestRoute.name}`, largestRoute.bytes, 60 * kib);
 
+const dashboardRoute = assetNames.find((name) =>
+  /^_authenticated\.dashboard-.+\.js$/.test(name),
+);
+if (!dashboardRoute) {
+  throw new Error('Dashboard route chunk was not found.');
+}
+const dashboardRouteSource = readFileSync(
+  new URL(`assets/${dashboardRoute}`, distDir),
+  'utf8',
+);
+const companyDashboard = assetNames.find((name) =>
+  /^CompanyRevenueDashboard-.+\.js$/.test(name),
+);
+if (!companyDashboard) {
+  throw new Error('Company dashboard chunk was not found.');
+}
+const companyDashboardSource = readFileSync(
+  new URL(`assets/${companyDashboard}`, distDir),
+  'utf8',
+);
+const staticChartsImport = /(?:from|import)\s*["']\.\/charts-vendor-/;
+for (const [name, source] of [
+  [dashboardRoute, dashboardRouteSource],
+  [companyDashboard, companyDashboardSource],
+]) {
+  if (staticChartsImport.test(source)) {
+    throw new Error(`${name} eagerly depends on charts-vendor.`);
+  }
+}
+
 const optionalBudgets = [
   { prefix: 'charts-vendor-', limit: 100 * kib },
   { prefix: 'export-xlsx-', limit: 160 * kib },

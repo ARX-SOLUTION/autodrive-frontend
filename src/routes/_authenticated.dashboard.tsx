@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import DashboardPage from '@/pages/DashboardPage';
+import DashboardRouter from '@/pages/dashboard/DashboardRouter';
 import { teacherAnalyticsQueryOptions } from '@/services/dashboardService';
 import { useAuthStore } from '@/store/authStore';
 
@@ -8,5 +8,5 @@ export const Route = createFileRoute('/_authenticated/dashboard')({
     if (useAuthStore.getState().user?.role !== 'teacher') return;
     return context.queryClient.ensureQueryData(teacherAnalyticsQueryOptions());
   },
-  component: DashboardPage,
+  component: DashboardRouter,
 });

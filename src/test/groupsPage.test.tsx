@@ -218,9 +218,11 @@ describe('GroupsPage role gating', () => {
   it('owner sees delete buttons and the branch filter select', async () => {
     await renderPage();
     expect(screen.getAllByLabelText('common.delete').length).toBeGreaterThan(0);
-    // Course type is tabs; only branch select remains for cross-tenant roles.
+    // Course type is a pressed-button group; only branch select remains for cross-tenant roles.
     expect(screen.getAllByRole('combobox').length).toBe(1);
-    expect(screen.getByRole('tablist')).toBeTruthy();
+    expect(
+      screen.getByRole('group', { name: 'students.course_type' }),
+    ).toBeTruthy();
   });
 
   it('teacher gets no delete button, no branch filter, and is pinned to own branch', async () => {
@@ -230,9 +232,11 @@ describe('GroupsPage role gating', () => {
     expect(screen.queryAllByLabelText('common.delete').length).toBe(0);
     // Edit stays available regardless of manageGroups.
     expect(screen.getAllByLabelText('common.edit').length).toBeGreaterThan(0);
-    // Course type is tabs; no branch picker for teachers.
+    // Course type is a pressed-button group; no branch picker for teachers.
     expect(screen.queryAllByRole('combobox').length).toBe(0);
-    expect(screen.getByRole('tablist')).toBeTruthy();
+    expect(
+      screen.getByRole('group', { name: 'students.course_type' }),
+    ).toBeTruthy();
     // Fetch is pinned to the teacher's own branch from the auth store.
     const pageCall = h.useGroupsSpy.mock.calls.find(
       (c) => 'courseType' in (c[0] as object),
