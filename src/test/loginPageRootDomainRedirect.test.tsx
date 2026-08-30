@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import LoginPage from '@/pages/LoginPage';
 import { queryClient } from '@/lib/queryClient';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
+import type { AuthResponse } from '@/types/user';
 
 // autodrive-dtj.2: root domain (automaktab.uz) has no app UI of its own, so
 // a successful login there must hand off to app.automaktab.uz with a full
@@ -14,8 +15,20 @@ vi.mock('@/services/authService', () => ({
   useLogin: () => ({
     mutate: (
       _vars: unknown,
-      opts: { onSuccess: () => void; onError: (e: unknown) => void },
-    ) => opts.onSuccess(),
+      opts: {
+        onSuccess: (data: AuthResponse) => void;
+        onError: (e: unknown) => void;
+      },
+    ) =>
+      opts.onSuccess({
+        token: 'token',
+        user: {
+          id: 'u1',
+          name: 'Test User',
+          email: 'test@automaktab.uz',
+          role: 'manager',
+        },
+      }),
     isPending: false,
   }),
 }));

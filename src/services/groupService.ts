@@ -100,7 +100,7 @@ export const groupsListQueryOptions = (
 // search/branchId/courseType so GET /groups filters server-side instead of
 // the page re-filtering the full list client-side (autodrive-b85.5).
 export const useGroups = (params: GroupListParams = {}) => {
-  const authBranchId = useAuthStore((s) => s.user?.branch_id);
+  const authBranchId = useAuthStore((s) => s.user?.branch_id ?? undefined);
   const isCrossTenant = useIsCrossTenant();
   return useQuery(
     groupsListQueryOptions(
@@ -126,7 +126,7 @@ export const groupsOverviewQueryOptions = (branchId?: string, enabled = true) =>
   });
 
 export const useGroupsOverview = () => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const branchId = useAuthStore((s) => s.user?.branch_id ?? undefined);
   const isCrossTenant = useIsCrossTenant();
   return useQuery(
     groupsOverviewQueryOptions(branchId, !!branchId || isCrossTenant),

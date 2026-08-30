@@ -34,9 +34,9 @@ vi.mock('@/services/userService', async (importOriginal) => {
   return {
     ...actual,
     useUsersPage: h.useUsersPage,
-    useCreateManager: h.idleMutation,
+    useCreateCompanyUser: h.idleMutation,
     useUpdateUser: h.idleMutation,
-    useDeleteUser: h.idleMutation,
+    useChangeUserLifecycle: h.idleMutation,
     useRestoreUser: h.idleMutation,
   };
 });

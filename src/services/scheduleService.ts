@@ -38,7 +38,7 @@ export const scheduleTemplatesQueryOptions = (
   });
 
 export const useScheduleTemplates = () => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const branchId = useAuthStore((s) => s.user?.branch_id ?? undefined);
   const isCrossTenant = useIsCrossTenant();
   return useQuery(
     scheduleTemplatesQueryOptions(branchId, !!branchId || isCrossTenant),
@@ -119,7 +119,7 @@ export const calendarLessonsQueryOptions = (
   });
 
 export const useCalendarLessons = (dateFrom: string, dateTo: string) => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const branchId = useAuthStore((s) => s.user?.branch_id ?? undefined);
   const isCrossTenant = useIsCrossTenant();
   return useQuery(
     calendarLessonsQueryOptions(

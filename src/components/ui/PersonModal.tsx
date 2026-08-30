@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -41,18 +41,23 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useCan } from '@/hooks/useCan';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import { useBranches } from '@/services/branchService';
+import { useAuthStore } from '@/store/authStore';
 
 // Reuses the canonical UserRole union (src/types/user.ts) instead of a
 // parallel string literal type -- 'dev'/'owner' never open this modal.
-export type PersonRole = Extract<UserRole, 'manager' | 'operator' | 'teacher'>;
+export type PersonRole = Extract<
+  UserRole,
+  'manager' | 'accountant' | 'operator' | 'teacher'
+>;
 
 export interface PersonFormPayload {
   fullName: string;
-  phone?: string; // E.164, omitted if left blank (manager only -- operator/teacher require it)
+  phone?: string; // E.164, omitted if left blank (manager/accountant only -- operator/teacher require it)
   branchId?: string;
-  email?: string; // manager, create only
-  password?: string; // manager, create only
+  email?: string; // manager/accountant, create only
+  password?: string; // manager/accountant, create only
   specialization?: Specialization; // teacher only
+  role?: PersonRole;
 }
 
 // Per-role i18n keys for the fields every role has (name/phone/branch) --
@@ -62,6 +67,11 @@ const FIELD_LABELS: Record<
   { name: string; phone: string; branch: string }
 > = {
   manager: {
+    name: 'users.name_label',
+    phone: 'common.phone',
+    branch: 'common.branch',
+  },
+  accountant: {
     name: 'users.name_label',
     phone: 'common.phone',
     branch: 'common.branch',
@@ -83,17 +93,14 @@ const FIELD_LABELS: Record<
 // optional for manager; branch is required only for manager.
 const REQUIRED: Record<PersonRole, { phone: boolean; branch: boolean }> = {
   manager: { phone: false, branch: true },
+  accountant: { phone: false, branch: false },
   operator: { phone: true, branch: false },
   teacher: { phone: true, branch: false },
 };
 
 // Factory so field messages can be localized via t(); unlocalized fields use
 // literal strings, matching StudentModal's makeStudentFormSchema convention.
-const makePersonFormSchema = (
-  t: (key: string) => string,
-  role: PersonRole,
-  isEdit: boolean,
-) =>
+const makePersonFormSchema = (t: (key: string) => string, isEdit: boolean) =>
   z
     .object({
       fullName: z.string().refine(isValidName, t('common.invalid_name')),
@@ -102,8 +109,10 @@ const makePersonFormSchema = (
       email: z.string().optional(),
       password: z.string().optional(),
       specialization: z.enum(['THEORY', 'PRACTICE']).optional(),
+      role: z.enum(['manager', 'accountant', 'operator', 'teacher']),
     })
     .superRefine((data, ctx) => {
+      const role = data.role;
       const phoneRequired = REQUIRED[role].phone;
       const hasPhoneDigits = uzLocalDigits(data.phone).length > 0;
       if (phoneRequired || hasPhoneDigits) {
@@ -129,19 +138,24 @@ const makePersonFormSchema = (
           message: 'Required',
         });
       }
-      if (role === 'manager' && !isEdit) {
+      if ((role === 'manager' || role === 'accountant') && !isEdit) {
         if (!data.email || !z.string().email().safeParse(data.email).success) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['email'],
-            message: 'Invalid email',
+            message: t('students.wizard.email_invalid'),
           });
         }
-        if (!data.password) {
+        if (
+          !data.password ||
+          data.password.length < 8 ||
+          !/[0-9]/.test(data.password) ||
+          !/[A-Z]/.test(data.password)
+        ) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['password'],
-            message: 'Required',
+            message: t('users.password_requirements'),
           });
         }
       }
@@ -155,6 +169,7 @@ interface PersonModalProps {
   onSubmit: (data: PersonFormPayload) => void;
   loading?: boolean;
   role: PersonRole;
+  selectableRoles?: readonly PersonRole[];
   // Presence signals edit mode, absence signals create -- mirrors
   // StudentModal's `student?: Student | null` convention.
   person?: User | null;
@@ -168,15 +183,21 @@ const PersonModal = ({
   onSubmit,
   loading,
   role,
+  selectableRoles,
   person,
   title,
   description,
 }: PersonModalProps) => {
   const { t } = useTranslation();
   const canAssignBranch = useCan('assignBranch');
+  const isOwner = useAuthStore((state) => state.user?.role === 'owner');
   const { data: branches } = useBranches();
 
-  const personFormSchema = makePersonFormSchema(t, role, !!person);
+  const visibleSelectableRoles = isOwner
+    ? selectableRoles
+    : selectableRoles?.filter((option) => option !== 'accountant');
+
+  const personFormSchema = makePersonFormSchema(t, !!person);
 
   const defaultFormValues = (): PersonFormValues => ({
     fullName: '',
@@ -185,12 +206,14 @@ const PersonModal = ({
     email: '',
     password: '',
     specialization: 'THEORY',
+    role,
   });
 
   const form = useForm<PersonFormValues>({
     resolver: zodResolver(personFormSchema),
     defaultValues: defaultFormValues(),
   });
+  const selectedRole = useWatch({ control: form.control, name: 'role' });
 
   useEffect(() => {
     if (!open) return;
@@ -202,6 +225,7 @@ const PersonModal = ({
         email: '',
         password: '',
         specialization: person.specialization || 'THEORY',
+        role: person.role === 'accountant' ? 'accountant' : role,
       });
     } else {
       form.reset(defaultFormValues());
@@ -217,14 +241,22 @@ const PersonModal = ({
       phone: isValidUzPhone(values.phone)
         ? uzPhoneE164(values.phone)
         : undefined,
-      branchId: values.branchId || undefined,
     };
-    if (role === 'manager' && !person) {
+    if (selectedRole !== 'accountant') {
+      payload.branchId = values.branchId || undefined;
+    }
+    if (
+      (selectedRole === 'manager' || selectedRole === 'accountant') &&
+      !person
+    ) {
       payload.email = values.email?.trim();
       payload.password = values.password;
     }
-    if (role === 'teacher') {
+    if (selectedRole === 'teacher') {
       payload.specialization = values.specialization;
+    }
+    if (visibleSelectableRoles && visibleSelectableRoles.length > 1) {
+      payload.role = selectedRole;
     }
     onSubmit(payload);
   };
@@ -232,10 +264,18 @@ const PersonModal = ({
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
     useConfirmedClose(form.formState.isDirty || !!loading, onClose);
 
-  const labels = FIELD_LABELS[role];
-  const showEmailPassword = role === 'manager' && !person;
-  const showSpecialization = role === 'teacher';
-  const showBranch = role === 'teacher' ? canAssignBranch : true;
+  const labels = FIELD_LABELS[selectedRole];
+  const showRoleSelect =
+    !person && !!visibleSelectableRoles && visibleSelectableRoles.length > 1;
+  const showEmailPassword =
+    (selectedRole === 'manager' || selectedRole === 'accountant') && !person;
+  const showSpecialization = selectedRole === 'teacher';
+  const showBranch =
+    selectedRole === 'accountant'
+      ? false
+      : selectedRole === 'teacher'
+        ? canAssignBranch
+        : true;
 
   return (
     <>
@@ -269,6 +309,35 @@ const PersonModal = ({
                   </FormItem>
                 )}
               />
+
+              {showRoleSelect && (
+                <FormItem>
+                  <FormLabel>{t('users.detail.role')}</FormLabel>
+                  <Select
+                    value={selectedRole}
+                    onValueChange={(value) =>
+                      form.setValue('role', value as PersonRole, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      aria-label={t('users.detail.role')}
+                      className="bg-secondary border-border"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {visibleSelectableRoles.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {t(`roles.${option}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
 
               {showEmailPassword && (
                 <>
@@ -315,7 +384,7 @@ const PersonModal = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      {t(labels.phone)} {REQUIRED[role].phone && '*'}
+                      {t(labels.phone)} {REQUIRED[selectedRole].phone && '*'}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -376,20 +445,22 @@ const PersonModal = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        {t(labels.branch)} {REQUIRED[role].branch && '*'}
+                        {t(labels.branch)}{' '}
+                        {REQUIRED[selectedRole].branch && '*'}
                       </FormLabel>
                       <Select
                         value={field.value || ''}
                         onValueChange={field.onChange}
                         disabled={
-                          role === 'manager' && (branches || []).length === 0
+                          selectedRole === 'manager' &&
+                          (branches || []).length === 0
                         }
                       >
                         <FormControl>
                           <SelectTrigger className="bg-secondary border-border">
                             <SelectValue
                               placeholder={
-                                role === 'manager' &&
+                                selectedRole === 'manager' &&
                                 (branches || []).length === 0
                                   ? t('users.no_branches')
                                   : t('common.select_placeholder')

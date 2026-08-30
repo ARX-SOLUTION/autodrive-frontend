@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/form';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
+import type { AuthResponse } from '@/types/user';
 
 const makeLoginFormSchema = (t: (key: string) => string) =>
   z.object({
@@ -71,14 +72,19 @@ const LoginPage = () => {
     }
   };
 
-  const onSuccess = () => {
+  const onSuccess = (data: AuthResponse) => {
     toast.success(t('login.success'));
     // Return to the page a session-expiry redirect came from, if any.
     const from =
       'from' in location.state && typeof location.state.from === 'string'
         ? location.state.from
         : undefined;
-    const target = from && from !== '/login' ? from : '/dashboard';
+    const target =
+      data.user.role === 'accountant'
+        ? '/profile'
+        : from && from !== '/login'
+          ? from
+          : '/dashboard';
     if (isRootDomain()) {
       // automaktab.uz has no app UI of its own -- hand off to app. with a
       // full navigation so the domain-wide auth cookie rides along.

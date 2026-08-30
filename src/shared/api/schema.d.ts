@@ -1624,7 +1624,7 @@ export interface components {
       password: string;
       phone?: string;
       /** @enum {string} */
-      role: 'dev' | 'owner' | 'manager' | 'operator' | 'teacher';
+      role: 'dev' | 'owner' | 'manager' | 'accountant' | 'operator' | 'teacher';
     };
     CreateStudentDto: {
       address?: string;
@@ -1695,7 +1695,7 @@ export interface components {
       /** @example +998901234567 */
       phone?: string;
       /** @enum {string} */
-      role: 'dev' | 'owner' | 'manager' | 'operator' | 'teacher';
+      role: 'dev' | 'owner' | 'manager' | 'accountant' | 'operator' | 'teacher';
       /** @enum {string} */
       specialization: 'THEORY' | 'PRACTICE';
     };
@@ -1877,7 +1877,8 @@ export interface components {
       name?: string;
       phone?: string;
       /** @enum {string} */
-      role?: 'dev' | 'owner' | 'manager' | 'operator' | 'teacher';
+      role?:
+        'dev' | 'owner' | 'manager' | 'accountant' | 'operator' | 'teacher';
     };
     UpdateStudentDto: {
       address?: string;
@@ -3552,7 +3553,8 @@ export interface operations {
         includeDeleted?: boolean;
         limit?: number;
         page?: number;
-        role?: 'dev' | 'owner' | 'manager' | 'operator' | 'teacher';
+        role?:
+          'dev' | 'owner' | 'manager' | 'accountant' | 'operator' | 'teacher';
         /** @description Matches name, email, or phone (case-insensitive) */
         search?: string;
       };
@@ -3941,7 +3943,8 @@ export interface operations {
         includeDeleted?: boolean;
         limit?: number;
         page?: number;
-        role?: 'dev' | 'owner' | 'manager' | 'operator' | 'teacher';
+        role?:
+          'dev' | 'owner' | 'manager' | 'accountant' | 'operator' | 'teacher';
         /** @description Matches name, email, or phone (case-insensitive) */
         search?: string;
       };
@@ -4495,7 +4498,8 @@ export interface operations {
         isActive?: boolean;
         limit?: number;
         page?: number;
-        role?: 'dev' | 'owner' | 'manager' | 'operator' | 'teacher';
+        role?:
+          'dev' | 'owner' | 'manager' | 'accountant' | 'operator' | 'teacher';
         search?: string;
       };
       header?: never;

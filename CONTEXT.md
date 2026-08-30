@@ -2,12 +2,12 @@
 
 ## Overview
 
-React 19 + Vite + TypeScript frontend for an Uzbek driving school CRM. Tenant-facing application serving owners, managers, operators, and teachers across driving school branches. Built with shadcn/ui, TanStack Router, TanStack Query, Zustand, and a tenant-local **Warm Paper** visual system (warm off-white surfaces, rust accent). Shared `@autodrive/design-tokens` remain the package default; the tenant CRM overrides palette in `src/index.css` so the admin panel stays unchanged.
+React 19 + Vite + TypeScript frontend for an Uzbek driving school CRM. Tenant-facing application serving owners, managers, accountants, operators, and teachers across driving school branches. Built with shadcn/ui, TanStack Router, TanStack Query, Zustand, and a tenant-local **Warm Paper** visual system (warm off-white surfaces, rust accent). Shared `@autodrive/design-tokens` remain the package default; the tenant CRM overrides palette in `src/index.css` so the admin panel stays unchanged.
 
 ## Product boundaries
 
 **Tenant App**:
-The authenticated driving-school workspace used by owners, managers, operators, and teachers. It contains no public marketing or editorial pages.
+The authenticated driving-school workspace used by owners, managers, accountants, operators, and teachers. It contains no public marketing or editorial pages.
 _Avoid_: website, landing app, public app
 
 **Public Web**:
@@ -27,7 +27,7 @@ _Avoid_: CRM, tenant app
 | Davomat       | Attendance      | Per-student-per-lesson record. States: **present** (keldi), **absent** (kelmadi), **late** (kech qoldi), **excused** (uzrli).                                                                                                                                                                                                                                                                                                                       |
 | Jadval        | Schedule        | Weekly schedule template assigned to a group. Defines which days/hours lessons occur. Auto-generates lessons for the scheduled period.                                                                                                                                                                                                                                                                                                              |
 | To'lov        | Payment         | Student payment record. Supports partial payments, installment tracking, and debt management. `debt` is a single running balance, not an invoice/ledger entity — it can go **negative**, meaning the student has a credit balance (overpaid / advance payment), not an amount owed. UI treats `debt > 0` as owed (destructive/red), `debt < 0` as credit (shown via `students.credit_label`, abs value, success/green), `debt === 0` as fully paid. |
-| Foydalanuvchi | User            | Five roles: **dev** (platform developer, all access), **owner** (company owner, cross-branch analytics + branch CRUD), **manager** (branch manager, full branch operations), **operator** (day-to-day registrar), **teacher** (read-only on assigned students/groups).                                                                                                                                                                              |
+| Foydalanuvchi | User            | Roles: **dev** (platform developer, all access), **owner** (company owner, cross-branch analytics + branch CRUD), **manager** (branch manager, full branch operations), **accountant** (company accountant), **operator** (day-to-day registrar), **teacher** (read-only on assigned students/groups).                                                                                                                                              |
 | Sana oralig‘i | Date Range      | Inclusive pair of Calendar Dates (`from` / `to` as `YYYY-MM-DD`). Same-day allowed. Wire params stay `date_from` / `date_to`. _Avoid_: period, interval, date filter.                                                                                                                                                                                                                                                                               |
 | —             | DateRangePicker | Single-trigger + range calendar for Date Range in filter bars (Students, Payments, Audit, Dashboard). _Avoid_: DateRangeFields, dual DatePicker.                                                                                                                                                                                                                                                                                                    |
 

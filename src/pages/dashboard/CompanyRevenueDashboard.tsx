@@ -571,7 +571,7 @@ const CompanyRevenueDashboard = () => {
       getSearchQuery(
         params,
         canViewAllBranches ? params.get('branch_id') || undefined : undefined,
-        user?.branch_id,
+        user?.branch_id ?? undefined,
       ),
     [canViewAllBranches, params, user?.branch_id],
   );
