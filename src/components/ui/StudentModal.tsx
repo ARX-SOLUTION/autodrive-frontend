@@ -189,10 +189,11 @@ const StudentModal = ({
     setDupQueryForDismissal(debouncedDupQuery);
     setDupWarningDismissed(false);
   }
+  const activeBranchId = watchedBranchId || user?.branch_id || undefined;
 
   const { data: dupMatchesPage } = useStudentsPage(
     undefined,
-    watchedBranchId || user?.branch_id,
+    activeBranchId,
     1,
     5,
     undefined,
@@ -207,7 +208,7 @@ const StudentModal = ({
   // courseType. Real prices now live on Course rows, scoped by branch +
   // course_type — fetch them and let the picker below drive the pre-fill.
   const { data: courses } = useCourses({
-    branchId: watchedBranchId || user?.branch_id,
+    branchId: activeBranchId,
     courseType,
   });
   const activeCourseList = (courses || []).filter((c) => c.is_active);

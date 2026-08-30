@@ -1,4 +1,5 @@
-export type UserRole = 'dev' | 'owner' | 'manager' | 'operator' | 'teacher';
+export type UserRole =
+  'dev' | 'owner' | 'manager' | 'accountant' | 'operator' | 'teacher';
 export type Specialization = 'THEORY' | 'PRACTICE';
 export type CompanyStatus = 'pending' | 'active' | 'suspended';
 
@@ -14,7 +15,7 @@ export interface User {
   name?: string;
   email: string;
   role: UserRole;
-  branch_id?: string;
+  branch_id?: string | null;
   branch_name?: string;
   company_id?: string;
   company_status?: CompanyStatus;

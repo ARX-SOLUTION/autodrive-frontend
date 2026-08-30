@@ -29,7 +29,9 @@ export type Capability =
 // Role groups — named so the matrix reads as intent, not a wall of literals.
 const OWNERS: readonly UserRole[] = ['dev', 'owner'];
 const OPS: readonly UserRole[] = ['dev', 'owner', 'manager', 'operator'];
-const ALL: readonly UserRole[] = [
+// Accountant remains outside operational capabilities until the .1.2
+// dashboard/operations follow-up explicitly grants them.
+const OPERATIONAL_ROLES: readonly UserRole[] = [
   'dev',
   'owner',
   'manager',
@@ -49,7 +51,7 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   manageStudents: OPS,
   manageGroups: OPS,
   manageSchedule: OPS,
-  takeAttendance: ALL,
+  takeAttendance: OPERATIONAL_ROLES,
   // Teacher creates an ad-hoc lesson for their own (server-scoped) group and
   // edits/deletes only lessons they personally created -- narrower than
   // manageSchedule (templates/bulk-generate stay OPS-only, unaffected).
@@ -61,7 +63,7 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   // have unconditional delete via the role check in AttendancePage.
   manageOwnLesson: ['dev', 'owner', 'manager', 'teacher'],
   viewAudit: OWNERS,
-  viewDashboard: ALL,
+  viewDashboard: OPERATIONAL_ROLES,
   // autodrive-cg9: "show deleted" toggle + restore action on the students/
   // groups/users/branches list pages. No existing capability means this --
   // manageBranches/manageUsers/manageStudents/manageGroups are each scoped

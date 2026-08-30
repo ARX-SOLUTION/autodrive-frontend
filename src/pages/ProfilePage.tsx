@@ -168,6 +168,8 @@ const ProfilePage = () => {
     // Captured before the mutation: onSuccess replaces the user in the store
     // (must_change_password becomes false), so read the flag now.
     const wasForced = !!user?.must_change_password;
+    const forcedRedirect =
+      user?.role === 'accountant' ? '/profile' : '/dashboard';
     const payload = {
       currentPassword: values.currentPassword.trim(),
       newPassword: values.newPassword.trim(),
@@ -176,7 +178,7 @@ const ProfilePage = () => {
       onSuccess: () => {
         toast.success(t('profile.update_password_success'));
         pwForm.reset({ currentPassword: '', newPassword: '' });
-        if (wasForced) void navigate({ to: '/dashboard' });
+        if (wasForced) void navigate({ to: forcedRedirect });
       },
       onError: (error) =>
         mutationErrorToast(error, t, () => changePasswordMut.mutate(payload)),

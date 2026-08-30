@@ -82,7 +82,7 @@ const TeacherDashboard = () => {
     LESSONS_FETCH_LIMIT,
   );
   const { data: owingStudentsPage, isLoading: studentsLoading } =
-    useStudentsPage(undefined, user?.branch_id, 1, 1, undefined, {
+    useStudentsPage(undefined, user?.branch_id ?? undefined, 1, 1, undefined, {
       hasDebt: true,
     });
 

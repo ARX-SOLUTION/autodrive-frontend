@@ -58,7 +58,7 @@ export const lessonsPageQueryOptions = (
   });
 
 export const useLessons = (page = 1, limit = 50) => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const branchId = useAuthStore((s) => s.user?.branch_id ?? undefined);
   const isCrossTenant = useIsCrossTenant();
   return useQuery(
     lessonsPageQueryOptions(

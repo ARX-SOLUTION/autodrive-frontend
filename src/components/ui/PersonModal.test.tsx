@@ -128,6 +128,71 @@ describe('PersonModal validation', () => {
 });
 
 describe('PersonModal submit payload shape', () => {
+  it('lets an owner choose accountant and submit without a branch', async () => {
+    auth.role = 'owner';
+    const onSubmit = vi.fn();
+    render(
+      <PersonModal
+        open
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+        role="manager"
+        selectableRoles={['manager', 'accountant']}
+        title="t"
+        description="d"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('combobox', { name: 'users.detail.role' }),
+    );
+    fireEvent.click(
+      within(screen.getByRole('listbox')).getByText('roles.accountant'),
+    );
+    fireEvent.change(q('fullName'), { target: { value: 'Aziza Hisobchi' } });
+    fireEvent.change(q('email'), { target: { value: 'aziza@example.com' } });
+    fireEvent.change(q('password'), { target: { value: 'secret123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'common.add' }));
+
+    expect(
+      await screen.findByText('users.password_requirements'),
+    ).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    fireEvent.change(q('password'), { target: { value: 'Secret123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'common.add' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit).toHaveBeenCalledWith({
+      fullName: 'Aziza Hisobchi',
+      phone: undefined,
+      email: 'aziza@example.com',
+      password: 'Secret123',
+      role: 'accountant',
+    });
+    expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('branchId');
+  });
+
+  it('does not expose accountant selection to a manager', () => {
+    auth.role = 'manager';
+    render(
+      <PersonModal
+        open
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        role="manager"
+        selectableRoles={['manager', 'accountant']}
+        title="t"
+        description="d"
+      />,
+    );
+
+    expect(
+      screen.queryByRole('combobox', { name: 'users.detail.role' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('roles.accountant')).not.toBeInTheDocument();
+  });
+
   it('submits an operator payload with no email/password/specialization keys', async () => {
     auth.role = 'owner';
     const onSubmit = vi.fn();
@@ -172,7 +237,7 @@ describe('PersonModal submit payload shape', () => {
     );
     fireEvent.change(q('fullName'), { target: { value: 'Vali Valiyev' } });
     fireEvent.change(q('email'), { target: { value: 'vali@example.com' } });
-    fireEvent.change(q('password'), { target: { value: 'secret123' } });
+    fireEvent.change(q('password'), { target: { value: 'Secret123' } });
     fireEvent.click(screen.getByRole('button', { name: 'common.add' }));
 
     expect(await screen.findByText('Required')).toBeInTheDocument();

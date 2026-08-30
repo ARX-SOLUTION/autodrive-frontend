@@ -14,9 +14,9 @@ import type {
 } from '@/shared/api/contract';
 
 // The generated schema marks specialization required, but the backend DTO
-// accepts it only when supplied and the manager UI intentionally has no such
-// field. Keep the role-specific request equal to the real manager payload.
-type ManagerCreateRequest = Pick<
+// accepts it only when supplied and this company-user UI intentionally has no
+// such field. Keep the role-specific request equal to the real API payload.
+type CompanyUserCreateRequest = Pick<
   CreateUserRequest,
   'fullName' | 'email' | 'password' | 'phone' | 'branchId' | 'role'
 >;
@@ -98,7 +98,7 @@ export const useUser = (id?: string) =>
     },
   });
 
-export const useCreateManager = () => {
+export const useCreateCompanyUser = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (m: {
@@ -106,11 +106,16 @@ export const useCreateManager = () => {
       email: string;
       password: string;
       phone?: string;
-      branchId: string;
+      branchId?: string;
+      role: Extract<CreateUserRequest['role'], 'manager' | 'accountant'>;
     }) => {
-      const request: ManagerCreateRequest = {
-        ...m,
-        role: 'manager',
+      const request: CompanyUserCreateRequest = {
+        fullName: m.fullName,
+        email: m.email,
+        password: m.password,
+        phone: m.phone,
+        role: m.role,
+        ...(m.branchId ? { branchId: m.branchId } : {}),
       };
       const { data } = await axiosInstance.post<unknown>('/users', request);
       return parseItemEnvelope<User>(data, 'user');
@@ -134,11 +139,17 @@ export const useUpdateUser = () => {
   });
 };
 
-export const useDeleteUser = () => {
+export const useChangeUserLifecycle = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      await axiosInstance.delete(`/users/${id}`);
+    mutationFn: async (
+      target: string | { id: string; action: 'activate' | 'deactivate' },
+    ) => {
+      if (typeof target === 'string') {
+        await axiosInstance.delete(`/users/${target}`);
+      } else {
+        await axiosInstance.patch(`/users/${target.id}/${target.action}`);
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: userKeys.all });

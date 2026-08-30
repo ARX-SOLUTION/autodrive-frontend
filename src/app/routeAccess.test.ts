@@ -3,7 +3,14 @@ import { roleCan } from '@/lib/permissions';
 import { ROUTE_CAPABILITIES } from './routeAccess';
 import type { UserRole } from '@/types/user';
 
-const ROLES: UserRole[] = ['dev', 'owner', 'manager', 'operator', 'teacher'];
+const ROLES: UserRole[] = [
+  'dev',
+  'owner',
+  'manager',
+  'accountant',
+  'operator',
+  'teacher',
+];
 
 const allowedRoles = (path: keyof typeof ROUTE_CAPABILITIES) =>
   ROLES.filter((role) => roleCan(role, ROUTE_CAPABILITIES[path]));

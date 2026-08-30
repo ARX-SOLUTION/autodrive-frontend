@@ -5,14 +5,15 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   useUsersPage,
-  useCreateManager,
+  useCreateCompanyUser,
   useUpdateUser,
-  useDeleteUser,
+  useChangeUserLifecycle,
   useRestoreUser,
 } from '@/services/userService';
 import { useBranches } from '@/services/branchService';
 import { RoleGate } from '@/components/RoleGate';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
+import { useAuthStore } from '@/store/authStore';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { extractErrorMessage } from '@/lib/errors';
@@ -40,6 +41,7 @@ import {
   MagnifyingGlass,
   PencilSimple,
   Trash,
+  Power,
   ArrowCounterClockwise,
   CircleNotch,
 } from '@phosphor-icons/react';
@@ -47,7 +49,7 @@ import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DeletedBadge } from '@/components/ui/DeletedBadge';
 import { cn } from '@/lib/utils';
-import type { User } from '@/types/user';
+import type { User, UserRole } from '@/types/user';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataGrid, createDataGridColumnHelper } from '@/shared/ui/data-grid';
 
@@ -64,12 +66,66 @@ const SERVER_PAGE_SIZE = 25;
 const userColumnHelper = createDataGridColumnHelper<User>();
 const NO_COLUMN_FILTERS: ColumnFiltersState = [];
 const ignoreColumnFiltersChange = () => undefined;
+type CompanyUserRole = Extract<UserRole, 'manager' | 'accountant'>;
+type UserLifecycleSnapshot =
+  | { action: 'delete'; id: string; name?: string }
+  | { action: 'activate' | 'deactivate'; id: string; name?: string };
+
+interface UserLifecycleButtonProps {
+  user: User;
+  onSelect: (snapshot: UserLifecycleSnapshot) => void;
+}
+
+const UserLifecycleButton = ({ user, onSelect }: UserLifecycleButtonProps) => {
+  const { t } = useTranslation();
+  const isAccountant = user.role === 'accountant';
+  const label = t(
+    isAccountant
+      ? user.is_active
+        ? 'users.deactivate'
+        : 'users.activate'
+      : 'common.delete',
+  );
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onSelect({
+          id: user.id,
+          name: user.name,
+          action: isAccountant
+            ? user.is_active
+              ? 'deactivate'
+              : 'activate'
+            : 'delete',
+        });
+      }}
+      aria-label={label}
+      title={label}
+      className={cn(
+        'flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors',
+        isAccountant && !user.is_active
+          ? 'hover:bg-primary/10 hover:text-primary'
+          : 'hover:bg-destructive/10 hover:text-destructive',
+      )}
+    >
+      {isAccountant ? (
+        <Power className="h-3.5 w-3.5" />
+      ) : (
+        <Trash className="h-3.5 w-3.5" />
+      )}
+    </button>
+  );
+};
 
 const UsersPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isCrossTenant = useIsCrossTenant();
   const canViewDeleted = useCan('viewDeleted');
+  const isOwner = useAuthStore((state) => state.user?.role === 'owner');
 
   // Filter state lives in the URL (autodrive-b85.2), same pattern as
   // StudentsPage's searchParams/setParam.
@@ -80,6 +136,16 @@ const UsersPage = () => {
   const branchId = searchParams.get('branch_id') ?? undefined;
   const setBranchId = (v: string | undefined) =>
     setParams({ branch_id: v, page: undefined });
+  const userRole: CompanyUserRole =
+    isOwner && searchParams.get('role') === 'accountant'
+      ? 'accountant'
+      : 'manager';
+  const setUserRole = (role: CompanyUserRole) =>
+    setParams({
+      role: role === 'manager' ? undefined : role,
+      branch_id: role === 'accountant' ? undefined : branchId,
+      page: undefined,
+    });
   const isActiveParam = searchParams.get('is_active') ?? undefined;
   const isActive =
     isActiveParam === 'true'
@@ -110,9 +176,9 @@ const UsersPage = () => {
     isFetching,
     isError,
     refetch,
-  } = useUsersPage('manager', currentPage, SERVER_PAGE_SIZE, {
+  } = useUsersPage(userRole, currentPage, SERVER_PAGE_SIZE, {
     search: debouncedSearch,
-    branchId,
+    branchId: userRole === 'accountant' ? undefined : branchId,
     isActive,
     // Defensive even though the toggle only renders for an owner: never let
     // a stray true reach the request for anyone else (403 on the wire).
@@ -129,14 +195,15 @@ const UsersPage = () => {
   }, [totalPages]);
 
   const { data: branches } = useBranches();
-  const createMut = useCreateManager();
+  const createMut = useCreateCompanyUser();
   const updateMut = useUpdateUser();
-  const deleteMut = useDeleteUser();
+  const lifecycleMut = useChangeUserLifecycle();
   const restoreMut = useRestoreUser();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<User | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [lifecycleTarget, setLifecycleTarget] =
+    useState<UserLifecycleSnapshot | null>(null);
   const [restoreId, setRestoreId] = useState<string | null>(null);
 
   const openCreate = () => {
@@ -151,41 +218,35 @@ const UsersPage = () => {
 
   const handleSubmit = (data: PersonFormPayload) => {
     if (editItem) {
-      updateMut.mutate(
-        {
-          id: editItem.id,
-          fullName: data.fullName,
-          phone: data.phone,
-          branchId: data.branchId,
+      const update = {
+        id: editItem.id,
+        fullName: data.fullName,
+        phone: data.phone,
+        ...(editItem.role === 'accountant' ? {} : { branchId: data.branchId }),
+      };
+      updateMut.mutate(update, {
+        onSuccess: () => {
+          toast.success(t('users.updated'));
+          setModalOpen(false);
         },
-        {
-          onSuccess: () => {
-            toast.success(t('users.updated'));
-            setModalOpen(false);
-          },
-          onError: (err) =>
-            mutationErrorToast(err, t, () =>
-              updateMut.mutate({
-                id: editItem.id,
-                fullName: data.fullName,
-                phone: data.phone,
-                branchId: data.branchId,
-              }),
-            ),
-        },
-      );
+        onError: (err) =>
+          mutationErrorToast(err, t, () => updateMut.mutate(update)),
+      });
     } else {
+      const role = data.role === 'accountant' ? 'accountant' : 'manager';
       createMut.mutate(
         {
           fullName: data.fullName,
           email: data.email!,
           password: data.password!,
           phone: data.phone,
-          branchId: data.branchId!,
+          role,
+          ...(data.branchId ? { branchId: data.branchId } : {}),
         },
         {
           onSuccess: () => {
             toast.success(t('users.added'));
+            if (role === 'accountant') setUserRole('accountant');
             setModalOpen(false);
           },
           onError: (err) =>
@@ -195,15 +256,25 @@ const UsersPage = () => {
     }
   };
 
-  const handleDelete = () => {
-    if (!deleteId) return;
-    deleteMut.mutate(deleteId, {
+  const handleLifecycle = () => {
+    if (!lifecycleTarget) return;
+    const target =
+      lifecycleTarget.action === 'delete'
+        ? lifecycleTarget.id
+        : { id: lifecycleTarget.id, action: lifecycleTarget.action };
+    lifecycleMut.mutate(target, {
       onSuccess: () => {
-        toast.success(t('users.deleted'));
-        setDeleteId(null);
+        toast.success(
+          t(
+            lifecycleTarget.action === 'delete'
+              ? 'users.deleted'
+              : `users.${lifecycleTarget.action}d`,
+          ),
+        );
+        setLifecycleTarget(null);
       },
       onError: (err) =>
-        mutationErrorToast(err, t, () => deleteMut.mutate(deleteId)),
+        mutationErrorToast(err, t, () => lifecycleMut.mutate(target)),
     });
   };
 
@@ -313,18 +384,10 @@ const UsersPage = () => {
                 >
                   <PencilSimple className="h-3.5 w-3.5" />
                 </button>
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setDeleteId(user.id);
-                  }}
-                  aria-label={t('common.delete')}
-                  title={t('common.delete')}
-                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash className="h-3.5 w-3.5" />
-                </button>
+                <UserLifecycleButton
+                  user={user}
+                  onSelect={setLifecycleTarget}
+                />
               </div>
             );
           },
@@ -352,7 +415,27 @@ const UsersPage = () => {
       />
 
       <div className="flex flex-wrap items-center gap-3">
-        {isCrossTenant && (
+        {isOwner && (
+          <Select
+            value={userRole}
+            onValueChange={(value) => setUserRole(value as CompanyUserRole)}
+          >
+            <SelectTrigger
+              aria-label={t('users.detail.role')}
+              className="w-40 bg-secondary border-border"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="manager">{t('roles.manager')}</SelectItem>
+              <SelectItem value="accountant">
+                {t('roles.accountant')}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+
+        {isCrossTenant && userRole !== 'accountant' && (
           <Select
             value={branchId || 'all'}
             onValueChange={(v) => setBranchId(v === 'all' ? undefined : v)}
@@ -520,18 +603,10 @@ const UsersPage = () => {
                       >
                         <PencilSimple className="h-3.5 w-3.5" />
                       </button>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setDeleteId(user.id);
-                        }}
-                        aria-label={t('common.delete')}
-                        title={t('common.delete')}
-                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <Trash className="h-3.5 w-3.5" />
-                      </button>
+                      <UserLifecycleButton
+                        user={user}
+                        onSelect={setLifecycleTarget}
+                      />
                     </>
                   )
                 }
@@ -560,23 +635,42 @@ const UsersPage = () => {
         onClose={() => setModalOpen(false)}
         onSubmit={handleSubmit}
         loading={createMut.isPending || updateMut.isPending}
-        role="manager"
+        role={editItem?.role === 'accountant' ? 'accountant' : userRole}
+        selectableRoles={isOwner ? ['manager', 'accountant'] : undefined}
         person={editItem}
         title={editItem ? t('users.edit') : t('users.add_title')}
         description={t('users.add_desc')}
       />
 
       <ConfirmDialog
-        open={!!deleteId}
-        onClose={() => setDeleteId(null)}
-        onConfirm={handleDelete}
-        loading={deleteMut.isPending}
-        description={
-          deleteId
-            ? t('users.confirm_delete_desc', {
-                name: users.find((u) => u.id === deleteId)?.name,
-              })
+        open={!!lifecycleTarget}
+        onClose={() => setLifecycleTarget(null)}
+        onConfirm={handleLifecycle}
+        loading={lifecycleMut.isPending}
+        title={
+          lifecycleTarget && lifecycleTarget.action !== 'delete'
+            ? t(`users.confirm_${lifecycleTarget.action}_title`)
             : undefined
+        }
+        description={
+          lifecycleTarget
+            ? t(
+                lifecycleTarget.action === 'delete'
+                  ? 'users.confirm_delete_desc'
+                  : `users.confirm_${lifecycleTarget.action}_desc`,
+                {
+                  name: lifecycleTarget.name,
+                },
+              )
+            : undefined
+        }
+        confirmLabel={
+          lifecycleTarget && lifecycleTarget.action !== 'delete'
+            ? t(`users.${lifecycleTarget.action}`)
+            : undefined
+        }
+        confirmVariant={
+          lifecycleTarget?.action === 'activate' ? 'default' : 'destructive'
         }
       />
 

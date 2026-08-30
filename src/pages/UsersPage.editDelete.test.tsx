@@ -22,7 +22,7 @@ vi.mock('@/store/authStore', () => ({
 
 const h = vi.hoisted(() => ({
   updateMutate: vi.fn(),
-  deleteMutate: vi.fn(),
+  lifecycleMutate: vi.fn(),
 }));
 
 const MANAGER = {
@@ -34,6 +34,7 @@ const MANAGER = {
   branch_name: 'Yunusobod',
   is_active: true,
   created_at: '2026-01-01T00:00:00.000Z',
+  role: 'manager' as const,
 };
 
 vi.mock('@/services/userService', async (importOriginal) => {
@@ -58,9 +59,12 @@ vi.mock('@/services/userService', async (importOriginal) => {
       isError: false,
       refetch: vi.fn(),
     }),
-    useCreateManager: () => ({ mutate: vi.fn(), isPending: false }),
+    useCreateCompanyUser: () => ({ mutate: vi.fn(), isPending: false }),
     useUpdateUser: () => ({ mutate: h.updateMutate, isPending: false }),
-    useDeleteUser: () => ({ mutate: h.deleteMutate, isPending: false }),
+    useChangeUserLifecycle: () => ({
+      mutate: h.lifecycleMutate,
+      isPending: false,
+    }),
     useRestoreUser: () => ({ mutate: vi.fn(), isPending: false }),
   };
 });
@@ -77,7 +81,7 @@ const renderPage = () => renderWithRouter(<UsersPage />);
 afterEach(() => {
   cleanup();
   h.updateMutate.mockClear();
-  h.deleteMutate.mockClear();
+  h.lifecycleMutate.mockClear();
 });
 
 describe('UsersPage edit', () => {
@@ -123,7 +127,7 @@ describe('UsersPage delete', () => {
     );
 
     await waitFor(() =>
-      expect(h.deleteMutate).toHaveBeenCalledWith('u1', expect.anything()),
+      expect(h.lifecycleMutate).toHaveBeenCalledWith('u1', expect.anything()),
     );
   });
 });

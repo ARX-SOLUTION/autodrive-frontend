@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Button, type ButtonProps } from '@/components/ui/button';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -21,6 +21,7 @@ interface ConfirmDialogProps {
   // pass their own label -- t('common.discard') -- instead of a "Delete"
   // button on a dialog that isn't deleting anything.
   confirmLabel?: string;
+  confirmVariant?: ButtonProps['variant'];
 }
 
 export const ConfirmDialog = ({
@@ -31,6 +32,7 @@ export const ConfirmDialog = ({
   description,
   loading,
   confirmLabel,
+  confirmVariant = 'destructive',
 }: ConfirmDialogProps) => {
   const { t } = useTranslation();
 
@@ -49,7 +51,11 @@ export const ConfirmDialog = ({
           <Button variant="outline" onClick={onClose}>
             {t('common.cancel')}
           </Button>
-          <Button variant="destructive" onClick={onConfirm} disabled={loading}>
+          <Button
+            variant={confirmVariant}
+            onClick={onConfirm}
+            disabled={loading}
+          >
             {confirmLabel ??
               (loading ? t('common.deleting') : t('common.delete'))}
           </Button>

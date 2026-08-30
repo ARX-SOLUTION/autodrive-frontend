@@ -51,9 +51,9 @@ vi.mock('@/services/userService', async (importOriginal) => {
   return {
     ...actual,
     useUsersPage: h.useUsersPage,
-    useCreateManager: () => ({ mutate: vi.fn(), isPending: false }),
+    useCreateCompanyUser: () => ({ mutate: vi.fn(), isPending: false }),
     useUpdateUser: () => ({ mutate: vi.fn(), isPending: false }),
-    useDeleteUser: () => ({ mutate: vi.fn(), isPending: false }),
+    useChangeUserLifecycle: () => ({ mutate: vi.fn(), isPending: false }),
     useRestoreUser: () => ({ mutate: h.restoreMutate, isPending: false }),
   };
 });
