@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import CompanyRevenueDashboard from '@/pages/dashboard/CompanyRevenueDashboard';
 import { formatMoney } from '@/lib/money';
@@ -14,7 +14,11 @@ globalThis.ResizeObserver =
   ResizeObserverStub as unknown as typeof ResizeObserver;
 
 const auth = vi.hoisted(() => ({
-  user: { name: 'Demo Owner', role: 'owner', branch_id: undefined },
+  user: {
+    name: 'Demo Owner',
+    role: 'owner' as 'owner' | 'manager',
+    branch_id: undefined as string | undefined,
+  },
 }));
 
 const overview = vi.hoisted(() => ({
@@ -104,7 +108,10 @@ const overview = vi.hoisted(() => ({
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (state: typeof auth) => unknown) => selector(auth),
 }));
-vi.mock('@/hooks/useCan', () => ({ useCan: () => true }));
+vi.mock('@/hooks/useCan', () => ({
+  useCan: (capability: string) =>
+    capability === 'viewAllBranches' ? auth.user.role === 'owner' : true,
+}));
 vi.mock('@/services/branchService', () => ({
   useBranches: () => ({ data: [{ id: 'branch-1', name: 'Chorsu' }] }),
 }));
@@ -129,6 +136,11 @@ vi.mock('@/services/dashboardService', () => ({
 }));
 
 afterEach(() => {
+  auth.user = {
+    name: 'Demo Owner',
+    role: 'owner',
+    branch_id: undefined,
+  };
   overviewState.isLoading = false;
   overviewState.isError = false;
   vi.clearAllMocks();
@@ -157,9 +169,14 @@ describe('CompanyRevenueDashboard', () => {
 
   it('renders Hierarchy B KPI strip (autodrive-9s5j dedupe)', async () => {
     await renderDashboard();
-    expect(screen.getByTestId('dashboard-v2-kpi-strip')).toBeInTheDocument();
-    expect(screen.getByText('dashboard.v2.today_revenue')).toBeInTheDocument();
-    expect(screen.getByText('dashboard.v2.period_revenue')).toBeInTheDocument();
+    const strip = screen.getByTestId('dashboard-v2-kpi-strip');
+    expect(strip).toBeInTheDocument();
+    expect(
+      within(strip).getByText('dashboard.v2.today_revenue'),
+    ).toBeInTheDocument();
+    expect(
+      within(strip).getByText('dashboard.v2.period_revenue'),
+    ).toBeInTheDocument();
     expect(
       screen.getByText('dashboard.v2.period_over_period'),
     ).toBeInTheDocument();
@@ -180,7 +197,7 @@ describe('CompanyRevenueDashboard', () => {
     const freshness = screen.getByTestId('dashboard-freshness-caption');
     expect(freshness).toHaveTextContent('dashboard.v2.updated');
     expect(freshness).toHaveTextContent('10.07.2026');
-    expect(screen.getAllByText(/dashboard\.v2\.updated/)).toHaveLength(2);
+    expect(screen.getAllByText(/dashboard\.v2\.updated/)).toHaveLength(1);
     expect(screen.queryByText('dashboard.live_label')).not.toBeInTheDocument();
   });
 
@@ -252,6 +269,43 @@ describe('CompanyRevenueDashboard', () => {
     expect(
       screen.getByText((content) => content.replace(/\D/g, '') === '5000000'),
     ).toBeInTheDocument();
+  });
+
+  it('combines revenue and payment count in one controllable trend', async () => {
+    await renderDashboard();
+
+    expect(screen.getByTestId('revenue-payment-chart')).toBeInTheDocument();
+    expect(screen.getByTestId('chart-metric-revenue')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    const paymentMetric = screen.getByTestId('chart-metric-payments');
+    expect(paymentMetric).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(paymentMetric);
+    expect(paymentMetric).toHaveAttribute('aria-pressed', 'false');
+    expect(
+      screen.getByText('dashboard.v2.average_payment'),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps manager decisions branch-scoped and prioritizes operations', async () => {
+    auth.user = {
+      name: 'Demo Manager',
+      role: 'manager',
+      branch_id: 'branch-1',
+    };
+
+    await renderDashboard('/dashboard?branch_id=branch-2');
+
+    expect(
+      screen.getByText('dashboard.v2.branch_performance'),
+    ).not.toBeVisible();
+    expect(screen.getByText('dashboard.v2.operations')).toBeInTheDocument();
+    expect(
+      screen.getByText('dashboard.v2.quick_action_payment'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('nav.audit')).not.toBeInTheDocument();
   });
 
   it('shows per-lesson revenue when lessons exist, and a no-lessons label when the count is 0', async () => {

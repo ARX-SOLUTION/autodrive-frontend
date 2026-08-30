@@ -7,6 +7,7 @@ import {
   Warning,
   ArrowDownRight,
   ArrowUpRight,
+  Buildings,
   CalendarDot,
   CheckCircle,
   CaretRight,
@@ -16,6 +17,7 @@ import {
   Hourglass,
   PiggyBank,
   ArrowsClockwise,
+  ShieldCheck,
   UserCheck,
   UserMinus,
   UserPlus,
@@ -23,9 +25,10 @@ import {
   Wallet,
 } from '@phosphor-icons/react';
 import {
-  Area,
-  AreaChart,
+  Bar,
   CartesianGrid,
+  ComposedChart,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -50,7 +53,6 @@ import { useCan } from '@/hooks/useCan';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
 import { formatMoney, groupDigits } from '@/lib/money';
-import { formatNumber } from '@/pages/dashboard/dashboardCards';
 
 const UZ_TIMEZONE = 'Asia/Tashkent';
 const freshnessTimestampFormatter = new Intl.DateTimeFormat('en-GB', {
@@ -176,15 +178,18 @@ export const DashboardCard = ({
   description,
   action,
   className,
+  hidden,
   children,
 }: {
   title: string;
   description?: React.ReactNode;
   action?: React.ReactNode;
   className?: string;
+  hidden?: boolean;
   children: React.ReactNode;
 }) => (
   <Card
+    hidden={hidden}
     className={cn(
       // exec-dash 7: flat token surface (Design.md "Cards: 1px solid
       // --border, no shadow") — no glass blur/translucency, no hover lift.
@@ -315,12 +320,6 @@ const DeltaChip = ({
   </span>
 );
 
-const Eyebrow = ({ children }: { children: React.ReactNode }) => (
-  <p className="mb-2 font-mono text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-    {children}
-  </p>
-);
-
 const FilterBar = ({
   params,
   canViewAllBranches,
@@ -341,9 +340,9 @@ const FilterBar = ({
   const from = params.get('from') || startOfMonthInUz();
   const to = params.get('to') || today;
   const controlClassName =
-    'h-10 rounded-[11px] border border-border bg-card px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+    'h-10 rounded-md border border-border bg-card px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2">
+    <div className="flex flex-wrap items-center gap-2 border-y border-hair py-3">
       <DateRangePicker
         from={from}
         to={to}
@@ -368,7 +367,7 @@ const FilterBar = ({
               event.target.value === 'all' ? undefined : event.target.value,
             )
           }
-          className={controlClassName}
+          className={cn(controlClassName, 'w-full sm:w-auto lg:hidden')}
         >
           <option value="all">
             {t('common.all_branches', 'Barcha filiallar')}
@@ -401,7 +400,7 @@ const FilterBar = ({
         type="button"
         variant="outline"
         size="icon"
-        className="h-11 w-11 rounded-[11px]"
+        className="h-11 w-11 rounded-md"
         onClick={onRefresh}
         disabled={isFetching}
         aria-label={t('dashboard.v2.refresh', 'Yangilash')}
@@ -428,7 +427,7 @@ const FreshnessCaption = ({
   return (
     <div
       data-testid="dashboard-freshness-caption"
-      className="inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground"
+      className="inline-flex items-center gap-2 font-mono text-[11px] font-medium text-muted-foreground"
     >
       <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       <span>
@@ -454,48 +453,111 @@ const RevenueChart = ({
   onReset?: () => void;
 }) => {
   const { t } = useTranslation();
+  const [visibleMetrics, setVisibleMetrics] = useState({
+    amount: true,
+    payment_count: true,
+  });
   const chartData = data.map((item) => ({
     ...item,
-    label: formatShortDate(item.period_start),
+    label: formatDate(item.period_start),
+    tooltipLabel: formatShortDate(item.period_start),
   }));
-  const lastIndex = chartData.length - 1;
   const total = data.reduce((sum, item) => sum + item.amount, 0);
+  const paymentCount = data.reduce((sum, item) => sum + item.payment_count, 0);
+  const averagePayment = paymentCount ? total / paymentCount : 0;
+  const peak = data.reduce<(typeof data)[number] | null>(
+    (current, item) =>
+      !current || item.amount > current.amount ? item : current,
+    null,
+  );
+  const toggleMetric = (metric: keyof typeof visibleMetrics) => {
+    const otherMetric = metric === 'amount' ? 'payment_count' : 'amount';
+    setVisibleMetrics((current) =>
+      current[metric] && !current[otherMetric]
+        ? current
+        : { ...current, [metric]: !current[metric] },
+    );
+  };
+  const revenueLabel = t('dashboard.v2.period_revenue', 'Davr tushumi');
+  const paymentCountLabel = t('payments.payment_count', "To'lovlar soni");
   return (
     <div
+      data-testid="revenue-payment-chart"
       aria-label={t(
         'dashboard.v2.revenue_chart_summary',
-        `Revenue trend: ${formatMoney(total)} total`,
-        { total: formatMoney(total) },
+        `Revenue trend: ${formatMoney(total)} total, ${paymentCount} payments`,
+        { total: formatMoney(total), count: paymentCount },
       )}
     >
       {data.length ? (
         <>
-          <div className="h-72 w-full">
+          <div className="mb-3 grid grid-cols-2 gap-px overflow-hidden border-y border-border bg-border sm:grid-cols-4">
+            <button
+              type="button"
+              data-testid="chart-metric-revenue"
+              aria-pressed={visibleMetrics.amount}
+              onClick={() => toggleMetric('amount')}
+              className={cn(
+                'min-h-16 bg-card px-3 py-2.5 text-left transition-[background-color,opacity,scale] duration-150 ease-out hover:bg-muted/60 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                !visibleMetrics.amount && 'opacity-50',
+              )}
+            >
+              <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                <span
+                  className="h-0.5 w-4 rounded-full bg-info"
+                  aria-hidden="true"
+                />
+                {revenueLabel}
+              </span>
+              <span className="mt-1 block font-heading text-lg font-bold tabular-nums">
+                {groupDigits(String(Math.round(total)))}
+              </span>
+            </button>
+            <button
+              type="button"
+              data-testid="chart-metric-payments"
+              aria-pressed={visibleMetrics.payment_count}
+              onClick={() => toggleMetric('payment_count')}
+              className={cn(
+                'min-h-16 bg-card px-3 py-2.5 text-left transition-[background-color,opacity,scale] duration-150 ease-out hover:bg-muted/60 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                !visibleMetrics.payment_count && 'opacity-50',
+              )}
+            >
+              <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                <span
+                  className="h-2.5 w-2.5 rounded-[2px] bg-primary"
+                  aria-hidden="true"
+                />
+                {paymentCountLabel}
+              </span>
+              <span className="mt-1 block font-heading text-lg font-bold tabular-nums">
+                {groupDigits(String(paymentCount))}
+              </span>
+            </button>
+            <div className="min-h-16 bg-card px-3 py-2.5">
+              <p className="text-[11px] text-muted-foreground">
+                {t('dashboard.v2.average_payment', 'O‘rtacha to‘lov')}
+              </p>
+              <p className="mt-1 font-heading text-lg font-bold tabular-nums">
+                {groupDigits(String(Math.round(averagePayment)))}
+              </p>
+            </div>
+            <div className="min-h-16 bg-card px-3 py-2.5">
+              <p className="text-[11px] text-muted-foreground">
+                {t('dashboard.v2.trend_peak', 'Eng yuqori kun')}
+              </p>
+              <p className="mt-1 font-heading text-lg font-bold tabular-nums">
+                {peak ? formatDate(peak.period_start) : '—'}
+              </p>
+            </div>
+          </div>
+
+          <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
+              <ComposedChart
                 data={chartData}
-                margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
+                margin={{ top: 12, right: 0, left: -18, bottom: 0 }}
               >
-                <defs>
-                  <linearGradient
-                    id="company-revenue-fill"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="0%"
-                      stopColor="hsl(var(--primary))"
-                      stopOpacity={0.24}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor="hsl(var(--primary))"
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                </defs>
                 <CartesianGrid
                   stroke="hsl(var(--hair))"
                   vertical={false}
@@ -505,52 +567,103 @@ const RevenueChart = ({
                   dataKey="label"
                   {...AXIS_PROPS}
                   interval="preserveStartEnd"
+                  minTickGap={24}
                 />
-                <YAxis
-                  {...AXIS_PROPS}
-                  tickCount={3}
-                  tickFormatter={(value) =>
-                    `${Math.round(Number(value) / 1_000_000)}M`
-                  }
-                />
+                {visibleMetrics.amount && (
+                  <YAxis
+                    yAxisId="amount"
+                    {...AXIS_PROPS}
+                    tickCount={4}
+                    tickFormatter={(value) =>
+                      `${Math.round(Number(value) / 1_000_000)}M`
+                    }
+                  />
+                )}
+                {visibleMetrics.payment_count && (
+                  <YAxis
+                    yAxisId="payment_count"
+                    {...AXIS_PROPS}
+                    orientation="right"
+                    width={28}
+                    tickCount={4}
+                    allowDecimals={false}
+                  />
+                )}
                 <Tooltip
-                  contentStyle={{
-                    background: 'hsl(var(--popover))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: 10,
+                  cursor={{
+                    stroke: 'hsl(var(--border))',
+                    strokeDasharray: '3 3',
                   }}
-                  formatter={(value: number, _name, item) => [
-                    formatMoney(value),
-                    `${item.payload.payment_count} ta payment`,
-                  ]}
-                  labelFormatter={(label) => String(label)}
+                  content={({ active, payload }) => {
+                    const point = payload?.[0]?.payload as
+                      (typeof chartData)[number] | undefined;
+                    if (!active || !point) return null;
+                    const pointAverage = point.payment_count
+                      ? point.amount / point.payment_count
+                      : 0;
+                    return (
+                      <div className="min-w-52 rounded-md border border-border bg-popover p-3 text-popover-foreground shadow-lg">
+                        <p className="border-b border-border pb-2 text-xs font-semibold">
+                          {point.tooltipLabel}
+                        </p>
+                        <dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1.5 text-xs">
+                          <dt className="text-muted-foreground">
+                            {revenueLabel}
+                          </dt>
+                          <dd className="font-semibold tabular-nums">
+                            {formatMoney(point.amount)}
+                          </dd>
+                          <dt className="text-muted-foreground">
+                            {paymentCountLabel}
+                          </dt>
+                          <dd className="font-semibold tabular-nums">
+                            {point.payment_count}
+                          </dd>
+                          <dt className="text-muted-foreground">
+                            {t(
+                              'dashboard.v2.average_payment',
+                              'O‘rtacha to‘lov',
+                            )}
+                          </dt>
+                          <dd className="font-semibold tabular-nums">
+                            {formatMoney(pointAverage)}
+                          </dd>
+                        </dl>
+                      </div>
+                    );
+                  }}
                 />
-                <Area
-                  type="monotone"
-                  dataKey="amount"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2.6}
-                  fill="url(#company-revenue-fill)"
-                  isAnimationActive={false}
-                  // Dot only on the last point (mock spec) — zero it out for
-                  // every earlier point instead of branching return shape.
-                  dot={(dotProps: {
-                    cx?: number;
-                    cy?: number;
-                    index?: number;
-                  }) => (
-                    <circle
-                      key={`revenue-dot-${dotProps.index}`}
-                      cx={dotProps.cx}
-                      cy={dotProps.cy}
-                      r={dotProps.index === lastIndex ? 5 : 0}
-                      fill="hsl(var(--primary))"
-                      stroke="hsl(var(--card))"
-                      strokeWidth={dotProps.index === lastIndex ? 2.5 : 0}
-                    />
-                  )}
-                />
-              </AreaChart>
+                {visibleMetrics.payment_count && (
+                  <Bar
+                    yAxisId="payment_count"
+                    dataKey="payment_count"
+                    name={paymentCountLabel}
+                    fill="hsl(var(--primary))"
+                    fillOpacity={0.72}
+                    radius={[3, 3, 0, 0]}
+                    maxBarSize={18}
+                    isAnimationActive={false}
+                  />
+                )}
+                {visibleMetrics.amount && (
+                  <Line
+                    yAxisId="amount"
+                    type="monotone"
+                    dataKey="amount"
+                    name={revenueLabel}
+                    stroke="hsl(var(--info))"
+                    strokeWidth={2.4}
+                    dot={false}
+                    activeDot={{
+                      r: 4,
+                      fill: 'hsl(var(--info))',
+                      stroke: 'hsl(var(--card))',
+                      strokeWidth: 2,
+                    }}
+                    isAnimationActive={false}
+                  />
+                )}
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
           <details className="mt-3 rounded-md border border-border/60 bg-muted/20 px-3 py-2">
@@ -760,10 +873,10 @@ const CompanyRevenueDashboard = () => {
     () =>
       getSearchQuery(
         params,
-        params.get('branch_id') || undefined,
+        canViewAllBranches ? params.get('branch_id') || undefined : undefined,
         user?.branch_id,
       ),
-    [params, user?.branch_id],
+    [canViewAllBranches, params, user?.branch_id],
   );
   const { data, isLoading, isFetching, isError, refetch } =
     useCompanyOverview(query);
@@ -802,6 +915,9 @@ const CompanyRevenueDashboard = () => {
   });
   const resetFilters = () => {
     const next = new URLSearchParams();
+    if (canViewAllBranches && query.branchId) {
+      next.set('branch_id', query.branchId);
+    }
     next.set('from', startOfMonthInUz());
     next.set('to', todayInUz());
     next.set('granularity', 'day');
@@ -826,18 +942,12 @@ const CompanyRevenueDashboard = () => {
   const trendPeriodTo = kpis.revenue.period_to_inclusive || data.filters.to;
   const trendEnd = uzDateParts(trendPeriodTo);
   const trendRangeCaption = `${format(new Date(data.filters.from), 'dd')} — ${trendEnd.day} ${trendEnd.month} ${trendEnd.year} · ${t(data.filters.granularity === 'week' ? 'dashboard.v2.weekly' : 'dashboard.v2.daily').toUpperCase()}`;
-  const currency = t('dashboard.currency_suffix');
-  const revenueTrendTotal = data.revenue_trend.reduce(
-    (sum, item) => sum + item.amount,
-    0,
-  );
-
   return (
     <div className="space-y-5 pb-8">
-      <header className="space-y-5">
-        <div>
+      <header className="flex flex-col gap-4 border-b border-hair pb-5 xl:flex-row xl:items-end xl:justify-between">
+        <div className="min-w-0">
           <FreshnessCaption {...data.freshness} />
-          <h1 className="mt-2 font-heading text-[40px] font-extrabold leading-[1.1] tracking-[-0.025em] text-balance">
+          <h1 className="mt-2 font-heading text-3xl font-extrabold leading-tight tracking-[-0.02em] text-balance sm:text-[34px]">
             {t(greetingKey())}
             {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
           </h1>
@@ -850,53 +960,75 @@ const CompanyRevenueDashboard = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2.5">
-          {(
-            [
-              {
-                to: '/payments',
-                search: { action: 'create' },
-                icon: Wallet,
-                // ponytail: full static class strings, not `bg-${tone}` —
-                // Tailwind's scanner only picks up literal class text, so an
-                // interpolated tone would never generate the utility.
-                tileClass: 'bg-primary/[14%] text-primary',
-                label: t(
-                  'dashboard.v2.quick_action_payment',
-                  "To'lov qabul qilish",
-                ),
-              },
-              {
-                to: '/students',
-                search: { action: 'create' },
-                icon: UserPlus,
-                tileClass: 'bg-info/[14%] text-info',
-                label: t(
-                  'dashboard.v2.quick_action_student',
-                  "Talaba qo'shish",
-                ),
-              },
-              {
-                to: '/attendance',
-                search: {},
-                icon: UsersThree,
-                tileClass: 'bg-success/[14%] text-success',
-                label: t(
-                  'dashboard.v2.quick_action_attendance',
-                  'Davomat olish',
-                ),
-              },
-            ] as const
+        <div className="flex flex-wrap gap-2 xl:justify-end">
+          {(canViewAllBranches
+            ? ([
+                {
+                  to: '/payments',
+                  search: {},
+                  icon: Wallet,
+                  tileClass: 'bg-primary/[14%] text-primary',
+                  label: t('nav.payments', "To'lovlar"),
+                },
+                {
+                  to: '/branches',
+                  search: {},
+                  icon: Buildings,
+                  tileClass: 'bg-info/[14%] text-info',
+                  label: t('nav.branches', 'Filiallar'),
+                },
+                {
+                  to: '/audit',
+                  search: {},
+                  icon: ShieldCheck,
+                  tileClass: 'bg-success/[14%] text-success',
+                  label: t('nav.audit', 'Audit log'),
+                },
+              ] as const)
+            : ([
+                {
+                  to: '/payments',
+                  search: { action: 'create' },
+                  icon: Wallet,
+                  // Full static class strings: Tailwind does not generate
+                  // interpolated utilities such as `bg-${tone}`.
+                  tileClass: 'bg-primary/[14%] text-primary',
+                  label: t(
+                    'dashboard.v2.quick_action_payment',
+                    "To'lov qabul qilish",
+                  ),
+                },
+                {
+                  to: '/students',
+                  search: { action: 'create' },
+                  icon: UserPlus,
+                  tileClass: 'bg-info/[14%] text-info',
+                  label: t(
+                    'dashboard.v2.quick_action_student',
+                    "Talaba qo'shish",
+                  ),
+                },
+                {
+                  to: '/attendance',
+                  search: {},
+                  icon: UsersThree,
+                  tileClass: 'bg-success/[14%] text-success',
+                  label: t(
+                    'dashboard.v2.quick_action_attendance',
+                    'Davomat olish',
+                  ),
+                },
+              ] as const)
           ).map((action) => (
             <Link
               key={action.to}
               to={action.to}
               search={action.search}
-              className="flex items-center gap-2 rounded-xl border border-border bg-card px-[15px] py-[11px] text-[13.5px] font-semibold motion-safe:transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-[13px] font-semibold motion-safe:transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span
                 className={cn(
-                  'grid h-[26px] w-[26px] shrink-0 place-items-center rounded-lg',
+                  'grid h-6 w-6 shrink-0 place-items-center rounded-md',
                   action.tileClass,
                 )}
                 aria-hidden="true"
@@ -918,107 +1050,134 @@ const CompanyRevenueDashboard = () => {
         isFetching={isFetching}
       />
 
-      <div
-        data-testid="dashboard-v2-kpi-strip"
-        className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6"
-        aria-label={t('dashboard.v2.kpi_section_label', 'Revenue control KPIs')}
-      >
-        <button
-          type="button"
-          onClick={() =>
-            navigate({
-              to: '/payments',
-              search: {
-                ...listSearch,
-                date_from: todayInUz(),
-                date_to: todayInUz(),
-              },
-            })
-          }
-          className="rounded-xl border border-border bg-card p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      <section className="overflow-hidden rounded-lg border border-border bg-card">
+        <div
+          data-testid="dashboard-v2-kpi-strip"
+          className="grid grid-cols-2 gap-px bg-border sm:grid-cols-3 xl:grid-cols-6"
+          aria-label={t(
+            'dashboard.v2.kpi_section_label',
+            'Revenue control KPIs',
+          )}
         >
-          <p className="text-[11px] text-muted-foreground">
-            {t('dashboard.v2.today_revenue', 'Bugungi tushum')}
-          </p>
-          <p className="mt-1 font-heading text-xl font-bold tabular-nums">
-            {formatMoney(kpis.revenue.today)}
-          </p>
-        </button>
-        <div className="rounded-xl border border-border bg-card p-3">
-          <p className="text-[11px] text-muted-foreground">
-            {t('dashboard.v2.period_revenue', 'Davr tushumi')}
-          </p>
-          <p className="mt-1 font-heading text-xl font-bold tabular-nums">
-            {formatMoney(kpis.revenue.period)}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-3">
-          <p className="text-[11px] text-muted-foreground">
-            {t('dashboard.v2.period_over_period', 'Davr o‘sishi')}
-          </p>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            {kpis.revenue.delta_percent != null ? (
-              <DeltaChip delta={kpis.revenue.delta_percent} />
-            ) : (
-              <span className="font-heading text-xl font-bold">—</span>
-            )}
+          <button
+            type="button"
+            onClick={() =>
+              navigate({
+                to: '/payments',
+                search: {
+                  ...listSearch,
+                  date_from: todayInUz(),
+                  date_to: todayInUz(),
+                },
+              })
+            }
+            className="min-h-24 bg-card p-3 text-left motion-safe:transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          >
+            <p className="text-[11px] text-muted-foreground">
+              {t('dashboard.v2.today_revenue', 'Bugungi tushum')}
+            </p>
+            <p className="mt-1 font-heading text-xl font-bold tabular-nums">
+              {formatMoney(kpis.revenue.today)}
+            </p>
+          </button>
+          <div className="min-h-24 bg-card p-3">
+            <p className="text-[11px] text-muted-foreground">
+              {t('dashboard.v2.period_revenue', 'Davr tushumi')}
+            </p>
+            <p className="mt-1 font-heading text-xl font-bold tabular-nums">
+              {formatMoney(kpis.revenue.period)}
+            </p>
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            {comparisonRange}
-          </p>
+          <div className="min-h-24 bg-card p-3">
+            <p className="text-[11px] text-muted-foreground">
+              {t('dashboard.v2.period_over_period', 'Davr o‘sishi')}
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              {kpis.revenue.delta_percent != null ? (
+                <DeltaChip delta={kpis.revenue.delta_percent} />
+              ) : (
+                <span className="font-heading text-xl font-bold">—</span>
+              )}
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {comparisonRange}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              navigate({
+                to: '/students',
+                search: { ...listSearch, status: 'active' },
+              })
+            }
+            className="min-h-24 bg-card p-3 text-left motion-safe:transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          >
+            <p className="text-[11px] text-muted-foreground">
+              {t('dashboard.hero_active_students')}
+            </p>
+            <p className="mt-1 font-heading text-xl font-bold tabular-nums">
+              {groupDigits(String(Math.round(kpis.students.active)))}
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              +{kpis.students.new}{' '}
+              {t('dashboard.v2.new_in_period', 'tanlangan davrda')}
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              navigate({
+                to: '/students',
+                search: { ...listSearch, status: 'active', has_debt: true },
+              })
+            }
+            className="min-h-24 bg-card p-3 text-left motion-safe:transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          >
+            <p className="text-[11px] text-muted-foreground">
+              {t('dashboard.v2.outstanding_debt', 'Jami qarzdorlik')}
+            </p>
+            <p className="mt-1 font-heading text-xl font-bold tabular-nums text-destructive">
+              {formatMoney(kpis.debt.current_outstanding)}
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {t('dashboard.v2.debtors', '{{count}} ta qarzdor student', {
+                count: kpis.debt.students_with_debt,
+              })}
+            </p>
+          </button>
+          <div className="min-h-24 bg-card p-3">
+            <p className="text-[11px] text-muted-foreground">
+              {t('dashboard.v2.academic_block.attendance_rate', 'Davomat')}
+            </p>
+            <p className="mt-1 font-heading text-xl font-bold tabular-nums">
+              {kpis.attendance_rate != null ? `${kpis.attendance_rate}%` : '—'}
+            </p>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            navigate({
-              to: '/students',
-              search: { ...listSearch, status: 'active' },
-            })
-          }
-          className="rounded-xl border border-border bg-card p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <p className="text-[11px] text-muted-foreground">
-            {t('dashboard.hero_active_students')}
-          </p>
-          <p className="mt-1 font-heading text-xl font-bold tabular-nums">
-            {groupDigits(String(Math.round(kpis.students.active)))}
-          </p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            +{kpis.students.new}{' '}
-            {t('dashboard.v2.new_in_period', 'tanlangan davrda')}
-          </p>
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            navigate({
-              to: '/students',
-              search: { ...listSearch, status: 'active', has_debt: true },
-            })
-          }
-          className="rounded-xl border border-border bg-card p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <p className="text-[11px] text-muted-foreground">
-            {t('dashboard.v2.outstanding_debt', 'Jami qarzdorlik')}
-          </p>
-          <p className="mt-1 font-heading text-xl font-bold tabular-nums text-destructive">
-            {formatMoney(kpis.debt.current_outstanding)}
-          </p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            {t('dashboard.v2.debtors', '{{count}} ta qarzdor student', {
-              count: kpis.debt.students_with_debt,
-            })}
-          </p>
-        </button>
-        <div className="rounded-xl border border-border bg-card p-3">
-          <p className="text-[11px] text-muted-foreground">
-            {t('dashboard.v2.academic_block.attendance_rate', 'Davomat')}
-          </p>
-          <p className="mt-1 font-heading text-xl font-bold tabular-nums">
-            {kpis.attendance_rate != null ? `${kpis.attendance_rate}%` : '—'}
-          </p>
+
+        <div className="border-t border-border p-4 sm:p-5">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold tracking-tight text-balance">
+                {t('dashboard.v2.revenue_trend', 'Tushum trendi')}
+              </h2>
+              <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+                {trendRangeCaption}
+              </p>
+            </div>
+            <Link
+              to="/payments"
+              search={listSearch}
+              className="inline-flex h-10 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-semibold text-primary transition-[background-color,scale] duration-150 ease-out hover:bg-primary/10 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {t('payments.detail_details', 'Detallar')}
+              <CaretRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          </div>
+          <RevenueChart data={data.revenue_trend} onReset={resetFilters} />
         </div>
-      </div>
+      </section>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <DashboardCard
@@ -1172,24 +1331,9 @@ const CompanyRevenueDashboard = () => {
         </DashboardCard>
       </section>
 
-      <section className="space-y-3">
-        <div>
-          <Eyebrow>{t('dashboard.v2.revenue_trend', 'Tushum trendi')}</Eyebrow>
-          <h2 className="mb-2 font-heading text-2xl font-bold tracking-tight text-foreground">
-            {t('dashboard.revenue_trend_sub', {
-              total: formatNumber(revenueTrendTotal),
-              currency,
-            })}
-          </h2>
-          <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
-            {trendRangeCaption}
-          </p>
-          <RevenueChart data={data.revenue_trend} onReset={resetFilters} />
-        </div>
-      </section>
-
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <DashboardCard
+          hidden={!canViewAllBranches}
           title={t('dashboard.v2.branch_performance', 'Filial performance')}
           description={t(
             'dashboard.v2.branch_subtitle',
@@ -1374,6 +1518,7 @@ const CompanyRevenueDashboard = () => {
           )}
         </DashboardCard>
         <DashboardCard
+          className={!canViewAllBranches ? 'lg:col-span-2' : undefined}
           title={t('dashboard.v2.collection_status', 'To‘lov holati')}
           description={t(
             'dashboard.v2.collection_subtitle',
@@ -1773,11 +1918,6 @@ const CompanyRevenueDashboard = () => {
           </div>
         </DashboardCard>
       </section>
-
-      <p className="text-right text-xs text-muted-foreground">
-        {t('dashboard.v2.updated', 'Yangilandi')} ·{' '}
-        {formatFreshnessTimestamp(data.freshness.generated_at)}
-      </p>
     </div>
   );
 };

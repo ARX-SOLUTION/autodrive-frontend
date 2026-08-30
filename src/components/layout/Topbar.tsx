@@ -8,15 +8,19 @@ import {
   Plus,
 } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from '@tanstack/react-router';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useTheme } from '@/hooks/useTheme';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
+import { useBranches } from '@/services/branchService';
 import { changeAppLanguage, SUPPORTED_LANGS } from '@/i18n';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Brand } from './Brand';
@@ -46,9 +50,16 @@ export const Topbar = ({
 }: TopbarProps) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { searchParams, setParam } = useUrlParams();
   const { theme, toggle } = useTheme();
   const user = useAuthStore((s) => s.user);
   const canRecordPayment = useCan('recordPayment');
+  const canViewAllBranches = useCan('viewAllBranches');
+  const isDashboard = location.pathname === '/dashboard';
+  const { data: branches = [], isLoading: branchesLoading } = useBranches(
+    canViewAllBranches && isDashboard,
+  );
   const currentLang = (i18n.resolvedLanguage ?? i18n.language ?? 'uz').slice(
     0,
     2,
@@ -56,10 +67,19 @@ export const Topbar = ({
   const ThemeIcon = theme === 'dark' ? Sun : Moon;
   const themeLabel =
     theme === 'dark' ? t('actions.theme_light') : t('actions.theme_dark');
-  // Display-only branch context — no branch-switch feature exists, so this
-  // is deliberately inert (not a dropdown).
-  const branchLabel =
-    user?.role === 'owner' ? t('nav.branches_all') : user?.branch_name;
+  const allBranchesLabel = t('nav.branches_all');
+  const selectedBranchId = isDashboard
+    ? searchParams.get('branch_id') || 'all'
+    : 'all';
+  const selectedBranch = branches.find(
+    (branch) => branch.id === selectedBranchId,
+  );
+  const branchLabel = canViewAllBranches
+    ? selectedBranchId === 'all'
+      ? allBranchesLabel
+      : selectedBranch?.name || t('dashboard.v2.branch', 'Filial')
+    : user?.branch_name;
+  const showBranchSwitcher = canViewAllBranches && isDashboard;
   const searchHint = t(
     'actions.search_hint',
     "Talaba, to'lov qidirish",
@@ -80,12 +100,41 @@ export const Topbar = ({
         <Brand size="sm" />
       </span>
 
-      {branchLabel && (
-        <div className="hidden h-10 items-center gap-2 rounded-[11px] border border-border bg-card px-3 text-sm font-semibold shadow-[0_1px_2px_hsl(var(--foreground)/0.04)] lg:flex">
-          <Buildings className="h-4 w-4 text-muted-foreground" />
-          <span>{branchLabel}</span>
-        </div>
-      )}
+      {branchLabel &&
+        (showBranchSwitcher ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label={t('dashboard.v2.branch', 'Filial')}
+              disabled={branchesLoading}
+              className="hidden h-10 min-w-40 max-w-64 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-semibold transition-[background-color,color,scale] duration-150 ease-out hover:bg-accent active:scale-[0.96] disabled:cursor-wait disabled:opacity-60 lg:flex"
+            >
+              <Buildings className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="truncate">{branchLabel}</span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-56">
+              <DropdownMenuRadioGroup
+                value={selectedBranchId}
+                onValueChange={(value) =>
+                  setParam('branch_id', value === 'all' ? undefined : value)
+                }
+              >
+                <DropdownMenuRadioItem value="all">
+                  {allBranchesLabel}
+                </DropdownMenuRadioItem>
+                {branches.map((branch) => (
+                  <DropdownMenuRadioItem key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <div className="hidden h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-semibold lg:flex">
+            <Buildings className="h-4 w-4 text-muted-foreground" />
+            <span>{branchLabel}</span>
+          </div>
+        ))}
 
       <div className="flex-1" />
 
@@ -93,7 +142,7 @@ export const Topbar = ({
         type="button"
         onClick={onCommandPaletteOpen}
         aria-label={searchHint}
-        className="hidden h-10 w-[260px] items-center gap-2 rounded-[11px] border border-border bg-card px-3 text-sm text-muted-foreground transition-[background-color,color,box-shadow] duration-150 ease-out hover:bg-accent lg:inline-flex"
+        className="hidden h-10 w-[260px] items-center gap-2 rounded-md border border-border bg-card px-3 text-sm text-muted-foreground transition-[background-color,color,box-shadow] duration-150 ease-out hover:bg-accent lg:inline-flex"
       >
         <MagnifyingGlass className="h-4 w-4 shrink-0" />
         <span className="truncate">{searchHint}</span>
@@ -140,7 +189,7 @@ export const Topbar = ({
         <button
           type="button"
           onClick={() => navigate({ to: '/payments' })}
-          className="hidden h-10 items-center gap-1.5 rounded-[11px] bg-primary px-4 text-sm font-bold text-primary-foreground shadow-[0_2px_6px_hsl(var(--primary)/0.24)] transition-[background-color,box-shadow,scale] duration-150 ease-out hover:bg-primary/90 active:scale-[0.98] lg:inline-flex"
+          className="hidden h-10 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground shadow-[0_2px_6px_hsl(var(--primary)/0.24)] transition-[background-color,box-shadow,scale] duration-150 ease-out hover:bg-primary/90 active:scale-[0.96] lg:inline-flex"
         >
           <Plus className="h-4 w-4" />
           {t('actions.quick_payment', "To'lov")}
