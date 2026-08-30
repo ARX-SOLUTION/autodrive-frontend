@@ -1,5 +1,5 @@
 import { screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LoginPage from '@/pages/LoginPage';
 import { queryClient } from '@/lib/queryClient';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
@@ -10,6 +10,13 @@ import type { AuthResponse } from '@/types/user';
 // navigation (carries the domain-wide auth cookie). Every other host --
 // app./admin. subdomains, local dev, Vercel previews -- keeps the existing
 // in-SPA navigate() untouched.
+
+const authStore = vi.hoisted(() => ({
+  isAuthenticated: false,
+  logout: vi.fn(() => {
+    authStore.isAuthenticated = false;
+  }),
+}));
 
 vi.mock('@/services/authService', () => ({
   useLogin: () => ({
@@ -34,7 +41,10 @@ vi.mock('@/services/authService', () => ({
 }));
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
-    selector({ logout: vi.fn() }),
+    selector({
+      isAuthenticated: authStore.isAuthenticated,
+      logout: authStore.logout,
+    }),
 }));
 
 const setHostname = (hostname: string) => {
@@ -63,6 +73,10 @@ const submitLogin = () => {
 };
 
 describe('LoginPage root-domain redirect (autodrive-dtj.2)', () => {
+  beforeEach(() => {
+    authStore.isAuthenticated = false;
+  });
+
   afterEach(() => {
     queryClient.clear();
     vi.clearAllMocks();
@@ -78,6 +92,19 @@ describe('LoginPage root-domain redirect (autodrive-dtj.2)', () => {
     await waitFor(() =>
       expect(queryClient.getQueryData(['students', 'page'])).toBeUndefined(),
     );
+  });
+
+  it('does not clear fresh login data after auth flips during submit', async () => {
+    setHostname('app.automaktab.uz');
+    const view = await renderLogin('/dashboard');
+    const freshUser = { id: 'u1', email: 'test@automaktab.uz' };
+
+    queryClient.setQueryData(['auth', 'me'], freshUser);
+    authStore.isAuthenticated = true;
+    view.rerender(<LoginPage />);
+
+    expect(queryClient.getQueryData(['auth', 'me'])).toEqual(freshUser);
+    expect(authStore.logout).not.toHaveBeenCalled();
   });
 
   it('full-navigates to app.<domain> with the preserved `from` path on the root domain', async () => {

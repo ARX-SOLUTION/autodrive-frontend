@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useRouter } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
@@ -39,6 +39,7 @@ const LoginPage = () => {
   const login = useLogin();
   const logout = useAuthStore((s) => s.logout);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const hasCleanedInitialSession = useRef(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(makeLoginFormSchema(t)),
@@ -48,6 +49,9 @@ const LoginPage = () => {
   useEffect(() => {
     // Always start a direct /login visit from a clean auth state so stale
     // persisted sessions cannot bounce the user away from the form.
+    if (hasCleanedInitialSession.current) return;
+    hasCleanedInitialSession.current = true;
+
     const hasCachedQueries = queryClient.getQueryCache().getAll().length > 0;
     if (isAuthenticated || hasCachedQueries) {
       logout();
