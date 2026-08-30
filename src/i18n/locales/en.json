@@ -259,6 +259,7 @@
       "recovery": "Debt recovery queue",
       "recovery_subtitle": "Largest outstanding balances first.",
       "recovery_count": "{{count}}",
+      "debtors_label": "debtors",
       "view_debtor": "View: {{name}}",
       "priority_high": "High",
       "open_payments": "Payments",

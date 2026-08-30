@@ -598,6 +598,7 @@ const CompanyRevenueDashboard = () => {
   const { kpis } = data;
   const statusTotal =
     kpis.collection.paid + kpis.collection.partial + kpis.collection.debt;
+  const visibleRecoveryQueue = data.recovery_queue.slice(0, 3);
   const attendanceTotal = Object.values(
     data.operations.attendance_status,
   ).reduce((sum, value) => sum + value, 0);
@@ -967,10 +968,21 @@ const CompanyRevenueDashboard = () => {
             'dashboard.v2.recovery_subtitle',
             'Eng katta qarzlar birinchi ko‘rsatiladi.',
           )}
+          action={
+            <span
+              data-testid="recovery-count"
+              className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-md border border-destructive/25 bg-destructive/10 px-2.5 text-xs font-semibold text-destructive"
+            >
+              <span className="font-mono tabular-nums">
+                {kpis.debt.students_with_debt}
+              </span>{' '}
+              {t('dashboard.v2.debtors_label', 'qarzdor')}
+            </span>
+          }
         >
-          {data.recovery_queue.length ? (
+          {visibleRecoveryQueue.length ? (
             <ul>
-              {data.recovery_queue.map((student) => {
+              {visibleRecoveryQueue.map((student) => {
                 const overdueDays = daysSince(student.last_payment_at);
                 const tone = debtPriorityTone(student.debt, overdueDays);
                 return (
@@ -1110,35 +1122,26 @@ const CompanyRevenueDashboard = () => {
             'Tanlangan davr tushumi va joriy qarzdorlik.',
           )}
           action={
-            <Link
-              to="/branches"
-              className="inline-flex h-9 cursor-pointer items-center rounded-md px-2 text-xs font-semibold text-primary transition-[background-color,scale] hover:bg-primary/10 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {t('dashboard.v2.manage_branches', 'Filiallar')}{' '}
-              <CaretRight className="ml-1 inline h-3 w-3" aria-hidden="true" />
-            </Link>
-          }
-        >
-          {sortedBranches.length ? (
-            <>
-              <div className="mb-3 flex flex-wrap gap-2 text-xs">
-                <span className="text-muted-foreground">
-                  {t('dashboard.v2.sort_by', 'Saralash')}:
-                </span>
+            <div className="flex max-w-full flex-wrap items-center justify-end gap-1.5">
+              <span className="text-[11px] font-medium text-muted-foreground">
+                {t('dashboard.v2.sort_by', 'Saralash')}
+              </span>
+              <div
+                role="group"
+                aria-label={t('dashboard.v2.sort_by', 'Saralash')}
+                className="flex max-w-full flex-wrap gap-1"
+              >
                 {(
                   [
                     ['revenue', t('dashboard.top_branches_revenue', 'Tushum')],
-                    [
-                      'active_students',
-                      t('dashboard.top_branches_students', 'Faol talabalar'),
-                    ],
+                    ['active_students', t('dashboard.v2.active_short', 'Faol')],
                     [
                       'outstanding_debt',
                       t('dashboard.cards.total_debt', 'Qarz'),
                     ],
                     [
                       'collection_rate',
-                      t('dashboard.v2.coverage', 'To‘liq to‘laganlar'),
+                      t('dashboard.v2.coverage_short', 'To‘liq'),
                     ],
                   ] as const
                 ).map(([key, label]) => (
@@ -1148,7 +1151,7 @@ const CompanyRevenueDashboard = () => {
                     onClick={() => setBranchSort(key)}
                     aria-pressed={branchSort === key}
                     className={cn(
-                      'min-h-9 cursor-pointer rounded-md border px-3 py-1.5 font-semibold motion-safe:transition-[background-color,border-color,color,scale] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      'min-h-10 cursor-pointer rounded-md border px-2.5 py-1 text-[11px] font-semibold motion-safe:transition-[background-color,border-color,color,scale] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3 sm:text-xs',
                       branchSort === key
                         ? 'border-primary bg-primary text-primary-foreground shadow-sm'
                         : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-muted hover:text-foreground',
@@ -1158,6 +1161,21 @@ const CompanyRevenueDashboard = () => {
                   </button>
                 ))}
               </div>
+              <Link
+                to="/branches"
+                className="inline-flex min-h-10 cursor-pointer items-center rounded-md px-2 text-xs font-semibold text-primary transition-[background-color,scale] hover:bg-primary/10 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {t('dashboard.v2.manage_branches', 'Filiallar')}{' '}
+                <CaretRight
+                  className="ml-1 inline h-3 w-3"
+                  aria-hidden="true"
+                />
+              </Link>
+            </div>
+          }
+        >
+          {sortedBranches.length ? (
+            <>
               <div className="space-y-2 sm:hidden">
                 {sortedBranches.map((branch) => (
                   <button

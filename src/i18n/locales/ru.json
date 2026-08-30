@@ -259,6 +259,7 @@
       "recovery": "Очередь по долгам",
       "recovery_subtitle": "Сначала самые крупные задолженности.",
       "recovery_count": "{{count}}",
+      "debtors_label": "должников",
       "view_debtor": "Просмотр: {{name}}",
       "priority_high": "Высокий",
       "open_payments": "Платежи",
