@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import {
+  Area,
   Bar,
   CartesianGrid,
   ComposedChart,
@@ -70,15 +71,17 @@ const RevenueTrendChart = ({
         { total: formatMoney(total), count: paymentCount },
       )}
     >
-      <div className="mb-3 grid grid-cols-2 gap-px overflow-hidden border-y border-border bg-border sm:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-4">
         <button
           type="button"
           data-testid="chart-metric-revenue"
           aria-pressed={visibleMetrics.amount}
           onClick={() => toggleMetric('amount')}
           className={cn(
-            'min-h-16 bg-card px-3 py-2.5 text-left transition-[background-color,opacity,scale] duration-150 ease-out hover:bg-muted/60 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
-            !visibleMetrics.amount && 'opacity-50',
+            'min-h-16 cursor-pointer border-b-2 bg-card px-3 py-2.5 text-left transition-[background-color,border-color,color,opacity] duration-150 ease-out active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+            visibleMetrics.amount
+              ? 'border-info bg-info/[8%]'
+              : 'border-transparent opacity-65 hover:bg-muted/70 hover:opacity-100',
           )}
         >
           <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -87,6 +90,15 @@ const RevenueTrendChart = ({
               aria-hidden="true"
             />
             {revenueLabel}
+            <span
+              className={cn(
+                'ml-auto h-2 w-2 rounded-full transition-[background-color,box-shadow]',
+                visibleMetrics.amount
+                  ? 'bg-info shadow-[0_0_0_3px_hsl(var(--info)/0.14)]'
+                  : 'bg-muted-foreground/25',
+              )}
+              aria-hidden="true"
+            />
           </span>
           <span className="mt-1 block font-heading text-lg font-bold tabular-nums">
             {groupDigits(String(Math.round(total)))}
@@ -98,8 +110,10 @@ const RevenueTrendChart = ({
           aria-pressed={visibleMetrics.payment_count}
           onClick={() => toggleMetric('payment_count')}
           className={cn(
-            'min-h-16 bg-card px-3 py-2.5 text-left transition-[background-color,opacity,scale] duration-150 ease-out hover:bg-muted/60 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
-            !visibleMetrics.payment_count && 'opacity-50',
+            'min-h-16 cursor-pointer border-b-2 bg-card px-3 py-2.5 text-left transition-[background-color,border-color,color,opacity] duration-150 ease-out active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+            visibleMetrics.payment_count
+              ? 'border-primary bg-primary/[8%]'
+              : 'border-transparent opacity-65 hover:bg-muted/70 hover:opacity-100',
           )}
         >
           <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -108,6 +122,15 @@ const RevenueTrendChart = ({
               aria-hidden="true"
             />
             {paymentCountLabel}
+            <span
+              className={cn(
+                'ml-auto h-2 w-2 rounded-full transition-[background-color,box-shadow]',
+                visibleMetrics.payment_count
+                  ? 'bg-primary shadow-[0_0_0_3px_hsl(var(--primary)/0.14)]'
+                  : 'bg-muted-foreground/25',
+              )}
+              aria-hidden="true"
+            />
           </span>
           <span className="mt-1 block font-heading text-lg font-bold tabular-nums">
             {groupDigits(String(paymentCount))}
@@ -131,12 +154,37 @@ const RevenueTrendChart = ({
         </div>
       </div>
 
-      <div className="h-80 w-full">
+      <div className="h-64 w-full sm:h-72">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={chartData}
             margin={{ top: 12, right: 0, left: -18, bottom: 0 }}
           >
+            <defs>
+              <linearGradient
+                id="revenue-area-fill"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop
+                  offset="0%"
+                  stopColor="hsl(var(--info))"
+                  stopOpacity={0.24}
+                />
+                <stop
+                  offset="70%"
+                  stopColor="hsl(var(--info))"
+                  stopOpacity={0.05}
+                />
+                <stop
+                  offset="100%"
+                  stopColor="hsl(var(--info))"
+                  stopOpacity={0}
+                />
+              </linearGradient>
+            </defs>
             <CartesianGrid
               stroke="hsl(var(--hair))"
               vertical={false}
@@ -207,6 +255,16 @@ const RevenueTrendChart = ({
                 );
               }}
             />
+            {visibleMetrics.amount && (
+              <Area
+                yAxisId="amount"
+                type="monotone"
+                dataKey="amount"
+                fill="url(#revenue-area-fill)"
+                stroke="none"
+                isAnimationActive={false}
+              />
+            )}
             {visibleMetrics.payment_count && (
               <Bar
                 yAxisId="payment_count"
@@ -227,7 +285,15 @@ const RevenueTrendChart = ({
                 name={revenueLabel}
                 stroke="hsl(var(--info))"
                 strokeWidth={2.4}
-                dot={false}
+                dot={
+                  chartData.length === 1
+                    ? {
+                        r: 3,
+                        fill: 'hsl(var(--info))',
+                        strokeWidth: 0,
+                      }
+                    : false
+                }
                 activeDot={{
                   r: 4,
                   fill: 'hsl(var(--info))',
@@ -240,8 +306,8 @@ const RevenueTrendChart = ({
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-      <details className="mt-3 rounded-md border border-border/60 bg-muted/20 px-3 py-2">
-        <summary className="cursor-pointer text-xs font-semibold">
+      <details className="mt-3 rounded-md border border-border/60 bg-muted/20 px-3 py-2 open:bg-muted/35">
+        <summary className="cursor-pointer rounded-sm text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           {t('dashboard.v2.view_data', 'Maʼlumotlarni ko‘rish')}
         </summary>
         <table className="mt-2 w-full text-xs">

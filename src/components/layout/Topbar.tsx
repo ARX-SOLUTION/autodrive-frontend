@@ -106,10 +106,21 @@ export const Topbar = ({
             <DropdownMenuTrigger
               aria-label={t('dashboard.v2.branch', 'Filial')}
               disabled={branchesLoading}
-              className="hidden h-10 min-w-40 max-w-64 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-semibold transition-[background-color,color,scale] duration-150 ease-out hover:bg-accent active:scale-[0.96] disabled:cursor-wait disabled:opacity-60 lg:flex"
+              className="group hidden h-11 min-w-52 max-w-72 cursor-pointer items-center gap-2.5 rounded-md border border-border bg-card px-3 text-left transition-[background-color,border-color,box-shadow] duration-150 ease-out hover:border-primary/50 hover:bg-accent/70 active:bg-accent data-[state=open]:border-primary/60 data-[state=open]:bg-accent data-[state=open]:shadow-[0_0_0_3px_hsl(var(--ring)/0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60 lg:flex"
             >
-              <Buildings className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="truncate">{branchLabel}</span>
+              <Buildings className="h-4 w-4 shrink-0 text-primary" />
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                  {t('dashboard.v2.branch', 'Filial')}
+                </span>
+                <span className="mt-0.5 block truncate text-sm font-semibold text-foreground">
+                  {branchLabel}
+                </span>
+              </span>
+              <span
+                className="mr-0.5 h-2 w-2 shrink-0 rotate-45 border-b border-r border-muted-foreground transition-transform duration-150 group-data-[state=open]:rotate-[225deg]"
+                aria-hidden="true"
+              />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="min-w-56">
               <DropdownMenuRadioGroup
@@ -130,9 +141,16 @@ export const Topbar = ({
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <div className="hidden h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-semibold lg:flex">
-            <Buildings className="h-4 w-4 text-muted-foreground" />
-            <span>{branchLabel}</span>
+          <div className="hidden h-11 min-w-52 items-center gap-2.5 rounded-md border border-border bg-card px-3 lg:flex">
+            <Buildings className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 leading-tight">
+              <span className="block text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                {t('dashboard.v2.branch', 'Filial')}
+              </span>
+              <span className="mt-0.5 block truncate text-sm font-semibold">
+                {branchLabel}
+              </span>
+            </span>
           </div>
         ))}
 
