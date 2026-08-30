@@ -11,7 +11,7 @@ import { DeferredFeedback } from './DeferredFeedback';
 
 initUmami();
 
-const SessionBootstrap = ({ children }: PropsWithChildren) => {
+export const SessionBootstrap = ({ children }: PropsWithChildren) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const token = useAuthStore((state) => state.token);
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
