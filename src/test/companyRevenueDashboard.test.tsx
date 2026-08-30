@@ -255,6 +255,7 @@ describe('CompanyRevenueDashboard', () => {
     const deltas = strip.querySelectorAll('[data-testid="kpi-delta"]');
     expect(deltas.length).toBe(1);
     expect(deltas[0].textContent).toMatch(/15\.5/);
+    expect(deltas[0]).toHaveClass('dark:text-foreground');
   });
 
   it('renders revenue-control KPIs and the recovery queue', async () => {
@@ -274,7 +275,9 @@ describe('CompanyRevenueDashboard', () => {
   it('combines revenue and payment count in one controllable trend', async () => {
     await renderDashboard();
 
-    expect(screen.getByTestId('revenue-payment-chart')).toBeInTheDocument();
+    expect(
+      await screen.findByTestId('revenue-payment-chart'),
+    ).toBeInTheDocument();
     expect(screen.getByTestId('chart-metric-revenue')).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -321,10 +324,8 @@ describe('CompanyRevenueDashboard', () => {
 
   it('keeps dashboard filters in the URL', async () => {
     const { router } = await renderDashboard();
-    // Radix TabsTrigger commits via mouseDown (button 0), not click.
-    fireEvent.mouseDown(
-      screen.getByRole('tab', { name: 'students.course_fast' }),
-      { button: 0 },
+    fireEvent.click(
+      screen.getByRole('button', { name: 'students.course_fast' }),
     );
     await waitFor(() =>
       expect(
@@ -368,7 +369,11 @@ describe('CompanyRevenueDashboard navigation (autodrive-ls5)', () => {
 
   it('recovery-queue row navigates to /students/:id, not a name-search', async () => {
     const { router } = await renderDashboard();
-    fireEvent.click(screen.getByText('Ali Valiyev'));
+    const row = screen.getByText('Ali Valiyev').closest('li');
+    expect(row).toBeInTheDocument();
+    const link = within(row!).getByRole('link');
+    expect(row).not.toHaveAttribute('role', 'button');
+    fireEvent.click(link);
     await waitFor(() =>
       expect(router.state.location.pathname).toBe('/students/student-1'),
     );

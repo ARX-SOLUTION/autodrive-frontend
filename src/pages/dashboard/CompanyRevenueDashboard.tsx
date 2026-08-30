@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { useTranslation } from 'react-i18next';
@@ -24,16 +24,6 @@ import {
   UsersThree,
   Wallet,
 } from '@phosphor-icons/react';
-import {
-  Bar,
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -53,6 +43,8 @@ import { useCan } from '@/hooks/useCan';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
 import { formatMoney, groupDigits } from '@/lib/money';
+
+const RevenueTrendChart = lazy(() => import('./RevenueTrendChart'));
 
 const UZ_TIMEZONE = 'Asia/Tashkent';
 const freshnessTimestampFormatter = new Intl.DateTimeFormat('en-GB', {
@@ -85,12 +77,8 @@ const formatDate = (
   if (options?.hour) pattern += ' HH:mm';
   return format(new Date(value), pattern);
 };
-const formatShortDate = (value: string | Date) =>
-  format(new Date(value), 'dd.MM.yyyy');
 
-// ponytail: local copy, not imported from DashboardPage.tsx — that file
-// already imports CompanyRevenueDashboard, so importing back would create a
-// circular dependency. Spec's offered fallback ("else local copy") applies.
+// Keep the v2 chunk independent from the legacy DashboardPage module.
 const greetingKey = () => {
   const h = new Date().getHours();
   if (h < 12) return 'dashboard.greeting_morning';
@@ -306,8 +294,8 @@ const DeltaChip = ({
       ink
         ? 'bg-primary-foreground/[14%] text-primary-foreground'
         : delta < 0
-          ? 'bg-destructive/[14%] text-destructive'
-          : 'bg-success/[14%] text-success',
+          ? 'bg-destructive/[14%] text-destructive dark:text-foreground'
+          : 'bg-success/[14%] text-success dark:text-foreground',
     )}
   >
     {delta < 0 ? (
@@ -443,288 +431,6 @@ const FreshnessCaption = ({
       </span>
     </div>
   );
-};
-
-const RevenueChart = ({
-  data,
-  onReset,
-}: {
-  data: CompanyOverview['revenue_trend'];
-  onReset?: () => void;
-}) => {
-  const { t } = useTranslation();
-  const [visibleMetrics, setVisibleMetrics] = useState({
-    amount: true,
-    payment_count: true,
-  });
-  const chartData = data.map((item) => ({
-    ...item,
-    label: formatDate(item.period_start),
-    tooltipLabel: formatShortDate(item.period_start),
-  }));
-  const total = data.reduce((sum, item) => sum + item.amount, 0);
-  const paymentCount = data.reduce((sum, item) => sum + item.payment_count, 0);
-  const averagePayment = paymentCount ? total / paymentCount : 0;
-  const peak = data.reduce<(typeof data)[number] | null>(
-    (current, item) =>
-      !current || item.amount > current.amount ? item : current,
-    null,
-  );
-  const toggleMetric = (metric: keyof typeof visibleMetrics) => {
-    const otherMetric = metric === 'amount' ? 'payment_count' : 'amount';
-    setVisibleMetrics((current) =>
-      current[metric] && !current[otherMetric]
-        ? current
-        : { ...current, [metric]: !current[metric] },
-    );
-  };
-  const revenueLabel = t('dashboard.v2.period_revenue', 'Davr tushumi');
-  const paymentCountLabel = t('payments.payment_count', "To'lovlar soni");
-  return (
-    <div
-      data-testid="revenue-payment-chart"
-      aria-label={t(
-        'dashboard.v2.revenue_chart_summary',
-        `Revenue trend: ${formatMoney(total)} total, ${paymentCount} payments`,
-        { total: formatMoney(total), count: paymentCount },
-      )}
-    >
-      {data.length ? (
-        <>
-          <div className="mb-3 grid grid-cols-2 gap-px overflow-hidden border-y border-border bg-border sm:grid-cols-4">
-            <button
-              type="button"
-              data-testid="chart-metric-revenue"
-              aria-pressed={visibleMetrics.amount}
-              onClick={() => toggleMetric('amount')}
-              className={cn(
-                'min-h-16 bg-card px-3 py-2.5 text-left transition-[background-color,opacity,scale] duration-150 ease-out hover:bg-muted/60 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
-                !visibleMetrics.amount && 'opacity-50',
-              )}
-            >
-              <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                <span
-                  className="h-0.5 w-4 rounded-full bg-info"
-                  aria-hidden="true"
-                />
-                {revenueLabel}
-              </span>
-              <span className="mt-1 block font-heading text-lg font-bold tabular-nums">
-                {groupDigits(String(Math.round(total)))}
-              </span>
-            </button>
-            <button
-              type="button"
-              data-testid="chart-metric-payments"
-              aria-pressed={visibleMetrics.payment_count}
-              onClick={() => toggleMetric('payment_count')}
-              className={cn(
-                'min-h-16 bg-card px-3 py-2.5 text-left transition-[background-color,opacity,scale] duration-150 ease-out hover:bg-muted/60 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
-                !visibleMetrics.payment_count && 'opacity-50',
-              )}
-            >
-              <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                <span
-                  className="h-2.5 w-2.5 rounded-[2px] bg-primary"
-                  aria-hidden="true"
-                />
-                {paymentCountLabel}
-              </span>
-              <span className="mt-1 block font-heading text-lg font-bold tabular-nums">
-                {groupDigits(String(paymentCount))}
-              </span>
-            </button>
-            <div className="min-h-16 bg-card px-3 py-2.5">
-              <p className="text-[11px] text-muted-foreground">
-                {t('dashboard.v2.average_payment', 'O‘rtacha to‘lov')}
-              </p>
-              <p className="mt-1 font-heading text-lg font-bold tabular-nums">
-                {groupDigits(String(Math.round(averagePayment)))}
-              </p>
-            </div>
-            <div className="min-h-16 bg-card px-3 py-2.5">
-              <p className="text-[11px] text-muted-foreground">
-                {t('dashboard.v2.trend_peak', 'Eng yuqori kun')}
-              </p>
-              <p className="mt-1 font-heading text-lg font-bold tabular-nums">
-                {peak ? formatDate(peak.period_start) : '—'}
-              </p>
-            </div>
-          </div>
-
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart
-                data={chartData}
-                margin={{ top: 12, right: 0, left: -18, bottom: 0 }}
-              >
-                <CartesianGrid
-                  stroke="hsl(var(--hair))"
-                  vertical={false}
-                  horizontal
-                />
-                <XAxis
-                  dataKey="label"
-                  {...AXIS_PROPS}
-                  interval="preserveStartEnd"
-                  minTickGap={24}
-                />
-                {visibleMetrics.amount && (
-                  <YAxis
-                    yAxisId="amount"
-                    {...AXIS_PROPS}
-                    tickCount={4}
-                    tickFormatter={(value) =>
-                      `${Math.round(Number(value) / 1_000_000)}M`
-                    }
-                  />
-                )}
-                {visibleMetrics.payment_count && (
-                  <YAxis
-                    yAxisId="payment_count"
-                    {...AXIS_PROPS}
-                    orientation="right"
-                    width={28}
-                    tickCount={4}
-                    allowDecimals={false}
-                  />
-                )}
-                <Tooltip
-                  cursor={{
-                    stroke: 'hsl(var(--border))',
-                    strokeDasharray: '3 3',
-                  }}
-                  content={({ active, payload }) => {
-                    const point = payload?.[0]?.payload as
-                      (typeof chartData)[number] | undefined;
-                    if (!active || !point) return null;
-                    const pointAverage = point.payment_count
-                      ? point.amount / point.payment_count
-                      : 0;
-                    return (
-                      <div className="min-w-52 rounded-md border border-border bg-popover p-3 text-popover-foreground shadow-lg">
-                        <p className="border-b border-border pb-2 text-xs font-semibold">
-                          {point.tooltipLabel}
-                        </p>
-                        <dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1.5 text-xs">
-                          <dt className="text-muted-foreground">
-                            {revenueLabel}
-                          </dt>
-                          <dd className="font-semibold tabular-nums">
-                            {formatMoney(point.amount)}
-                          </dd>
-                          <dt className="text-muted-foreground">
-                            {paymentCountLabel}
-                          </dt>
-                          <dd className="font-semibold tabular-nums">
-                            {point.payment_count}
-                          </dd>
-                          <dt className="text-muted-foreground">
-                            {t(
-                              'dashboard.v2.average_payment',
-                              'O‘rtacha to‘lov',
-                            )}
-                          </dt>
-                          <dd className="font-semibold tabular-nums">
-                            {formatMoney(pointAverage)}
-                          </dd>
-                        </dl>
-                      </div>
-                    );
-                  }}
-                />
-                {visibleMetrics.payment_count && (
-                  <Bar
-                    yAxisId="payment_count"
-                    dataKey="payment_count"
-                    name={paymentCountLabel}
-                    fill="hsl(var(--primary))"
-                    fillOpacity={0.72}
-                    radius={[3, 3, 0, 0]}
-                    maxBarSize={18}
-                    isAnimationActive={false}
-                  />
-                )}
-                {visibleMetrics.amount && (
-                  <Line
-                    yAxisId="amount"
-                    type="monotone"
-                    dataKey="amount"
-                    name={revenueLabel}
-                    stroke="hsl(var(--info))"
-                    strokeWidth={2.4}
-                    dot={false}
-                    activeDot={{
-                      r: 4,
-                      fill: 'hsl(var(--info))',
-                      stroke: 'hsl(var(--card))',
-                      strokeWidth: 2,
-                    }}
-                    isAnimationActive={false}
-                  />
-                )}
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-          <details className="mt-3 rounded-md border border-border/60 bg-muted/20 px-3 py-2">
-            <summary className="cursor-pointer text-xs font-semibold">
-              {t('dashboard.v2.view_data', 'Maʼlumotlarni ko‘rish')}
-            </summary>
-            <table className="mt-2 w-full text-xs">
-              <caption className="sr-only">
-                {t('dashboard.v2.revenue_table_caption', 'Revenue trend data')}
-              </caption>
-              <thead>
-                <tr className="border-b border-border text-left text-muted-foreground">
-                  <th scope="col" className="py-2">
-                    {t('dashboard.v2.period', 'Davr')}
-                  </th>
-                  <th scope="col" className="py-2 text-right">
-                    {t('dashboard.top_branches_revenue', 'Tushum')}
-                  </th>
-                  <th scope="col" className="py-2 text-right">
-                    {t('payments.payment_count', "To'lovlar soni")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((item) => (
-                  <tr
-                    key={item.period_start}
-                    className="border-b border-border/60 last:border-0"
-                  >
-                    <td className="py-2">{formatDate(item.period_start)}</td>
-                    <td className="py-2 text-right tabular-nums">
-                      {formatMoney(item.amount)}
-                    </td>
-                    <td className="py-2 text-right tabular-nums">
-                      {item.payment_count}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </details>
-        </>
-      ) : (
-        <EmptyData
-          message={t(
-            'dashboard.v2.no_period_data',
-            'Tanlangan davr uchun maʼlumot yo‘q',
-          )}
-          onReset={onReset}
-        />
-      )}
-    </div>
-  );
-};
-
-const AXIS_PROPS = {
-  stroke: 'hsl(var(--muted-foreground))',
-  fontSize: 10,
-  fontFamily: 'JetBrains Mono, ui-monospace, monospace',
-  tickLine: false,
-  axisLine: false,
 };
 
 const EmptyData = ({
@@ -1175,7 +881,21 @@ const CompanyRevenueDashboard = () => {
               <CaretRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           </div>
-          <RevenueChart data={data.revenue_trend} onReset={resetFilters} />
+          {data.revenue_trend.length ? (
+            <Suspense
+              fallback={<Skeleton className="h-[28rem] w-full rounded-md" />}
+            >
+              <RevenueTrendChart data={data.revenue_trend} />
+            </Suspense>
+          ) : (
+            <EmptyData
+              message={t(
+                'dashboard.v2.no_period_data',
+                'Tanlangan davr uchun maʼlumot yo‘q',
+              )}
+              onReset={resetFilters}
+            />
+          )}
         </div>
       </section>
 
@@ -1195,48 +915,37 @@ const CompanyRevenueDashboard = () => {
                 return (
                   <li
                     key={student.student_id}
-                    onClick={() =>
-                      navigate({
-                        to: '/students/$id',
-                        params: { id: student.student_id },
-                      })
-                    }
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        void navigate({
-                          to: '/students/$id',
-                          params: { id: student.student_id },
-                        });
-                      }
-                    }}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={t(
-                      'dashboard.v2.view_debtor',
-                      "Ko'rish: {{name}}",
-                      { name: student.student_name },
-                    )}
-                    className="flex cursor-pointer items-center justify-between gap-4 border-b border-border py-3 last:border-b-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="border-b border-border last:border-b-0"
                   >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold">
-                        {student.student_name}
+                    <Link
+                      to="/students/$id"
+                      params={{ id: student.student_id }}
+                      aria-label={t(
+                        'dashboard.v2.view_debtor',
+                        "Ko'rish: {{name}}",
+                        { name: student.student_name },
+                      )}
+                      className="flex items-center justify-between gap-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold">
+                          {student.student_name}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {student.branch_name}
+                        </span>
                       </span>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {student.branch_name}
+                      <span className="flex shrink-0 items-center gap-1.5">
+                        <span
+                          className="h-1.5 w-1.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: DEBT_TONE_VAR[tone] }}
+                          aria-hidden="true"
+                        />
+                        <span className="font-heading text-base font-bold tabular-nums text-destructive">
+                          {formatMoney(student.debt)}
+                        </span>
                       </span>
-                    </span>
-                    <span className="flex shrink-0 items-center gap-1.5">
-                      <span
-                        className="h-1.5 w-1.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: DEBT_TONE_VAR[tone] }}
-                        aria-hidden="true"
-                      />
-                      <span className="font-heading text-base font-bold tabular-nums text-destructive">
-                        {formatMoney(student.debt)}
-                      </span>
-                    </span>
+                    </Link>
                   </li>
                 );
               })}

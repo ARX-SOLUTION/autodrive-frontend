@@ -1,13 +1,10 @@
 import { screen, cleanup } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import DashboardPage from '@/pages/DashboardPage';
+import DashboardRouter from '@/pages/dashboard/DashboardRouter';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
-// autodrive-vh0.6: TeacherDashboard was extracted out of DashboardPage.tsx
-// into its own module (dashboard/TeacherDashboard.tsx). This locks down that
-// DashboardPage's role router still picks the right dashboard per role after
-// the extraction -- LegacyMainDashboard/CompanyRevenueDashboard's own
-// internals are untouched and out of scope here.
+// Lock role and feature-flag routing independently from each dashboard's
+// internal implementation.
 
 class ResizeObserverStub {
   observe() {}
@@ -28,6 +25,9 @@ vi.mock('@/pages/dashboard/TeacherDashboard', () => ({
 }));
 vi.mock('@/pages/dashboard/CompanyRevenueDashboard', () => ({
   default: () => <div data-testid="company-revenue-dashboard-marker" />,
+}));
+vi.mock('@/pages/DashboardPage', () => ({
+  default: () => <div data-testid="legacy-dashboard-marker" />,
 }));
 vi.mock('@/hooks/useCan', () => ({
   useCan: () => false,
@@ -87,12 +87,12 @@ afterEach(() => {
 });
 
 const renderDashboardPage = () =>
-  renderWithRouter(<DashboardPage />, {
+  renderWithRouter(<DashboardRouter />, {
     initialEntry: '/dashboard',
     routePattern: '/dashboard',
   });
 
-describe('DashboardPage role routing (autodrive-vh0.6 regression)', () => {
+describe('DashboardRouter role routing (autodrive-vh0.6 regression)', () => {
   // The sub-dashboards are now React.lazy, so the marker appears after the
   // Suspense boundary resolves — findBy* awaits that.
   it('routes a teacher to TeacherDashboard', async () => {
@@ -114,7 +114,7 @@ describe('DashboardPage role routing (autodrive-vh0.6 regression)', () => {
   });
 });
 
-describe('DashboardPage feature flag (company_dashboard_v2)', () => {
+describe('DashboardRouter feature flag (company_dashboard_v2)', () => {
   it('renders LegacyMainDashboard when company_dashboard_v2 is false', async () => {
     user = {
       name: 'Owner',
@@ -124,7 +124,7 @@ describe('DashboardPage feature flag (company_dashboard_v2)', () => {
     };
     await renderDashboardPage();
     expect(
-      await screen.findByText('dashboard.hero_today_revenue'),
+      await screen.findByTestId('legacy-dashboard-marker'),
     ).toBeInTheDocument();
     expect(screen.queryByTestId('company-revenue-dashboard-marker')).toBeNull();
   });
