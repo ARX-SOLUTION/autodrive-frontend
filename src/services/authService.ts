@@ -6,6 +6,7 @@ import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { AuthResponse, User } from '@/types/user';
 import { track } from '@/lib/umami';
+import { resetAuthSessionState } from '@/lib/queryClient';
 import { parseItemEnvelope } from '@/lib/apiEnvelope';
 import { authKeys } from '@/lib/queryKeys';
 import type {
@@ -19,11 +20,13 @@ const loginApi = async (creds: LoginRequest): Promise<AuthResponse> => {
 };
 
 export const useLogin = () => {
+  const queryClient = useQueryClient();
   const setAuth = useAuthStore((s) => s.setAuth);
   return useMutation({
     mutationFn: loginApi,
     onSuccess: (data) => {
       setAuth(data.token, data.user);
+      queryClient.setQueryData(authKeys.me(), data.user);
       track('login_success', { role: data.user.role });
     },
   });
@@ -61,7 +64,7 @@ export const useRestoreSession = () => {
     }
     if ((query.error as AxiosError)?.response?.status === 401) {
       logout();
-      queryClient.clear();
+      resetAuthSessionState(queryClient);
     }
   }, [query.data, query.error, setUser, logout, queryClient]);
 
@@ -95,9 +98,9 @@ export const useLogout = () => {
   const navigate = useNavigate();
   return useMutation({
     mutationFn: () => axiosInstance.post('/auth/logout'),
-    onSettled: () => {
+    onMutate: () => {
       logout();
-      queryClient.clear();
+      resetAuthSessionState(queryClient);
       void navigate({ to: '/login' });
     },
   });

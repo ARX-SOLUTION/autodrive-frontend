@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useLogin } from '@/services/authService';
 import { isRootDomain, navigateFullPage, rootDomainAppUrl } from '@/lib/domain';
-import { queryClient } from '@/lib/queryClient';
+import { queryClient, resetAuthSessionState } from '@/lib/queryClient';
 import { Brand } from '@/components/layout/Brand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,7 @@ const LoginPage = () => {
   const location = useLocation();
   const login = useLogin();
   const logout = useAuthStore((s) => s.logout);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(makeLoginFormSchema(t)),
@@ -47,9 +48,12 @@ const LoginPage = () => {
   useEffect(() => {
     // Always start a direct /login visit from a clean auth state so stale
     // persisted sessions cannot bounce the user away from the form.
-    logout();
-    queryClient.clear();
-  }, [logout]);
+    const hasCachedQueries = queryClient.getQueryCache().getAll().length > 0;
+    if (isAuthenticated || hasCachedQueries) {
+      logout();
+      resetAuthSessionState(queryClient);
+    }
+  }, [isAuthenticated, logout, queryClient]);
 
   useEffect(() => {
     const prev = document.title;

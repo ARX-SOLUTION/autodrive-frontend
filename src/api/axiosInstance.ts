@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
-import { queryClient } from '@/lib/queryClient';
+import { queryClient, resetAuthSessionState } from '@/lib/queryClient';
 import i18n from '@/i18n';
 
 const API_BASE_URL =
@@ -36,7 +36,7 @@ axiosInstance.interceptors.response.use(
       const url = error.config?.url ?? '';
       if (!SKIP_LOGOUT_ON_401.test(url)) {
         useAuthStore.getState().logout();
-        queryClient.clear();
+        resetAuthSessionState(queryClient);
         void import('sonner')
           .then(({ toast }) => toast.error(i18n.t('login.session_expired')))
           .catch(() => undefined);
