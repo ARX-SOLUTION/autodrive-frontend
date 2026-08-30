@@ -14,6 +14,11 @@ import type {
   LoginRequest,
 } from '@/shared/api/contract';
 
+const SESSION_RESTORE_FAILURE_STATUSES = new Set([401, 429]);
+
+const getHttpStatus = (error: unknown): number | undefined =>
+  (error as AxiosError | undefined)?.response?.status;
+
 const loginApi = async (creds: LoginRequest): Promise<AuthResponse> => {
   const { data } = await axiosInstance.post<unknown>('/auth/login', creds);
   return parseItemEnvelope<AuthResponse>(data, 'auth');
@@ -56,19 +61,22 @@ export const useRestoreSession = () => {
     enabled: isAuthenticated,
     retry: false,
   });
+  const restoreFailed = SESSION_RESTORE_FAILURE_STATUSES.has(
+    getHttpStatus(query.error) ?? 0,
+  );
 
   useEffect(() => {
     if (query.data) {
       setUser(query.data);
       return;
     }
-    if ((query.error as AxiosError)?.response?.status === 401) {
+    if (restoreFailed) {
       logout();
-      resetAuthSessionState(queryClient);
+      resetAuthSessionState(queryClient, { keepAuthMe: true });
     }
-  }, [query.data, query.error, setUser, logout, queryClient]);
+  }, [query.data, restoreFailed, setUser, logout, queryClient]);
 
-  return query;
+  return { ...query, restoreFailed };
 };
 
 export const useChangePassword = () => {

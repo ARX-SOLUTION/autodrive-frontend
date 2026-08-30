@@ -18,6 +18,7 @@ describe('useRestoreSession', () => {
 
   beforeEach(() => {
     localStorage.clear();
+    (axiosInstance.get as ReturnType<typeof vi.fn>).mockReset();
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
@@ -49,5 +50,25 @@ describe('useRestoreSession', () => {
     for (const query of queryClient.getQueryCache().getAll()) {
       expect(query.state.data).toBeUndefined();
     }
+    expect(axiosInstance.get).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops stale cookie-session restore when /auth/me is rate-limited', async () => {
+    (axiosInstance.get as ReturnType<typeof vi.fn>).mockRejectedValue({
+      response: { status: 429 },
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useRestoreSession(), { wrapper });
+
+    await waitFor(() => {
+      expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    });
+    expect(result.current.restoreFailed).toBe(true);
+    expect(queryClient.getQueryData(['students', 'branch-1'])).toBeUndefined();
+    expect(axiosInstance.get).toHaveBeenCalledTimes(1);
   });
 });
