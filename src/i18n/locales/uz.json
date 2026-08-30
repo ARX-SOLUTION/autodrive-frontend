@@ -259,6 +259,7 @@
       "recovery": "Qarzdorlik navbati",
       "recovery_subtitle": "Eng katta qarzlar birinchi ko‘rsatiladi.",
       "recovery_count": "{{count}} ta",
+      "debtors_label": "qarzdor",
       "view_debtor": "Ko'rish: {{name}}",
       "priority_high": "Yuqori",
       "open_payments": "To‘lovlar",

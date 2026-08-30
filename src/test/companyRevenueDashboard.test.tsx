@@ -96,6 +96,33 @@ const overview = vi.hoisted(() => ({
         total_price: 10000000,
         last_payment_at: '2026-07-02T10:00:00.000Z',
       },
+      {
+        student_id: 'student-2',
+        student_name: 'Dilnoza Karimova',
+        branch_name: 'Chorsu',
+        course_type: 'tezkor',
+        debt: 4000000,
+        total_price: 10000000,
+        last_payment_at: '2026-07-03T10:00:00.000Z',
+      },
+      {
+        student_id: 'student-3',
+        student_name: 'Javohir Yusupov',
+        branch_name: 'Chorsu',
+        course_type: 'avto_maktab',
+        debt: 3000000,
+        total_price: 10000000,
+        last_payment_at: '2026-07-04T10:00:00.000Z',
+      },
+      {
+        student_id: 'student-4',
+        student_name: 'Sevara Aliyeva',
+        branch_name: 'Chorsu',
+        course_type: 'avto_maktab',
+        debt: 2000000,
+        total_price: 10000000,
+        last_payment_at: '2026-07-05T10:00:00.000Z',
+      },
     ],
     operations: {
       next_lessons: [],
@@ -270,6 +297,22 @@ describe('CompanyRevenueDashboard', () => {
     expect(
       screen.getByText((content) => content.replace(/\D/g, '') === '5000000'),
     ).toBeInTheDocument();
+    expect(screen.getByTestId('recovery-count')).toHaveTextContent('10');
+    expect(screen.queryByText('Sevara Aliyeva')).not.toBeInTheDocument();
+  });
+
+  it('shows branch sorting controls beside the section heading', async () => {
+    await renderDashboard();
+
+    const sorting = screen.getByRole('group', {
+      name: 'dashboard.v2.sort_by',
+    });
+    expect(sorting).toBeInTheDocument();
+    expect(
+      within(sorting).getByRole('button', {
+        name: 'dashboard.top_branches_revenue',
+      }),
+    ).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('combines revenue and payment count in one controllable trend', async () => {
