@@ -15,9 +15,12 @@ const SessionBootstrap = ({ children }: PropsWithChildren) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const token = useAuthStore((state) => state.token);
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
-  const { isLoading } = useRestoreSession();
+  const { isLoading, restoreFailed } = useRestoreSession();
 
-  if (!hasHydrated || (isAuthenticated && !token && isLoading)) {
+  if (
+    !hasHydrated ||
+    (isAuthenticated && !token && (isLoading || restoreFailed))
+  ) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">

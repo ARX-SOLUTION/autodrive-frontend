@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
+import { authKeys } from '@/lib/queryKeys';
 
 const getHttpStatus = (error: unknown): number | undefined => {
   if (!error || typeof error !== 'object' || !('response' in error)) {
@@ -40,8 +41,29 @@ export const queryClient = new QueryClient({
   },
 });
 
-export const resetAuthSessionState = (client: QueryClient = queryClient) => {
+type ResetAuthSessionStateOptions = {
+  keepAuthMe?: boolean;
+};
+
+const isAuthMeQuery = (queryKey: readonly unknown[]): boolean => {
+  const authMeKey = authKeys.me();
+  return (
+    queryKey.length === authMeKey.length &&
+    queryKey.every((part, index) => part === authMeKey[index])
+  );
+};
+
+export const resetAuthSessionState = (
+  client: QueryClient = queryClient,
+  options: ResetAuthSessionStateOptions = {},
+) => {
   void client.cancelQueries({ type: 'all' });
-  client.removeQueries({ type: 'all' });
+  if (options.keepAuthMe) {
+    client.removeQueries({
+      predicate: (query) => !isAuthMeQuery(query.queryKey),
+    });
+  } else {
+    client.removeQueries({ type: 'all' });
+  }
   client.getMutationCache().clear();
 };
