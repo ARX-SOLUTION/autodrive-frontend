@@ -157,6 +157,8 @@
     "network_error": "Server bilan ulanish yo'q.",
     "company_inactive": "Kompaniyangiz hali faollashtirilmagan. Administrator bilan bog'laning.",
     "demo": "Demo sifatida kirish",
+    "demo_retry": "Demo kirishini qayta urinish",
+    "demo_auto_error": "Demo avtomatik ochilmadi. Quyidagi tugma bilan qayta urinishingiz mumkin.",
     "demo_hint": "Namuna ma'lumotlar bilan tanishing",
     "session_expired": "Sessiya muddati tugadi, qaytadan kiring"
   },

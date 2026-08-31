@@ -1,31 +1,49 @@
-// ponytail: thin env-gated wrapper — umami script does all the heavy lifting
 const SRC = import.meta.env.VITE_UMAMI_SRC;
 const ID = import.meta.env.VITE_UMAMI_WEBSITE_ID;
+const MAX_PENDING_EVENTS = 20;
+
+type PendingEvent = {
+  event: string;
+  data?: Record<string, unknown>;
+};
 
 let injected = false;
+const pendingEvents: PendingEvent[] = [];
 
-/**
- * Inject the umami script once at module load.
- * No-op if either env var is missing or already injected.
- */
+const flushPendingEvents = (): void => {
+  if (typeof window === 'undefined' || !window.umami?.track) return;
+
+  for (const pending of pendingEvents.splice(0)) {
+    window.umami.track(pending.event, pending.data);
+  }
+};
+
 export const initUmami = (): void => {
   if (!SRC || !ID || injected || typeof document === 'undefined') return;
-  const s = document.createElement('script');
-  s.src = SRC;
-  s.defer = true;
-  s.setAttribute('data-website-id', ID);
-  document.head.appendChild(s);
+
+  const script = document.createElement('script');
+  script.src = SRC;
+  script.defer = true;
+  script.setAttribute('data-website-id', ID);
+  script.addEventListener('load', flushPendingEvents, { once: true });
+  document.head.appendChild(script);
   injected = true;
 };
 
-/**
- * Fire a named umami event. Safe no-op if umami hasn't loaded yet.
- * Never include PII (names, emails, phones) in data.
- */
+/** Never include PII (names, emails, phones) in event data. */
 export const track = (event: string, data?: Record<string, unknown>): void => {
+  if (typeof window === 'undefined') return;
+
   try {
-    window.umami?.track(event, data);
+    if (window.umami?.track) {
+      flushPendingEvents();
+      window.umami.track(event, data);
+      return;
+    }
+
+    pendingEvents.push({ event, data });
+    if (pendingEvents.length > MAX_PENDING_EVENTS) pendingEvents.shift();
   } catch {
-    // never throws — analytics must not break the app
+    // Analytics must never interrupt the product flow.
   }
 };

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useRouter } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
@@ -23,6 +23,7 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 import type { AuthResponse } from '@/types/user';
 import { getDefaultAuthenticatedRoute } from '@/lib/defaultAuthenticatedRoute';
+import { track } from '@/lib/umami';
 
 const makeLoginFormSchema = (t: (key: string) => string) =>
   z.object({
@@ -33,14 +34,16 @@ const makeLoginFormSchema = (t: (key: string) => string) =>
 type LoginFormValues = z.infer<ReturnType<typeof makeLoginFormSchema>>;
 
 const LoginPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [formError, setFormError] = useState<string | null>(null);
+  const [demoIntentFailed, setDemoIntentFailed] = useState(false);
   const router = useRouter();
   const location = useLocation();
   const login = useLogin();
   const logout = useAuthStore((s) => s.logout);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const hasCleanedInitialSession = useRef(false);
+  const hasTriedDemoIntent = useRef(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(makeLoginFormSchema(t)),
@@ -68,38 +71,44 @@ const LoginPage = () => {
     };
   }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleError = (error: any) => {
-    if (error.response?.status === 429) {
-      toast.error(t('login.rate_limit'));
-    } else if (error.response?.status === 403) {
-      toast.error(t('login.company_inactive'));
-    } else if (!error.response) {
-      toast.error(t('login.network_error'));
-    } else {
-      setFormError(t('login.error'));
-    }
-  };
+  const handleError = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (error: any) => {
+      if (error.response?.status === 429) {
+        toast.error(t('login.rate_limit'));
+      } else if (error.response?.status === 403) {
+        toast.error(t('login.company_inactive'));
+      } else if (!error.response) {
+        toast.error(t('login.network_error'));
+      } else {
+        setFormError(t('login.error'));
+      }
+    },
+    [t],
+  );
 
-  const onSuccess = (data: AuthResponse) => {
-    toast.success(t('login.success'));
-    // Return to the page a session-expiry redirect came from, if any.
-    const from =
-      'from' in location.state && typeof location.state.from === 'string'
-        ? location.state.from
-        : undefined;
-    const target =
-      data.user.role !== 'accountant' && from && from !== '/login'
-        ? from
-        : getDefaultAuthenticatedRoute(data.user.role);
-    if (isRootDomain()) {
-      // automaktab.uz has no app UI of its own -- hand off to app. with a
-      // full navigation so the domain-wide auth cookie rides along.
-      navigateFullPage(rootDomainAppUrl(target));
-      return;
-    }
-    void router.navigate({ href: target, replace: true });
-  };
+  const onSuccess = useCallback(
+    (data: AuthResponse) => {
+      toast.success(t('login.success'));
+      // Return to the page a session-expiry redirect came from, if any.
+      const from =
+        'from' in location.state && typeof location.state.from === 'string'
+          ? location.state.from
+          : undefined;
+      const target =
+        data.user.role !== 'accountant' && from && from !== '/login'
+          ? from
+          : getDefaultAuthenticatedRoute(data.user.role);
+      if (isRootDomain()) {
+        // automaktab.uz has no app UI of its own -- hand off to app. with a
+        // full navigation so the domain-wide auth cookie rides along.
+        navigateFullPage(rootDomainAppUrl(target));
+        return;
+      }
+      void router.navigate({ href: target, replace: true });
+    },
+    [location.state, router, t],
+  );
 
   const onValid = (values: LoginFormValues) => {
     login.mutate(
@@ -108,12 +117,50 @@ const LoginPage = () => {
     );
   };
 
-  const handleDemoLogin = () => {
-    login.mutate(
-      { email: 'demo@automaktab.uz', password: 'demo1234' },
-      { onSuccess, onError: handleError },
-    );
-  };
+  const handleDemoLogin = useCallback(
+    (automatic = false) => {
+      setDemoIntentFailed(false);
+      login.mutate(
+        { email: 'demo@automaktab.uz', password: 'demo1234' },
+        {
+          onSuccess: (data) => {
+            const language = (i18n.resolvedLanguage ?? i18n.language).slice(
+              0,
+              2,
+            );
+            const locale = ['uz', 'ru', 'en'].includes(language)
+              ? language
+              : 'uz';
+            track('demo_enter', { locale });
+            onSuccess(data);
+          },
+          onError: (error) => {
+            if (automatic) {
+              setDemoIntentFailed(true);
+              return;
+            }
+            handleError(error);
+          },
+        },
+      );
+    },
+    [handleError, i18n.language, i18n.resolvedLanguage, login, onSuccess],
+  );
+
+  useEffect(() => {
+    const isDemoIntent =
+      new URLSearchParams(location.searchStr).get('demo') === '1';
+    if (
+      !isDemoIntent ||
+      !hasCleanedInitialSession.current ||
+      hasTriedDemoIntent.current
+    ) {
+      return;
+    }
+
+    hasTriedDemoIntent.current = true;
+    handleDemoLogin(true);
+  }, [handleDemoLogin, location.searchStr]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -183,14 +230,19 @@ const LoginPage = () => {
               {login.isPending ? t('login.submitting') : t('login.submit')}
             </Button>
             <div className="pt-1">
+              {demoIntentFailed && (
+                <p role="alert" className="mb-2 text-sm text-destructive">
+                  {t('login.demo_auto_error')}
+                </p>
+              )}
               <Button
                 type="button"
                 variant="outline"
                 className="w-full"
-                onClick={handleDemoLogin}
+                onClick={() => handleDemoLogin(false)}
                 disabled={login.isPending}
               >
-                {t('login.demo')}
+                {t(demoIntentFailed ? 'login.demo_retry' : 'login.demo')}
               </Button>
               <p className="mt-1.5 text-center text-xs text-muted-foreground">
                 {t('login.demo_hint')}
