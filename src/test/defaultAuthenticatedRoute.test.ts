@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { getDefaultAuthenticatedRoute } from '@/lib/defaultAuthenticatedRoute';
 
 describe('getDefaultAuthenticatedRoute', () => {
-  it('keeps an accountant on the finance-safe profile landing in T1', () => {
-    expect(getDefaultAuthenticatedRoute('accountant')).toBe('/profile');
+  it('sends an accountant to the T2 finance landing', () => {
+    expect(getDefaultAuthenticatedRoute('accountant')).toBe('/expenses');
   });
 
   it('keeps operational roles on the dashboard', () => {

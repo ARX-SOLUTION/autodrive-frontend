@@ -2,6 +2,8 @@ import type { Capability } from '@/lib/permissions';
 
 export const ROUTE_CAPABILITIES = {
   '/dashboard': 'viewDashboard',
+  '/expenses': 'viewExpenses',
+  '/expenses/$id': 'viewExpenses',
   '/schedule': 'accessOperations',
   '/attendance': 'accessOperations',
   '/groups': 'accessOperations',

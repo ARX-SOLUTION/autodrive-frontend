@@ -82,3 +82,35 @@ export type CreateUserRequest = ApiRequest<'UsersController_create'>;
 export type UpdateUserRequest = ApiRequest<'UsersController_update'>;
 export type LoginRequest = ApiRequest<'AuthController_login'>;
 export type ChangePasswordRequest = ApiRequest<'AuthController_changePassword'>;
+
+/** Finance contracts are kept explicit until the live OpenAPI schema publishes
+ * the Expenses module. Wire names intentionally stay snake_case. */
+export type CreateExpenseRequest = {
+  category:
+    | 'rent'
+    | 'utilities'
+    | 'vehicle'
+    | 'marketing'
+    | 'supplies'
+    | 'administrative'
+    | 'other';
+  title: string;
+  amount: string;
+  expense_date: string;
+  due_date?: string | null;
+  payee?: string | null;
+  note?: string | null;
+  branch_id?: string | null;
+  idempotency_key: string;
+};
+
+export type ExpensesQuery = {
+  branch_id?: string;
+  scope?: 'company';
+  category?: CreateExpenseRequest['category'];
+  status?: 'planned' | 'partially_paid' | 'paid' | 'cancelled';
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  limit?: number;
+};
