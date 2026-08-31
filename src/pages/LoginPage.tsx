@@ -58,7 +58,7 @@ const LoginPage = () => {
       logout();
       resetAuthSessionState(queryClient);
     }
-  }, [isAuthenticated, logout, queryClient]);
+  }, [isAuthenticated, logout]);
 
   useEffect(() => {
     const prev = document.title;
