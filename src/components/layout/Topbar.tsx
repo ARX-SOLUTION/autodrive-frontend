@@ -54,6 +54,7 @@ export const Topbar = ({
   const { searchParams, setParam } = useUrlParams();
   const { theme, toggle } = useTheme();
   const user = useAuthStore((s) => s.user);
+  const canAccessOperations = useCan('accessOperations');
   const canRecordPayment = useCan('recordPayment');
   const canViewAllBranches = useCan('viewAllBranches');
   const isDashboard = location.pathname === '/dashboard';
@@ -156,18 +157,20 @@ export const Topbar = ({
 
       <div className="flex-1" />
 
-      <button
-        type="button"
-        onClick={onCommandPaletteOpen}
-        aria-label={searchHint}
-        className="hidden h-10 w-[260px] items-center gap-2 rounded-md border border-border bg-card px-3 text-sm text-muted-foreground transition-[background-color,color,box-shadow] duration-150 ease-out hover:bg-accent lg:inline-flex"
-      >
-        <MagnifyingGlass className="h-4 w-4 shrink-0" />
-        <span className="truncate">{searchHint}</span>
-        <kbd className="ml-auto rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10.5px] font-medium">
-          {commandShortcutLabel}
-        </kbd>
-      </button>
+      {canAccessOperations && (
+        <button
+          type="button"
+          onClick={onCommandPaletteOpen}
+          aria-label={searchHint}
+          className="hidden h-10 w-[260px] items-center gap-2 rounded-md border border-border bg-card px-3 text-sm text-muted-foreground transition-[background-color,color,box-shadow] duration-150 ease-out hover:bg-accent lg:inline-flex"
+        >
+          <MagnifyingGlass className="h-4 w-4 shrink-0" />
+          <span className="truncate">{searchHint}</span>
+          <kbd className="ml-auto rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10.5px] font-medium">
+            {commandShortcutLabel}
+          </kbd>
+        </button>
+      )}
 
       <button
         type="button"

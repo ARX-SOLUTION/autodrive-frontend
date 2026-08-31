@@ -95,4 +95,12 @@ describe('Sidebar teacher nav trim (autodrive-vh0.2)', () => {
     await renderSidebar();
     expect(screen.getByLabelText('nav.payments')).toBeTruthy();
   });
+
+  it('shows an accountant only the profile entry in T1', async () => {
+    role = 'accountant';
+    await renderSidebar();
+    expect(screen.getByLabelText('nav.profile')).toBeTruthy();
+    expect(screen.queryByLabelText('nav.dashboard')).toBeNull();
+    expect(screen.queryByLabelText('nav.students')).toBeNull();
+  });
 });

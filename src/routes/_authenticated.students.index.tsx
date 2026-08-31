@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import StudentsPage from '@/pages/StudentsPage';
+import { requireCapability } from '@/app/routeGuards';
+import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
 
 type StudentListSearch = {
   action?: 'create';
@@ -18,6 +20,8 @@ type StudentListSearch = {
 };
 
 export const Route = createFileRoute('/_authenticated/students/')({
+  beforeLoad: ({ location }) =>
+    requireCapability(location, ROUTE_CAPABILITIES['/students']),
   validateSearch: (search: Record<string, unknown>): StudentListSearch => ({
     action: search.action === 'create' ? ('create' as const) : undefined,
     branch_id:

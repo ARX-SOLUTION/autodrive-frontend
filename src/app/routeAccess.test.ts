@@ -17,6 +17,13 @@ const allowedRoles = (path: keyof typeof ROUTE_CAPABILITIES) =>
 
 describe('protected route capability matrix', () => {
   it.each([
+    ['/dashboard', ['dev', 'owner', 'manager', 'operator', 'teacher']],
+    ['/schedule', ['dev', 'owner', 'manager', 'operator', 'teacher']],
+    ['/attendance', ['dev', 'owner', 'manager', 'operator', 'teacher']],
+    ['/groups', ['dev', 'owner', 'manager', 'operator', 'teacher']],
+    ['/groups/$id', ['dev', 'owner', 'manager', 'operator', 'teacher']],
+    ['/students', ['dev', 'owner', 'manager', 'operator', 'teacher']],
+    ['/students/$id', ['dev', 'owner', 'manager', 'operator', 'teacher']],
     ['/branches', ['dev', 'owner']],
     ['/branches/$id', ['dev', 'owner']],
     ['/courses', ['dev', 'owner', 'manager']],

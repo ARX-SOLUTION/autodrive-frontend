@@ -29,6 +29,8 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const gate: Record<string, boolean> = {
+    accessOperations: useCan('accessOperations'),
+    viewDashboard: useCan('viewDashboard'),
     manageBranches: useCan('manageBranches'),
     manageStaff: useCan('manageStaff'),
     manageUsers: useCan('manageUsers'),
@@ -156,7 +158,13 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
 /** Owns open state + binds cmd+k / ctrl+k globally. */
 export const useCommandPalette = () => {
   const [open, setOpen] = useState(false);
+  const canAccessOperations = useCan('accessOperations');
+
   useEffect(() => {
+    if (!canAccessOperations) {
+      return;
+    }
+
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -165,6 +173,12 @@ export const useCommandPalette = () => {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
-  return { open, setOpen };
+  }, [canAccessOperations]);
+
+  return {
+    open: canAccessOperations && open,
+    setOpen: (next: boolean) => {
+      if (canAccessOperations) setOpen(next);
+    },
+  };
 };

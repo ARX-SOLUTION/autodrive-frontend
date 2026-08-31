@@ -1,5 +1,7 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getDefaultAuthenticatedRoute } from '@/lib/defaultAuthenticatedRoute';
 import { useAuthStore } from '@/store/authStore';
 
 const LegacyMainDashboard = lazy(() => import('@/pages/DashboardPage'));
@@ -12,7 +14,17 @@ const TeacherDashboard = lazy(
 
 const DashboardRouter = () => {
   const user = useAuthStore((state) => state.user);
+  const navigate = useNavigate();
+  const defaultRoute = getDefaultAuthenticatedRoute(user?.role);
+  const canViewDashboard = defaultRoute === '/dashboard';
   const fallback = <Skeleton className="h-96 w-full rounded-lg" />;
+
+  useEffect(() => {
+    if (canViewDashboard) return;
+    void navigate({ to: defaultRoute, replace: true });
+  }, [canViewDashboard, defaultRoute, navigate]);
+
+  if (!canViewDashboard) return null;
 
   if (user?.role === 'teacher') {
     return (

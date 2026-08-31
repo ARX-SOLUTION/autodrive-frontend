@@ -23,8 +23,12 @@ vi.mock('@/store/authStore', () => ({
 }));
 
 vi.mock('@/hooks/useCan', () => ({
-  useCan: (capability: string) =>
-    capability === 'viewAllBranches' && state.user.role === 'owner',
+  useCan: (capability: string) => {
+    if (capability === 'accessOperations') {
+      return state.user.role !== 'accountant';
+    }
+    return capability === 'viewAllBranches' && state.user.role === 'owner';
+  },
 }));
 
 vi.mock('@/services/branchService', () => ({
@@ -111,5 +115,48 @@ describe('Topbar dashboard branch scope', () => {
       screen.queryByRole('button', { name: 'dashboard.v2.branch' }),
     ).not.toBeInTheDocument();
     expect(screen.getByText('Toshkent Markaziy')).toBeInTheDocument();
+  });
+});
+
+describe('Topbar global search access', () => {
+  it('does not expose the search entry to an accountant', async () => {
+    state.user = {
+      name: 'Demo Accountant',
+      role: 'accountant',
+      branch_id: undefined,
+      branch_name: undefined,
+    };
+
+    await renderWithRouter(
+      <Topbar onMobileMenuClick={vi.fn()} onCommandPaletteOpen={vi.fn()} />,
+      {
+        initialEntry: '/profile',
+        routePattern: '/profile',
+      },
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'actions.search_hint' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps the search entry working for an owner', async () => {
+    const onCommandPaletteOpen = vi.fn();
+
+    await renderWithRouter(
+      <Topbar
+        onMobileMenuClick={vi.fn()}
+        onCommandPaletteOpen={onCommandPaletteOpen}
+      />,
+      {
+        initialEntry: '/dashboard',
+        routePattern: '/dashboard',
+      },
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'actions.search_hint' }),
+    );
+    expect(onCommandPaletteOpen).toHaveBeenCalledOnce();
   });
 });

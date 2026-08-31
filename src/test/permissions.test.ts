@@ -38,6 +38,12 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
     expect(roleCan('teacher', 'manageStudents')).toBe(false);
   });
 
+  it('accountant has no operational capability', () => {
+    expect(roleCan('accountant', 'accessOperations')).toBe(false);
+    expect(roleCan('accountant', 'viewDashboard')).toBe(false);
+    expect(roleCan('accountant', 'recordPayment')).toBe(false);
+  });
+
   // autodrive-vh0.4: manageOwnLesson deliberately excludes operator even
   // though operator already creates lessons via manageSchedule -- operator
   // must never get a delete-own-lesson affordance the backend won't honor.
