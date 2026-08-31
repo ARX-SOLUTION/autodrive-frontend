@@ -402,6 +402,7 @@
       "revenue": "Revenue",
       "debt": "Debt",
       "today_payment": "Today's payment",
+      "expenses": "Expenses",
       "revenue_trend": "6-month revenue",
       "top_debtors": "Top debtors",
       "view_all_debtors": "View all"

@@ -11,6 +11,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { useCan } from '@/hooks/useCan';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import {
   useCancelExpense,
   useCreateExpensePayment,
@@ -22,6 +23,7 @@ import {
 import type { ExpensePaymentMethod, ExpenseStatus } from '@/types/expense';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { parseCalendarDate } from '@/lib/calendarDate';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { useAuthStore } from '@/store/authStore';
@@ -56,6 +58,7 @@ const ExpenseDetailPage = () => {
   const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { searchParams } = useUrlParams();
   const canViewExpenses = useCan('viewExpenses');
   const canManageFinance = useCan('manageCompanyFinance');
   const authUser = useAuthStore((state) => state.user);
@@ -126,6 +129,10 @@ const ExpenseDetailPage = () => {
   }
 
   const canViewPaymentHistory = canManageFinance;
+  const initialTab =
+    searchParams.get('tab') === 'payments' && canViewPaymentHistory
+      ? 'payments'
+      : 'info';
   const serverExpense = canViewPaymentHistory
     ? (historyQuery.data?.expense ?? expense)
     : expense;
@@ -283,228 +290,247 @@ const ExpenseDetailPage = () => {
         </div>
       }
     >
-      <dl className="glass-card grid grid-cols-1 gap-x-8 gap-y-4 p-5 text-sm sm:grid-cols-2 lg:grid-cols-3">
-        <DetailField
-          label={t('expenses.detail.amount')}
-          value={formatAmount(serverExpense.amount, t('expenses.currency'))}
-        />
-        <DetailField
-          label={t('expenses.detail.paid')}
-          value={formatAmount(
-            serverExpense.paid_amount,
-            t('expenses.currency'),
+      <Tabs defaultValue={initialTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
+          {canViewPaymentHistory && (
+            <TabsTrigger value="payments">
+              {t('expenses.payments.title')}
+            </TabsTrigger>
           )}
-        />
-        <DetailField
-          label={t('expenses.detail.remaining')}
-          value={formatAmount(
-            serverExpense.remaining_amount,
-            t('expenses.currency'),
-          )}
-        />
-        <DetailField
-          label={t('expenses.detail.expense_date')}
-          value={serverExpense.expense_date}
-        />
-        <DetailField
-          label={t('expenses.detail.due_date')}
-          value={serverExpense.due_date ?? t('common.na')}
-        />
-        <DetailField
-          label={t('expenses.detail.branch')}
-          value={serverExpense.branch_name ?? t('expenses.form.company_wide')}
-        />
-        <DetailField
-          label={t('expenses.detail.payee')}
-          value={serverExpense.payee ?? t('common.na')}
-        />
-        <DetailField
-          label={t('expenses.detail.created_by')}
-          value={serverExpense.created_by_id}
-        />
-        <DetailField
-          label={t('expenses.detail.version')}
-          value={String(serverExpense.version)}
-        />
-        <div className="sm:col-span-2 lg:col-span-3">
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-            {t('expenses.detail.note')}
-          </dt>
-          <dd className="mt-1 whitespace-pre-wrap text-sm">
-            {serverExpense.note ?? t('common.na')}
-          </dd>
-        </div>
-      </dl>
-      {canViewPaymentHistory && (
-        <section className="glass-card space-y-4 p-5">
-          <h2 className="font-heading text-lg font-semibold">
-            {t('expenses.payments.title')}
-          </h2>
-          {historyQuery.isLoading && (
-            <p className="text-sm text-muted-foreground">
-              {t('expenses.payments.loading')}
-            </p>
-          )}
-          {historyQuery.isError && (
-            <div className="flex items-center gap-3 text-sm">
-              <span>{t('expenses.payments.error')}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void historyQuery.refetch()}
-              >
-                {t('common.retry')}
-              </Button>
+        </TabsList>
+
+        <TabsContent value="info">
+          <dl className="glass-card grid grid-cols-1 gap-x-8 gap-y-4 p-5 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            <DetailField
+              label={t('expenses.detail.amount')}
+              value={formatAmount(serverExpense.amount, t('expenses.currency'))}
+            />
+            <DetailField
+              label={t('expenses.detail.paid')}
+              value={formatAmount(
+                serverExpense.paid_amount,
+                t('expenses.currency'),
+              )}
+            />
+            <DetailField
+              label={t('expenses.detail.remaining')}
+              value={formatAmount(
+                serverExpense.remaining_amount,
+                t('expenses.currency'),
+              )}
+            />
+            <DetailField
+              label={t('expenses.detail.expense_date')}
+              value={serverExpense.expense_date}
+            />
+            <DetailField
+              label={t('expenses.detail.due_date')}
+              value={serverExpense.due_date ?? t('common.na')}
+            />
+            <DetailField
+              label={t('expenses.detail.branch')}
+              value={
+                serverExpense.branch_name ?? t('expenses.form.company_wide')
+              }
+            />
+            <DetailField
+              label={t('expenses.detail.payee')}
+              value={serverExpense.payee ?? t('common.na')}
+            />
+            <DetailField
+              label={t('expenses.detail.created_by')}
+              value={serverExpense.created_by_id}
+            />
+            <DetailField
+              label={t('expenses.detail.version')}
+              value={String(serverExpense.version)}
+            />
+            <div className="sm:col-span-2 lg:col-span-3">
+              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                {t('expenses.detail.note')}
+              </dt>
+              <dd className="mt-1 whitespace-pre-wrap text-sm">
+                {serverExpense.note ?? t('common.na')}
+              </dd>
             </div>
-          )}
-          {!historyQuery.isLoading &&
-            !historyQuery.isError &&
-            historyQuery.data?.payments.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                {t('expenses.payments.empty')}
-              </p>
-            )}
-          {historyQuery.data?.payments.map((payment) => (
-            <div
-              key={payment.id}
-              className="flex flex-wrap justify-between gap-2 border-b border-border py-2 text-sm"
-            >
-              <span>
-                {formatAmount(payment.amount, t('expenses.currency'))} ·{' '}
-                {t(`expenses.payments.methods.${payment.payment_method}`)} ·{' '}
-                {payment.date}
-              </span>
-              <span>
-                {payment.voided_at
-                  ? t('expenses.payments.voided')
-                  : t('expenses.payments.active')}
-              </span>
-            </div>
-          ))}
-          {canManageFinance &&
-            serverExpense.status !== 'cancelled' &&
-            serverExpense.status !== 'paid' && (
-              <form
-                className="grid gap-3 sm:grid-cols-2"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  setConflict(false);
-                  setPaymentError(null);
-                  const canonicalAmount = canonicalPaymentAmount(amount);
-                  const normalizedDate = date.trim();
-                  const normalizedNote = note.trim() || null;
-                  if (!canonicalAmount) {
-                    setPaymentError('expenses.payments.invalid_amount');
-                    return;
-                  }
-                  if (!parseCalendarDate(normalizedDate)) {
-                    setPaymentError('expenses.payments.invalid_date');
-                    return;
-                  }
-                  const fingerprint = JSON.stringify([
-                    canonicalAmount,
-                    method,
-                    normalizedDate,
-                    normalizedNote,
-                  ]);
-                  if (paymentAttempt.current?.fingerprint !== fingerprint) {
-                    paymentAttempt.current = {
-                      fingerprint,
-                      idempotencyKey: crypto.randomUUID(),
-                    };
-                  }
-                  paymentMutation.mutate(
-                    {
-                      amount: canonicalAmount,
-                      payment_method: method,
-                      date: normalizedDate,
-                      note: normalizedNote,
-                      idempotency_key: paymentAttempt.current.idempotencyKey,
-                      expected_version: serverExpense.version,
-                    },
-                    {
-                      onSuccess: () => {
-                        setAmount('');
-                        setDate('');
-                        setNote('');
-                        paymentAttempt.current = null;
-                      },
-                      onError: (error) => {
-                        if (
-                          (error as { response?: { status?: number } }).response
-                            ?.status === 409
-                        ) {
-                          setConflict(true);
-                          void Promise.all([
-                            expenseQuery.refetch(),
-                            historyQuery.refetch(),
-                          ]);
-                        }
-                      },
-                    },
-                  );
-                }}
-              >
-                <Input
-                  aria-label={t('expenses.payments.amount')}
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0.00"
-                  disabled={paymentMutation.isPending}
-                  required
-                />
-                <select
-                  aria-label={t('expenses.payments.method')}
-                  value={method}
-                  onChange={(e) =>
-                    setMethod(e.target.value as ExpensePaymentMethod)
-                  }
-                  disabled={paymentMutation.isPending}
-                  className="rounded-md border border-border bg-secondary px-3 text-sm"
+          </dl>
+        </TabsContent>
+
+        {canViewPaymentHistory && (
+          <TabsContent value="payments">
+            <section className="glass-card space-y-4 p-5">
+              <h2 className="font-heading text-lg font-semibold">
+                {t('expenses.payments.title')}
+              </h2>
+              {historyQuery.isLoading && (
+                <p className="text-sm text-muted-foreground">
+                  {t('expenses.payments.loading')}
+                </p>
+              )}
+              {historyQuery.isError && (
+                <div className="flex items-center gap-3 text-sm">
+                  <span>{t('expenses.payments.error')}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void historyQuery.refetch()}
+                  >
+                    {t('common.retry')}
+                  </Button>
+                </div>
+              )}
+              {!historyQuery.isLoading &&
+                !historyQuery.isError &&
+                historyQuery.data?.payments.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {t('expenses.payments.empty')}
+                  </p>
+                )}
+              {historyQuery.data?.payments.map((payment) => (
+                <div
+                  key={payment.id}
+                  className="flex flex-wrap justify-between gap-2 border-b border-border py-2 text-sm"
                 >
-                  <option value="naqd">
-                    {t('expenses.payments.methods.naqd')}
-                  </option>
-                  <option value="karta">
-                    {t('expenses.payments.methods.karta')}
-                  </option>
-                  <option value="perechisleniya">
-                    {t('expenses.payments.methods.perechisleniya')}
-                  </option>
-                </select>
-                <Input
-                  aria-label={t('expenses.payments.date')}
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  disabled={paymentMutation.isPending}
-                  required
-                />
-                <Input
-                  aria-label={t('expenses.payments.note')}
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  disabled={paymentMutation.isPending}
-                />
-                <Button type="submit" disabled={paymentMutation.isPending}>
-                  {paymentMutation.isPending
-                    ? t('expenses.payments.saving')
-                    : t('expenses.payments.submit')}
-                </Button>
-                {conflict && (
-                  <p className="text-sm text-destructive sm:col-span-2">
-                    {t('expenses.payments.conflict')}
-                  </p>
+                  <span>
+                    {formatAmount(payment.amount, t('expenses.currency'))} ·{' '}
+                    {t(`expenses.payments.methods.${payment.payment_method}`)} ·{' '}
+                    {payment.date}
+                  </span>
+                  <span>
+                    {payment.voided_at
+                      ? t('expenses.payments.voided')
+                      : t('expenses.payments.active')}
+                  </span>
+                </div>
+              ))}
+              {canManageFinance &&
+                serverExpense.status !== 'cancelled' &&
+                serverExpense.status !== 'paid' && (
+                  <form
+                    className="grid gap-3 sm:grid-cols-2"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      setConflict(false);
+                      setPaymentError(null);
+                      const canonicalAmount = canonicalPaymentAmount(amount);
+                      const normalizedDate = date.trim();
+                      const normalizedNote = note.trim() || null;
+                      if (!canonicalAmount) {
+                        setPaymentError('expenses.payments.invalid_amount');
+                        return;
+                      }
+                      if (!parseCalendarDate(normalizedDate)) {
+                        setPaymentError('expenses.payments.invalid_date');
+                        return;
+                      }
+                      const fingerprint = JSON.stringify([
+                        canonicalAmount,
+                        method,
+                        normalizedDate,
+                        normalizedNote,
+                      ]);
+                      if (paymentAttempt.current?.fingerprint !== fingerprint) {
+                        paymentAttempt.current = {
+                          fingerprint,
+                          idempotencyKey: crypto.randomUUID(),
+                        };
+                      }
+                      paymentMutation.mutate(
+                        {
+                          amount: canonicalAmount,
+                          payment_method: method,
+                          date: normalizedDate,
+                          note: normalizedNote,
+                          idempotency_key:
+                            paymentAttempt.current.idempotencyKey,
+                          expected_version: serverExpense.version,
+                        },
+                        {
+                          onSuccess: () => {
+                            setAmount('');
+                            setDate('');
+                            setNote('');
+                            paymentAttempt.current = null;
+                          },
+                          onError: (error) => {
+                            if (
+                              (error as { response?: { status?: number } })
+                                .response?.status === 409
+                            ) {
+                              setConflict(true);
+                              void Promise.all([
+                                expenseQuery.refetch(),
+                                historyQuery.refetch(),
+                              ]);
+                            }
+                          },
+                        },
+                      );
+                    }}
+                  >
+                    <Input
+                      aria-label={t('expenses.payments.amount')}
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="0.00"
+                      disabled={paymentMutation.isPending}
+                      required
+                    />
+                    <select
+                      aria-label={t('expenses.payments.method')}
+                      value={method}
+                      onChange={(e) =>
+                        setMethod(e.target.value as ExpensePaymentMethod)
+                      }
+                      disabled={paymentMutation.isPending}
+                      className="rounded-md border border-border bg-secondary px-3 text-sm"
+                    >
+                      <option value="naqd">
+                        {t('expenses.payments.methods.naqd')}
+                      </option>
+                      <option value="karta">
+                        {t('expenses.payments.methods.karta')}
+                      </option>
+                      <option value="perechisleniya">
+                        {t('expenses.payments.methods.perechisleniya')}
+                      </option>
+                    </select>
+                    <Input
+                      aria-label={t('expenses.payments.date')}
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      disabled={paymentMutation.isPending}
+                      required
+                    />
+                    <Input
+                      aria-label={t('expenses.payments.note')}
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      disabled={paymentMutation.isPending}
+                    />
+                    <Button type="submit" disabled={paymentMutation.isPending}>
+                      {paymentMutation.isPending
+                        ? t('expenses.payments.saving')
+                        : t('expenses.payments.submit')}
+                    </Button>
+                    {conflict && (
+                      <p className="text-sm text-destructive sm:col-span-2">
+                        {t('expenses.payments.conflict')}
+                      </p>
+                    )}
+                    {paymentError && (
+                      <p className="text-sm text-destructive sm:col-span-2">
+                        {t(paymentError)}
+                      </p>
+                    )}
+                  </form>
                 )}
-                {paymentError && (
-                  <p className="text-sm text-destructive sm:col-span-2">
-                    {t(paymentError)}
-                  </p>
-                )}
-              </form>
-            )}
-        </section>
-      )}
+            </section>
+          </TabsContent>
+        )}
+      </Tabs>
       {editOpen && (
         <ExpenseFormDialog
           open={editOpen}

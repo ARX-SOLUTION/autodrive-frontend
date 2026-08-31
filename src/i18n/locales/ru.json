@@ -402,6 +402,7 @@
       "revenue": "Выручка",
       "debt": "Задолженность",
       "today_payment": "Платёж за сегодня",
+      "expenses": "Расходы",
       "revenue_trend": "Выручка за 6 месяцев",
       "top_debtors": "Крупнейшие должники",
       "view_all_debtors": "Смотреть всё"

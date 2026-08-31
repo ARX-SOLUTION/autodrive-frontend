@@ -159,4 +159,11 @@ describe('Sidebar navigation', () => {
       screen.getByLabelText('nav.dashboard').getAttribute('data-active'),
     ).toBe('false');
   });
+
+  it('keeps the parent Expenses menu active on a direct detail route', async () => {
+    await renderSidebar(false, '/expenses/expense-1');
+    expect(
+      screen.getByLabelText('nav.expenses').getAttribute('data-active'),
+    ).toBe('true');
+  });
 });

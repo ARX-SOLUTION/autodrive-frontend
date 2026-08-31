@@ -142,6 +142,9 @@ describe('ExpensesPage', () => {
     fireEvent.change(screen.getByLabelText(/expenses\.form\.amount/), {
       target: { value: '1250000' },
     });
+    expect(screen.getByLabelText(/expenses\.form\.amount/)).toHaveValue(
+      '1 250 000',
+    );
     fireEvent.change(screen.getByLabelText(/expenses\.form\.expense_date/), {
       target: { value: '2026-08-12' },
     });

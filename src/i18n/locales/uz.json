@@ -88,7 +88,7 @@
     "confirm_delete_desc": "Bu amalni ortga qaytarib bo'lmaydi. Davom etasizmi?",
     "discard_changes_title": "Saqlanmagan o'zgarishlar bekor qilinsinmi?",
     "discard_changes_desc": "Saqlanmagan o'zgarishlar bor. Hozir yopsangiz, ular yo'qoladi.",
-    "discard": "Bekor qilish",
+    "discard": "O'zgarishlarni bekor qilish",
     "restore": "Tiklash",
     "restoring": "Tiklanmoqda...",
     "confirm_restore_title": "Tiklashni tasdiqlang",
@@ -402,6 +402,7 @@
       "revenue": "Tushum",
       "debt": "Qarzdorlik",
       "today_payment": "Bugungi to'lov",
+      "expenses": "Xarajatlar",
       "revenue_trend": "6 oylik tushum",
       "top_debtors": "Eng katta qarzdorlar",
       "view_all_debtors": "Hammasini ko'rish"

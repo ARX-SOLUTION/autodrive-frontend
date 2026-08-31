@@ -147,6 +147,11 @@ describe('ExpenseDetailPage', () => {
       screen.getByText('expenses.status.partially_paid'),
     ).toBeInTheDocument();
     expect(screen.getByText('Chorsu')).toBeInTheDocument();
+
+    fireEvent.mouseDown(
+      screen.getByRole('tab', { name: 'expenses.payments.title' }),
+    );
+
     expect(screen.getByText('expenses.payments.active')).toBeInTheDocument();
     expect(screen.getByText('expenses.payments.voided')).toBeInTheDocument();
     expect(screen.getByText(/2026-08-30/)).toBeInTheDocument();
@@ -160,6 +165,9 @@ describe('ExpenseDetailPage', () => {
       routePattern: '/expenses/$id',
       params: { id: 'expense-1' },
     });
+    fireEvent.mouseDown(
+      screen.getByRole('tab', { name: 'expenses.payments.title' }),
+    );
     expect(screen.getByText('expenses.payments.loading')).toBeInTheDocument();
 
     cleanup();
@@ -170,6 +178,9 @@ describe('ExpenseDetailPage', () => {
       routePattern: '/expenses/$id',
       params: { id: 'expense-1' },
     });
+    fireEvent.mouseDown(
+      screen.getByRole('tab', { name: 'expenses.payments.title' }),
+    );
     expect(screen.getByText('expenses.payments.error')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(historyState.refetch).toHaveBeenCalledOnce();
@@ -183,6 +194,10 @@ describe('ExpenseDetailPage', () => {
       routePattern: '/expenses/$id',
       params: { id: 'expense-1' },
     });
+
+    fireEvent.mouseDown(
+      screen.getByRole('tab', { name: 'expenses.payments.title' }),
+    );
 
     fireEvent.change(screen.getByLabelText('expenses.payments.amount'), {
       target: { value: '10' },
@@ -236,6 +251,10 @@ describe('ExpenseDetailPage', () => {
       routePattern: '/expenses/$id',
       params: { id: 'expense-1' },
     });
+
+    fireEvent.mouseDown(
+      screen.getByRole('tab', { name: 'expenses.payments.title' }),
+    );
 
     expect(
       screen.getByRole('button', { name: 'expenses.payments.saving' }),

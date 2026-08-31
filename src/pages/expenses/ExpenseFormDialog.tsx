@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import { useCan } from '@/hooks/useCan';
+import { groupDigits } from '@/lib/money';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { useCreateExpense, useUpdateExpense } from '@/services/expenseService';
 import type {
@@ -46,8 +47,23 @@ const isBusinessDate = (value: string) => {
 };
 
 const canonicalAmount = (value: string) => {
-  const [whole, fraction = ''] = value.trim().split('.');
+  const [whole, fraction = ''] = value.replace(/\s/g, '').trim().split('.');
   return `${whole}.${fraction.padEnd(2, '0')}`;
+};
+
+const formatAmountInput = (value: string) => {
+  const sanitized = value.replace(/[^\d.]/g, '');
+  const dotIndex = sanitized.indexOf('.');
+  const hasFraction = dotIndex >= 0;
+  const integerPart = sanitized.slice(0, hasFraction ? dotIndex : undefined);
+  const fractionPart = hasFraction
+    ? sanitized
+        .slice(dotIndex + 1)
+        .replace(/\./g, '')
+        .slice(0, 2)
+    : '';
+  const groupedInteger = groupDigits(integerPart || (hasFraction ? '0' : ''));
+  return hasFraction ? `${groupedInteger}.${fractionPart}` : groupedInteger;
 };
 
 const MONEY_PATTERN = /^(?:0|[1-9]\d{0,9})\.\d{2}$/;
@@ -127,7 +143,7 @@ export const ExpenseFormDialog = ({
               ? 'other'
               : editExpense.category,
           title: editExpense.title,
-          amount: editExpense.amount,
+          amount: formatAmountInput(editExpense.amount),
           expenseDate: editExpense.expense_date,
           dueDate: editExpense.due_date ?? '',
           payee: editExpense.payee ?? '',
@@ -383,11 +399,20 @@ export const ExpenseFormDialog = ({
                       <FormControl>
                         <Input
                           {...field}
+                          type="text"
                           inputMode="decimal"
                           placeholder={t('expenses.form.amount_placeholder')}
                           className="bg-secondary border-border"
                           aria-required="true"
                           disabled={financialFieldsLocked}
+                          value={
+                            field.value ? formatAmountInput(field.value) : ''
+                          }
+                          onChange={(event) =>
+                            field.onChange(
+                              formatAmountInput(event.target.value),
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -504,6 +529,7 @@ export const ExpenseFormDialog = ({
         open={confirmOpen}
         onClose={cancelDiscard}
         onConfirm={confirmDiscard}
+        title={t('common.discard_changes_title')}
         confirmLabel={t('common.discard')}
         description={t('common.discard_changes_desc')}
       />
