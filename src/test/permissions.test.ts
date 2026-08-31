@@ -11,14 +11,20 @@ const ALL_CAPS = Object.keys(CAPABILITIES) as Capability[];
 describe('permissions matrix (bd autodrive-6ef.2)', () => {
   it('dev and owner have every capability (dev ⊇ owner)', () => {
     for (const cap of ALL_CAPS) {
-      expect(roleCan('dev', cap)).toBe(true);
       expect(roleCan('owner', cap)).toBe(true);
+      if (cap === 'viewExpenses' || cap === 'manageCompanyFinance') {
+        expect(roleCan('dev', cap)).toBe(false);
+      } else {
+        expect(roleCan('dev', cap)).toBe(true);
+      }
     }
   });
 
   it('manager can manage staff/students but not branches or audit', () => {
     expect(roleCan('manager', 'manageStaff')).toBe(true);
     expect(roleCan('manager', 'manageStudents')).toBe(true);
+    expect(roleCan('manager', 'viewExpenses')).toBe(true);
+    expect(roleCan('manager', 'manageCompanyFinance')).toBe(false);
     expect(roleCan('manager', 'manageBranches')).toBe(false);
     expect(roleCan('manager', 'assignBranch')).toBe(false);
     expect(roleCan('manager', 'viewAudit')).toBe(false);
@@ -42,6 +48,16 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
     expect(roleCan('accountant', 'accessOperations')).toBe(false);
     expect(roleCan('accountant', 'viewDashboard')).toBe(false);
     expect(roleCan('accountant', 'recordPayment')).toBe(false);
+  });
+
+  it('owner/accountant receive finance controls and managers receive read-only expense access', () => {
+    expect(roleCan('owner', 'viewExpenses')).toBe(true);
+    expect(roleCan('accountant', 'viewExpenses')).toBe(true);
+    expect(roleCan('manager', 'viewExpenses')).toBe(true);
+    expect(roleCan('owner', 'manageCompanyFinance')).toBe(true);
+    expect(roleCan('accountant', 'manageCompanyFinance')).toBe(true);
+    expect(roleCan('dev', 'viewExpenses')).toBe(false);
+    expect(roleCan('dev', 'manageCompanyFinance')).toBe(false);
   });
 
   // autodrive-vh0.4: manageOwnLesson deliberately excludes operator even

@@ -25,6 +25,8 @@ export type Capability =
   | 'manageOwnLesson'
   | 'viewAudit'
   | 'viewDashboard'
+  | 'viewExpenses'
+  | 'manageCompanyFinance'
   | 'viewDeleted';
 
 // Role groups — named so the matrix reads as intent, not a wall of literals.
@@ -66,6 +68,11 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   manageOwnLesson: ['dev', 'owner', 'manager', 'teacher'],
   viewAudit: OWNERS,
   viewDashboard: OPERATIONAL_ROLES,
+  // Finance is intentionally not part of the dev superset. Direct platform
+  // sessions are denied by the backend; an impersonated owner is evaluated
+  // with the effective owner role instead.
+  viewExpenses: ['owner', 'accountant', 'manager'],
+  manageCompanyFinance: ['owner', 'accountant'],
   // autodrive-cg9: "show deleted" toggle + restore action on the students/
   // groups/users/branches list pages. No existing capability means this --
   // manageBranches/manageUsers/manageStudents/manageGroups are each scoped

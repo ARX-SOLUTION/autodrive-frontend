@@ -60,6 +60,12 @@ export const paymentKeys = {
     ['payments', 'student', studentId, filters] as const,
 };
 
+export const expenseKeys = {
+  ...baseKeys('expenses'),
+  branchOptions: (companyId: string | undefined) =>
+    ['expenses', 'branch-options', companyId] as const,
+};
+
 export const attendanceKeys = {
   all: ['attendance'] as const,
   history: (studentId: string | undefined, filters: Filters = {}) =>
@@ -81,6 +87,8 @@ export const dashboardKeys = {
   teacherAnalytics: () => ['dashboard', 'teacher-analytics'] as const,
   company: (filters: Filters = {}) =>
     ['dashboard', 'company', filters] as const,
+  financeSummary: (filters: Filters = {}) =>
+    ['dashboard', 'finance-summary', filters] as const,
 };
 
 export const examKeys = {

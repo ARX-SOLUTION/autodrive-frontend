@@ -118,7 +118,7 @@ describe('DashboardRouter role routing (autodrive-vh0.6 regression)', () => {
     const { router } = await renderDashboardPage();
 
     await waitFor(() =>
-      expect(router.state.location.pathname).toBe('/profile'),
+      expect(router.state.location.pathname).toBe('/expenses'),
     );
     expect(screen.queryByTestId('teacher-dashboard-marker')).toBeNull();
     expect(screen.queryByTestId('company-revenue-dashboard-marker')).toBeNull();

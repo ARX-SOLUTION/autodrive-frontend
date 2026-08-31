@@ -3,6 +3,7 @@ import {
   Buildings,
   GraduationCap,
   CreditCard,
+  Wallet,
   Headphones,
   UsersThree,
   User,
@@ -25,6 +26,7 @@ export type AppRoutePath =
   | '/courses'
   | '/students'
   | '/payments'
+  | '/expenses'
   | '/branches'
   | '/operators'
   | '/teachers'
@@ -100,6 +102,13 @@ export const NAV_ITEMS: NavItem[] = [
     icon: CreditCard,
     section: 'learning',
     cap: 'recordPayment',
+  },
+  {
+    path: '/expenses',
+    labelKey: 'nav.expenses',
+    icon: Wallet,
+    section: 'workspace',
+    cap: 'viewExpenses',
   },
   {
     path: '/branches',

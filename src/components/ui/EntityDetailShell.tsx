@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { ArrowLeft } from '@phosphor-icons/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Button } from '@/components/ui/button';
 
 interface EntityDetailShellProps {
   onBack: () => void;
@@ -10,7 +11,10 @@ interface EntityDetailShellProps {
   isLoading: boolean;
   isError: boolean;
   errorTitle?: string;
+  errorDescription?: string;
   errorIcon?: PhosphorIcon;
+  onRetry?: () => void;
+  retryLabel?: string;
   header?: ReactNode;
   children?: ReactNode;
 }
@@ -27,7 +31,10 @@ export const EntityDetailShell = ({
   isLoading,
   isError,
   errorTitle,
+  errorDescription,
   errorIcon,
+  onRetry,
+  retryLabel,
   header,
   children,
 }: EntityDetailShellProps) => (
@@ -40,7 +47,18 @@ export const EntityDetailShell = ({
         <Skeleton className="h-64 w-full" />
       </>
     ) : isError ? (
-      <EmptyState icon={errorIcon} title={errorTitle ?? ''} />
+      <EmptyState
+        icon={errorIcon}
+        title={errorTitle ?? ''}
+        description={errorDescription}
+        action={
+          onRetry ? (
+            <Button variant="outline" onClick={onRetry}>
+              {retryLabel}
+            </Button>
+          ) : undefined
+        }
+      />
     ) : (
       <>
         {header}

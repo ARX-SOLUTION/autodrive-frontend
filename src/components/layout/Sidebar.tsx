@@ -261,6 +261,7 @@ export const Sidebar = ({
     manageUsers: useCan('manageUsers'),
     viewAudit: useCan('viewAudit'),
     recordPayment: useCan('recordPayment'),
+    viewExpenses: useCan('viewExpenses'),
   };
   const canSee = (item: NavItem) => !item.cap || gate[item.cap] === true;
   const visibleItems = NAV_ITEMS.filter(canSee);

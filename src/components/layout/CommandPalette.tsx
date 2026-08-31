@@ -36,6 +36,7 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
     manageUsers: useCan('manageUsers'),
     viewAudit: useCan('viewAudit'),
     recordPayment: useCan('recordPayment'),
+    viewExpenses: useCan('viewExpenses'),
   };
 
   const visibleNav = NAV_ITEMS.filter((n) => !n.cap || gate[n.cap]);
