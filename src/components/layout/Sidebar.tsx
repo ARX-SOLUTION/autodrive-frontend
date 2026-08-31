@@ -254,6 +254,8 @@ export const Sidebar = ({
   const pinnedPaths = pinnedState.paths;
 
   const gate: Partial<Record<Capability, boolean>> = {
+    accessOperations: useCan('accessOperations'),
+    viewDashboard: useCan('viewDashboard'),
     manageBranches: useCan('manageBranches'),
     manageStaff: useCan('manageStaff'),
     manageUsers: useCan('manageUsers'),

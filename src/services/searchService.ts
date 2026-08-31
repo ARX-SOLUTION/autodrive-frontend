@@ -1,5 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
+import { useCan } from '@/hooks/useCan';
 import { parseItemEnvelope } from '@/lib/apiEnvelope';
 import { searchKeys } from '@/lib/queryKeys';
 
@@ -28,12 +29,12 @@ export const fetchGlobalSearch = async (
   return parseItemEnvelope<SearchResponse>(data, 'search');
 };
 
-export const globalSearchQueryOptions = (query: string) => {
+export const globalSearchQueryOptions = (query: string, enabled = true) => {
   const trimmed = query.trim();
   return queryOptions({
     queryKey: searchKeys.query(trimmed),
     queryFn: ({ signal }) => fetchGlobalSearch(trimmed, signal),
-    enabled: trimmed.length >= MIN_QUERY_LENGTH,
+    enabled: enabled && trimmed.length >= MIN_QUERY_LENGTH,
   });
 };
 
@@ -42,5 +43,6 @@ export const globalSearchQueryOptions = (query: string) => {
 // { students, groups, staff }, each item { id, label, subtitle }. No
 // separate "payments" group — a payment match surfaces as its student.
 export const useGlobalSearch = (query: string) => {
-  return useQuery(globalSearchQueryOptions(query));
+  const canAccessOperations = useCan('accessOperations');
+  return useQuery(globalSearchQueryOptions(query, canAccessOperations));
 };

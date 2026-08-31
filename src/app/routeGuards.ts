@@ -1,5 +1,6 @@
 import { redirect } from '@tanstack/react-router';
 import { roleCan, type Capability } from '@/lib/permissions';
+import { getDefaultAuthenticatedRoute } from '@/lib/defaultAuthenticatedRoute';
 import { useAuthStore } from '@/store/authStore';
 
 type GuardLocation = {
@@ -42,6 +43,9 @@ export function requireCapability(
     auth.isAuthenticated &&
     !roleCan(auth.user?.role, capability)
   ) {
-    throw redirect({ to: '/dashboard', replace: true });
+    throw redirect({
+      to: getDefaultAuthenticatedRoute(auth.user?.role),
+      replace: true,
+    });
   }
 }

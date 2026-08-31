@@ -36,6 +36,7 @@ import {
   uzLocalDigits,
   uzPhoneE164,
 } from '@/lib/phoneFormater';
+import { getDefaultAuthenticatedRoute } from '@/lib/defaultAuthenticatedRoute';
 
 // Factory so the phone message can be localized via t() -- name has no
 // validation rules today (not required), matching the page's existing
@@ -168,8 +169,7 @@ const ProfilePage = () => {
     // Captured before the mutation: onSuccess replaces the user in the store
     // (must_change_password becomes false), so read the flag now.
     const wasForced = !!user?.must_change_password;
-    const forcedRedirect =
-      user?.role === 'accountant' ? '/profile' : '/dashboard';
+    const forcedRedirect = getDefaultAuthenticatedRoute(user?.role);
     const payload = {
       currentPassword: values.currentPassword.trim(),
       newPassword: values.newPassword.trim(),

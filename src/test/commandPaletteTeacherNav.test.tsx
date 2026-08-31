@@ -46,4 +46,12 @@ describe('CommandPalette teacher nav trim (autodrive-vh0.2)', () => {
     await renderPalette();
     expect(screen.getByText('nav.payments')).toBeTruthy();
   });
+
+  it('shows no operational command to an accountant in T1', async () => {
+    role = 'accountant';
+    await renderPalette();
+    expect(screen.getByText('nav.profile')).toBeTruthy();
+    expect(screen.queryByText('nav.dashboard')).toBeNull();
+    expect(screen.queryByText('nav.students')).toBeNull();
+  });
 });

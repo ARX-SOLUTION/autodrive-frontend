@@ -57,20 +57,29 @@ export const NAV_ITEMS: NavItem[] = [
     labelKey: 'nav.dashboard',
     icon: SquaresFour,
     section: 'workspace',
+    cap: 'viewDashboard',
   },
   {
     path: '/schedule',
     labelKey: 'nav.schedule',
     icon: Calendar,
     section: 'workspace',
+    cap: 'accessOperations',
   },
   {
     path: '/attendance',
     labelKey: 'nav.attendance',
     icon: ListChecks,
     section: 'workspace',
+    cap: 'accessOperations',
   },
-  { path: '/groups', labelKey: 'nav.groups', icon: Stack, section: 'learning' },
+  {
+    path: '/groups',
+    labelKey: 'nav.groups',
+    icon: Stack,
+    section: 'learning',
+    cap: 'accessOperations',
+  },
   {
     path: '/courses',
     labelKey: 'nav.courses',
@@ -83,6 +92,7 @@ export const NAV_ITEMS: NavItem[] = [
     labelKey: 'nav.students',
     icon: GraduationCap,
     section: 'learning',
+    cap: 'accessOperations',
   },
   {
     path: '/payments',

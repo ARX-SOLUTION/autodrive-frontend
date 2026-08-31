@@ -22,6 +22,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 import type { AuthResponse } from '@/types/user';
+import { getDefaultAuthenticatedRoute } from '@/lib/defaultAuthenticatedRoute';
 
 const makeLoginFormSchema = (t: (key: string) => string) =>
   z.object({
@@ -88,11 +89,9 @@ const LoginPage = () => {
         ? location.state.from
         : undefined;
     const target =
-      data.user.role === 'accountant'
-        ? '/profile'
-        : from && from !== '/login'
-          ? from
-          : '/dashboard';
+      data.user.role !== 'accountant' && from && from !== '/login'
+        ? from
+        : getDefaultAuthenticatedRoute(data.user.role);
     if (isRootDomain()) {
       // automaktab.uz has no app UI of its own -- hand off to app. with a
       // full navigation so the domain-wide auth cookie rides along.

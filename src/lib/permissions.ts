@@ -6,11 +6,12 @@ import type { UserRole } from '@/types/user';
  *
  * FE gating is COSMETIC — the backend `@Roles` guards are the real security
  * boundary, so every capability here should have a matching server-side guard.
- * `dev` is a strict SUPERSET of `owner` (the admin-panel's acting role is
- * always dev, so an owner-only gate would hide owner controls from dev).
- * Confirmed with the product owner — see bd autodrive-6ef.2.
+ * `dev` is a superset of `owner` for operational capabilities. Finance is an
+ * explicit exception: direct dev sessions never receive company-finance
+ * capabilities; an effective impersonated owner is checked as `owner`.
  */
 export type Capability =
+  | 'accessOperations'
   | 'viewAllBranches'
   | 'manageBranches'
   | 'assignBranch'
@@ -29,8 +30,8 @@ export type Capability =
 // Role groups — named so the matrix reads as intent, not a wall of literals.
 const OWNERS: readonly UserRole[] = ['dev', 'owner'];
 const OPS: readonly UserRole[] = ['dev', 'owner', 'manager', 'operator'];
-// Accountant remains outside operational capabilities until the .1.2
-// dashboard/operations follow-up explicitly grants them.
+// Accountant stays permanently outside operational capabilities. Finance
+// access is granted separately through staged finance-only capabilities.
 const OPERATIONAL_ROLES: readonly UserRole[] = [
   'dev',
   'owner',
@@ -40,6 +41,7 @@ const OPERATIONAL_ROLES: readonly UserRole[] = [
 ];
 
 export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
+  accessOperations: OPERATIONAL_ROLES,
   viewAllBranches: OWNERS,
   manageBranches: OWNERS,
   assignBranch: OWNERS,

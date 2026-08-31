@@ -1,4 +1,4 @@
-import { screen, cleanup } from '@testing-library/react';
+import { screen, cleanup, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import DashboardRouter from '@/pages/dashboard/DashboardRouter';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
@@ -111,6 +111,18 @@ describe('DashboardRouter role routing (autodrive-vh0.6 regression)', () => {
       await screen.findByTestId('company-revenue-dashboard-marker'),
     ).toBeInTheDocument();
     expect(screen.queryByTestId('teacher-dashboard-marker')).toBeNull();
+  });
+
+  it('redirects an accountant from a direct dashboard visit without mounting a dashboard', async () => {
+    user = { name: 'Accountant', role: 'accountant' };
+    const { router } = await renderDashboardPage();
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/profile'),
+    );
+    expect(screen.queryByTestId('teacher-dashboard-marker')).toBeNull();
+    expect(screen.queryByTestId('company-revenue-dashboard-marker')).toBeNull();
+    expect(screen.queryByTestId('legacy-dashboard-marker')).toBeNull();
   });
 });
 
