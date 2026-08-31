@@ -162,6 +162,27 @@ afterEach(() => {
 });
 
 describe('manager expense scope', () => {
+  it('uses the discard dialog copy when closing a dirty expense form', async () => {
+    await renderWithRouter(<ExpensesPage />, {
+      initialEntry: '/expenses',
+      routePattern: '/expenses',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'expenses.add' }));
+    fireEvent.change(await screen.findByLabelText(/expenses\.table\.title/), {
+      target: { value: 'Draft expense' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+
+    expect(
+      screen.getByText('common.discard_changes_title'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('common.discard_changes_desc')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'common.discard' }),
+    ).toBeInTheDocument();
+  });
+
   it('pins list scope to the JWT branch and omits branch_id from create payload', async () => {
     await renderWithRouter(<ExpensesPage />, {
       initialEntry: '/expenses?branch_id=other-branch&scope=company',

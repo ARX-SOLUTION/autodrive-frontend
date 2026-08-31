@@ -1,4 +1,5 @@
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Warning, MapPin, Phone, ShieldCheck } from '@phosphor-icons/react';
 import {
@@ -13,9 +14,12 @@ import {
 import { EmptyState } from '@/components/ui/EmptyState';
 import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { useBranch } from '@/services/branchService';
+import { useExpensesPage } from '@/services/expenseService';
 import { tashkentToday } from '@/lib/tashkentDate';
 import { formatMoney } from '@/lib/money';
 import { toLocalDateStr } from '@/services/studentService';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ExpensesTable } from './expenses/ExpensesTable';
 
 // Same gradient AreaChart used by DashboardPage's monthly revenue chart —
 // mirrored here (not extracted) since the two consume slightly different
@@ -33,6 +37,12 @@ const BranchDetailPage = () => {
   const { t } = useTranslation();
 
   const { data: branch, isLoading, isError } = useBranch(id);
+  const [expensePage, setExpensePage] = useState(1);
+  const expensesQuery = useExpensesPage({
+    branchId: id,
+    page: expensePage,
+    limit: 5,
+  });
   const today = toLocalDateStr(tashkentToday());
 
   if (isLoading || isError || !branch) {
@@ -77,45 +87,70 @@ const BranchDetailPage = () => {
         </div>
       }
     >
-      {/* Analytics */}
-      <dl className="glass-card grid grid-cols-1 gap-x-8 gap-y-3 p-5 text-sm sm:grid-cols-2">
-        <Field
-          label={t('branches.students')}
-          value={String(branch.active_students)}
-          link={{ type: 'students', branchId: branch.id }}
-        />
-        <Field
-          label={t('branches.detail.revenue')}
-          value={formatMoney(branch.revenue)}
-        />
-        <Field
-          label={t('branches.detail.debt')}
-          value={formatMoney(branch.debt)}
-        />
-        <Field
-          label={t('branches.detail.today_payment')}
-          value={formatMoney(branch.today_payment)}
-          link={{ type: 'payments', branchId: branch.id, date: today }}
-        />
-      </dl>
+      <Tabs defaultValue="info" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
+          <TabsTrigger value="expenses">
+            {t('branches.detail.expenses')}
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="glass-card p-5">
-          <h2 className="mb-3 text-sm font-semibold">
-            {t('branches.detail.revenue_trend')}
-          </h2>
-          <RevenueTrendChart data={branch.monthly_revenue} />
-        </div>
-        <div className="glass-card p-5">
-          <h2 className="mb-3 text-sm font-semibold">
-            {t('branches.detail.top_debtors')}
-          </h2>
-          <TopDebtorsList
-            debtors={branch.top_debtors}
-            viewAllBranchId={branch.id}
+        <TabsContent value="info" className="space-y-6">
+          <dl className="glass-card grid grid-cols-1 gap-x-8 gap-y-3 p-5 text-sm sm:grid-cols-2">
+            <Field
+              label={t('branches.students')}
+              value={String(branch.active_students)}
+              link={{ type: 'students', branchId: branch.id }}
+            />
+            <Field
+              label={t('branches.detail.revenue')}
+              value={formatMoney(branch.revenue)}
+            />
+            <Field
+              label={t('branches.detail.debt')}
+              value={formatMoney(branch.debt)}
+            />
+            <Field
+              label={t('branches.detail.today_payment')}
+              value={formatMoney(branch.today_payment)}
+              link={{ type: 'payments', branchId: branch.id, date: today }}
+            />
+          </dl>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="glass-card p-5">
+              <h2 className="mb-3 text-sm font-semibold">
+                {t('branches.detail.revenue_trend')}
+              </h2>
+              <RevenueTrendChart data={branch.monthly_revenue} />
+            </div>
+            <div className="glass-card p-5">
+              <h2 className="mb-3 text-sm font-semibold">
+                {t('branches.detail.top_debtors')}
+              </h2>
+              <TopDebtorsList
+                debtors={branch.top_debtors}
+                viewAllBranchId={branch.id}
+              />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="expenses">
+          <ExpensesTable
+            expenses={expensesQuery.data?.data ?? []}
+            isLoading={expensesQuery.isLoading}
+            isFetching={expensesQuery.isFetching}
+            isError={expensesQuery.isError}
+            onRetry={() => void expensesQuery.refetch()}
+            currentPage={expensePage}
+            pageSize={5}
+            totalExpenses={expensesQuery.data?.meta.total ?? 0}
+            totalPages={Math.max(1, expensesQuery.data?.meta.totalPages ?? 1)}
+            onPageChange={setExpensePage}
           />
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </EntityDetailShell>
   );
 };

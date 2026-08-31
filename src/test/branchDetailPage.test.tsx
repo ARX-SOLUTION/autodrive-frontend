@@ -35,11 +35,48 @@ const branch = vi.hoisted(() => ({
 }));
 branch.current = BRANCH;
 
+const branchExpenses = vi.hoisted(() => ({
+  current: {
+    data: [
+      {
+        id: 'e1',
+        branch_id: 'b1',
+        branch_name: 'Yunusobod filiali',
+        created_by_id: 'owner-1',
+        category: 'rent' as const,
+        title: 'Ofis ijarasi',
+        amount: '1250000.00',
+        expense_date: '2026-08-12',
+        due_date: null,
+        payee: null,
+        note: null,
+        paid_amount: '500000.00',
+        remaining_amount: '750000.00',
+        status: 'partially_paid' as const,
+        version: 1,
+        created_at: '2026-08-12T00:00:00.000Z',
+        updated_at: '2026-08-12T00:00:00.000Z',
+      },
+    ],
+    meta: { total: 1, totalPages: 1 },
+  },
+}));
+
 vi.mock('@/services/branchService', () => ({
   useBranch: () => ({
     data: branch.current,
     isLoading: false,
     isError: branch.isError,
+  }),
+}));
+
+vi.mock('@/services/expenseService', () => ({
+  useExpensesPage: () => ({
+    data: branchExpenses.current,
+    isLoading: false,
+    isFetching: false,
+    isError: false,
+    refetch: vi.fn(),
   }),
 }));
 
@@ -123,6 +160,20 @@ describe('BranchDetailPage drill-down navigation (autodrive-6ef.20)', () => {
   it('renders the 6-month revenue trend chart heading', async () => {
     await renderPage();
     expect(screen.getByText('branches.detail.revenue_trend')).toBeTruthy();
+  });
+
+  it('shows branch expenses in a dedicated tab and opens the expense detail', async () => {
+    const { router } = await renderPage();
+
+    fireEvent.mouseDown(
+      screen.getByRole('tab', { name: 'branches.detail.expenses' }),
+    );
+    expect(await screen.findByText('Ofis ijarasi')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Ofis ijarasi'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/expenses/e1'),
+    );
   });
 
   it('falls back to a no-data state when monthly_revenue/top_debtors are absent', async () => {
