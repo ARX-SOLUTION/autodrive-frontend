@@ -67,74 +67,100 @@ export const ExpensesFilterBar = ({
 
       <div className="flex flex-wrap items-center gap-3">
         {showBranchFilter ? (
-          <Select value={branchFilter} onValueChange={onBranchFilterChange}>
-            <SelectTrigger className="w-56 bg-secondary border-border">
-              <SelectValue placeholder={t('common.branch')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('common.all')}</SelectItem>
-              <SelectItem value="company">
-                {t('expenses.form.company_wide')}
-              </SelectItem>
-              {branches.map((branch) => (
-                <SelectItem key={branch.id} value={branch.id}>
-                  {branch.name}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              {t('common.branch')}
+            </span>
+            <Select value={branchFilter} onValueChange={onBranchFilterChange}>
+              <SelectTrigger
+                aria-label={t('common.branch')}
+                className="w-56 bg-secondary border-border"
+              >
+                <SelectValue placeholder={t('common.branch')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
+                <SelectItem value="company">
+                  {t('expenses.form.company_wide')}
                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                {branches.map((branch) => (
+                  <SelectItem key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         ) : (
           <span className="rounded-md border border-border bg-secondary px-3 py-2 text-sm text-muted-foreground">
             {t('expenses.table.branch')}: {fixedBranchLabel ?? t('common.na')}
           </span>
         )}
 
-        <Select value={categoryFilter} onValueChange={onCategoryFilterChange}>
-          <SelectTrigger className="w-48 bg-secondary border-border">
-            <SelectValue placeholder={t('expenses.table.category')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('common.all')}</SelectItem>
-            <SelectItem value="rent">{t('expenses.category.rent')}</SelectItem>
-            <SelectItem value="utilities">
-              {t('expenses.category.utilities')}
-            </SelectItem>
-            <SelectItem value="vehicle">
-              {t('expenses.category.vehicle')}
-            </SelectItem>
-            <SelectItem value="marketing">
-              {t('expenses.category.marketing')}
-            </SelectItem>
-            <SelectItem value="supplies">
-              {t('expenses.category.supplies')}
-            </SelectItem>
-            <SelectItem value="administrative">
-              {t('expenses.category.administrative')}
-            </SelectItem>
-            <SelectItem value="other">
-              {t('expenses.category.other')}
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            {t('expenses.table.category')}
+          </span>
+          <Select value={categoryFilter} onValueChange={onCategoryFilterChange}>
+            <SelectTrigger
+              aria-label={t('expenses.table.category')}
+              className="w-48 bg-secondary border-border"
+            >
+              <SelectValue placeholder={t('expenses.table.category')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              <SelectItem value="rent">
+                {t('expenses.category.rent')}
+              </SelectItem>
+              <SelectItem value="utilities">
+                {t('expenses.category.utilities')}
+              </SelectItem>
+              <SelectItem value="vehicle">
+                {t('expenses.category.vehicle')}
+              </SelectItem>
+              <SelectItem value="marketing">
+                {t('expenses.category.marketing')}
+              </SelectItem>
+              <SelectItem value="supplies">
+                {t('expenses.category.supplies')}
+              </SelectItem>
+              <SelectItem value="administrative">
+                {t('expenses.category.administrative')}
+              </SelectItem>
+              <SelectItem value="other">
+                {t('expenses.category.other')}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-        <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-          <SelectTrigger className="w-44 bg-secondary border-border">
-            <SelectValue placeholder={t('expenses.table.status')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('common.all')}</SelectItem>
-            <SelectItem value="planned">
-              {t('expenses.status.planned')}
-            </SelectItem>
-            <SelectItem value="partially_paid">
-              {t('expenses.status.partially_paid')}
-            </SelectItem>
-            <SelectItem value="paid">{t('expenses.status.paid')}</SelectItem>
-            <SelectItem value="cancelled">
-              {t('expenses.status.cancelled')}
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            {t('expenses.table.status')}
+          </span>
+          <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+            <SelectTrigger
+              aria-label={t('expenses.table.status')}
+              className="w-44 bg-secondary border-border"
+            >
+              <SelectValue placeholder={t('expenses.table.status')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              <SelectItem value="planned">
+                {t('expenses.status.planned')}
+              </SelectItem>
+              <SelectItem value="partially_paid">
+                {t('expenses.status.partially_paid')}
+              </SelectItem>
+              <SelectItem value="paid">{t('expenses.status.paid')}</SelectItem>
+              <SelectItem value="cancelled">
+                {t('expenses.status.cancelled')}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         <DateRangePicker
           from={dateFrom ? formatCalendarDate(dateFrom) : undefined}

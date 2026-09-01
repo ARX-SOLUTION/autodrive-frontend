@@ -30,7 +30,7 @@ const statuses: ExpenseStatus[] = [
   'cancelled',
 ];
 
-export const Route = createFileRoute('/_authenticated/expenses')({
+export const Route = createFileRoute('/_authenticated/expenses/')({
   validateSearch: (search: Record<string, unknown>): ExpensesSearch => ({
     branch_id:
       typeof search.branch_id === 'string' ? search.branch_id : undefined,
