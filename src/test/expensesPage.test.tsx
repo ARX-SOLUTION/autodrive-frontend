@@ -99,6 +99,15 @@ describe('ExpensesPage', () => {
       page: 2,
       limit: 20,
     });
+    expect(
+      screen.getByRole('combobox', { name: 'common.branch' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: 'expenses.table.category' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: 'expenses.table.status' }),
+    ).toBeInTheDocument();
     expect(screen.getByText('Ofis ijarasi')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Ofis ijarasi'));

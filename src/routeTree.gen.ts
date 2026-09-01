@@ -14,7 +14,6 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated';
 import { Route as LoginRouteImport } from './routes/login';
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated.attendance';
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard';
-import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated.expenses';
 import { Route as AuthenticatedOperatorsRouteImport } from './routes/_authenticated.operators';
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated.payments';
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile';
@@ -26,6 +25,7 @@ import { Route as AuthenticatedBranchesIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedBranchesIdRouteImport } from './routes/_authenticated.branches.$id';
 import { Route as AuthenticatedCoursesIndexRouteImport } from './routes/_authenticated.courses.index';
 import { Route as AuthenticatedCoursesIdRouteImport } from './routes/_authenticated.courses.$id';
+import { Route as AuthenticatedExpensesIndexRouteImport } from './routes/_authenticated.expenses.index';
 import { Route as AuthenticatedExpensesIdRouteImport } from './routes/_authenticated.expenses.$id';
 import { Route as AuthenticatedGroupsIndexRouteImport } from './routes/_authenticated.groups.index';
 import { Route as AuthenticatedGroupsIdRouteImport } from './routes/_authenticated.groups.$id';
@@ -56,11 +56,6 @@ const AuthenticatedAttendanceRoute = AuthenticatedAttendanceRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AuthenticatedRoute,
-} as any);
-const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
-  id: '/expenses',
-  path: '/expenses',
   getParentRoute: () => AuthenticatedRoute,
 } as any);
 const AuthenticatedOperatorsRoute = AuthenticatedOperatorsRouteImport.update({
@@ -120,10 +115,16 @@ const AuthenticatedCoursesIdRoute = AuthenticatedCoursesIdRouteImport.update({
   path: '/courses/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any);
+const AuthenticatedExpensesIndexRoute =
+  AuthenticatedExpensesIndexRouteImport.update({
+    id: '/expenses/',
+    path: '/expenses/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any);
 const AuthenticatedExpensesIdRoute = AuthenticatedExpensesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedExpensesRoute,
+  id: '/expenses/$id',
+  path: '/expenses/$id',
+  getParentRoute: () => AuthenticatedRoute,
 } as any);
 const AuthenticatedGroupsIndexRoute =
   AuthenticatedGroupsIndexRouteImport.update({
@@ -163,7 +164,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute;
   '/attendance': typeof AuthenticatedAttendanceRoute;
   '/dashboard': typeof AuthenticatedDashboardRoute;
-  '/expenses': typeof AuthenticatedExpensesRouteWithChildren;
   '/operators': typeof AuthenticatedOperatorsRoute;
   '/payments': typeof AuthenticatedPaymentsRoute;
   '/profile': typeof AuthenticatedProfileRoute;
@@ -179,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/audit/': typeof AuthenticatedAuditIndexRoute;
   '/branches/': typeof AuthenticatedBranchesIndexRoute;
   '/courses/': typeof AuthenticatedCoursesIndexRoute;
+  '/expenses/': typeof AuthenticatedExpensesIndexRoute;
   '/groups/': typeof AuthenticatedGroupsIndexRoute;
   '/students/': typeof AuthenticatedStudentsIndexRoute;
   '/users/': typeof AuthenticatedUsersIndexRoute;
@@ -188,7 +189,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute;
   '/attendance': typeof AuthenticatedAttendanceRoute;
   '/dashboard': typeof AuthenticatedDashboardRoute;
-  '/expenses': typeof AuthenticatedExpensesRouteWithChildren;
   '/operators': typeof AuthenticatedOperatorsRoute;
   '/payments': typeof AuthenticatedPaymentsRoute;
   '/profile': typeof AuthenticatedProfileRoute;
@@ -204,6 +204,7 @@ export interface FileRoutesByTo {
   '/audit': typeof AuthenticatedAuditIndexRoute;
   '/branches': typeof AuthenticatedBranchesIndexRoute;
   '/courses': typeof AuthenticatedCoursesIndexRoute;
+  '/expenses': typeof AuthenticatedExpensesIndexRoute;
   '/groups': typeof AuthenticatedGroupsIndexRoute;
   '/students': typeof AuthenticatedStudentsIndexRoute;
   '/users': typeof AuthenticatedUsersIndexRoute;
@@ -215,7 +216,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute;
   '/_authenticated/attendance': typeof AuthenticatedAttendanceRoute;
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute;
-  '/_authenticated/expenses': typeof AuthenticatedExpensesRouteWithChildren;
   '/_authenticated/operators': typeof AuthenticatedOperatorsRoute;
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute;
   '/_authenticated/profile': typeof AuthenticatedProfileRoute;
@@ -231,6 +231,7 @@ export interface FileRoutesById {
   '/_authenticated/audit/': typeof AuthenticatedAuditIndexRoute;
   '/_authenticated/branches/': typeof AuthenticatedBranchesIndexRoute;
   '/_authenticated/courses/': typeof AuthenticatedCoursesIndexRoute;
+  '/_authenticated/expenses/': typeof AuthenticatedExpensesIndexRoute;
   '/_authenticated/groups/': typeof AuthenticatedGroupsIndexRoute;
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute;
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute;
@@ -242,7 +243,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/attendance'
     | '/dashboard'
-    | '/expenses'
     | '/operators'
     | '/payments'
     | '/profile'
@@ -258,6 +258,7 @@ export interface FileRouteTypes {
     | '/audit/'
     | '/branches/'
     | '/courses/'
+    | '/expenses/'
     | '/groups/'
     | '/students/'
     | '/users/';
@@ -267,7 +268,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/attendance'
     | '/dashboard'
-    | '/expenses'
     | '/operators'
     | '/payments'
     | '/profile'
@@ -283,6 +283,7 @@ export interface FileRouteTypes {
     | '/audit'
     | '/branches'
     | '/courses'
+    | '/expenses'
     | '/groups'
     | '/students'
     | '/users';
@@ -293,7 +294,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/_authenticated/attendance'
     | '/_authenticated/dashboard'
-    | '/_authenticated/expenses'
     | '/_authenticated/operators'
     | '/_authenticated/payments'
     | '/_authenticated/profile'
@@ -309,6 +309,7 @@ export interface FileRouteTypes {
     | '/_authenticated/audit/'
     | '/_authenticated/branches/'
     | '/_authenticated/courses/'
+    | '/_authenticated/expenses/'
     | '/_authenticated/groups/'
     | '/_authenticated/students/'
     | '/_authenticated/users/';
@@ -355,13 +356,6 @@ declare module '@tanstack/react-router' {
       path: '/dashboard';
       fullPath: '/dashboard';
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport;
-      parentRoute: typeof AuthenticatedRoute;
-    };
-    '/_authenticated/expenses': {
-      id: '/_authenticated/expenses';
-      path: '/expenses';
-      fullPath: '/expenses';
-      preLoaderRoute: typeof AuthenticatedExpensesRouteImport;
       parentRoute: typeof AuthenticatedRoute;
     };
     '/_authenticated/operators': {
@@ -441,12 +435,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoursesIdRouteImport;
       parentRoute: typeof AuthenticatedRoute;
     };
+    '/_authenticated/expenses/': {
+      id: '/_authenticated/expenses/';
+      path: '/expenses';
+      fullPath: '/expenses/';
+      preLoaderRoute: typeof AuthenticatedExpensesIndexRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
     '/_authenticated/expenses/$id': {
       id: '/_authenticated/expenses/$id';
-      path: '/$id';
+      path: '/expenses/$id';
       fullPath: '/expenses/$id';
       preLoaderRoute: typeof AuthenticatedExpensesIdRouteImport;
-      parentRoute: typeof AuthenticatedExpensesRoute;
+      parentRoute: typeof AuthenticatedRoute;
     };
     '/_authenticated/groups/': {
       id: '/_authenticated/groups/';
@@ -493,23 +494,9 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedExpensesRouteChildren {
-  AuthenticatedExpensesIdRoute: typeof AuthenticatedExpensesIdRoute;
-}
-
-const AuthenticatedExpensesRouteChildren: AuthenticatedExpensesRouteChildren = {
-  AuthenticatedExpensesIdRoute: AuthenticatedExpensesIdRoute,
-};
-
-const AuthenticatedExpensesRouteWithChildren =
-  AuthenticatedExpensesRoute._addFileChildren(
-    AuthenticatedExpensesRouteChildren,
-  );
-
 interface AuthenticatedRouteChildren {
   AuthenticatedAttendanceRoute: typeof AuthenticatedAttendanceRoute;
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute;
-  AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRouteWithChildren;
   AuthenticatedOperatorsRoute: typeof AuthenticatedOperatorsRoute;
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute;
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute;
@@ -518,12 +505,14 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAuditIdRoute: typeof AuthenticatedAuditIdRoute;
   AuthenticatedBranchesIdRoute: typeof AuthenticatedBranchesIdRoute;
   AuthenticatedCoursesIdRoute: typeof AuthenticatedCoursesIdRoute;
+  AuthenticatedExpensesIdRoute: typeof AuthenticatedExpensesIdRoute;
   AuthenticatedGroupsIdRoute: typeof AuthenticatedGroupsIdRoute;
   AuthenticatedStudentsIdRoute: typeof AuthenticatedStudentsIdRoute;
   AuthenticatedUsersIdRoute: typeof AuthenticatedUsersIdRoute;
   AuthenticatedAuditIndexRoute: typeof AuthenticatedAuditIndexRoute;
   AuthenticatedBranchesIndexRoute: typeof AuthenticatedBranchesIndexRoute;
   AuthenticatedCoursesIndexRoute: typeof AuthenticatedCoursesIndexRoute;
+  AuthenticatedExpensesIndexRoute: typeof AuthenticatedExpensesIndexRoute;
   AuthenticatedGroupsIndexRoute: typeof AuthenticatedGroupsIndexRoute;
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute;
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute;
@@ -532,7 +521,6 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAttendanceRoute: AuthenticatedAttendanceRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedExpensesRoute: AuthenticatedExpensesRouteWithChildren,
   AuthenticatedOperatorsRoute: AuthenticatedOperatorsRoute,
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
@@ -541,12 +529,14 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAuditIdRoute: AuthenticatedAuditIdRoute,
   AuthenticatedBranchesIdRoute: AuthenticatedBranchesIdRoute,
   AuthenticatedCoursesIdRoute: AuthenticatedCoursesIdRoute,
+  AuthenticatedExpensesIdRoute: AuthenticatedExpensesIdRoute,
   AuthenticatedGroupsIdRoute: AuthenticatedGroupsIdRoute,
   AuthenticatedStudentsIdRoute: AuthenticatedStudentsIdRoute,
   AuthenticatedUsersIdRoute: AuthenticatedUsersIdRoute,
   AuthenticatedAuditIndexRoute: AuthenticatedAuditIndexRoute,
   AuthenticatedBranchesIndexRoute: AuthenticatedBranchesIndexRoute,
   AuthenticatedCoursesIndexRoute: AuthenticatedCoursesIndexRoute,
+  AuthenticatedExpensesIndexRoute: AuthenticatedExpensesIndexRoute,
   AuthenticatedGroupsIndexRoute: AuthenticatedGroupsIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
