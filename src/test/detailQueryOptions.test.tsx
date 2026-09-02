@@ -9,6 +9,7 @@ import {
 } from '@/services/studentService';
 import { groupDetailQueryOptions, useGroup } from '@/services/groupService';
 import { courseDetailQueryOptions, useCourse } from '@/services/courseService';
+import { branchDetailQueryOptions, useBranch } from '@/services/branchService';
 
 vi.mock('@/api/axiosInstance', () => ({
   default: { get: vi.fn() },
@@ -42,21 +43,25 @@ describe('detail query options', () => {
       queryClient.ensureQueryData(studentDetailQueryOptions('student-1')),
       queryClient.ensureQueryData(groupDetailQueryOptions('group-1')),
       queryClient.ensureQueryData(courseDetailQueryOptions('course-1')),
+      queryClient.ensureQueryData(branchDetailQueryOptions('branch-1')),
     ]);
 
     const student = renderHook(() => useStudent('student-1'), { wrapper });
     const group = renderHook(() => useGroup('group-1'), { wrapper });
     const course = renderHook(() => useCourse('course-1'), { wrapper });
+    const branch = renderHook(() => useBranch('branch-1'), { wrapper });
 
     await waitFor(() => {
       expect(student.result.current.isSuccess).toBe(true);
       expect(group.result.current.isSuccess).toBe(true);
       expect(course.result.current.isSuccess).toBe(true);
+      expect(branch.result.current.isSuccess).toBe(true);
     });
 
-    expect(axiosInstance.get).toHaveBeenCalledTimes(3);
+    expect(axiosInstance.get).toHaveBeenCalledTimes(4);
     expect(student.result.current.data?.id).toBe('student-1');
     expect(group.result.current.data?.id).toBe('group-1');
     expect(course.result.current.data?.id).toBe('course-1');
+    expect(branch.result.current.data?.id).toBe('branch-1');
   });
 });

@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { GraduationCap, Stack, UserGear } from '@phosphor-icons/react';
@@ -156,30 +156,5 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
   );
 };
 
-/** Owns open state + binds cmd+k / ctrl+k globally. */
-export const useCommandPalette = () => {
-  const [open, setOpen] = useState(false);
-  const canAccessOperations = useCan('accessOperations');
-
-  useEffect(() => {
-    if (!canAccessOperations) {
-      return;
-    }
-
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpen((o) => !o);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [canAccessOperations]);
-
-  return {
-    open: canAccessOperations && open,
-    setOpen: (next: boolean) => {
-      if (canAccessOperations) setOpen(next);
-    },
-  };
-};
+export { useCommandPalette } from './useCommandPalette';
+export default CommandPalette;
