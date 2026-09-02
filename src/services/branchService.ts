@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
 import { Branch } from '@/types/branch';
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
@@ -33,20 +38,25 @@ export const useBranches = (enabled = true, includeDeleted = false) =>
     },
   });
 
-export const useBranch = (id?: string) =>
-  useQuery<Branch>({
+export const fetchBranch = async (
+  id: string,
+  signal?: AbortSignal,
+): Promise<Branch> => {
+  const { data: res } = await axiosInstance.get<unknown>(`/branches/${id}`, {
+    signal,
+  });
+  return parseItemEnvelope<Branch>(res, 'branch');
+};
+
+export const branchDetailQueryOptions = (id?: string) =>
+  queryOptions({
     queryKey: branchKeys.detail(id),
     enabled: !!id,
-    queryFn: async ({ signal }) => {
-      const { data: res } = await axiosInstance.get<unknown>(
-        `/branches/${id}`,
-        {
-          signal,
-        },
-      );
-      return parseItemEnvelope<Branch>(res, 'branch');
-    },
+    queryFn: ({ signal }) => fetchBranch(id!, signal),
   });
+
+export const useBranch = (id?: string) =>
+  useQuery(branchDetailQueryOptions(id));
 
 export const useCreateBranch = () => {
   const qc = useQueryClient();

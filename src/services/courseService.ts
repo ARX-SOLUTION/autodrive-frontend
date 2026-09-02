@@ -47,6 +47,7 @@ export const coursesListQueryOptions = (
       courseType: params.courseType,
       search: params.search,
     }),
+    staleTime: 5 * 60_000,
     queryFn: ({ signal }) => fetchCourses(params, signal),
     enabled,
   });
