@@ -319,7 +319,7 @@ export const Sidebar = ({
     const navLink = (
       <Link
         to={item.path}
-        preload="intent"
+        preload={false}
         onClick={onNavigate}
         aria-label={label}
         aria-current={active ? 'page' : undefined}

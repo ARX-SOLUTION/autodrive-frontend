@@ -8,10 +8,6 @@ import { useCommandPalette } from './useCommandPalette';
 import { PageLoader } from './PageLoader';
 import { cn } from '@/lib/utils';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { useAuthStore } from '@/store/authStore';
-import { isCrossTenantRole } from '@/lib/permissions';
-import { queryClient } from '@/lib/queryClient';
-import { coursesListQueryOptions } from '@/services/courseService';
 
 const CommandPalette = lazy(() => import('./CommandPalette'));
 
@@ -38,32 +34,6 @@ export const AppLayout = () => {
   const prevPathnameRef = useRef(pathname);
   const mainRef = useRef<HTMLElement>(null);
   const palette = useCommandPalette();
-  const user = useAuthStore((s) => s.user);
-
-  // Prewarm frequently reused course reference data during browser idle time
-  // so modals (+ Yangi talaba, etc.) open with pre-populated course dropdowns.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const branchId = user?.branch_id;
-    const isCrossTenant = isCrossTenantRole(user?.role);
-    if (!branchId && !isCrossTenant) return;
-
-    const idleCallback =
-      window.requestIdleCallback ||
-      ((cb: () => void) => window.setTimeout(cb, 1000));
-    const cancelCallback =
-      window.cancelIdleCallback || ((id: number) => window.clearTimeout(id));
-
-    const idleId = idleCallback(() => {
-      void queryClient.prefetchQuery(
-        coursesListQueryOptions({ branchId: branchId || undefined }, true),
-      );
-    });
-
-    return () => {
-      cancelCallback(idleId);
-    };
-  }, [user?.branch_id, user?.role]);
 
   // Match the previous router: any committed navigation (including a same-page
   // query update) closes the mobile drawer without waiting for an effect.

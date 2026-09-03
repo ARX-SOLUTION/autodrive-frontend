@@ -17,10 +17,9 @@ describe('Performance Architecture Optimizations', () => {
     expect(defaultQueries?.refetchOnWindowFocus).toBe(false);
   });
 
-  it('configures rate-limited prefetching on the app router (100ms debounce, 30s preload staleTime)', () => {
+  it('disables router-level auto prefetching by default', () => {
     const router = createAppRouter();
-    expect(router.options.defaultPreload).toBe('intent');
-    expect(router.options.defaultPreloadDelay).toBe(100);
+    expect(router.options.defaultPreload).toBe(false);
     expect(router.options.defaultPreloadStaleTime).toBe(30_000);
   });
 
