@@ -60,7 +60,7 @@ export const Breadcrumbs = () => {
     >
       <Link
         to="/dashboard"
-        preload="intent"
+        preload={false}
         className="inline-flex items-center text-muted-foreground hover:text-foreground"
         aria-label={t('actions.home')}
       >
@@ -79,7 +79,7 @@ export const Breadcrumbs = () => {
             ) : c.href ? (
               <Link
                 to={c.href}
-                preload="intent"
+                preload={false}
                 className="text-muted-foreground hover:text-foreground"
               >
                 {c.label}
