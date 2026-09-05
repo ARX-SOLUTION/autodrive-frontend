@@ -73,7 +73,7 @@ export interface AddStudentPayload {
   passport_series: string;
   passport_number: string;
   birth_date: string;
-  gender: 'MALE' | 'FEMALE';
+  gender: 'male' | 'female';
   address: string;
 
   // Step 2: Course & Branch
@@ -86,9 +86,8 @@ export interface AddStudentPayload {
   completion_date?: string;
 
   // Step 3: Payment & Confirmation
-  payment_type: 'FULL' | 'PARTIAL' | 'INSTALLMENT';
   amount: number;
-  payment_method: 'CASH' | 'CARD' | 'TRANSFER';
+  payment_method: 'naqd' | 'karta' | 'perechisleniya';
   first_payment_date: string;
   contract_signed: boolean;
 
@@ -138,7 +137,7 @@ const buildSchemas = (t: (key: string) => string) => {
         (v) => !v || !!parseCalendarDate(v),
         t('students.wizard.birth_date_required'),
       ),
-    gender: z.enum(['MALE', 'FEMALE']),
+    gender: z.enum(['male', 'female']),
     address: z.string().min(5, t('students.wizard.address_too_short')),
   });
 
@@ -161,9 +160,8 @@ const buildSchemas = (t: (key: string) => string) => {
   });
 
   const step3 = z.object({
-    payment_type: z.enum(['FULL', 'PARTIAL', 'INSTALLMENT']),
     amount: z.number().min(1, t('students.wizard.amount_invalid')),
-    payment_method: z.enum(['CASH', 'CARD', 'TRANSFER']),
+    payment_method: z.enum(['naqd', 'karta', 'perechisleniya']),
     first_payment_date: z
       .string()
       .min(1, t('students.wizard.first_payment_date_required'))
@@ -282,7 +280,7 @@ interface WizardSummaryProps {
 // Same react-hooks/incompatible-library fix as Step2ReferralSection above,
 // for the step-3 summary card, and the same reason it's a separate
 // component: only mounts while step 3 is active, so last_name/first_name/
-// phone/group_id/payment_type/amount are watched HERE to keep their
+// phone/group_id/amount are watched HERE to keep their
 // original only-subscribed-on-step-3 lifetime. course_id/branch_id are
 // passed in as props instead of watched again -- AddStudentDialog already
 // watches both unconditionally below (filteredCourses/filteredGroups need
@@ -301,7 +299,6 @@ const WizardSummary = ({
   const firstName = useWatch({ control, name: 'first_name' });
   const phone = useWatch({ control, name: 'phone' });
   const groupId = useWatch({ control, name: 'group_id' });
-  const paymentType = useWatch({ control, name: 'payment_type' });
   const amount = useWatch({ control, name: 'amount' });
 
   return (
@@ -332,16 +329,6 @@ const WizardSummary = ({
         <dd className="font-medium">
           {filteredGroups.find((g) => g.id === groupId)?.name ||
             t('students.wizard.group_later')}
-        </dd>
-        <dt className="text-muted-foreground">
-          {t('students.wizard.payment_type')}:
-        </dt>
-        <dd className="font-medium">
-          {paymentType === 'FULL' && t('students.wizard.payment_type_full')}
-          {paymentType === 'PARTIAL' &&
-            t('students.wizard.payment_type_partial')}
-          {paymentType === 'INSTALLMENT' &&
-            t('students.wizard.payment_type_installment')}
         </dd>
         <dt className="text-muted-foreground">
           {t('students.wizard.amount')}:
@@ -392,7 +379,7 @@ const AddStudentDialog = ({
       passport_series: '',
       passport_number: '',
       birth_date: '',
-      gender: 'MALE',
+      gender: 'male',
       address: '',
       branch_id: canAssignBranch
         ? defaultBranchId || ''
@@ -401,9 +388,8 @@ const AddStudentDialog = ({
       group_id: '',
       start_date: todayCalendarDate(),
       completion_date: '',
-      payment_type: 'FULL',
       amount: 0,
-      payment_method: 'CASH',
+      payment_method: 'naqd',
       first_payment_date: todayCalendarDate(),
       contract_signed: false,
       lead_source: undefined,
@@ -922,10 +908,10 @@ const AddStudentDialog = ({
                                   />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="MALE">
+                                  <SelectItem value="male">
                                     {t('students.wizard.gender_male')}
                                   </SelectItem>
-                                  <SelectItem value="FEMALE">
+                                  <SelectItem value="female">
                                     {t('students.wizard.gender_female')}
                                   </SelectItem>
                                 </SelectContent>
@@ -1160,46 +1146,6 @@ const AddStudentDialog = ({
                     <div className="grid gap-4 sm:grid-cols-2">
                       <FormField
                         control={form.control}
-                        name="payment_type"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              {t('students.wizard.payment_type')} *
-                            </FormLabel>
-                            <FormControl>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue
-                                    placeholder={t(
-                                      'students.wizard.select_placeholder',
-                                    )}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="FULL">
-                                    {t('students.wizard.payment_type_full')}
-                                  </SelectItem>
-                                  <SelectItem value="PARTIAL">
-                                    {t('students.wizard.payment_type_partial')}
-                                  </SelectItem>
-                                  <SelectItem value="INSTALLMENT">
-                                    {t(
-                                      'students.wizard.payment_type_installment',
-                                    )}
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
                         name="payment_method"
                         render={({ field }) => (
                           <FormItem>
@@ -1219,13 +1165,13 @@ const AddStudentDialog = ({
                                   />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="CASH">
+                                  <SelectItem value="naqd">
                                     {t('students.payment_cash')}
                                   </SelectItem>
-                                  <SelectItem value="CARD">
+                                  <SelectItem value="karta">
                                     {t('students.payment_card')}
                                   </SelectItem>
-                                  <SelectItem value="TRANSFER">
+                                  <SelectItem value="perechisleniya">
                                     {t('payments.method.perechisleniya')}
                                   </SelectItem>
                                 </SelectContent>

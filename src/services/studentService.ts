@@ -291,12 +291,6 @@ export const useCreateStudentWithPayment = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: AddStudentPayload) => {
-      const paymentMethod = {
-        CASH: 'naqd',
-        CARD: 'karta',
-        TRANSFER: 'perechisleniya',
-      }[payload.payment_method] as CreateStudentPayload['payment_method'];
-
       // Student creation records the initial payment atomically in backend.
       // Referral fields are optional — undefined keys are dropped by JSON.
       const request: CreateStudentRequest = {
@@ -307,7 +301,7 @@ export const useCreateStudentWithPayment = () => {
         course_id: payload.course_id,
         total_price: payload.course_price,
         initial_payment: payload.amount,
-        payment_method: paymentMethod,
+        payment_method: payload.payment_method,
         branch_id: payload.branch_id,
         group_id: payload.group_id,
         completion_date: payload.completion_date,
@@ -317,7 +311,7 @@ export const useCreateStudentWithPayment = () => {
         notes: '',
         status: 'active',
         birth_date: payload.birth_date,
-        gender: payload.gender === 'MALE' ? 'male' : 'female',
+        gender: payload.gender,
         address: payload.address,
         passport_series: payload.passport_series,
         passport_number: payload.passport_number,

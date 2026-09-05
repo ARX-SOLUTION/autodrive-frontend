@@ -24,16 +24,15 @@ const buildPayload = (): AddStudentPayload => ({
   passport_series: 'AA',
   passport_number: '1234567',
   birth_date: '2000-01-15',
-  gender: 'FEMALE',
+  gender: 'female',
   address: 'Tashkent, Chilonzor',
   branch_id: 'b1',
   course_id: 'c1',
   course_type: 'tezkor',
   course_price: 1000000,
   start_date: '2026-07-16',
-  payment_type: 'FULL',
   amount: 500000,
-  payment_method: 'CASH',
+  payment_method: 'naqd',
   first_payment_date: '2026-07-16',
   contract_signed: true,
 });
@@ -66,9 +65,9 @@ describe('useCreateStudentWithPayment payload', () => {
       passport_number: '1234567',
       birth_date: '2000-01-15',
       address: 'Tashkent, Chilonzor',
-      // Backend Gender enum is lowercase ('male' | 'female'); form uses
-      // uppercase UI values ('MALE' | 'FEMALE').
       gender: 'female',
+      payment_method: 'naqd',
     });
+    expect(body).not.toHaveProperty('payment_type');
   });
 });

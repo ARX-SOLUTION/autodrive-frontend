@@ -65,8 +65,6 @@ export interface Student {
 
   // New fields from detailed registration
   start_date?: string;
-  payment_type?: 'FULL' | 'PARTIAL' | 'INSTALLMENT';
-
   // Referral / acquisition (detailed registration) — optional.
   lead_source?: LeadSource;
   lead_source_other?: string;
