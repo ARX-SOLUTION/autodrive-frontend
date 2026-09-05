@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import type { AxiosError } from 'axios';
@@ -52,15 +52,13 @@ export const useRestoreSession = () => {
   const logout = useAuthStore((s) => s.logout);
   const queryClient = useQueryClient();
   const storedUser = useAuthStore((s) => s.user);
-  const [restoreFailed, setRestoreFailed] = useState(false);
-
   const query = useQuery<User>({
     queryKey: authKeys.me(),
     queryFn: async ({ signal }) => {
       const { data } = await axiosInstance.get<unknown>('/auth/me', { signal });
       return parseItemEnvelope<User>(data, 'auth-me');
     },
-    initialData: storedUser ?? undefined,
+    placeholderData: storedUser ?? undefined,
     staleTime: 0,
     enabled: isAuthenticated,
     retry: false,
@@ -71,18 +69,16 @@ export const useRestoreSession = () => {
 
   useEffect(() => {
     if (sessionRestoreError) {
-      setRestoreFailed(true);
       logout();
-      resetAuthSessionState(queryClient);
+      resetAuthSessionState(queryClient, { keepAuthMe: true });
       return;
     }
     if (query.data) {
-      setRestoreFailed(false);
       setUser(query.data);
     }
   }, [query.data, sessionRestoreError, setUser, logout, queryClient]);
 
-  return { ...query, restoreFailed };
+  return { ...query, restoreFailed: sessionRestoreError };
 };
 
 export const useChangePassword = () => {
