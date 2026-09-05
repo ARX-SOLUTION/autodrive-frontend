@@ -6,6 +6,8 @@ import { telegramKeys } from '@/lib/queryKeys';
 export interface TelegramLinkStatus {
   linked: boolean;
   daily_report_enabled: boolean;
+  expense_digest_enabled: boolean;
+  expense_digest_snoozed_until: string | null;
 }
 
 export const useTelegramLinkStatus = () =>
@@ -46,6 +48,28 @@ export const useTelegramDailyReport = () => {
   return useMutation({
     mutationFn: async (enabled: boolean) => {
       await axiosInstance.patch('/telegram/daily-report', { enabled });
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: telegramKeys.linkStatus() }),
+  });
+};
+
+export const useTelegramExpenseDigest = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (enabled: boolean) => {
+      await axiosInstance.patch('/telegram/expense-digest', { enabled });
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: telegramKeys.linkStatus() }),
+  });
+};
+
+export const useTelegramExpenseDigestSnooze = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      await axiosInstance.post('/telegram/expense-digest/snooze');
     },
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: telegramKeys.linkStatus() }),
