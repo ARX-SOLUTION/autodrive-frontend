@@ -107,10 +107,16 @@ export type CreateExpenseRequest = {
 export type ExpensesQuery = {
   branch_id?: string;
   scope?: 'company';
-  category?: CreateExpenseRequest['category'];
+  category?: CreateExpenseRequest['category'] | 'teacher_settlement';
   status?: 'planned' | 'partially_paid' | 'paid' | 'cancelled';
+  attention?: 'overdue';
   date_from?: string;
   date_to?: string;
   page?: number;
   limit?: number;
+};
+
+export type ExpenseTriageCountsQuery = {
+  branch_id?: string;
+  scope?: 'company';
 };

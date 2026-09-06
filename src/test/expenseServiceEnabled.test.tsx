@@ -1,8 +1,9 @@
 import type { PropsWithChildren } from 'react';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import axiosInstance from '@/api/axiosInstance';
+import * as expenseService from '@/services/expenseService';
 import {
   expenseDetailQueryOptions,
   expensesPageQueryOptions,
@@ -11,7 +12,9 @@ import {
   useExpenseBranchOptions,
   useExpense,
   useExpenseHistory,
+  useExpensesPage,
   useUpdateExpense,
+  toExpenseQueryParams,
 } from '@/services/expenseService';
 import { dashboardKeys, expenseKeys } from '@/lib/queryKeys';
 import { useAuthStore } from '@/store/authStore';
@@ -227,5 +230,230 @@ describe('useExpense capability gating', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: dashboardKeys.financeSummary(),
     });
+  });
+});
+
+type TriageCounts = {
+  pending_total: number;
+  due_today: number;
+  due_within_three_days: number;
+  overdue_1_7: number;
+  overdue_8_30: number;
+  overdue_31_plus: number;
+  created_yesterday: number;
+};
+
+type TriageServiceContract = {
+  fetchExpenseTriageCounts?: (
+    filters: { branchId?: string; scope?: 'company' },
+    signal?: AbortSignal,
+  ) => Promise<TriageCounts>;
+  expenseTriageCountsQueryOptions?: (
+    filters: { branchId?: string; scope?: 'company' },
+    enabled?: boolean,
+    businessDay?: string,
+  ) => { queryKey: readonly unknown[]; enabled?: boolean };
+  useExpenseTriageCounts?: (
+    filters: { branchId?: string; scope?: 'company' },
+    enabled?: boolean,
+    businessDay?: string,
+  ) => { fetchStatus: string };
+};
+
+const triageService = expenseService as typeof expenseService &
+  TriageServiceContract;
+
+describe('expense triage API', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useAuthStore.getState().setAuth('token', {
+      id: 'owner-1',
+      email: 'owner@example.com',
+      role: 'owner',
+      company_id: 'company-1',
+    });
+  });
+
+  it('serializes overdue attention without a conflicting status', () => {
+    expect(
+      toExpenseQueryParams({
+        attention: 'overdue',
+        status: 'planned',
+        branchId: 'branch-1',
+      } as Parameters<typeof toExpenseQueryParams>[0] & {
+        attention: 'overdue';
+      }),
+    ).toMatchObject({
+      attention: 'overdue',
+      branch_id: 'branch-1',
+      status: undefined,
+    });
+  });
+
+  it('requests triage counts with scope params and parses the item envelope', async () => {
+    expect(triageService.fetchExpenseTriageCounts).toBeTypeOf('function');
+    if (!triageService.fetchExpenseTriageCounts) return;
+
+    const counts: TriageCounts = {
+      pending_total: 12,
+      due_today: 2,
+      due_within_three_days: 3,
+      overdue_1_7: 4,
+      overdue_8_30: 5,
+      overdue_31_plus: 6,
+      created_yesterday: 7,
+    };
+    vi.mocked(axiosInstance.get).mockResolvedValue({
+      data: { success: true, data: counts },
+    });
+    const controller = new AbortController();
+
+    await expect(
+      triageService.fetchExpenseTriageCounts(
+        { scope: 'company' },
+        controller.signal,
+      ),
+    ).resolves.toEqual(counts);
+    expect(axiosInstance.get).toHaveBeenCalledWith('/expenses/triage-counts', {
+      params: { branch_id: undefined, scope: 'company' },
+      signal: controller.signal,
+    });
+  });
+
+  it('keeps triage keys distinct across tenant, selected scope, and JWT branch', () => {
+    expect(triageService.expenseTriageCountsQueryOptions).toBeTypeOf(
+      'function',
+    );
+    if (!triageService.expenseTriageCountsQueryOptions) return;
+
+    const companyScope = triageService.expenseTriageCountsQueryOptions({
+      scope: 'company',
+    }).queryKey;
+    const selectedBranch = triageService.expenseTriageCountsQueryOptions({
+      branchId: 'branch-2',
+    }).queryKey;
+
+    useAuthStore.getState().setAuth('token', {
+      id: 'manager-1',
+      email: 'manager@example.com',
+      role: 'manager',
+      company_id: 'company-2',
+      branch_id: 'branch-3',
+    });
+    const managerBranch = triageService.expenseTriageCountsQueryOptions({
+      branchId: 'branch-3',
+    }).queryKey;
+
+    expect(companyScope).not.toEqual(selectedBranch);
+    expect(selectedBranch).not.toEqual(managerBranch);
+    expect(companyScope.at(-1)).toMatchObject({
+      companyId: 'company-1',
+      branchId: undefined,
+      jwtBranchId: undefined,
+      scope: 'company',
+    });
+    expect(managerBranch.at(-1)).toMatchObject({
+      companyId: 'company-2',
+      branchId: 'branch-3',
+      jwtBranchId: 'branch-3',
+      scope: undefined,
+    });
+  });
+
+  it('keys triage counts by business day without adding it to request params', async () => {
+    expect(triageService.expenseTriageCountsQueryOptions).toBeTypeOf(
+      'function',
+    );
+    if (!triageService.expenseTriageCountsQueryOptions) return;
+
+    const firstDay = triageService.expenseTriageCountsQueryOptions(
+      { branchId: 'branch-1' },
+      true,
+      '2026-09-01',
+    ).queryKey;
+    const secondDay = triageService.expenseTriageCountsQueryOptions(
+      { branchId: 'branch-1' },
+      true,
+      '2026-09-02',
+    ).queryKey;
+
+    expect(firstDay).not.toEqual(secondDay);
+    expect(firstDay.at(-1)).toMatchObject({ businessDay: '2026-09-01' });
+    expect(secondDay.at(-1)).toMatchObject({ businessDay: '2026-09-02' });
+
+    vi.mocked(axiosInstance.get).mockResolvedValue({
+      data: {
+        data: {
+          pending_total: 0,
+          due_today: 0,
+          due_within_three_days: 0,
+          overdue_1_7: 0,
+          overdue_8_30: 0,
+          overdue_31_plus: 0,
+          created_yesterday: 0,
+        },
+      },
+    });
+    await triageService.fetchExpenseTriageCounts?.({ branchId: 'branch-1' });
+    expect(axiosInstance.get).toHaveBeenCalledWith('/expenses/triage-counts', {
+      params: { branch_id: 'branch-1', scope: undefined },
+      signal: undefined,
+    });
+  });
+
+  it('gates triage counts by capability, explicit enabled state, and manager JWT branch', () => {
+    expect(triageService.useExpenseTriageCounts).toBeTypeOf('function');
+    if (!triageService.useExpenseTriageCounts) return;
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    useAuthStore.getState().setAuth('token', {
+      id: 'dev-1',
+      email: 'dev@example.com',
+      role: 'dev',
+      company_id: 'company-1',
+    });
+    const devQuery = renderHook(
+      () => triageService.useExpenseTriageCounts!({}, true),
+      { wrapper: makeWrapper(queryClient) },
+    );
+    expect(devQuery.result.current.fetchStatus).toBe('idle');
+    devQuery.unmount();
+
+    act(() =>
+      useAuthStore.getState().setAuth('token', {
+        id: 'owner-1',
+        email: 'owner@example.com',
+        role: 'owner',
+        company_id: 'company-1',
+      }),
+    );
+    const disabledOwnerQuery = renderHook(
+      () => triageService.useExpenseTriageCounts!({}, false),
+      { wrapper: makeWrapper(queryClient) },
+    );
+    expect(disabledOwnerQuery.result.current.fetchStatus).toBe('idle');
+    disabledOwnerQuery.unmount();
+
+    act(() =>
+      useAuthStore.getState().setAuth('token', {
+        id: 'manager-1',
+        email: 'manager@example.com',
+        role: 'manager',
+        company_id: 'company-1',
+        branch_id: null,
+      }),
+    );
+    const unscopedManagerQuery = renderHook(
+      () => triageService.useExpenseTriageCounts!({}, true),
+      { wrapper: makeWrapper(queryClient) },
+    );
+    const unscopedManagerList = renderHook(() => useExpensesPage({}), {
+      wrapper: makeWrapper(queryClient),
+    });
+    expect(unscopedManagerQuery.result.current.fetchStatus).toBe('idle');
+    expect(unscopedManagerList.result.current.fetchStatus).toBe('idle');
+    expect(axiosInstance.get).not.toHaveBeenCalled();
   });
 });

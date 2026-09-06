@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/authStore';
 import { parseItemEnvelope, parseListEnvelope } from '@/lib/apiEnvelope';
 import { dashboardKeys, expenseKeys } from '@/lib/queryKeys';
 import { track } from '@/lib/umami';
+import { tashkentTodayCalendarDate } from '@/lib/tashkentDate';
 import type {
   CreateExpensePayload,
   CreateExpensePaymentPayload,
@@ -21,20 +22,36 @@ import type {
   ExpenseCategory,
   ExpenseListFilters,
   ExpenseStatus,
+  ExpenseTriageCounts,
+  ExpenseTriageCountsFilters,
   CancelExpensePayload,
   DeleteExpensePayload,
 } from '@/types/expense';
 import type { ListResponse } from '@/types/list';
+import type {
+  ExpensesQuery,
+  ExpenseTriageCountsQuery,
+} from '@/shared/api/contract';
 
-export const toExpenseQueryParams = (filters: ExpenseListFilters) => ({
+export const toExpenseQueryParams = (
+  filters: ExpenseListFilters,
+): ExpensesQuery => ({
   branch_id: filters.branchId,
   scope: filters.scope,
   category: filters.category,
-  status: filters.status,
+  status: filters.attention ? undefined : filters.status,
+  attention: filters.attention,
   date_from: filters.dateFrom,
   date_to: filters.dateTo,
   page: filters.page,
   limit: filters.limit,
+});
+
+const toExpenseTriageCountsQueryParams = (
+  filters: ExpenseTriageCountsFilters,
+): ExpenseTriageCountsQuery => ({
+  branch_id: filters.branchId,
+  scope: filters.scope,
 });
 
 const expenseIdentity = (branchId?: string) => ({
@@ -84,7 +101,54 @@ export const expensesPageQueryOptions = (
 
 export const useExpensesPage = (filters: ExpenseListFilters = {}) => {
   const canViewExpenses = useCan('viewExpenses');
-  return useQuery(expensesPageQueryOptions(filters, canViewExpenses));
+  const user = useAuthStore((state) => state.user);
+  const hasManagerScope = user?.role !== 'manager' || !!user.branch_id;
+  return useQuery(
+    expensesPageQueryOptions(filters, canViewExpenses && hasManagerScope),
+  );
+};
+
+export const fetchExpenseTriageCounts = async (
+  filters: ExpenseTriageCountsFilters,
+  signal?: AbortSignal,
+): Promise<ExpenseTriageCounts> => {
+  const { data } = await axiosInstance.get<unknown>('/expenses/triage-counts', {
+    params: toExpenseTriageCountsQueryParams(filters),
+    signal,
+  });
+  return parseItemEnvelope<ExpenseTriageCounts>(data, 'expense-triage-counts');
+};
+
+export const expenseTriageCountsQueryOptions = (
+  filters: ExpenseTriageCountsFilters,
+  enabled = true,
+  businessDay = tashkentTodayCalendarDate(),
+) =>
+  queryOptions({
+    queryKey: expenseKeys.triageCounts({
+      ...expenseIdentity(filters.branchId),
+      scope: filters.scope,
+      businessDay,
+    }),
+    enabled,
+    queryFn: ({ signal }) => fetchExpenseTriageCounts(filters, signal),
+  });
+
+export const useExpenseTriageCounts = (
+  filters: ExpenseTriageCountsFilters = {},
+  enabled = true,
+  businessDay = tashkentTodayCalendarDate(),
+) => {
+  const canViewExpenses = useCan('viewExpenses');
+  const user = useAuthStore((state) => state.user);
+  const hasManagerScope = user?.role !== 'manager' || !!user.branch_id;
+  return useQuery(
+    expenseTriageCountsQueryOptions(
+      filters,
+      enabled && canViewExpenses && hasManagerScope,
+      businessDay,
+    ),
+  );
 };
 
 export const expenseDetailQueryOptions = (id?: string, enabled = !!id) =>

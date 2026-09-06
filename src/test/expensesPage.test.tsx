@@ -7,11 +7,13 @@ import { renderWithRouter } from '@/test/utils/renderWithRouter';
 const {
   createExpenseMock,
   useExpensesPageMock,
+  useExpenseTriageCountsMock,
   useExpenseBranchOptionsMock,
   useUpdateExpenseMock,
 } = vi.hoisted(() => ({
   createExpenseMock: vi.fn(),
   useExpensesPageMock: vi.fn(),
+  useExpenseTriageCountsMock: vi.fn(),
   useExpenseBranchOptionsMock: vi.fn(),
   useUpdateExpenseMock: vi.fn(),
 }));
@@ -22,6 +24,7 @@ vi.mock('@/services/expenseService', async (importOriginal) => {
   return {
     ...actual,
     useExpensesPage: useExpensesPageMock,
+    useExpenseTriageCounts: useExpenseTriageCountsMock,
     useExpenseBranchOptions: useExpenseBranchOptionsMock,
     useCreateExpense: () => ({ mutate: createExpenseMock, isPending: false }),
     useUpdateExpense: () => ({
@@ -66,6 +69,12 @@ beforeEach(() => {
   useExpenseBranchOptionsMock.mockReset().mockReturnValue({
     data: [{ id: 'b1', name: 'Chilonzor' }],
     isLoading: false,
+  });
+  useExpenseTriageCountsMock.mockReset().mockReturnValue({
+    data: undefined,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
   });
   useExpensesPageMock.mockReset().mockReturnValue({
     data: { data: EXPENSES, meta: { total: 1, totalPages: 1 } },

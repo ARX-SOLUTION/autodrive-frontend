@@ -31,6 +31,7 @@ export interface Expense {
   created_at: string;
   updated_at: string;
   has_payment_history?: boolean;
+  overdue_days?: number;
 }
 
 export type ExpensePaymentMethod = 'naqd' | 'karta' | 'perechisleniya';
@@ -74,10 +75,26 @@ export interface ExpenseListFilters {
   scope?: 'company';
   category?: ExpenseCategory;
   status?: ExpenseStatus;
+  attention?: 'overdue';
   dateFrom?: string;
   dateTo?: string;
   page?: number;
   limit?: number;
+}
+
+export interface ExpenseTriageCounts {
+  pending_total: number;
+  due_today: number;
+  due_within_three_days: number;
+  overdue_1_7: number;
+  overdue_8_30: number;
+  overdue_31_plus: number;
+  created_yesterday: number;
+}
+
+export interface ExpenseTriageCountsFilters {
+  branchId?: string;
+  scope?: 'company';
 }
 
 export interface CreateExpensePayload {

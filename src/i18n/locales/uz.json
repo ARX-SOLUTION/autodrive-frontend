@@ -789,6 +789,21 @@
     "cancelled": "Xarajat muvaffaqiyatli bekor qilindi",
     "deleted": "Xarajat muvaffaqiyatli o'chirildi",
     "currency": "so'm",
+    "daily_brief": {
+      "title": "Xarajatlar bo‘yicha kunlik qisqa hisobot",
+      "description": "Bugun tez ko‘rib chiqish kerak bo‘lgan to‘lov majburiyatlari.",
+      "dismiss": "Bugungi kunlik qisqa hisobotni yashirish",
+      "loading": "Kunlik xarajatlar hisoboti yuklanmoqda",
+      "due": "Yaqinda to‘lanadi",
+      "overdue": "Muddati o‘tgan",
+      "overdue_filter": "Faqat muddati o‘tgan",
+      "newly_created": "Kecha yaratilgan",
+      "pending": "Kutilayotgan",
+      "no_attention": "Bugun e’tibor talab qiladigan xarajat majburiyatlari yo‘q.",
+      "view_overdue": "Muddati o‘tganlarni ko‘rish",
+      "view_all": "Barcha xarajatlar",
+      "load_error": "Kunlik xarajatlar hisobotini yuklab bo‘lmadi"
+    },
     "table": {
       "date": "Sana",
       "title": "Nomi",

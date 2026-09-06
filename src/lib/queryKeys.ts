@@ -64,6 +64,8 @@ export const expenseKeys = {
   ...baseKeys('expenses'),
   branchOptions: (companyId: string | undefined) =>
     ['expenses', 'branch-options', companyId] as const,
+  triageCounts: (filters: Filters = {}) =>
+    ['expenses', 'triage-counts', filters] as const,
 };
 
 export const attendanceKeys = {
