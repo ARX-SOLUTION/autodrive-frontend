@@ -53,6 +53,8 @@ const branchExpenses = vi.hoisted(() => ({
         paid_amount: '500000.00',
         remaining_amount: '750000.00',
         status: 'partially_paid' as const,
+        reviewed_at: null,
+        reviewed_by_id: null,
         version: 1,
         created_at: '2026-08-12T00:00:00.000Z',
         updated_at: '2026-08-12T00:00:00.000Z',

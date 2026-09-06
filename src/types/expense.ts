@@ -25,6 +25,8 @@ export interface Expense {
   paid_amount: string;
   remaining_amount: string;
   status: ExpenseStatus;
+  reviewed_at: string | null;
+  reviewed_by_id: string | null;
   version: number;
   created_at: string;
   updated_at: string;

@@ -87,6 +87,8 @@ const expense: Expense = {
   paid_amount: '0.00',
   remaining_amount: '100.00',
   status: 'planned',
+  reviewed_at: null,
+  reviewed_by_id: null,
   version: 3,
   created_at: '2026-08-31T00:00:00.000Z',
   updated_at: '2026-08-31T00:00:00.000Z',
