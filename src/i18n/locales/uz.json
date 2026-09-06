@@ -810,6 +810,7 @@
       "bucket_8_30": "8–30 kun muddati o‘tgan",
       "bucket_31_plus": "31+ kun muddati o‘tgan",
       "overdue_days": "Kechikkan kunlar",
+      "shortcut_help": "— keyingi muddati o‘tgan xarajatga fokuslash uchun bosing.",
       "empty": "Muddati o‘tgan xarajatlar yo‘q",
       "empty_desc": "Tanlangan filtrlar bo‘yicha muddati o‘tgan to‘lov majburiyatlari yo‘q.",
       "load_error": "Muddati o‘tgan xarajatlarni yuklab bo‘lmadi"

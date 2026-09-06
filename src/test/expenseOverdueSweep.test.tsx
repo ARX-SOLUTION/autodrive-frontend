@@ -11,7 +11,8 @@ const authState = vi.hoisted(() => ({
   user: {
     id: 'owner-1',
     email: 'owner@example.com',
-    role: 'owner' as 'owner' | 'accountant' | 'manager',
+    role: 'owner' as
+      'dev' | 'owner' | 'accountant' | 'manager' | 'operator' | 'teacher',
     company_id: 'company-1',
     branch_id: 'jwt-branch-1' as string | null,
     branch_name: 'Chilonzor',
@@ -33,7 +34,9 @@ vi.mock('@/store/authStore', () => ({
 
 vi.mock('@/hooks/useCan', () => ({
   useCan: (capability: string) =>
-    capability === 'viewExpenses' || authState.user.role !== 'manager',
+    capability === 'navigateExpenseOverdueSweep'
+      ? authState.user.role === 'owner' || authState.user.role === 'manager'
+      : capability === 'viewExpenses' || authState.user.role !== 'manager',
 }));
 
 vi.mock('@/lib/tashkentDate', () => ({
@@ -97,6 +100,7 @@ const overdueRows = [
 
 const renderSweep = (
   props: Partial<ComponentProps<typeof ExpenseOverdueSweep>> = {},
+  reactStrictMode = false,
 ) =>
   renderWithRouter(
     <ExpenseOverdueSweep
@@ -108,8 +112,31 @@ const renderSweep = (
       returnContext={{ return_attention: 'overdue' }}
       {...props}
     />,
-    { initialEntry: '/expenses', routePattern: '/expenses' },
+    {
+      initialEntry: '/expenses',
+      routePattern: '/expenses',
+      reactStrictMode,
+    },
   );
+
+const dispatchShortcut = (
+  target: EventTarget,
+  init: KeyboardEventInit & { defaultPrevented?: boolean } = {},
+) => {
+  const event = new KeyboardEvent('keydown', {
+    key: 'p',
+    bubbles: true,
+    cancelable: true,
+    ...init,
+  });
+  const preventDefault = vi.spyOn(event, 'preventDefault');
+  if (init.defaultPrevented) {
+    event.preventDefault();
+    preventDefault.mockClear();
+  }
+  target.dispatchEvent(event);
+  return { event, preventDefault };
+};
 
 beforeEach(() => {
   localStorage.clear();
@@ -146,6 +173,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   vi.clearAllMocks();
 });
 
@@ -264,6 +292,252 @@ describe('ExpenseOverdueSweep', () => {
     expect(screen.getAllByRole('link')).toHaveLength(overdueRows.length);
     expect(screen.getByRole('region')).toHaveAttribute('aria-busy', 'true');
     expect(screen.getByRole('status')).toBeEmptyDOMElement();
+  });
+
+  it('moves owner focus first, next, and wrapped in rendered order without clicking or navigating', async () => {
+    const { router } = await renderSweep();
+    const links = screen.getAllByRole('link');
+    const click = vi.fn();
+    for (const link of links) link.addEventListener('click', click);
+    const initialUrl = router.state.location.href;
+
+    const first = dispatchShortcut(window);
+    expect(first.event.defaultPrevented).toBe(true);
+    expect(links[0]).toHaveFocus();
+    dispatchShortcut(window);
+    expect(links[1]).toHaveFocus();
+    links.at(-1)?.focus();
+    dispatchShortcut(links.at(-1)!);
+    expect(links[0]).toHaveFocus();
+    expect(click).not.toHaveBeenCalled();
+    expect(router.state.location.href).toBe(initialUrl);
+  });
+
+  it('enables the shortcut for managers but not accountant, dev, operator, or teacher', async () => {
+    authState.user.role = 'manager';
+    const manager = await renderSweep();
+    dispatchShortcut(window);
+    expect(screen.getAllByRole('link')[0]).toHaveFocus();
+    manager.unmount();
+
+    for (const role of ['accountant', 'dev', 'operator', 'teacher'] as const) {
+      authState.user.role = role;
+      const rendered = await renderSweep();
+      const region = screen.getByRole('region');
+      dispatchShortcut(window);
+      expect(screen.getAllByRole('link')[0]).not.toHaveFocus();
+      expect(region).not.toHaveAttribute('aria-keyshortcuts');
+      expect(
+        screen.queryByText('expenses.overdue_sweep.shortcut_help'),
+      ).not.toBeInTheDocument();
+      rendered.unmount();
+    }
+  });
+
+  it('exposes localized shortcut help and its description only while active', async () => {
+    await renderSweep();
+
+    const region = screen.getByRole('region');
+    const help = screen.getByText('expenses.overdue_sweep.shortcut_help');
+    expect(region).toHaveAttribute('aria-keyshortcuts', 'P');
+    expect(region).toHaveAttribute('aria-describedby', help.id);
+    expect(help).toContainElement(screen.getByText('P'));
+    expect(screen.getByText('P').tagName).toBe('KBD');
+  });
+
+  it.each([
+    ['input', '<input data-target />'],
+    ['textarea', '<textarea data-target></textarea>'],
+    ['select', '<select data-target><option>One</option></select>'],
+    [
+      'inherited contenteditable',
+      '<div contenteditable="true" tabindex="0"><span data-target></span></div>',
+    ],
+    [
+      'ARIA textbox descendant',
+      '<div role="textbox" tabindex="0"><span data-target></span></div>',
+    ],
+    [
+      'ARIA searchbox descendant',
+      '<div role="searchbox" tabindex="0"><span data-target></span></div>',
+    ],
+  ])('ignores editable target: %s', async (_name, markup) => {
+    await renderSweep();
+    const host = document.createElement('div');
+    host.innerHTML = markup;
+    document.body.append(host);
+    const target = host.querySelector('[data-target]')!;
+
+    const { event, preventDefault } = dispatchShortcut(target);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(preventDefault).not.toHaveBeenCalled();
+    expect(screen.getAllByRole('link')[0]).not.toHaveFocus();
+    host.remove();
+  });
+
+  it.each([
+    ['button descendant', '<button><span data-target></span></button>'],
+    ['link descendant', '<a href="/elsewhere"><span data-target></span></a>'],
+    [
+      'summary descendant',
+      '<details><summary><span data-target></span></summary></details>',
+    ],
+    [
+      'ARIA button descendant',
+      '<div role="button" tabindex="0"><span data-target></span></div>',
+    ],
+    [
+      'ARIA slider descendant',
+      '<div role="slider" tabindex="0"><span data-target></span></div>',
+    ],
+    [
+      'ARIA listbox descendant',
+      '<div role="listbox" tabindex="0"><span data-target></span></div>',
+    ],
+    [
+      'ARIA grid descendant',
+      '<div role="grid" tabindex="0"><span data-target></span></div>',
+    ],
+  ])('ignores unrelated interactive target: %s', async (_name, markup) => {
+    await renderSweep();
+    const host = document.createElement('div');
+    host.innerHTML = markup;
+    document.body.append(host);
+    const target = host.querySelector('[data-target]')!;
+
+    const { event, preventDefault } = dispatchShortcut(target);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(preventDefault).not.toHaveBeenCalled();
+    expect(screen.getAllByRole('link')[0]).not.toHaveFocus();
+    host.remove();
+  });
+
+  it.each([
+    ['alt', { altKey: true }],
+    ['control', { ctrlKey: true }],
+    ['meta', { metaKey: true }],
+    ['shift', { shiftKey: true }],
+    ['repeat', { repeat: true }],
+    ['composition', { isComposing: true }],
+    ['uppercase', { key: 'P' }],
+    ['unrelated', { key: 'q' }],
+    ['already prevented', { defaultPrevented: true }],
+  ] satisfies [string, KeyboardEventInit & { defaultPrevented?: boolean }][])(
+    'ignores %s keydown without preventing it again',
+    async (_name, init) => {
+      await renderSweep();
+
+      const { event, preventDefault } = dispatchShortcut(window, init);
+
+      expect(preventDefault).not.toHaveBeenCalled();
+      if (!('defaultPrevented' in init))
+        expect(event.defaultPrevented).toBe(false);
+      expect(screen.getAllByRole('link')[0]).not.toHaveFocus();
+    },
+  );
+
+  it.each([
+    ['loading', { expenses: [], isLoading: true, isFetching: true }],
+    ['error', { expenses: [], isError: true }],
+    ['empty', { expenses: [] }],
+  ] satisfies [string, Partial<ComponentProps<typeof ExpenseOverdueSweep>>][])(
+    'is inactive during %s state',
+    async (_name, props) => {
+      const add = vi.spyOn(window, 'addEventListener');
+      await renderSweep(props);
+      const region = screen.getByRole('region');
+
+      dispatchShortcut(window);
+
+      expect(region).not.toHaveAttribute('aria-keyshortcuts');
+      expect(region).not.toHaveAttribute('aria-describedby');
+      expect(
+        screen.queryByText('expenses.overdue_sweep.shortcut_help'),
+      ).not.toBeInTheDocument();
+      expect(add.mock.calls.filter(([type]) => type === 'keydown')).toHaveLength(
+        0,
+      );
+    },
+  );
+
+  it('removes the shortcut listener when the sweep becomes inactive', async () => {
+    const add = vi.spyOn(window, 'addEventListener');
+    const remove = vi.spyOn(window, 'removeEventListener');
+    const rendered = await renderSweep();
+    const added = add.mock.calls.filter(([type]) => type === 'keydown');
+
+    rendered.rerender(
+      <ExpenseOverdueSweep
+        expenses={[]}
+        isLoading={false}
+        isFetching={false}
+        isError={false}
+        onRetry={vi.fn()}
+        returnContext={{ return_attention: 'overdue' }}
+      />,
+    );
+
+    const removed = remove.mock.calls.filter(([type]) => type === 'keydown');
+    expect(added).toHaveLength(1);
+    expect(removed).toHaveLength(1);
+    expect(removed[0]?.[1]).toBe(added[0]?.[1]);
+  });
+
+  it('stays active during a background fetch', async () => {
+    await renderSweep({ isFetching: true });
+
+    dispatchShortcut(window);
+
+    expect(screen.getAllByRole('link')[0]).toHaveFocus();
+    expect(screen.getByRole('region')).toHaveAttribute(
+      'aria-keyshortcuts',
+      'P',
+    );
+  });
+
+  it('queries the rendered links on each press after rows change', async () => {
+    const rendered = await renderSweep({
+      expenses: [makeExpense('one', 1), makeExpense('seven', 7)],
+    });
+    dispatchShortcut(window);
+    expect(screen.getAllByRole('link')[0]).toHaveTextContent('Expense one');
+
+    rendered.rerender(
+      <ExpenseOverdueSweep
+        expenses={[makeExpense('seven', 7), makeExpense('one', 1)]}
+        isLoading={false}
+        isFetching={false}
+        isError={false}
+        onRetry={vi.fn()}
+        returnContext={{ return_attention: 'overdue' }}
+      />,
+    );
+    dispatchShortcut(screen.getByText('Expense one').closest('a')!);
+
+    expect(screen.getAllByRole('link')[0]).toHaveFocus();
+    expect(screen.getAllByRole('link')[0]).toHaveTextContent('Expense seven');
+  });
+
+  it('balances its listener in StrictMode and moves focus once per press', async () => {
+    const add = vi.spyOn(window, 'addEventListener');
+    const remove = vi.spyOn(window, 'removeEventListener');
+    const rendered = await renderSweep({}, true);
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus');
+    const added = add.mock.calls.filter(([type]) => type === 'keydown');
+
+    dispatchShortcut(window);
+
+    expect(focus).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByRole('link')[0]).toHaveFocus();
+    rendered.unmount();
+    const removed = remove.mock.calls.filter(([type]) => type === 'keydown');
+    expect(added).toHaveLength(2);
+    expect(removed).toHaveLength(2);
+    expect(removed.map(([, listener]) => listener)).toEqual(
+      added.map(([, listener]) => listener),
+    );
   });
 
   it('restores focus only after its explicit retry succeeds', async () => {

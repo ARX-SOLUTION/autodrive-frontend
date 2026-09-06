@@ -810,6 +810,7 @@
       "bucket_8_30": "8–30 days overdue",
       "bucket_31_plus": "31+ days overdue",
       "overdue_days": "Days overdue",
+      "shortcut_help": "— press to focus the next overdue expense.",
       "empty": "No overdue expenses",
       "empty_desc": "There are no overdue payment obligations for these filters.",
       "load_error": "Unable to load overdue expenses"

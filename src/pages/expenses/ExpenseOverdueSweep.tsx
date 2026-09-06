@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Warning, Wallet } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCan } from '@/hooks/useCan';
 import { formatMoney } from '@/lib/money';
 import type { OverdueExpense } from '@/types/expense';
 
@@ -21,6 +22,10 @@ interface ExpenseOverdueSweepProps {
   onRetry: () => void;
   returnContext: ExpenseOverdueReturnContext;
 }
+
+const overdueLinkSelector = '[data-overdue-shortcut]';
+const interactiveSelector =
+  'a[href], button, details, summary, input, select, textarea, option, audio[controls], video[controls], iframe, embed, object, [contenteditable]:not([contenteditable="false"]), [role]:not([role="none"]):not([role="presentation"]), [tabindex]:not([tabindex="-1"])';
 
 const buckets = [
   {
@@ -46,14 +51,63 @@ export const ExpenseOverdueSweep = ({
   returnContext,
 }: ExpenseOverdueSweepProps) => {
   const { t } = useTranslation();
+  const canNavigateSweep = useCan('navigateExpenseOverdueSweep');
   const regionRef = useRef<HTMLElement>(null);
   const focusAfterRetry = useRef(false);
+  const shortcutId = useId();
+  const shortcutHelpId = `expense-overdue-shortcut-${shortcutId.replace(/:/g, '')}`;
+  const shortcutActive =
+    canNavigateSweep && !isLoading && !isError && expenses.length > 0;
 
   useEffect(() => {
     if (!focusAfterRetry.current || isLoading || isFetching) return;
     focusAfterRetry.current = false;
     if (!isError) regionRef.current?.focus();
   }, [isError, isFetching, isLoading]);
+
+  useEffect(() => {
+    if (!shortcutActive) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.key !== 'p' ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.repeat ||
+        event.isComposing
+      ) {
+        return;
+      }
+
+      const target = event.target;
+      if (target instanceof Element) {
+        const overdueTarget = target.closest(overdueLinkSelector);
+        const isFocusedOverdueLink =
+          overdueTarget !== null && overdueTarget === document.activeElement;
+        if (!isFocusedOverdueLink && target.closest(interactiveSelector))
+          return;
+      }
+
+      const links = Array.from(
+        regionRef.current?.querySelectorAll<HTMLAnchorElement>(
+          overdueLinkSelector,
+        ) ?? [],
+      );
+      if (links.length === 0) return;
+
+      const currentIndex = links.indexOf(
+        document.activeElement as HTMLAnchorElement,
+      );
+      event.preventDefault();
+      links[(currentIndex + 1) % links.length].focus();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [shortcutActive]);
 
   const handleRetry = () => {
     focusAfterRetry.current = true;
@@ -65,6 +119,8 @@ export const ExpenseOverdueSweep = ({
       ref={regionRef}
       tabIndex={-1}
       aria-label={t('expenses.overdue_sweep.title')}
+      aria-describedby={shortcutActive ? shortcutHelpId : undefined}
+      aria-keyshortcuts={shortcutActive ? 'P' : undefined}
       aria-busy={isLoading || isFetching}
       className="space-y-6 p-3 md:p-5"
     >
@@ -75,6 +131,14 @@ export const ExpenseOverdueSweep = ({
             ? t('expenses.overdue_sweep.load_error')
             : ''}
       </p>
+      {shortcutActive && (
+        <p id={shortcutHelpId} className="text-sm text-muted-foreground">
+          <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs font-medium text-foreground">
+            P
+          </kbd>{' '}
+          {t('expenses.overdue_sweep.shortcut_help')}
+        </p>
+      )}
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }, (_, index) => (
@@ -116,6 +180,7 @@ export const ExpenseOverdueSweep = ({
                       to="/expenses/$id"
                       params={{ id: expense.id }}
                       search={returnContext}
+                      data-overdue-shortcut
                       className="block min-h-10 rounded-xl border border-border bg-card p-4 text-card-foreground transition-colors hover:border-primary/40 hover:bg-secondary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
