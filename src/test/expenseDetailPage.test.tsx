@@ -183,6 +183,65 @@ describe('ExpenseDetailPage', () => {
     expect(screen.getByText(/2026-08-30/)).toBeInTheDocument();
   });
 
+  it.each([
+    [
+      'branch',
+      '?return_attention=overdue&return_branch_id=branch-2&return_scope=company',
+      { attention: 'overdue', branch_id: 'branch-2' },
+    ],
+    [
+      'company',
+      '?return_attention=overdue&return_scope=company',
+      { attention: 'overdue', scope: 'company' },
+    ],
+  ] as const)(
+    'returns from success to the exact overdue %s scope',
+    async (_label, search, expected) => {
+      queryState.data = expense;
+      historyState.data = history;
+      const { router } = await renderWithRouter(<ExpenseDetailPage />, {
+        initialEntry: `/expenses/expense-1${search}`,
+        routePattern: '/expenses/$id',
+        params: { id: 'expense-1' },
+      });
+
+      fireEvent.click(
+        screen.getByRole('button', { name: 'expenses.detail.back' }),
+      );
+
+      await waitFor(() => {
+        expect(router.state.location.pathname).toBe('/expenses');
+        expect(router.state.location.search).toEqual(expected);
+      });
+    },
+  );
+
+  it.each(['loading', 'error'] as const)(
+    'uses overdue return context from the %s state',
+    async (state) => {
+      queryState.isLoading = state === 'loading';
+      queryState.isError = state === 'error';
+      const { router } = await renderWithRouter(<ExpenseDetailPage />, {
+        initialEntry:
+          '/expenses/expense-1?return_attention=overdue&return_scope=company',
+        routePattern: '/expenses/$id',
+        params: { id: 'expense-1' },
+      });
+
+      fireEvent.click(
+        screen.getByRole('button', { name: 'expenses.detail.back' }),
+      );
+
+      await waitFor(() => {
+        expect(router.state.location.pathname).toBe('/expenses');
+        expect(router.state.location.search).toEqual({
+          attention: 'overdue',
+          scope: 'company',
+        });
+      });
+    },
+  );
+
   it('shows payment-history loading and retry states', async () => {
     queryState.data = expense;
     historyState.isLoading = true;
@@ -403,7 +462,8 @@ describe('ExpenseDetailPage', () => {
     historyState.refetch.mockReturnValue(refresh);
 
     const { router } = await renderWithRouter(<ExpenseDetailPage />, {
-      initialEntry: '/expenses/expense-1?tab=payments&action=pay_remaining',
+      initialEntry:
+        '/expenses/expense-1?tab=payments&action=pay_remaining&return_attention=overdue&return_scope=company',
       routePattern: '/expenses/$id',
       params: { id: 'expense-1' },
       reactStrictMode: true,
@@ -412,7 +472,11 @@ describe('ExpenseDetailPage', () => {
     await waitFor(() => {
       expect(historyState.refetch).toHaveBeenCalledOnce();
       expect(historyState.refetch.mock.calls[0]).toEqual([]);
-      expect(router.state.location.search).toEqual({ tab: 'payments' });
+      expect(router.state.location.search).toEqual({
+        tab: 'payments',
+        return_attention: 'overdue',
+        return_scope: 'company',
+      });
     });
     expect(router.history.canGoBack()).toBe(false);
     expect(screen.getByLabelText('expenses.payments.amount')).toBeDisabled();

@@ -3,16 +3,19 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import ExpensesPage from '@/pages/ExpensesPage';
 import type { Expense } from '@/types/expense';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
+import { useAuthStore } from '@/store/authStore';
 
 const {
   createExpenseMock,
   useExpensesPageMock,
+  useOverdueExpenseSweepMock,
   useExpenseTriageCountsMock,
   useExpenseBranchOptionsMock,
   useUpdateExpenseMock,
 } = vi.hoisted(() => ({
   createExpenseMock: vi.fn(),
   useExpensesPageMock: vi.fn(),
+  useOverdueExpenseSweepMock: vi.fn(),
   useExpenseTriageCountsMock: vi.fn(),
   useExpenseBranchOptionsMock: vi.fn(),
   useUpdateExpenseMock: vi.fn(),
@@ -24,6 +27,7 @@ vi.mock('@/services/expenseService', async (importOriginal) => {
   return {
     ...actual,
     useExpensesPage: useExpensesPageMock,
+    useOverdueExpenseSweep: useOverdueExpenseSweepMock,
     useExpenseTriageCounts: useExpenseTriageCountsMock,
     useExpenseBranchOptions: useExpenseBranchOptionsMock,
     useCreateExpense: () => ({ mutate: createExpenseMock, isPending: false }),
@@ -65,6 +69,12 @@ const renderPage = (initialEntry = '/expenses') =>
   });
 
 beforeEach(() => {
+  useAuthStore.getState().setAuth('token', {
+    id: 'owner-1',
+    email: 'owner@example.com',
+    role: 'owner',
+    company_id: 'company-1',
+  });
   createExpenseMock.mockReset();
   useExpenseBranchOptionsMock.mockReset().mockReturnValue({
     data: [{ id: 'b1', name: 'Chilonzor' }],
@@ -73,6 +83,13 @@ beforeEach(() => {
   useExpenseTriageCountsMock.mockReset().mockReturnValue({
     data: undefined,
     isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
+  useOverdueExpenseSweepMock.mockReset().mockReturnValue({
+    data: [],
+    isLoading: false,
+    isFetching: false,
     isError: false,
     refetch: vi.fn(),
   });

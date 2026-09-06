@@ -84,6 +84,7 @@ describe('useExpense capability gating', () => {
       companyId: 'company-1',
       branchId: undefined,
       jwtBranchId: 'branch-1',
+      viewerRole: 'manager',
     });
     const listKey = expensesPageQueryOptions({ branchId: 'branch-1' }).queryKey;
     expect(listKey[2]).toMatchObject({ jwtBranchId: 'branch-1' });
@@ -350,12 +351,14 @@ describe('expense triage API', () => {
       companyId: 'company-1',
       branchId: undefined,
       jwtBranchId: undefined,
+      viewerRole: 'owner',
       scope: 'company',
     });
     expect(managerBranch.at(-1)).toMatchObject({
       companyId: 'company-2',
       branchId: 'branch-3',
       jwtBranchId: 'branch-3',
+      viewerRole: 'manager',
       scope: undefined,
     });
   });

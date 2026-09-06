@@ -39,6 +39,7 @@ const authState = vi.hoisted(
 
 const mocks = vi.hoisted(() => ({
   useExpensesPage: vi.fn(),
+  useOverdueExpenseSweep: vi.fn(),
   useExpenseTriageCounts: vi.fn(),
   useExpenseBranchOptions: vi.fn(),
   createExpense: vi.fn(),
@@ -78,6 +79,7 @@ vi.mock('@/services/expenseService', () => ({
   ],
   expenseStatusValues: ['planned', 'partially_paid', 'paid', 'cancelled'],
   useExpensesPage: mocks.useExpensesPage,
+  useOverdueExpenseSweep: mocks.useOverdueExpenseSweep,
   useExpenseTriageCounts: mocks.useExpenseTriageCounts,
   useExpenseBranchOptions: mocks.useExpenseBranchOptions,
   useCreateExpense: () => ({ mutate: mocks.createExpense, isPending: false }),
@@ -116,6 +118,13 @@ beforeEach(() => {
   authState.day = '2026-09-01';
   authState.dynamicDay = false;
   mocks.refetchTriage.mockReset();
+  mocks.useOverdueExpenseSweep.mockReset().mockReturnValue({
+    data: [],
+    isLoading: false,
+    isFetching: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
   mocks.useExpensesPage.mockReset().mockReturnValue({
     data: { data: [], meta: { total: 0, totalPages: 1 } },
     isLoading: false,
@@ -464,12 +473,18 @@ describe('ExpensesPage daily brief', () => {
       true,
       '2026-08-31',
     );
+    expect(mocks.useOverdueExpenseSweep.mock.calls.at(-1)?.[2]).toBe(
+      '2026-08-31',
+    );
 
     await act(async () => vi.advanceTimersByTime(100));
 
     expect(mocks.useExpenseTriageCounts).toHaveBeenLastCalledWith(
       { branchId: undefined },
       true,
+      '2026-09-01',
+    );
+    expect(mocks.useOverdueExpenseSweep.mock.calls.at(-1)?.[2]).toBe(
       '2026-09-01',
     );
   });
@@ -549,6 +564,9 @@ describe('ExpensesPage daily brief', () => {
     expect(
       screen.getByRole('heading', { name: 'expenses.daily_brief.title' }),
     ).toBeInTheDocument();
+    expect(mocks.useOverdueExpenseSweep.mock.calls.at(-1)?.[2]).toBe(
+      '2026-09-01',
+    );
   });
 
   it('fails open for malformed/throwing reads and hides after a throwing write', async () => {

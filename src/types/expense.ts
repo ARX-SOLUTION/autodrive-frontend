@@ -34,6 +34,8 @@ export interface Expense {
   overdue_days?: number;
 }
 
+export type OverdueExpense = Expense & { overdue_days: number };
+
 export type ExpensePaymentMethod = 'naqd' | 'karta' | 'perechisleniya';
 
 export interface ExpensePayment {

@@ -66,6 +66,8 @@ export const expenseKeys = {
     ['expenses', 'branch-options', companyId] as const,
   triageCounts: (filters: Filters = {}) =>
     ['expenses', 'triage-counts', filters] as const,
+  overdueSweep: (filters: Filters = {}) =>
+    ['expenses', 'overdue-sweep', filters] as const,
 };
 
 export const attendanceKeys = {

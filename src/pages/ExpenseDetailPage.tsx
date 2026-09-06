@@ -99,6 +99,39 @@ const ExpenseDetailPage = () => {
     (expenseQuery.error as { response?: { status?: number } } | null)?.response
       ?.status === 404;
   const hasPayRemainingIntent = searchParams.get('action') === 'pay_remaining';
+  const backToExpenses = () => {
+    const returnAttentionValues = searchParams.getAll('return_attention');
+    const returnAttention =
+      returnAttentionValues.length === 1 &&
+      returnAttentionValues[0] === 'overdue'
+        ? ('overdue' as const)
+        : undefined;
+    const returnBranchValues = searchParams.getAll('return_branch_id');
+    const rawReturnBranchId =
+      returnBranchValues.length === 1 ? returnBranchValues[0] : undefined;
+    const returnBranchId =
+      returnAttention &&
+      rawReturnBranchId &&
+      rawReturnBranchId.trim() === rawReturnBranchId
+        ? rawReturnBranchId
+        : undefined;
+    const returnScopeValues = searchParams.getAll('return_scope');
+
+    return navigate({
+      to: '/expenses',
+      search: {
+        attention: returnAttention,
+        branch_id: returnBranchId,
+        scope:
+          returnAttention &&
+          !returnBranchId &&
+          returnScopeValues.length === 1 &&
+          returnScopeValues[0] === 'company'
+            ? ('company' as const)
+            : undefined,
+      },
+    });
+  };
 
   useLayoutEffect(() => {
     if (currentExpenseId.current !== id) {
@@ -186,7 +219,7 @@ const ExpenseDetailPage = () => {
   if (expenseQuery.isLoading) {
     return (
       <EntityDetailShell
-        onBack={() => navigate({ to: '/expenses' })}
+        onBack={backToExpenses}
         backLabel={t('expenses.detail.back')}
         isLoading
         isError={false}
@@ -197,7 +230,7 @@ const ExpenseDetailPage = () => {
   if (expenseQuery.isError) {
     return (
       <EntityDetailShell
-        onBack={() => navigate({ to: '/expenses' })}
+        onBack={backToExpenses}
         backLabel={t('expenses.detail.back')}
         isLoading={false}
         isError
@@ -224,7 +257,7 @@ const ExpenseDetailPage = () => {
   if (!serverExpense) {
     return (
       <EntityDetailShell
-        onBack={() => navigate({ to: '/expenses' })}
+        onBack={backToExpenses}
         backLabel={t('expenses.detail.back')}
         isLoading={false}
         isError
@@ -281,7 +314,7 @@ const ExpenseDetailPage = () => {
       setLifecycleAction(null);
       if (lifecycleAction === 'delete') {
         toast.success(t('expenses.deleted'));
-        void navigate({ to: '/expenses' });
+        void backToExpenses();
         return;
       }
       toast.success(t('expenses.cancelled'));
@@ -307,7 +340,7 @@ const ExpenseDetailPage = () => {
 
   return (
     <EntityDetailShell
-      onBack={() => navigate({ to: '/expenses' })}
+      onBack={backToExpenses}
       backLabel={t('expenses.detail.back')}
       isLoading={false}
       isError={false}

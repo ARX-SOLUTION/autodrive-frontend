@@ -18,6 +18,7 @@ import {
   useExpenseBranchOptions,
   useExpensesPage,
   useExpenseTriageCounts,
+  useOverdueExpenseSweep,
 } from '@/services/expenseService';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -28,6 +29,7 @@ import { parseCalendarDate } from '@/lib/calendarDate';
 import { tashkentTodayCalendarDate } from '@/lib/tashkentDate';
 import { cn } from '@/lib/utils';
 import { ExpensesFilterBar } from './expenses/ExpensesFilterBar';
+import { ExpenseOverdueSweep } from './expenses/ExpenseOverdueSweep';
 import { ExpensesTable } from './expenses/ExpensesTable';
 import { ExpenseFormDialog } from './expenses/ExpenseFormDialog';
 import type {
@@ -404,11 +406,22 @@ const ExpensesPage = () => {
   );
   const {
     data: expensesPage,
-    isLoading,
-    isFetching,
-    isError,
-    refetch,
-  } = useExpensesPage(expenseFilters);
+    isLoading: isPageLoading,
+    isFetching: isPageFetching,
+    isError: isPageError,
+    refetch: refetchPage,
+  } = useExpensesPage(expenseFilters, !attentionFilter && hasManagerScope);
+  const {
+    data: overdueExpenses = [],
+    isLoading: isSweepLoading,
+    isFetching: isSweepFetching,
+    isError: isSweepError,
+    refetch: refetchSweep,
+  } = useOverdueExpenseSweep(
+    expenseFilters,
+    !!attentionFilter && hasManagerScope,
+    dailyBriefDismissal.businessDay,
+  );
   const { data: branches = [] } = useExpenseBranchOptions();
   const [formOpen, setFormOpen] = useState(false);
 
@@ -457,13 +470,22 @@ const ExpensesPage = () => {
       page: undefined,
     });
 
-  const visibleExpenses = expensesPage?.data ?? [];
-  const totalExpenses = expensesPage?.meta.total ?? 0;
+  const canRenderExpenseData = canViewExpenses && hasManagerScope;
+  const visibleExpenses = canRenderExpenseData
+    ? (expensesPage?.data ?? [])
+    : [];
+  const visibleOverdueExpenses = canRenderExpenseData ? overdueExpenses : [];
+  const totalExpenses = canRenderExpenseData
+    ? (expensesPage?.meta.total ?? 0)
+    : 0;
   const totalPages = Math.max(1, expensesPage?.meta.totalPages ?? 1);
 
   useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(1);
-  }, [currentPage, totalPages, setCurrentPage]);
+    if (!attentionFilter && currentPage > totalPages) setCurrentPage(1);
+  }, [attentionFilter, currentPage, totalPages, setCurrentPage]);
+
+  const isLoading = attentionFilter ? isSweepLoading : isPageLoading;
+  const isFetching = attentionFilter ? isSweepFetching : isPageFetching;
 
   return (
     <div className="space-y-6">
@@ -511,7 +533,7 @@ const ExpensesPage = () => {
       />
 
       <div className="relative">
-        {isFetching && !isLoading && (
+        {!attentionFilter && isFetching && !isLoading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
@@ -519,21 +541,38 @@ const ExpensesPage = () => {
         <div
           className={cn(
             'glass-card overflow-hidden transition-opacity duration-200',
-            isFetching && !isLoading && 'opacity-50',
+            !attentionFilter && isFetching && !isLoading && 'opacity-50',
           )}
         >
-          <ExpensesTable
-            expenses={visibleExpenses}
-            isLoading={isLoading}
-            isFetching={isFetching}
-            isError={isError}
-            onRetry={() => void refetch()}
-            currentPage={currentPage}
-            pageSize={SERVER_PAGE_SIZE}
-            totalExpenses={totalExpenses}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
+          {attentionFilter ? (
+            <ExpenseOverdueSweep
+              expenses={visibleOverdueExpenses}
+              isLoading={isSweepLoading}
+              isFetching={isSweepFetching}
+              isError={isSweepError}
+              onRetry={() => void refetchSweep()}
+              returnContext={{
+                return_attention: 'overdue',
+                return_branch_id: expenseFilters.branchId,
+                return_scope: expenseFilters.branchId
+                  ? undefined
+                  : expenseFilters.scope,
+              }}
+            />
+          ) : (
+            <ExpensesTable
+              expenses={visibleExpenses}
+              isLoading={isPageLoading}
+              isFetching={isPageFetching}
+              isError={isPageError}
+              onRetry={() => void refetchPage()}
+              currentPage={currentPage}
+              pageSize={SERVER_PAGE_SIZE}
+              totalExpenses={totalExpenses}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </div>
       </div>
 

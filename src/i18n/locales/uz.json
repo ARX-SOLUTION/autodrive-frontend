@@ -804,6 +804,16 @@
       "view_all": "Barcha xarajatlar",
       "load_error": "Kunlik xarajatlar hisobotini yuklab bo‘lmadi"
     },
+    "overdue_sweep": {
+      "title": "Muddati o‘tgan xarajatlar ko‘rigi",
+      "bucket_1_7": "1–7 kun muddati o‘tgan",
+      "bucket_8_30": "8–30 kun muddati o‘tgan",
+      "bucket_31_plus": "31+ kun muddati o‘tgan",
+      "overdue_days": "Kechikkan kunlar",
+      "empty": "Muddati o‘tgan xarajatlar yo‘q",
+      "empty_desc": "Tanlangan filtrlar bo‘yicha muddati o‘tgan to‘lov majburiyatlari yo‘q.",
+      "load_error": "Muddati o‘tgan xarajatlarni yuklab bo‘lmadi"
+    },
     "table": {
       "date": "Sana",
       "title": "Nomi",

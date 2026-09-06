@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   createExpense: vi.fn(),
   updateExpense: vi.fn(),
   useExpensesPage: vi.fn(),
+  useOverdueExpenseSweep: vi.fn(),
   useExpenseTriageCounts: vi.fn(),
   useExpenseBranchOptions: vi.fn(),
   useExpense: vi.fn(),
@@ -54,6 +55,7 @@ vi.mock('@/services/expenseService', () => ({
   ],
   expenseStatusValues: ['planned', 'partially_paid', 'paid', 'cancelled'],
   useExpensesPage: mocks.useExpensesPage,
+  useOverdueExpenseSweep: mocks.useOverdueExpenseSweep,
   useExpenseTriageCounts: mocks.useExpenseTriageCounts,
   useExpenseBranchOptions: mocks.useExpenseBranchOptions,
   useCreateExpense: () => ({
@@ -146,6 +148,13 @@ beforeEach(() => {
   mocks.createExpense.mockReset();
   mocks.updateExpense.mockReset();
   mocks.useExpensesPage.mockReset().mockReturnValue(listState);
+  mocks.useOverdueExpenseSweep.mockReset().mockReturnValue({
+    data: [],
+    isLoading: false,
+    isFetching: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
   mocks.useExpenseTriageCounts.mockReset().mockReturnValue({
     data: undefined,
     isLoading: false,
