@@ -1,9 +1,12 @@
+import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { createDataGridColumnHelper, DataGrid } from '@/shared/ui/data-grid';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataCard } from '@/components/ui/DataCard';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useCan } from '@/hooks/useCan';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import { formatMoney } from '@/lib/money';
 import type { Expense, ExpenseStatus } from '@/types/expense';
@@ -33,47 +36,79 @@ const statusVariant = (status: ExpenseStatus) => {
 const statusLabelKey = (status: ExpenseStatus) =>
   `expenses.status.${status}` as const;
 
-const ExpenseMobileCard = ({
+const PayRemainingLink = ({
   expense,
-  onActivate,
+  fullWidth = false,
 }: {
   expense: Expense;
-  onActivate: (element: HTMLElement) => void;
+  fullWidth?: boolean;
 }) => {
   const { t } = useTranslation();
   return (
-    <DataCard
-      title={expense.title}
-      subtitle={expense.branch_name ?? t('expenses.form.company_wide')}
-      onClick={(event) => onActivate(event.currentTarget)}
-      fields={[
-        { label: t('expenses.table.date'), value: expense.expense_date },
-        {
-          label: t('expenses.table.category'),
-          value: t(`expenses.category.${expense.category}`),
-        },
-        {
-          label: t('expenses.table.amount'),
-          value: formatMoney(expense.amount),
-        },
-        {
-          label: t('expenses.table.paid'),
-          value: formatMoney(expense.paid_amount),
-        },
-        {
-          label: t('expenses.table.remaining'),
-          value: formatMoney(expense.remaining_amount),
-        },
-        {
-          label: t('expenses.table.status'),
-          value: (
-            <Badge variant={statusVariant(expense.status)}>
-              {t(statusLabelKey(expense.status))}
-            </Badge>
-          ),
-        },
-      ]}
-    />
+    <Button
+      asChild
+      variant="outline"
+      size="sm"
+      className={fullWidth ? 'w-full' : undefined}
+    >
+      <Link
+        to="/expenses/$id"
+        params={{ id: expense.id }}
+        search={{ tab: 'payments', action: 'pay_remaining' }}
+        aria-label={`${t('expenses.payments.submit')}: ${expense.title}`}
+      >
+        {t('expenses.payments.submit')}
+      </Link>
+    </Button>
+  );
+};
+
+const ExpenseMobileCard = ({
+  expense,
+  onActivate,
+  showPayRemaining,
+}: {
+  expense: Expense;
+  onActivate: (element: HTMLElement) => void;
+  showPayRemaining: boolean;
+}) => {
+  const { t } = useTranslation();
+  return (
+    <div className="space-y-2">
+      <DataCard
+        title={expense.title}
+        subtitle={expense.branch_name ?? t('expenses.form.company_wide')}
+        onClick={(event) => onActivate(event.currentTarget)}
+        fields={[
+          { label: t('expenses.table.date'), value: expense.expense_date },
+          {
+            label: t('expenses.table.category'),
+            value: t(`expenses.category.${expense.category}`),
+          },
+          {
+            label: t('expenses.table.amount'),
+            value: formatMoney(expense.amount),
+          },
+          {
+            label: t('expenses.table.paid'),
+            value: formatMoney(expense.paid_amount),
+          },
+          {
+            label: t('expenses.table.remaining'),
+            value: formatMoney(expense.remaining_amount),
+          },
+          {
+            label: t('expenses.table.status'),
+            value: (
+              <Badge variant={statusVariant(expense.status)}>
+                {t(statusLabelKey(expense.status))}
+              </Badge>
+            ),
+          },
+        ]}
+      />
+      {showPayRemaining && <PayRemainingLink expense={expense} fullWidth />}
+    </div>
   );
 };
 
@@ -90,6 +125,7 @@ export const ExpensesTable = ({
   onPageChange,
 }: ExpensesTableProps) => {
   const { t } = useTranslation();
+  const canManageFinance = useCan('manageCompanyFinance');
   const navigate = useViewTransitionNavigate();
 
   const columns = columnHelper.columns([
@@ -155,6 +191,19 @@ export const ExpensesTable = ({
       ),
       meta: { align: 'center' },
     }),
+    ...(canManageFinance
+      ? [
+          columnHelper.display({
+            id: 'payment-action',
+            header: t('expenses.payments.title'),
+            cell: ({ row }) =>
+              row.original.status === 'partially_paid' ? (
+                <PayRemainingLink expense={row.original} />
+              ) : null,
+            meta: { align: 'center' },
+          }),
+        ]
+      : []),
   ]);
 
   const openExpense = (expense: Expense, element: HTMLElement | null) =>
@@ -226,6 +275,7 @@ export const ExpensesTable = ({
         <ExpenseMobileCard
           expense={row}
           onActivate={(element) => openExpense(row, element)}
+          showPayRemaining={canManageFinance && row.status === 'partially_paid'}
         />
       )}
       onRowActivate={(expense, element) => openExpense(expense, element)}

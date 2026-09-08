@@ -21,6 +21,8 @@ const mocks = vi.hoisted(() => ({
   createExpense: vi.fn(),
   updateExpense: vi.fn(),
   useExpensesPage: vi.fn(),
+  useOverdueExpenseSweep: vi.fn(),
+  useExpenseTriageCounts: vi.fn(),
   useExpenseBranchOptions: vi.fn(),
   useExpense: vi.fn(),
   useExpenseHistory: vi.fn(),
@@ -53,6 +55,8 @@ vi.mock('@/services/expenseService', () => ({
   ],
   expenseStatusValues: ['planned', 'partially_paid', 'paid', 'cancelled'],
   useExpensesPage: mocks.useExpensesPage,
+  useOverdueExpenseSweep: mocks.useOverdueExpenseSweep,
+  useExpenseTriageCounts: mocks.useExpenseTriageCounts,
   useExpenseBranchOptions: mocks.useExpenseBranchOptions,
   useCreateExpense: () => ({
     mutate: mocks.createExpense,
@@ -87,6 +91,8 @@ const expense: Expense = {
   paid_amount: '0.00',
   remaining_amount: '100.00',
   status: 'planned',
+  reviewed_at: null,
+  reviewed_by_id: null,
   version: 3,
   created_at: '2026-08-31T00:00:00.000Z',
   updated_at: '2026-08-31T00:00:00.000Z',
@@ -142,6 +148,19 @@ beforeEach(() => {
   mocks.createExpense.mockReset();
   mocks.updateExpense.mockReset();
   mocks.useExpensesPage.mockReset().mockReturnValue(listState);
+  mocks.useOverdueExpenseSweep.mockReset().mockReturnValue({
+    data: [],
+    isLoading: false,
+    isFetching: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
+  mocks.useExpenseTriageCounts.mockReset().mockReturnValue({
+    data: undefined,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
   mocks.useExpenseBranchOptions.mockReset().mockReturnValue({ data: [] });
   mocks.useExpense.mockReset().mockReturnValue(detailState);
   mocks.useExpenseHistory.mockReset().mockReturnValue(historyState);

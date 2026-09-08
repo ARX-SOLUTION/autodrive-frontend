@@ -3,15 +3,20 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import ExpensesPage from '@/pages/ExpensesPage';
 import type { Expense } from '@/types/expense';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
+import { useAuthStore } from '@/store/authStore';
 
 const {
   createExpenseMock,
   useExpensesPageMock,
+  useOverdueExpenseSweepMock,
+  useExpenseTriageCountsMock,
   useExpenseBranchOptionsMock,
   useUpdateExpenseMock,
 } = vi.hoisted(() => ({
   createExpenseMock: vi.fn(),
   useExpensesPageMock: vi.fn(),
+  useOverdueExpenseSweepMock: vi.fn(),
+  useExpenseTriageCountsMock: vi.fn(),
   useExpenseBranchOptionsMock: vi.fn(),
   useUpdateExpenseMock: vi.fn(),
 }));
@@ -22,6 +27,8 @@ vi.mock('@/services/expenseService', async (importOriginal) => {
   return {
     ...actual,
     useExpensesPage: useExpensesPageMock,
+    useOverdueExpenseSweep: useOverdueExpenseSweepMock,
+    useExpenseTriageCounts: useExpenseTriageCountsMock,
     useExpenseBranchOptions: useExpenseBranchOptionsMock,
     useCreateExpense: () => ({ mutate: createExpenseMock, isPending: false }),
     useUpdateExpense: () => ({
@@ -47,6 +54,8 @@ const EXPENSES: Expense[] = [
     paid_amount: '500000',
     remaining_amount: '750000',
     status: 'partially_paid',
+    reviewed_at: null,
+    reviewed_by_id: null,
     version: 1,
     created_at: '2026-08-12T00:00:00.000Z',
     updated_at: '2026-08-12T00:00:00.000Z',
@@ -60,10 +69,29 @@ const renderPage = (initialEntry = '/expenses') =>
   });
 
 beforeEach(() => {
+  useAuthStore.getState().setAuth('token', {
+    id: 'owner-1',
+    email: 'owner@example.com',
+    role: 'owner',
+    company_id: 'company-1',
+  });
   createExpenseMock.mockReset();
   useExpenseBranchOptionsMock.mockReset().mockReturnValue({
     data: [{ id: 'b1', name: 'Chilonzor' }],
     isLoading: false,
+  });
+  useExpenseTriageCountsMock.mockReset().mockReturnValue({
+    data: undefined,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
+  useOverdueExpenseSweepMock.mockReset().mockReturnValue({
+    data: [],
+    isLoading: false,
+    isFetching: false,
+    isError: false,
+    refetch: vi.fn(),
   });
   useExpensesPageMock.mockReset().mockReturnValue({
     data: { data: EXPENSES, meta: { total: 1, totalPages: 1 } },

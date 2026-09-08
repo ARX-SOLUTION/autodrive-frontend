@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import ExpenseDetailPage from '@/pages/ExpenseDetailPage';
 import type { Expense, ExpenseHistory } from '@/types/expense';
@@ -10,7 +16,14 @@ const queryState = vi.hoisted(() => ({
   isError: false,
   refetch: vi.fn(),
 }));
-const permissionState = vi.hoisted(() => ({ canViewExpenses: true }));
+const permissionState = vi.hoisted(() => ({
+  canViewExpenses: true,
+  canManageFinance: true,
+}));
+const expenseHooks = vi.hoisted(() => ({
+  useExpense: vi.fn(),
+  useExpenseHistory: vi.fn(),
+}));
 const historyState = vi.hoisted(() => ({
   data: null as ExpenseHistory | null,
   isLoading: false,
@@ -38,9 +51,12 @@ const updateMutation = vi.hoisted(() => ({
   mutate: vi.fn(),
 }));
 
+expenseHooks.useExpense.mockImplementation(() => queryState);
+expenseHooks.useExpenseHistory.mockImplementation(() => historyState);
+
 vi.mock('@/services/expenseService', () => ({
-  useExpense: () => queryState,
-  useExpenseHistory: () => historyState,
+  useExpense: expenseHooks.useExpense,
+  useExpenseHistory: expenseHooks.useExpenseHistory,
   useExpenseBranchOptions: () => ({ data: [] }),
   useCreateExpensePayment: () => paymentMutation,
   useCancelExpense: () => cancelMutation,
@@ -49,7 +65,10 @@ vi.mock('@/services/expenseService', () => ({
   useUpdateExpense: () => updateMutation,
 }));
 vi.mock('@/hooks/useCan', () => ({
-  useCan: () => permissionState.canViewExpenses,
+  useCan: (capability: string) =>
+    capability === 'viewExpenses'
+      ? permissionState.canViewExpenses
+      : permissionState.canManageFinance,
 }));
 
 const expense: Expense = {
@@ -67,6 +86,8 @@ const expense: Expense = {
   paid_amount: '25000.00',
   remaining_amount: '100000.00',
   status: 'partially_paid',
+  reviewed_at: null,
+  reviewed_by_id: null,
   version: 1,
   created_at: '2026-08-31T00:00:00.000Z',
   updated_at: '2026-08-31T00:00:00.000Z',
@@ -126,6 +147,11 @@ afterEach(() => {
   updateMutation.isPending = false;
   updateMutation.mutate.mockReset();
   permissionState.canViewExpenses = true;
+  permissionState.canManageFinance = true;
+  expenseHooks.useExpense.mockReset().mockImplementation(() => queryState);
+  expenseHooks.useExpenseHistory
+    .mockReset()
+    .mockImplementation(() => historyState);
   cleanup();
 });
 
@@ -156,6 +182,65 @@ describe('ExpenseDetailPage', () => {
     expect(screen.getByText('expenses.payments.voided')).toBeInTheDocument();
     expect(screen.getByText(/2026-08-30/)).toBeInTheDocument();
   });
+
+  it.each([
+    [
+      'branch',
+      '?return_attention=overdue&return_branch_id=branch-2&return_scope=company',
+      { attention: 'overdue', branch_id: 'branch-2' },
+    ],
+    [
+      'company',
+      '?return_attention=overdue&return_scope=company',
+      { attention: 'overdue', scope: 'company' },
+    ],
+  ] as const)(
+    'returns from success to the exact overdue %s scope',
+    async (_label, search, expected) => {
+      queryState.data = expense;
+      historyState.data = history;
+      const { router } = await renderWithRouter(<ExpenseDetailPage />, {
+        initialEntry: `/expenses/expense-1${search}`,
+        routePattern: '/expenses/$id',
+        params: { id: 'expense-1' },
+      });
+
+      fireEvent.click(
+        screen.getByRole('button', { name: 'expenses.detail.back' }),
+      );
+
+      await waitFor(() => {
+        expect(router.state.location.pathname).toBe('/expenses');
+        expect(router.state.location.search).toEqual(expected);
+      });
+    },
+  );
+
+  it.each(['loading', 'error'] as const)(
+    'uses overdue return context from the %s state',
+    async (state) => {
+      queryState.isLoading = state === 'loading';
+      queryState.isError = state === 'error';
+      const { router } = await renderWithRouter(<ExpenseDetailPage />, {
+        initialEntry:
+          '/expenses/expense-1?return_attention=overdue&return_scope=company',
+        routePattern: '/expenses/$id',
+        params: { id: 'expense-1' },
+      });
+
+      fireEvent.click(
+        screen.getByRole('button', { name: 'expenses.detail.back' }),
+      );
+
+      await waitFor(() => {
+        expect(router.state.location.pathname).toBe('/expenses');
+        expect(router.state.location.search).toEqual({
+          attention: 'overdue',
+          scope: 'company',
+        });
+      });
+    },
+  );
 
   it('shows payment-history loading and retry states', async () => {
     queryState.data = expense;
@@ -364,6 +449,327 @@ describe('ExpenseDetailPage', () => {
     expect(
       screen.queryByRole('button', { name: 'common.edit' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('consumes an initial pay-remaining intent once in React StrictMode', async () => {
+    const freshExpense = { ...expense, remaining_amount: '90432.12' };
+    let resolveRefresh!: (value: unknown) => void;
+    const refresh = new Promise((resolve) => {
+      resolveRefresh = resolve;
+    });
+    queryState.data = expense;
+    historyState.data = history;
+    historyState.refetch.mockReturnValue(refresh);
+
+    const { router } = await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry:
+        '/expenses/expense-1?tab=payments&action=pay_remaining&return_attention=overdue&return_scope=company',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+      reactStrictMode: true,
+    });
+
+    await waitFor(() => {
+      expect(historyState.refetch).toHaveBeenCalledOnce();
+      expect(historyState.refetch.mock.calls[0]).toEqual([]);
+      expect(router.state.location.search).toEqual({
+        tab: 'payments',
+        return_attention: 'overdue',
+        return_scope: 'company',
+      });
+    });
+    expect(router.history.canGoBack()).toBe(false);
+    expect(screen.getByLabelText('expenses.payments.amount')).toBeDisabled();
+    expect(queryState.refetch).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveRefresh({
+        isSuccess: true,
+        data: { ...history, expense: freshExpense },
+      });
+      await refresh;
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('expenses.payments.amount')).toHaveValue(
+        '90432.12',
+      );
+      expect(
+        screen.getByLabelText('expenses.payments.amount'),
+      ).not.toBeDisabled();
+    });
+    expect(historyState.refetch).toHaveBeenCalledOnce();
+  });
+
+  it('runs later and repeated pay-remaining intents on the same mounted route', async () => {
+    const firstFreshExpense = {
+      ...expense,
+      remaining_amount: '90432.12',
+      version: 2,
+    };
+    const secondFreshExpense = {
+      ...expense,
+      remaining_amount: '80000.00',
+      version: 3,
+    };
+    let resolveFirstRefresh!: (value: unknown) => void;
+    const firstRefresh = new Promise((resolve) => {
+      resolveFirstRefresh = resolve;
+    });
+    queryState.data = expense;
+    historyState.data = history;
+    historyState.refetch
+      .mockReturnValueOnce(firstRefresh)
+      .mockResolvedValueOnce({
+        isSuccess: true,
+        data: { ...history, expense: secondFreshExpense },
+      });
+
+    const { router } = await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1?tab=payments',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+
+    await act(async () => {
+      await router.navigate({
+        href: '/expenses/expense-1?tab=payments&action=pay_remaining',
+      });
+    });
+
+    expect(screen.getByLabelText('expenses.payments.amount')).toBeDisabled();
+    await waitFor(() => {
+      expect(historyState.refetch).toHaveBeenCalledOnce();
+      expect(historyState.refetch).toHaveBeenLastCalledWith();
+      expect(router.state.location.search).toEqual({ tab: 'payments' });
+    });
+    expect(queryState.refetch).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveFirstRefresh({
+        isSuccess: true,
+        data: { ...history, expense: firstFreshExpense },
+      });
+      await firstRefresh;
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText('expenses.payments.amount')).toHaveValue(
+        '90432.12',
+      );
+      expect(
+        screen.getByLabelText('expenses.payments.amount'),
+      ).not.toBeDisabled();
+    });
+
+    await act(async () => {
+      await router.navigate({
+        href: '/expenses/expense-1?tab=payments&action=pay_remaining',
+      });
+    });
+
+    await waitFor(() => {
+      expect(historyState.refetch).toHaveBeenCalledTimes(2);
+      expect(screen.getByLabelText('expenses.payments.amount')).toHaveValue(
+        '80000.00',
+      );
+      expect(router.state.location.search).toEqual({ tab: 'payments' });
+    });
+    expect(queryState.refetch).not.toHaveBeenCalled();
+  });
+
+  it('ignores an older deferred response after expense-id/action navigation', async () => {
+    const expenseTwo = {
+      ...expense,
+      id: 'expense-2',
+      title: 'Vehicle fuel',
+      remaining_amount: '700.00',
+    };
+    const historyTwo = { ...history, expense: expenseTwo, payments: [] };
+    const refreshes = new Map<string, ReturnType<typeof vi.fn>>();
+    let resolveExpenseOne!: (value: unknown) => void;
+    const expenseOneRefresh = new Promise((resolve) => {
+      resolveExpenseOne = resolve;
+    });
+    let resolveExpenseTwo!: (value: unknown) => void;
+    const expenseTwoRefresh = new Promise((resolve) => {
+      resolveExpenseTwo = resolve;
+    });
+    refreshes.set('expense-1', vi.fn().mockReturnValue(expenseOneRefresh));
+    refreshes.set('expense-2', vi.fn().mockReturnValue(expenseTwoRefresh));
+    expenseHooks.useExpense.mockImplementation((expenseId?: string) => ({
+      ...queryState,
+      data: expenseId === 'expense-2' ? expenseTwo : expense,
+    }));
+    expenseHooks.useExpenseHistory.mockImplementation((expenseId?: string) => ({
+      ...historyState,
+      data: expenseId === 'expense-2' ? historyTwo : history,
+      refetch: refreshes.get(expenseId ?? ''),
+    }));
+
+    const { router } = await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1?tab=payments&action=pay_remaining',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+    await waitFor(() => {
+      expect(refreshes.get('expense-1')).toHaveBeenCalledOnce();
+      expect(router.state.location.search).toEqual({ tab: 'payments' });
+    });
+
+    await act(async () => {
+      await router.navigate({
+        href: '/expenses/expense-2?tab=payments&action=pay_remaining',
+      });
+    });
+    await waitFor(() => {
+      expect(refreshes.get('expense-2')).toHaveBeenCalledOnce();
+      expect(screen.getByLabelText('expenses.payments.amount')).toBeDisabled();
+      expect(router.state.location.search).toEqual({ tab: 'payments' });
+    });
+    expect(expenseHooks.useExpense).toHaveBeenLastCalledWith('expense-2');
+    expect(expenseHooks.useExpenseHistory).toHaveBeenLastCalledWith(
+      'expense-2',
+    );
+
+    await act(async () => {
+      resolveExpenseOne({
+        isSuccess: true,
+        data: { ...history, expense: { ...expense, remaining_amount: '1.00' } },
+      });
+      await expenseOneRefresh;
+    });
+    expect(screen.getByLabelText('expenses.payments.amount')).toHaveValue('');
+    expect(screen.getByLabelText('expenses.payments.amount')).toBeDisabled();
+
+    await act(async () => {
+      resolveExpenseTwo({ isSuccess: true, data: historyTwo });
+      await expenseTwoRefresh;
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText('expenses.payments.amount')).toHaveValue(
+        '700.00',
+      );
+      expect(
+        screen.getByLabelText('expenses.payments.amount'),
+      ).not.toBeDisabled();
+    });
+  });
+
+  it('clears shortcut pending without overwriting input when history refresh rejects', async () => {
+    queryState.data = expense;
+    historyState.data = history;
+    historyState.refetch.mockRejectedValue(new Error('history unavailable'));
+
+    const { router } = await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1?tab=payments',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+    fireEvent.change(screen.getByLabelText('expenses.payments.amount'), {
+      target: { value: '321.00' },
+    });
+
+    await act(async () => {
+      await router.navigate({
+        href: '/expenses/expense-1?tab=payments&action=pay_remaining',
+      });
+    });
+
+    await waitFor(() => {
+      expect(historyState.refetch).toHaveBeenCalledOnce();
+      expect(
+        screen.getByLabelText('expenses.payments.amount'),
+      ).not.toBeDisabled();
+      expect(router.state.location.search).toEqual({ tab: 'payments' });
+    });
+    expect(screen.getByLabelText('expenses.payments.amount')).toHaveValue(
+      '321.00',
+    );
+    expect(queryState.refetch).not.toHaveBeenCalled();
+  });
+
+  it.each(['planned', 'paid', 'cancelled'] as const)(
+    'does not prefill after an authoritative %s result',
+    async (status) => {
+      const freshExpense = {
+        ...expense,
+        status,
+        remaining_amount: '123.45',
+      };
+      queryState.data = expense;
+      historyState.data = history;
+      historyState.refetch.mockResolvedValue({
+        isSuccess: true,
+        data: { ...history, expense: freshExpense },
+      });
+
+      await renderWithRouter(<ExpenseDetailPage />, {
+        initialEntry: '/expenses/expense-1?tab=payments&action=pay_remaining',
+        routePattern: '/expenses/$id',
+        params: { id: 'expense-1' },
+      });
+
+      await waitFor(() =>
+        expect(
+          screen.getByLabelText('expenses.payments.amount'),
+        ).not.toBeDisabled(),
+      );
+      expect(screen.getByLabelText('expenses.payments.amount')).toHaveValue('');
+    },
+  );
+
+  it('preserves user edits across cache rerenders after consuming an intent', async () => {
+    const freshExpense = { ...expense, remaining_amount: '90432.12' };
+    queryState.data = expense;
+    historyState.data = history;
+    historyState.refetch.mockResolvedValue({
+      isSuccess: true,
+      data: { ...history, expense: freshExpense },
+    });
+
+    const rendered = await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1?tab=payments&action=pay_remaining',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+    await waitFor(() =>
+      expect(screen.getByLabelText('expenses.payments.amount')).toHaveValue(
+        '90432.12',
+      ),
+    );
+    fireEvent.change(screen.getByLabelText('expenses.payments.amount'), {
+      target: { value: '80000.00' },
+    });
+    historyState.data = {
+      ...history,
+      expense: { ...freshExpense, remaining_amount: '70000.00', version: 3 },
+    };
+    rendered.rerender(<ExpenseDetailPage />);
+
+    expect(screen.getByLabelText('expenses.payments.amount')).toHaveValue(
+      '80000.00',
+    );
+    expect(historyState.refetch).toHaveBeenCalledOnce();
+  });
+
+  it('removes a crafted manager action without refreshing or exposing payments', async () => {
+    permissionState.canManageFinance = false;
+    queryState.data = expense;
+    historyState.data = history;
+
+    const { router } = await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1?tab=payments&action=pay_remaining',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+
+    expect(screen.queryByText('expenses.payments.title')).toBeNull();
+    expect(screen.queryByLabelText('expenses.payments.amount')).toBeNull();
+    expect(queryState.refetch).not.toHaveBeenCalled();
+    expect(historyState.refetch).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(router.state.location.search).toEqual({ tab: 'payments' }),
+    );
   });
 
   it('shows an error state with retry without mounting data', async () => {

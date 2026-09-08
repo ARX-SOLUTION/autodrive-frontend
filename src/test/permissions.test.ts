@@ -12,7 +12,11 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
   it('dev and owner have every capability (dev ⊇ owner)', () => {
     for (const cap of ALL_CAPS) {
       expect(roleCan('owner', cap)).toBe(true);
-      if (cap === 'viewExpenses' || cap === 'manageCompanyFinance') {
+      if (
+        cap === 'viewExpenses' ||
+        cap === 'manageCompanyFinance' ||
+        cap === 'navigateExpenseOverdueSweep'
+      ) {
         expect(roleCan('dev', cap)).toBe(false);
       } else {
         expect(roleCan('dev', cap)).toBe(true);
@@ -48,6 +52,15 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
     expect(roleCan('accountant', 'accessOperations')).toBe(false);
     expect(roleCan('accountant', 'viewDashboard')).toBe(false);
     expect(roleCan('accountant', 'recordPayment')).toBe(false);
+  });
+
+  it('pins overdue sweep keyboard navigation to owner and manager only', () => {
+    expect(roleCan('owner', 'navigateExpenseOverdueSweep')).toBe(true);
+    expect(roleCan('manager', 'navigateExpenseOverdueSweep')).toBe(true);
+    expect(roleCan('accountant', 'navigateExpenseOverdueSweep')).toBe(false);
+    expect(roleCan('dev', 'navigateExpenseOverdueSweep')).toBe(false);
+    expect(roleCan('operator', 'navigateExpenseOverdueSweep')).toBe(false);
+    expect(roleCan('teacher', 'navigateExpenseOverdueSweep')).toBe(false);
   });
 
   it('owner/accountant receive finance controls and managers receive read-only expense access', () => {

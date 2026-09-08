@@ -789,6 +789,32 @@
     "cancelled": "Xarajat muvaffaqiyatli bekor qilindi",
     "deleted": "Xarajat muvaffaqiyatli o'chirildi",
     "currency": "so'm",
+    "daily_brief": {
+      "title": "Xarajatlar bo‘yicha kunlik qisqa hisobot",
+      "description": "Bugun tez ko‘rib chiqish kerak bo‘lgan to‘lov majburiyatlari.",
+      "dismiss": "Bugungi kunlik qisqa hisobotni yashirish",
+      "loading": "Kunlik xarajatlar hisoboti yuklanmoqda",
+      "due": "Yaqinda to‘lanadi",
+      "overdue": "Muddati o‘tgan",
+      "overdue_filter": "Faqat muddati o‘tgan",
+      "newly_created": "Kecha yaratilgan",
+      "pending": "Kutilayotgan",
+      "no_attention": "Bugun e’tibor talab qiladigan xarajat majburiyatlari yo‘q.",
+      "view_overdue": "Muddati o‘tganlarni ko‘rish",
+      "view_all": "Barcha xarajatlar",
+      "load_error": "Kunlik xarajatlar hisobotini yuklab bo‘lmadi"
+    },
+    "overdue_sweep": {
+      "title": "Muddati o‘tgan xarajatlar ko‘rigi",
+      "bucket_1_7": "1–7 kun muddati o‘tgan",
+      "bucket_8_30": "8–30 kun muddati o‘tgan",
+      "bucket_31_plus": "31+ kun muddati o‘tgan",
+      "overdue_days": "Kechikkan kunlar",
+      "shortcut_help": "— keyingi muddati o‘tgan xarajatga fokuslash uchun bosing.",
+      "empty": "Muddati o‘tgan xarajatlar yo‘q",
+      "empty_desc": "Tanlangan filtrlar bo‘yicha muddati o‘tgan to‘lov majburiyatlari yo‘q.",
+      "load_error": "Muddati o‘tgan xarajatlarni yuklab bo‘lmadi"
+    },
     "table": {
       "date": "Sana",
       "title": "Nomi",

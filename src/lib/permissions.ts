@@ -9,6 +9,7 @@ import type { UserRole } from '@/types/user';
  * `dev` is a superset of `owner` for operational capabilities. Finance is an
  * explicit exception: direct dev sessions never receive company-finance
  * capabilities; an effective impersonated owner is checked as `owner`.
+ * Narrow workflow capabilities may also deliberately use their own role set.
  */
 export type Capability =
   | 'accessOperations'
@@ -26,6 +27,7 @@ export type Capability =
   | 'viewAudit'
   | 'viewDashboard'
   | 'viewExpenses'
+  | 'navigateExpenseOverdueSweep'
   | 'manageCompanyFinance'
   | 'viewDeleted';
 
@@ -72,6 +74,7 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   // sessions are denied by the backend; an impersonated owner is evaluated
   // with the effective owner role instead.
   viewExpenses: ['owner', 'accountant', 'manager'],
+  navigateExpenseOverdueSweep: ['owner', 'manager'],
   manageCompanyFinance: ['owner', 'accountant'],
   // autodrive-cg9: "show deleted" toggle + restore action on the students/
   // groups/users/branches list pages. No existing capability means this --

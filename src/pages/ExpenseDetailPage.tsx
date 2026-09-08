@@ -1,5 +1,5 @@
-import { useNavigate, useParams } from '@tanstack/react-router';
-import { useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
@@ -56,9 +56,10 @@ const canonicalPaymentAmount = (value: string): string | null => {
 
 const ExpenseDetailPage = () => {
   const { id } = useParams({ strict: false });
+  const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { searchParams } = useUrlParams();
+  const { searchParams, setSearchParams } = useUrlParams();
   const canViewExpenses = useCan('viewExpenses');
   const canManageFinance = useCan('manageCompanyFinance');
   const authUser = useAuthStore((state) => state.user);
@@ -66,12 +67,22 @@ const ExpenseDetailPage = () => {
   const expenseQuery = useExpense(id);
   const historyQuery = useExpenseHistory(id);
   const branchOptionsQuery = useExpenseBranchOptions();
-  const [amount, setAmount] = useState('');
+  const payRemainingConsumedFor = useRef<string | null>(null);
+  const payRemainingRequestGeneration = useRef(0);
+  const currentExpenseId = useRef(id);
+  const [amountState, setAmountState] = useState({ expenseId: id, value: '' });
+  const amount = amountState.expenseId === id ? amountState.value : '';
   const [method, setMethod] = useState<ExpensePaymentMethod>('naqd');
   const [date, setDate] = useState('');
   const [note, setNote] = useState('');
   const [conflict, setConflict] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [payRemainingRefresh, setPayRemainingRefresh] = useState({
+    expenseId: id,
+    pending: searchParams.get('action') === 'pay_remaining' && canManageFinance,
+  });
+  const payRemainingRefreshPending =
+    payRemainingRefresh.expenseId === id && payRemainingRefresh.pending;
   const [editOpen, setEditOpen] = useState(false);
   const [lifecycleAction, setLifecycleAction] =
     useState<ExpenseLifecycleAction | null>(null);
@@ -87,6 +98,112 @@ const ExpenseDetailPage = () => {
   const isNotFound =
     (expenseQuery.error as { response?: { status?: number } } | null)?.response
       ?.status === 404;
+  const hasPayRemainingIntent = searchParams.get('action') === 'pay_remaining';
+  const backToExpenses = () => {
+    const returnAttentionValues = searchParams.getAll('return_attention');
+    const returnAttention =
+      returnAttentionValues.length === 1 &&
+      returnAttentionValues[0] === 'overdue'
+        ? ('overdue' as const)
+        : undefined;
+    const returnBranchValues = searchParams.getAll('return_branch_id');
+    const rawReturnBranchId =
+      returnBranchValues.length === 1 ? returnBranchValues[0] : undefined;
+    const returnBranchId =
+      returnAttention &&
+      rawReturnBranchId &&
+      rawReturnBranchId.trim() === rawReturnBranchId
+        ? rawReturnBranchId
+        : undefined;
+    const returnScopeValues = searchParams.getAll('return_scope');
+
+    return navigate({
+      to: '/expenses',
+      search: {
+        attention: returnAttention,
+        branch_id: returnBranchId,
+        scope:
+          returnAttention &&
+          !returnBranchId &&
+          returnScopeValues.length === 1 &&
+          returnScopeValues[0] === 'company'
+            ? ('company' as const)
+            : undefined,
+      },
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (currentExpenseId.current !== id) {
+      currentExpenseId.current = id;
+      payRemainingRequestGeneration.current += 1;
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (!hasPayRemainingIntent) {
+      payRemainingConsumedFor.current = null;
+      return;
+    }
+
+    const expenseId = id ?? '';
+    if (
+      location.pathname !== `/expenses/${encodeURIComponent(expenseId)}` ||
+      payRemainingConsumedFor.current === expenseId
+    ) {
+      return;
+    }
+    payRemainingConsumedFor.current = expenseId;
+    const requestGeneration = ++payRemainingRequestGeneration.current;
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.set('tab', 'payments');
+        next.delete('action');
+        return next;
+      },
+      { replace: true },
+    );
+    setPayRemainingRefresh({
+      expenseId,
+      pending: canManageFinance,
+    });
+    if (!canManageFinance) return;
+
+    void historyQuery
+      .refetch()
+      .then((historyResult) => {
+        if (
+          requestGeneration !== payRemainingRequestGeneration.current ||
+          currentExpenseId.current !== expenseId ||
+          !historyResult.isSuccess ||
+          historyResult.data.expense.id !== expenseId
+        ) {
+          return;
+        }
+        if (historyResult.data.expense.status === 'partially_paid') {
+          setAmountState({
+            expenseId,
+            value: historyResult.data.expense.remaining_amount,
+          });
+        }
+      })
+      .catch(() => {
+        // Keep the current form value when the authoritative refresh fails.
+      })
+      .finally(() => {
+        if (requestGeneration === payRemainingRequestGeneration.current) {
+          setPayRemainingRefresh({ expenseId, pending: false });
+        }
+      });
+  }, [
+    canManageFinance,
+    hasPayRemainingIntent,
+    historyQuery,
+    id,
+    location.pathname,
+    setSearchParams,
+  ]);
 
   if (!canViewExpenses) {
     return (
@@ -102,7 +219,7 @@ const ExpenseDetailPage = () => {
   if (expenseQuery.isLoading) {
     return (
       <EntityDetailShell
-        onBack={() => navigate({ to: '/expenses' })}
+        onBack={backToExpenses}
         backLabel={t('expenses.detail.back')}
         isLoading
         isError={false}
@@ -113,7 +230,7 @@ const ExpenseDetailPage = () => {
   if (expenseQuery.isError) {
     return (
       <EntityDetailShell
-        onBack={() => navigate({ to: '/expenses' })}
+        onBack={backToExpenses}
         backLabel={t('expenses.detail.back')}
         isLoading={false}
         isError
@@ -130,7 +247,8 @@ const ExpenseDetailPage = () => {
 
   const canViewPaymentHistory = canManageFinance;
   const initialTab =
-    searchParams.get('tab') === 'payments' && canViewPaymentHistory
+    (searchParams.get('tab') === 'payments' || hasPayRemainingIntent) &&
+    canViewPaymentHistory
       ? 'payments'
       : 'info';
   const serverExpense = canViewPaymentHistory
@@ -139,7 +257,7 @@ const ExpenseDetailPage = () => {
   if (!serverExpense) {
     return (
       <EntityDetailShell
-        onBack={() => navigate({ to: '/expenses' })}
+        onBack={backToExpenses}
         backLabel={t('expenses.detail.back')}
         isLoading={false}
         isError
@@ -169,6 +287,10 @@ const ExpenseDetailPage = () => {
   const paidDeleteLocked =
     canManageFinance && serverExpense.paid_amount !== '0.00';
   const lifecyclePending = cancelMutation.isPending || deleteMutation.isPending;
+  const paymentControlsDisabled =
+    paymentMutation.isPending ||
+    payRemainingRefreshPending ||
+    (hasPayRemainingIntent && canManageFinance);
 
   const openLifecycleDialog = (action: ExpenseLifecycleAction) => {
     setLifecycleConflict(false);
@@ -192,7 +314,7 @@ const ExpenseDetailPage = () => {
       setLifecycleAction(null);
       if (lifecycleAction === 'delete') {
         toast.success(t('expenses.deleted'));
-        void navigate({ to: '/expenses' });
+        void backToExpenses();
         return;
       }
       toast.success(t('expenses.cancelled'));
@@ -218,7 +340,7 @@ const ExpenseDetailPage = () => {
 
   return (
     <EntityDetailShell
-      onBack={() => navigate({ to: '/expenses' })}
+      onBack={backToExpenses}
       backLabel={t('expenses.detail.back')}
       isLoading={false}
       isError={false}
@@ -290,7 +412,11 @@ const ExpenseDetailPage = () => {
         </div>
       }
     >
-      <Tabs defaultValue={initialTab} className="space-y-4">
+      <Tabs
+        key={`${id}-${initialTab}`}
+        defaultValue={initialTab}
+        className="space-y-4"
+      >
         <TabsList>
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
           {canViewPaymentHistory && (
@@ -448,7 +574,7 @@ const ExpenseDetailPage = () => {
                         },
                         {
                           onSuccess: () => {
-                            setAmount('');
+                            setAmountState({ expenseId: id, value: '' });
                             setDate('');
                             setNote('');
                             paymentAttempt.current = null;
@@ -472,9 +598,11 @@ const ExpenseDetailPage = () => {
                     <Input
                       aria-label={t('expenses.payments.amount')}
                       value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
+                      onChange={(e) =>
+                        setAmountState({ expenseId: id, value: e.target.value })
+                      }
                       placeholder="0.00"
-                      disabled={paymentMutation.isPending}
+                      disabled={paymentControlsDisabled}
                       required
                     />
                     <select
@@ -483,7 +611,7 @@ const ExpenseDetailPage = () => {
                       onChange={(e) =>
                         setMethod(e.target.value as ExpensePaymentMethod)
                       }
-                      disabled={paymentMutation.isPending}
+                      disabled={paymentControlsDisabled}
                       className="rounded-md border border-border bg-secondary px-3 text-sm"
                     >
                       <option value="naqd">
@@ -501,16 +629,16 @@ const ExpenseDetailPage = () => {
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      disabled={paymentMutation.isPending}
+                      disabled={paymentControlsDisabled}
                       required
                     />
                     <Input
                       aria-label={t('expenses.payments.note')}
                       value={note}
                       onChange={(e) => setNote(e.target.value)}
-                      disabled={paymentMutation.isPending}
+                      disabled={paymentControlsDisabled}
                     />
-                    <Button type="submit" disabled={paymentMutation.isPending}>
+                    <Button type="submit" disabled={paymentControlsDisabled}>
                       {paymentMutation.isPending
                         ? t('expenses.payments.saving')
                         : t('expenses.payments.submit')}

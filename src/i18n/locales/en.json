@@ -789,6 +789,32 @@
     "cancelled": "Expense cancelled successfully",
     "deleted": "Expense deleted successfully",
     "currency": "UZS",
+    "daily_brief": {
+      "title": "Daily expense brief",
+      "description": "Payment obligations that need a quick review today.",
+      "dismiss": "Dismiss today’s daily brief",
+      "loading": "Loading the daily expense brief",
+      "due": "Due soon",
+      "overdue": "Overdue",
+      "overdue_filter": "Overdue only",
+      "newly_created": "Created yesterday",
+      "pending": "Pending",
+      "no_attention": "No expense obligations need attention today.",
+      "view_overdue": "View overdue",
+      "view_all": "View all expenses",
+      "load_error": "Unable to load the daily expense brief"
+    },
+    "overdue_sweep": {
+      "title": "Overdue expense sweep",
+      "bucket_1_7": "1–7 days overdue",
+      "bucket_8_30": "8–30 days overdue",
+      "bucket_31_plus": "31+ days overdue",
+      "overdue_days": "Days overdue",
+      "shortcut_help": "— press to focus the next overdue expense.",
+      "empty": "No overdue expenses",
+      "empty_desc": "There are no overdue payment obligations for these filters.",
+      "load_error": "Unable to load overdue expenses"
+    },
     "table": {
       "date": "Date",
       "title": "Title",

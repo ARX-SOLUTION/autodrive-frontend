@@ -1,3 +1,4 @@
+import type { Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,12 +22,14 @@ interface ExpensesFilterBarProps {
   categoryFilter: string;
   onCategoryFilterChange: (value: string) => void;
   statusFilter: string;
+  attentionFilter?: 'overdue';
   onStatusFilterChange: (value: string) => void;
   dateFrom: Date | undefined;
   dateTo: Date | undefined;
   onDateRangeChange: (from: Date | undefined, to: Date | undefined) => void;
   hasAnyFilter: boolean;
   onClearAll: () => void;
+  headingRef?: Ref<HTMLHeadingElement>;
 }
 
 export const ExpensesFilterBar = ({
@@ -38,21 +41,34 @@ export const ExpensesFilterBar = ({
   categoryFilter,
   onCategoryFilterChange,
   statusFilter,
+  attentionFilter,
   onStatusFilterChange,
   dateFrom,
   dateTo,
   onDateRangeChange,
   hasAnyFilter,
   onClearAll,
+  headingRef,
 }: ExpensesFilterBarProps) => {
   const { t } = useTranslation();
 
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground text-balance">
-          {t('expenses.list_title')}
-        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2
+            ref={headingRef}
+            tabIndex={-1}
+            className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground text-balance"
+          >
+            {t('expenses.list_title')}
+          </h2>
+          {attentionFilter === 'overdue' && (
+            <span className="rounded-full border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+              {t('expenses.daily_brief.overdue_filter')}
+            </span>
+          )}
+        </div>
         {hasAnyFilter && (
           <Button
             variant="ghost"
