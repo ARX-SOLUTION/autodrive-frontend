@@ -10,4 +10,4 @@ Skills that consume domain context (`improve-codebase-architecture`, `diagnose`,
    - `autodrive-backend` — NestJS API backend
    - `autodrive-admin-panel` — platform admin React UI
 
-If the repo grows multiple domain contexts in the future, create `CONTEXT-MAP.md` at root pointing to per-context files.
+If the repo grows multiple domain contexts, add an explicit root-level context map pointing to the focused files.
