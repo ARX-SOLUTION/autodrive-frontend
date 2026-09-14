@@ -789,6 +789,18 @@
     "cancelled": "Xarajat muvaffaqiyatli bekor qilindi",
     "deleted": "Xarajat muvaffaqiyatli o'chirildi",
     "currency": "so'm",
+    "month_close": {
+      "action": "Oy yopish CSV fayli",
+      "title": "Oy yopish CSV faylini yuklash",
+      "description": "Tanlangan kalendar oy uchun xarajat yozuvlarini yuklang.",
+      "month": "Xarajat oyi",
+      "branch": "Filial",
+      "all_branches": "Barcha ruxsat etilgan filiallar",
+      "submit": "CSV yuklash",
+      "downloading": "Yuklanmoqda...",
+      "success": "Oy yopish CSV fayli yuklandi",
+      "error": "Oy yopish CSV faylini yuklab bo‘lmadi"
+    },
     "daily_brief": {
       "title": "Xarajatlar bo‘yicha kunlik qisqa hisobot",
       "description": "Bugun tez ko‘rib chiqish kerak bo‘lgan to‘lov majburiyatlari.",

@@ -72,6 +72,11 @@ export interface ExpenseBranchOption {
   name: string;
 }
 
+export interface ExpenseMonthCloseCsvFilters {
+  month: string;
+  branchId?: string;
+}
+
 export interface ExpenseListFilters {
   branchId?: string;
   scope?: 'company';

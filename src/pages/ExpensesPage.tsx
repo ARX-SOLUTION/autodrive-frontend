@@ -32,6 +32,7 @@ import { ExpensesFilterBar } from './expenses/ExpensesFilterBar';
 import { ExpenseOverdueSweep } from './expenses/ExpenseOverdueSweep';
 import { ExpensesTable } from './expenses/ExpensesTable';
 import { ExpenseFormDialog } from './expenses/ExpenseFormDialog';
+import { ExpenseMonthCloseDialog } from './expenses/ExpenseMonthCloseDialog';
 import type {
   ExpenseCategory,
   ExpenseListFilters,
@@ -424,6 +425,7 @@ const ExpensesPage = () => {
   );
   const { data: branches = [] } = useExpenseBranchOptions();
   const [formOpen, setFormOpen] = useState(false);
+  const [monthCloseOpen, setMonthCloseOpen] = useState(false);
 
   const hasAnyFilter =
     (!isManager && branchFilter !== 'all') ||
@@ -495,9 +497,21 @@ const ExpensesPage = () => {
         description={t('expenses.subtitle')}
         icon={<Wallet className="h-3.5 w-3.5" aria-hidden="true" />}
         actions={
-          <Button className="gap-2" onClick={() => setFormOpen(true)}>
-            <Plus className="h-4 w-4" aria-hidden="true" /> {t('expenses.add')}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {canManageFinance && (
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => setMonthCloseOpen(true)}
+              >
+                {t('expenses.month_close.action')}
+              </Button>
+            )}
+            <Button className="gap-2" onClick={() => setFormOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden="true" />{' '}
+              {t('expenses.add')}
+            </Button>
+          </div>
         }
       />
 
@@ -581,6 +595,13 @@ const ExpensesPage = () => {
         branches={isManager ? [] : branches}
         onClose={() => setFormOpen(false)}
       />
+      {canManageFinance && monthCloseOpen && (
+        <ExpenseMonthCloseDialog
+          open={monthCloseOpen}
+          branches={branches}
+          onClose={() => setMonthCloseOpen(false)}
+        />
+      )}
     </div>
   );
 };

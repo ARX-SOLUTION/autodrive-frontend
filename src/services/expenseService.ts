@@ -23,6 +23,7 @@ import type {
   ExpenseHistory,
   ExpensePayment,
   ExpenseBranchOption,
+  ExpenseMonthCloseCsvFilters,
   ExpenseCategory,
   ExpenseListFilters,
   ExpenseStatus,
@@ -82,6 +83,28 @@ const invalidateExpenseQueries = (
   queryClient.invalidateQueries({
     queryKey: dashboardKeys.financeSummary(),
   });
+};
+
+export const fetchExpenseMonthCloseCsv = async (
+  filters: ExpenseMonthCloseCsvFilters,
+) => {
+  const response = await axiosInstance.get<Blob>('/expenses/month-close.csv', {
+    params: {
+      month: filters.month,
+      ...(filters.branchId ? { branch_id: filters.branchId } : {}),
+    },
+    responseType: 'blob',
+  });
+  const getHeader = response.headers.get;
+  const contentDisposition =
+    typeof getHeader === 'function'
+      ? getHeader.call(response.headers, 'content-disposition')
+      : response.headers['content-disposition'];
+  return {
+    blob: response.data,
+    contentDisposition:
+      typeof contentDisposition === 'string' ? contentDisposition : undefined,
+  };
 };
 
 export const fetchExpensesPage = async (
