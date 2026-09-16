@@ -41,11 +41,19 @@ export const ExpenseMonthCloseDialog = ({
   const areBranchesResolved = !isBranchesLoading && !isBranchesError;
   const requestControllerRef = useRef<AbortController | null>(null);
   const isDownloadingRef = useRef(false);
+  const isSelectedBranchAllowed =
+    !branchId || branches.some((branch) => branch.id === branchId);
 
   useEffect(() => {
     if (!open) requestControllerRef.current?.abort();
     return () => requestControllerRef.current?.abort();
   }, [open]);
+
+  useEffect(() => {
+    if (areBranchesResolved && !isSelectedBranchAllowed) {
+      setBranchId('');
+    }
+  }, [areBranchesResolved, isSelectedBranchAllowed]);
 
   const handleClose = () => {
     requestControllerRef.current?.abort();
@@ -54,7 +62,13 @@ export const ExpenseMonthCloseDialog = ({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!month || !areBranchesResolved || isDownloadingRef.current) return;
+    if (
+      !month ||
+      !areBranchesResolved ||
+      !isSelectedBranchAllowed ||
+      isDownloadingRef.current
+    )
+      return;
 
     const controller = new AbortController();
     requestControllerRef.current = controller;
@@ -139,7 +153,11 @@ export const ExpenseMonthCloseDialog = ({
               id="expense-month-close-branch"
               value={branchId}
               onChange={(event) => setBranchId(event.target.value)}
-              disabled={isDownloading || !areBranchesResolved}
+              disabled={
+                isDownloading ||
+                !areBranchesResolved ||
+                !isSelectedBranchAllowed
+              }
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="">{t('expenses.month_close.all_branches')}</option>

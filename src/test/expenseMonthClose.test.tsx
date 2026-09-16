@@ -46,13 +46,21 @@ const monthCloseResponse = (
     headers: { get: vi.fn(() => contentDisposition) },
   }) as unknown as AxiosResponse<Blob>;
 
-const dialog = (open = true) => (
+const branchOptions = [
+  { id: 'branch-1', name: 'Chilonzor' },
+  { id: 'branch-2', name: 'Yunusobod' },
+];
+
+const dialog = ({
+  open = true,
+  branches = branchOptions,
+}: {
+  open?: boolean;
+  branches?: typeof branchOptions;
+} = {}) => (
   <ExpenseMonthCloseDialog
     open={open}
-    branches={[
-      { id: 'branch-1', name: 'Chilonzor' },
-      { id: 'branch-2', name: 'Yunusobod' },
-    ]}
+    branches={branches}
     isBranchesLoading={false}
     isBranchesError={false}
     onRetryBranches={vi.fn()}
@@ -188,7 +196,7 @@ describe('ExpenseMonthCloseDialog', () => {
     );
     const signal = vi.mocked(axiosInstance.get).mock.calls[0]?.[1]?.signal;
 
-    view.rerender(dialog(false));
+    view.rerender(dialog({ open: false }));
 
     await waitFor(() => expect(signal?.aborted).toBe(true));
     expect(mocks.error).not.toHaveBeenCalled();
@@ -226,6 +234,33 @@ describe('ExpenseMonthCloseDialog', () => {
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     resolveRequest(monthCloseResponse(new Blob(['csv'])));
     await waitFor(() => expect(mocks.success).toHaveBeenCalledTimes(1));
+  });
+
+  it('does not request a branch that disappears after a server refresh', async () => {
+    vi.mocked(axiosInstance.get).mockImplementation(
+      () => new Promise(() => undefined),
+    );
+    const view = await renderDialog();
+    fireEvent.change(screen.getByLabelText('expenses.month_close.month'), {
+      target: { value: '2026-08' },
+    });
+    fireEvent.change(screen.getByLabelText('expenses.month_close.branch'), {
+      target: { value: 'branch-2' },
+    });
+
+    view.rerender(dialog({ branches: [branchOptions[0]] }));
+    expect(screen.getByLabelText('expenses.month_close.branch')).toHaveValue(
+      '',
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.month_close.submit' }),
+    );
+
+    await waitFor(() => expect(axiosInstance.get).toHaveBeenCalled());
+    expect(axiosInstance.get).toHaveBeenCalledWith(
+      '/expenses/month-close.csv',
+      expect.objectContaining({ params: { month: '2026-08' } }),
+    );
   });
 
   it('revokes the object URL after the browser can consume the download', async () => {
