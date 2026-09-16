@@ -101,13 +101,14 @@ const paymentMethodLabels: Record<PaymentMethod, string> = {
 const paymentSchema = z.object({
   student_id: z.string().min(1, 'payments.validation.select_student'),
   amount: z.coerce
-    .number({ invalid_type_error: 'payments.validation.enter_amount' })
+    .number({ error: 'payments.validation.enter_amount' })
     .positive('payments.validation.amount_positive'),
   payment_method: z.enum(['naqd', 'karta', 'perechisleniya'], {
-    required_error: 'payments.validation.select_method',
+    error: 'payments.validation.select_method',
   }),
 });
 
+type PaymentFormInput = z.input<typeof paymentSchema>;
 type PaymentFormValues = z.infer<typeof paymentSchema>;
 
 const PaymentModal = ({
@@ -126,7 +127,7 @@ const PaymentModal = ({
 }: PaymentModalProps) => {
   const { t } = useTranslation();
   const isEdit = !!payment;
-  const form = useForm<PaymentFormValues>({
+  const form = useForm<PaymentFormInput, unknown, PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
       student_id: '',

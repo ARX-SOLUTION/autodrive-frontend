@@ -33,6 +33,9 @@ export const makeStudentFormSchema = (t: (key: string) => string) =>
 export type StudentFormValues = z.infer<
   ReturnType<typeof makeStudentFormSchema>
 >;
+export type StudentFormInput = z.input<
+  ReturnType<typeof makeStudentFormSchema>
+>;
 
 interface CreateStudentFormDefaults {
   courseType: CourseType;

@@ -42,13 +42,18 @@ const schema = z.object({
   // so map ''/null to undefined BEFORE coercion.
   score: z.preprocess(
     (v) => (v === '' || v == null ? undefined : v),
-    z.coerce.number().min(0).max(100).optional(),
+    z.coerce
+      .number()
+      .min(0, 'Number must be greater than or equal to 0')
+      .max(100, 'Number must be less than or equal to 100')
+      .optional(),
   ),
   passed: z.boolean(),
   notes: z.string().optional(),
   date: z.string().min(1, 'Date is required'),
 });
 
+type FormInput = z.input<typeof schema>;
 type FormValues = z.infer<typeof schema>;
 
 interface RecordExamModalProps {
@@ -73,7 +78,7 @@ export const RecordExamModal = ({
   // have used it anyway.
   const [defaultExamDate] = useState(() => partsToIso(nowTashkentParts()));
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       exam_type: 'THEORY',
@@ -175,7 +180,12 @@ export const RecordExamModal = ({
                     <Input
                       type="number"
                       {...field}
-                      value={field.value ?? ''}
+                      value={
+                        typeof field.value === 'string' ||
+                        typeof field.value === 'number'
+                          ? field.value
+                          : ''
+                      }
                       className="bg-secondary border-border"
                     />
                   </FormControl>
