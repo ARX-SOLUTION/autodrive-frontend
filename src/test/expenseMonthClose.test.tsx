@@ -54,14 +54,16 @@ const branchOptions = [
 const dialog = ({
   open = true,
   branches = branchOptions,
+  isBranchesPending = false,
 }: {
   open?: boolean;
   branches?: typeof branchOptions;
+  isBranchesPending?: boolean;
 } = {}) => (
   <ExpenseMonthCloseDialog
     open={open}
     branches={branches}
-    isBranchesLoading={false}
+    isBranchesPending={isBranchesPending}
     isBranchesError={false}
     onRetryBranches={vi.fn()}
     onClose={onClose}
@@ -102,9 +104,12 @@ describe('ExpenseMonthCloseDialog', () => {
         'attachment; filename="month-close-2026-08.csv"',
       ),
     );
+    const clickedDownloads: string[] = [];
     const click = vi
       .spyOn(HTMLAnchorElement.prototype, 'click')
-      .mockImplementation(() => {});
+      .mockImplementation(function (this: HTMLAnchorElement) {
+        clickedDownloads.push(this.download);
+      });
     await renderDialog();
 
     fireEvent.change(screen.getByLabelText('expenses.month_close.month'), {
@@ -118,8 +123,15 @@ describe('ExpenseMonthCloseDialog', () => {
     );
 
     await waitFor(() => expect(axiosInstance.get).toHaveBeenCalled());
+    expect(axiosInstance.get).toHaveBeenCalledWith(
+      '/expenses/month-close.csv',
+      expect.objectContaining({
+        params: { month: '2026-08', branch_id: 'branch-2' },
+      }),
+    );
     expect(createObjectUrl).toHaveBeenCalledWith(blob);
     expect(click).toHaveBeenCalled();
+    expect(clickedDownloads).toEqual(['month-close-2026-08.csv']);
     expect(onClose).toHaveBeenCalled();
     expect(mocks.success).toHaveBeenCalledWith('expenses.month_close.success');
   });
@@ -234,6 +246,26 @@ describe('ExpenseMonthCloseDialog', () => {
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
     resolveRequest(monthCloseResponse(new Blob(['csv'])));
     await waitFor(() => expect(mocks.success).toHaveBeenCalledTimes(1));
+  });
+
+  it('blocks export while initial branch options are pending without data', async () => {
+    await renderWithRouter(dialog({ branches: [], isBranchesPending: true }), {
+      initialEntry: '/expenses',
+      routePattern: '/expenses',
+    });
+    fireEvent.change(screen.getByLabelText('expenses.month_close.month'), {
+      target: { value: '2026-08' },
+    });
+    const submit = screen.getByRole('button', {
+      name: 'expenses.month_close.submit',
+    });
+    const form = submit.closest('form');
+
+    expect(submit).toBeDisabled();
+    expect(form).not.toBeNull();
+    fireEvent.submit(form!);
+
+    expect(axiosInstance.get).not.toHaveBeenCalled();
   });
 
   it('clears a removed branch from the UI and excludes it from the request', async () => {

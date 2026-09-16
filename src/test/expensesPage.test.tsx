@@ -144,10 +144,11 @@ describe('ExpensesPage', () => {
     },
   );
 
-  it('blocks export while branch options are loading', async () => {
+  it('blocks export while initial branch options are pending without data', async () => {
     useExpenseBranchOptionsMock.mockReturnValue({
       data: undefined,
-      isLoading: true,
+      isLoading: false,
+      isPending: true,
       isError: false,
       refetch: vi.fn(),
     });

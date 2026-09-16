@@ -425,7 +425,7 @@ const ExpensesPage = () => {
   );
   const {
     data: branches = [],
-    isLoading: isBranchesLoading,
+    isPending: isBranchesPending,
     isError: isBranchesError,
     refetch: refetchBranches,
   } = useExpenseBranchOptions();
@@ -604,7 +604,7 @@ const ExpensesPage = () => {
         <ExpenseMonthCloseDialog
           open={monthCloseOpen}
           branches={branches}
-          isBranchesLoading={isBranchesLoading}
+          isBranchesPending={isBranchesPending}
           isBranchesError={isBranchesError}
           onRetryBranches={() => void refetchBranches()}
           onClose={() => setMonthCloseOpen(false)}

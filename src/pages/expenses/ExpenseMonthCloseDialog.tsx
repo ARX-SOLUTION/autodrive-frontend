@@ -20,7 +20,7 @@ import type { ExpenseBranchOption } from '@/types/expense';
 interface ExpenseMonthCloseDialogProps {
   open: boolean;
   branches: ExpenseBranchOption[];
-  isBranchesLoading: boolean;
+  isBranchesPending: boolean;
   isBranchesError: boolean;
   onRetryBranches: () => void;
   onClose: () => void;
@@ -29,7 +29,7 @@ interface ExpenseMonthCloseDialogProps {
 export const ExpenseMonthCloseDialog = ({
   open,
   branches,
-  isBranchesLoading,
+  isBranchesPending,
   isBranchesError,
   onRetryBranches,
   onClose,
@@ -38,7 +38,7 @@ export const ExpenseMonthCloseDialog = ({
   const [month, setMonth] = useState('');
   const [branchId, setBranchId] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
-  const areBranchesResolved = !isBranchesLoading && !isBranchesError;
+  const areBranchesResolved = !isBranchesPending && !isBranchesError;
   const requestControllerRef = useRef<AbortController | null>(null);
   const isDownloadingRef = useRef(false);
   const selectedBranchId = branches.some((branch) => branch.id === branchId)
@@ -152,7 +152,7 @@ export const ExpenseMonthCloseDialog = ({
                 </option>
               ))}
             </select>
-            {isBranchesLoading && (
+            {isBranchesPending && (
               <p className="text-sm text-muted-foreground" role="status">
                 {t('common.loading')}
               </p>
