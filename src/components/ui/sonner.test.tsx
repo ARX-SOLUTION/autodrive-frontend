@@ -40,13 +40,13 @@ describe('Toaster theme (FE-B4 regression)', () => {
     toast('hello');
     const getToaster = () => document.querySelector('[data-sonner-toaster]');
     await waitFor(() =>
-      expect(getToaster()).toHaveAttribute('data-theme', 'dark'),
+      expect(getToaster()).toHaveAttribute('data-sonner-theme', 'dark'),
     );
 
     fireEvent.click(screen.getByText('toggle'));
 
     await waitFor(() =>
-      expect(getToaster()).toHaveAttribute('data-theme', 'light'),
+      expect(getToaster()).toHaveAttribute('data-sonner-theme', 'light'),
     );
   });
 });
