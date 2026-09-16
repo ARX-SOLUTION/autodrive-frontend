@@ -41,19 +41,14 @@ export const ExpenseMonthCloseDialog = ({
   const areBranchesResolved = !isBranchesLoading && !isBranchesError;
   const requestControllerRef = useRef<AbortController | null>(null);
   const isDownloadingRef = useRef(false);
-  const isSelectedBranchAllowed =
-    !branchId || branches.some((branch) => branch.id === branchId);
+  const selectedBranchId = branches.some((branch) => branch.id === branchId)
+    ? branchId
+    : '';
 
   useEffect(() => {
     if (!open) requestControllerRef.current?.abort();
     return () => requestControllerRef.current?.abort();
   }, [open]);
-
-  useEffect(() => {
-    if (areBranchesResolved && !isSelectedBranchAllowed) {
-      setBranchId('');
-    }
-  }, [areBranchesResolved, isSelectedBranchAllowed]);
 
   const handleClose = () => {
     requestControllerRef.current?.abort();
@@ -62,13 +57,7 @@ export const ExpenseMonthCloseDialog = ({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (
-      !month ||
-      !areBranchesResolved ||
-      !isSelectedBranchAllowed ||
-      isDownloadingRef.current
-    )
-      return;
+    if (!month || !areBranchesResolved || isDownloadingRef.current) return;
 
     const controller = new AbortController();
     requestControllerRef.current = controller;
@@ -78,7 +67,7 @@ export const ExpenseMonthCloseDialog = ({
       const { blob, contentDisposition } = await fetchExpenseMonthCloseCsv(
         {
           month,
-          ...(branchId ? { branchId } : {}),
+          ...(selectedBranchId ? { branchId: selectedBranchId } : {}),
         },
         controller.signal,
       );
@@ -151,13 +140,9 @@ export const ExpenseMonthCloseDialog = ({
             </label>
             <select
               id="expense-month-close-branch"
-              value={branchId}
+              value={selectedBranchId}
               onChange={(event) => setBranchId(event.target.value)}
-              disabled={
-                isDownloading ||
-                !areBranchesResolved ||
-                !isSelectedBranchAllowed
-              }
+              disabled={isDownloading || !areBranchesResolved}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="">{t('expenses.month_close.all_branches')}</option>

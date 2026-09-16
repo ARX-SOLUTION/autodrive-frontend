@@ -236,7 +236,7 @@ describe('ExpenseMonthCloseDialog', () => {
     await waitFor(() => expect(mocks.success).toHaveBeenCalledTimes(1));
   });
 
-  it('does not request a branch that disappears after a server refresh', async () => {
+  it('clears a removed branch from the UI and excludes it from the request', async () => {
     vi.mocked(axiosInstance.get).mockImplementation(
       () => new Promise(() => undefined),
     );
@@ -252,6 +252,7 @@ describe('ExpenseMonthCloseDialog', () => {
     expect(screen.getByLabelText('expenses.month_close.branch')).toHaveValue(
       '',
     );
+    expect(screen.getByLabelText('expenses.month_close.branch')).toBeEnabled();
     fireEvent.click(
       screen.getByRole('button', { name: 'expenses.month_close.submit' }),
     );
