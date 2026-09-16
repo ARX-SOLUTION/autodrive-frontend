@@ -789,6 +789,18 @@
     "cancelled": "Expense cancelled successfully",
     "deleted": "Expense deleted successfully",
     "currency": "UZS",
+    "month_close": {
+      "action": "Close month CSV",
+      "title": "Download month-close CSV",
+      "description": "Download expense records for a selected calendar month.",
+      "month": "Expense month",
+      "branch": "Branch",
+      "all_branches": "All permitted branches",
+      "submit": "Download CSV",
+      "downloading": "Downloading...",
+      "success": "Month-close CSV downloaded",
+      "error": "Unable to download the month-close CSV"
+    },
     "daily_brief": {
       "title": "Daily expense brief",
       "description": "Payment obligations that need a quick review today.",

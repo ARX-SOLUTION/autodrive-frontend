@@ -107,6 +107,92 @@ afterEach(() => {
 });
 
 describe('ExpensesPage', () => {
+  it.each(['owner', 'accountant'] as const)(
+    'shows the month-close export to %s users',
+    async (role) => {
+      useAuthStore.getState().setAuth('token', {
+        id: `${role}-1`,
+        email: `${role}@example.com`,
+        role,
+        company_id: 'company-1',
+      });
+
+      await renderPage();
+
+      expect(
+        screen.getByRole('button', { name: 'expenses.month_close.action' }),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it.each(['manager', 'operator', 'teacher', 'dev'] as const)(
+    'hides the month-close export from %s users',
+    async (role) => {
+      useAuthStore.getState().setAuth('token', {
+        id: `${role}-1`,
+        email: `${role}@example.com`,
+        role,
+        company_id: 'company-1',
+        ...(role === 'manager' ? { branch_id: 'b1' } : {}),
+      });
+
+      await renderPage();
+
+      expect(
+        screen.queryByRole('button', { name: 'expenses.month_close.action' }),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it('blocks export while initial branch options are pending without data', async () => {
+    useExpenseBranchOptionsMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isPending: true,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    await renderPage();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.month_close.action' }),
+    );
+    fireEvent.change(screen.getByLabelText('expenses.month_close.month'), {
+      target: { value: '2026-08' },
+    });
+
+    expect(screen.getByText('common.loading')).toBeInTheDocument();
+    expect(screen.getByLabelText('expenses.month_close.branch')).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'expenses.month_close.submit' }),
+    ).toBeDisabled();
+  });
+
+  it('shows branch option errors and retries without enabling export', async () => {
+    const refetchBranches = vi.fn();
+    useExpenseBranchOptionsMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      refetch: refetchBranches,
+    });
+    await renderPage();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.month_close.action' }),
+    );
+    fireEvent.change(screen.getByLabelText('expenses.month_close.month'), {
+      target: { value: '2026-08' },
+    });
+
+    expect(screen.getByText('common.error')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'expenses.month_close.submit' }),
+    ).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(refetchBranches).toHaveBeenCalledTimes(1);
+  });
+
   it('feeds URL filters into the query and opens the detail page from a row click', async () => {
     useExpensesPageMock.mockReturnValue({
       data: { data: EXPENSES, meta: { total: 1, totalPages: 2 } },
