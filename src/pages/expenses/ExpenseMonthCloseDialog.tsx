@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
@@ -11,74 +11,65 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { fetchExpenseMonthCloseCsv } from '@/services/expenseService';
+import {
+  fetchExpenseMonthCloseCsv,
+  getExpenseMonthCloseFilename,
+} from '@/services/expenseService';
 import type { ExpenseBranchOption } from '@/types/expense';
-
-const DEFAULT_FILENAME = 'expenses-month-close.csv';
-
-const decodeFilename = (value: string) => {
-  const encodedValue = value.replace(/^UTF-8'[^']*'/i, '');
-  try {
-    return decodeURIComponent(encodedValue);
-  } catch {
-    return undefined;
-  }
-};
-
-const sanitizeFilename = (value: string | undefined) => {
-  const filename = value
-    ?.trim()
-    .replace(/[\\/:*?"<>|\u0000-\u001F\u007F]/g, '_');
-  if (!filename || filename === '.' || filename === '..') {
-    return DEFAULT_FILENAME;
-  }
-  return filename.toLowerCase().endsWith('.csv') ? filename : DEFAULT_FILENAME;
-};
-
-export const getExpenseMonthCloseFilename = (contentDisposition?: string) => {
-  if (!contentDisposition) return DEFAULT_FILENAME;
-
-  const encodedMatch = contentDisposition.match(
-    /(?:^|;)\s*filename\*\s*=\s*([^;]+)/i,
-  );
-  if (encodedMatch) {
-    const encodedFilename = encodedMatch[1].trim().replace(/^"|"$/g, '');
-    const decodedFilename = decodeFilename(encodedFilename);
-    if (decodedFilename) return sanitizeFilename(decodedFilename);
-  }
-
-  const filenameMatch = contentDisposition.match(
-    /(?:^|;)\s*filename\s*=\s*(?:"([^"]*)"|([^;]*))/i,
-  );
-  return sanitizeFilename(filenameMatch?.[1] ?? filenameMatch?.[2]);
-};
 
 interface ExpenseMonthCloseDialogProps {
   open: boolean;
   branches: ExpenseBranchOption[];
+  isBranchesLoading: boolean;
+  isBranchesError: boolean;
+  onRetryBranches: () => void;
   onClose: () => void;
 }
 
 export const ExpenseMonthCloseDialog = ({
   open,
   branches,
+  isBranchesLoading,
+  isBranchesError,
+  onRetryBranches,
   onClose,
 }: ExpenseMonthCloseDialogProps) => {
   const { t } = useTranslation();
   const [month, setMonth] = useState('');
   const [branchId, setBranchId] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
+  const areBranchesResolved = !isBranchesLoading && !isBranchesError;
+  const requestControllerRef = useRef<AbortController | null>(null);
+  const isDownloadingRef = useRef(false);
+
+  useEffect(() => {
+    if (!open) requestControllerRef.current?.abort();
+    return () => requestControllerRef.current?.abort();
+  }, [open]);
+
+  const handleClose = () => {
+    requestControllerRef.current?.abort();
+    onClose();
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!month || isDownloading) return;
+    if (!month || !areBranchesResolved || isDownloadingRef.current) return;
 
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
+    isDownloadingRef.current = true;
     setIsDownloading(true);
     try {
-      const { blob, contentDisposition } = await fetchExpenseMonthCloseCsv({
-        month,
-        ...(branchId ? { branchId } : {}),
-      });
+      const { blob, contentDisposition } = await fetchExpenseMonthCloseCsv(
+        {
+          month,
+          ...(branchId ? { branchId } : {}),
+        },
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       try {
@@ -89,13 +80,19 @@ export const ExpenseMonthCloseDialog = ({
         anchor.click();
       } finally {
         anchor.remove();
-        URL.revokeObjectURL(url);
+        window.setTimeout(() => URL.revokeObjectURL(url), 0);
       }
       toast.success(t('expenses.month_close.success'));
       onClose();
     } catch {
-      toast.error(t('expenses.month_close.error'));
+      if (!controller.signal.aborted) {
+        toast.error(t('expenses.month_close.error'));
+      }
     } finally {
+      if (requestControllerRef.current === controller) {
+        requestControllerRef.current = null;
+      }
+      isDownloadingRef.current = false;
       setIsDownloading(false);
     }
   };
@@ -104,7 +101,7 @@ export const ExpenseMonthCloseDialog = ({
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
-        if (!nextOpen && !isDownloading) onClose();
+        if (!nextOpen) handleClose();
       }}
     >
       <DialogContent>
@@ -142,7 +139,7 @@ export const ExpenseMonthCloseDialog = ({
               id="expense-month-close-branch"
               value={branchId}
               onChange={(event) => setBranchId(event.target.value)}
-              disabled={isDownloading}
+              disabled={isDownloading || !areBranchesResolved}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="">{t('expenses.month_close.all_branches')}</option>
@@ -152,9 +149,35 @@ export const ExpenseMonthCloseDialog = ({
                 </option>
               ))}
             </select>
+            {isBranchesLoading && (
+              <p className="text-sm text-muted-foreground" role="status">
+                {t('common.loading')}
+              </p>
+            )}
+            {isBranchesError && (
+              <div
+                className="flex items-center justify-between gap-3"
+                role="alert"
+              >
+                <span className="text-sm text-destructive">
+                  {t('common.error')}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onRetryBranches}
+                >
+                  {t('common.retry')}
+                </Button>
+              </div>
+            )}
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isDownloading || !month}>
+            <Button
+              type="submit"
+              disabled={isDownloading || !month || !areBranchesResolved}
+            >
               {isDownloading
                 ? t('expenses.month_close.downloading')
                 : t('expenses.month_close.submit')}

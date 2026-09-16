@@ -423,7 +423,12 @@ const ExpensesPage = () => {
     !!attentionFilter && hasManagerScope,
     dailyBriefDismissal.businessDay,
   );
-  const { data: branches = [] } = useExpenseBranchOptions();
+  const {
+    data: branches = [],
+    isLoading: isBranchesLoading,
+    isError: isBranchesError,
+    refetch: refetchBranches,
+  } = useExpenseBranchOptions();
   const [formOpen, setFormOpen] = useState(false);
   const [monthCloseOpen, setMonthCloseOpen] = useState(false);
 
@@ -599,6 +604,9 @@ const ExpensesPage = () => {
         <ExpenseMonthCloseDialog
           open={monthCloseOpen}
           branches={branches}
+          isBranchesLoading={isBranchesLoading}
+          isBranchesError={isBranchesError}
+          onRetryBranches={() => void refetchBranches()}
           onClose={() => setMonthCloseOpen(false)}
         />
       )}

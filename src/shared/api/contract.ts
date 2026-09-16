@@ -116,6 +116,11 @@ export type ExpensesQuery = {
   limit?: number;
 };
 
+export type ExpenseMonthCloseQuery = {
+  month: string;
+  branch_id?: string;
+};
+
 export type ExpenseTriageCountsQuery = {
   branch_id?: string;
   scope?: 'company';

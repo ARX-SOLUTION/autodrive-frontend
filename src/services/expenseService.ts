@@ -36,6 +36,7 @@ import type {
 import type { ListResponse } from '@/types/list';
 import type {
   ExpensesQuery,
+  ExpenseMonthCloseQuery,
   ExpenseTriageCountsQuery,
 } from '@/shared/api/contract';
 
@@ -59,6 +60,60 @@ const toExpenseTriageCountsQueryParams = (
   branch_id: filters.branchId,
   scope: filters.scope,
 });
+
+export const toExpenseMonthCloseQueryParams = (
+  filters: ExpenseMonthCloseCsvFilters,
+): ExpenseMonthCloseQuery => ({
+  month: filters.month,
+  ...(filters.branchId ? { branch_id: filters.branchId } : {}),
+});
+
+const DEFAULT_MONTH_CLOSE_FILENAME = 'expenses-month-close.csv';
+const INVALID_FILENAME_CHARACTER = /[\\/:*?"<>|]/;
+
+const decodeFilename = (value: string) => {
+  const encodedValue = value.replace(/^UTF-8'[^']*'/i, '');
+  try {
+    return decodeURIComponent(encodedValue);
+  } catch {
+    return undefined;
+  }
+};
+
+const sanitizeMonthCloseFilename = (value: string | undefined) => {
+  const filename = Array.from(value?.trim() ?? '', (character) => {
+    const code = character.charCodeAt(0);
+    return code <= 31 ||
+      code === 127 ||
+      INVALID_FILENAME_CHARACTER.test(character)
+      ? '_'
+      : character;
+  }).join('');
+  if (!filename || filename === '.' || filename === '..') {
+    return DEFAULT_MONTH_CLOSE_FILENAME;
+  }
+  return filename.toLowerCase().endsWith('.csv')
+    ? filename
+    : DEFAULT_MONTH_CLOSE_FILENAME;
+};
+
+export const getExpenseMonthCloseFilename = (contentDisposition?: string) => {
+  if (!contentDisposition) return DEFAULT_MONTH_CLOSE_FILENAME;
+
+  const encodedMatch = contentDisposition.match(
+    /(?:^|;)\s*filename\*\s*=\s*([^;]+)/i,
+  );
+  if (encodedMatch) {
+    const encodedFilename = encodedMatch[1].trim().replace(/^"|"$/g, '');
+    const decodedFilename = decodeFilename(encodedFilename);
+    if (decodedFilename) return sanitizeMonthCloseFilename(decodedFilename);
+  }
+
+  const filenameMatch = contentDisposition.match(
+    /(?:^|;)\s*filename\s*=\s*(?:"([^"]*)"|([^;]*))/i,
+  );
+  return sanitizeMonthCloseFilename(filenameMatch?.[1] ?? filenameMatch?.[2]);
+};
 
 const expenseIdentity = (branchId?: string) => {
   const user = useAuthStore.getState().user;
@@ -87,13 +142,12 @@ const invalidateExpenseQueries = (
 
 export const fetchExpenseMonthCloseCsv = async (
   filters: ExpenseMonthCloseCsvFilters,
+  signal?: AbortSignal,
 ) => {
   const response = await axiosInstance.get<Blob>('/expenses/month-close.csv', {
-    params: {
-      month: filters.month,
-      ...(filters.branchId ? { branch_id: filters.branchId } : {}),
-    },
+    params: toExpenseMonthCloseQueryParams(filters),
     responseType: 'blob',
+    signal,
   });
   const getHeader = response.headers.get;
   const contentDisposition =
