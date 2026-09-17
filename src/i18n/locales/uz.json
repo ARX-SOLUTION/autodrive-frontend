@@ -909,7 +909,17 @@
         "naqd": "Naqd",
         "karta": "Karta",
         "perechisleniya": "O‘tkazma"
-      }
+      },
+      "void_action": "Bekor qilish",
+      "void_title": "To‘lovni bekor qilish",
+      "void_description": "Ushbu to‘lov bekor qilinadi, lekin audit tarixi saqlanadi. Xarajat balansi va qoldiq summa qayta hisoblanadi.",
+      "void_reason": "Bekor qilish sababi",
+      "void_reason_placeholder": "Nima uchun ushbu to‘lov bekor qilinayotganini yozing",
+      "void_reason_required": "Bekor qilish sababini kiritish shart",
+      "void_confirm": "Bekor qilishni tasdiqlash",
+      "void_submitting": "Bekor qilinmoqda…",
+      "void_success": "To‘lov muvaffaqiyatli bekor qilindi",
+      "void_conflict": "Xarajat boshqa foydalanuvchi tomonidan o‘zgartirildi. Yangilangan ma’lumotni tekshirib, qayta yuboring."
     },
     "lifecycle": {
       "cancel_action": "Xarajatni bekor qilish",

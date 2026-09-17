@@ -19,8 +19,13 @@ import {
   useExpense,
   useExpenseBranchOptions,
   useExpenseHistory,
+  useVoidExpensePayment,
 } from '@/services/expenseService';
-import type { ExpensePaymentMethod, ExpenseStatus } from '@/types/expense';
+import type {
+  ExpensePayment,
+  ExpensePaymentMethod,
+  ExpenseStatus,
+} from '@/types/expense';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,6 +37,7 @@ import {
   ExpenseLifecycleDialog,
   type ExpenseLifecycleAction,
 } from './expenses/ExpenseLifecycleDialog';
+import { VoidPaymentDialog } from './expenses/VoidPaymentDialog';
 
 const statusVariant = (status: ExpenseStatus) => {
   if (status === 'cancelled') return 'destructive' as const;
@@ -94,6 +100,10 @@ const ExpenseDetailPage = () => {
   const paymentMutation = useCreateExpensePayment(id ?? '');
   const cancelMutation = useCancelExpense(id ?? '');
   const deleteMutation = useDeleteExpense(id ?? '');
+  const voidPaymentMutation = useVoidExpensePayment(id ?? '');
+  const [voidPaymentTarget, setVoidPaymentTarget] =
+    useState<ExpensePayment | null>(null);
+  const [voidPaymentConflict, setVoidPaymentConflict] = useState(false);
   const expense = expenseQuery.data;
   const isNotFound =
     (expenseQuery.error as { response?: { status?: number } } | null)?.response
@@ -338,6 +348,37 @@ const ExpenseDetailPage = () => {
     }
   };
 
+  const handleVoidPaymentConfirm = (reason: string) => {
+    if (!voidPaymentTarget) return;
+
+    setVoidPaymentConflict(false);
+    voidPaymentMutation.mutate(
+      {
+        paymentId: voidPaymentTarget.id,
+        reason,
+        expected_version: serverExpense.version,
+      },
+      {
+        onSuccess: () => {
+          toast.success(t('expenses.payments.void_success'));
+          setVoidPaymentTarget(null);
+          setVoidPaymentConflict(false);
+          void Promise.all([expenseQuery.refetch(), historyQuery.refetch()]);
+        },
+        onError: (error: unknown) => {
+          const status = (error as { response?: { status?: number } }).response
+            ?.status;
+          if (status === 409) {
+            setVoidPaymentConflict(true);
+            void Promise.all([expenseQuery.refetch(), historyQuery.refetch()]);
+            return;
+          }
+          mutationErrorToast(error, t);
+        },
+      },
+    );
+  };
+
   return (
     <EntityDetailShell
       onBack={backToExpenses}
@@ -516,18 +557,56 @@ const ExpenseDetailPage = () => {
               {historyQuery.data?.payments.map((payment) => (
                 <div
                   key={payment.id}
-                  className="flex flex-wrap justify-between gap-2 border-b border-border py-2 text-sm"
+                  className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2 text-sm"
                 >
-                  <span>
-                    {formatAmount(payment.amount, t('expenses.currency'))} ·{' '}
-                    {t(`expenses.payments.methods.${payment.payment_method}`)} ·{' '}
-                    {payment.date}
-                  </span>
-                  <span>
-                    {payment.voided_at
-                      ? t('expenses.payments.voided')
-                      : t('expenses.payments.active')}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={
+                        payment.voided_at
+                          ? 'text-muted-foreground line-through'
+                          : ''
+                      }
+                    >
+                      {formatAmount(payment.amount, t('expenses.currency'))} ·{' '}
+                      {t(`expenses.payments.methods.${payment.payment_method}`)}{' '}
+                      · {payment.date}
+                    </span>
+                    {payment.voided_at && payment.void_reason && (
+                      <span className="text-xs text-muted-foreground italic">
+                        ({payment.void_reason})
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {payment.voided_at ? (
+                      <Badge
+                        variant="outline"
+                        className="border-destructive/30 text-destructive bg-destructive/5"
+                      >
+                        {t('expenses.payments.voided')}
+                      </Badge>
+                    ) : (
+                      <>
+                        <Badge variant="secondary">
+                          {t('expenses.payments.active')}
+                        </Badge>
+                        {canManageFinance && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => {
+                              setVoidPaymentTarget(payment);
+                              setVoidPaymentConflict(false);
+                            }}
+                            disabled={voidPaymentMutation.isPending}
+                          >
+                            {t('expenses.payments.void_action')}
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
               {canManageFinance &&
@@ -676,6 +755,21 @@ const ExpenseDetailPage = () => {
           conflict={lifecycleConflict}
           onClose={closeLifecycleDialog}
           onConfirm={handleLifecycleConfirm}
+        />
+      )}
+      {voidPaymentTarget && (
+        <VoidPaymentDialog
+          key={voidPaymentTarget.id}
+          open={!!voidPaymentTarget}
+          loading={voidPaymentMutation.isPending}
+          conflict={voidPaymentConflict}
+          onClose={() => {
+            if (!voidPaymentMutation.isPending) {
+              setVoidPaymentTarget(null);
+              setVoidPaymentConflict(false);
+            }
+          }}
+          onConfirm={handleVoidPaymentConfirm}
         />
       )}
     </EntityDetailShell>

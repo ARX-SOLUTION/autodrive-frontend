@@ -50,6 +50,10 @@ const updateMutation = vi.hoisted(() => ({
   isPending: false,
   mutate: vi.fn(),
 }));
+const voidPaymentMutation = vi.hoisted(() => ({
+  isPending: false,
+  mutate: vi.fn(),
+}));
 
 expenseHooks.useExpense.mockImplementation(() => queryState);
 expenseHooks.useExpenseHistory.mockImplementation(() => historyState);
@@ -63,6 +67,7 @@ vi.mock('@/services/expenseService', () => ({
   useDeleteExpense: () => deleteMutation,
   useCreateExpense: () => lifecycleMutation,
   useUpdateExpense: () => updateMutation,
+  useVoidExpensePayment: () => voidPaymentMutation,
 }));
 vi.mock('@/hooks/useCan', () => ({
   useCan: (capability: string) =>
@@ -146,6 +151,8 @@ afterEach(() => {
   deleteMutation.mutate.mockReset();
   updateMutation.isPending = false;
   updateMutation.mutate.mockReset();
+  voidPaymentMutation.isPending = false;
+  voidPaymentMutation.mutate.mockReset();
   permissionState.canViewExpenses = true;
   permissionState.canManageFinance = true;
   expenseHooks.useExpense.mockReset().mockImplementation(() => queryState);
@@ -797,5 +804,145 @@ describe('ExpenseDetailPage', () => {
     });
 
     expect(screen.queryByText('Office rent')).toBeNull();
+  });
+
+  it('renders void button for active payment and opens dialog', async () => {
+    queryState.data = expense;
+    historyState.data = history;
+
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1?tab=payments',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+
+    const voidButtons = screen.getAllByRole('button', {
+      name: 'expenses.payments.void_action',
+    });
+    expect(voidButtons).toHaveLength(1);
+
+    fireEvent.click(voidButtons[0]);
+
+    expect(
+      screen.getByText('expenses.payments.void_title'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('expenses.payments.void_reason'),
+    ).toBeInTheDocument();
+  });
+
+  it('validates void reason is required before submitting', async () => {
+    queryState.data = expense;
+    historyState.data = history;
+
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1?tab=payments',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.payments.void_action' }),
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.payments.void_confirm' }),
+    );
+
+    expect(
+      screen.getByText('expenses.payments.void_reason_required'),
+    ).toBeInTheDocument();
+    expect(voidPaymentMutation.mutate).not.toHaveBeenCalled();
+  });
+
+  it('submits void mutation with reason and expected_version, then refetches queries', async () => {
+    queryState.data = expense;
+    historyState.data = history;
+
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1?tab=payments',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.payments.void_action' }),
+    );
+
+    fireEvent.change(screen.getByLabelText('expenses.payments.void_reason'), {
+      target: { value: 'Paid via wrong bank account' },
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.payments.void_confirm' }),
+    );
+
+    expect(voidPaymentMutation.mutate).toHaveBeenCalledOnce();
+    const [payload, options] = voidPaymentMutation.mutate.mock.calls[0];
+    expect(payload).toEqual({
+      paymentId: 'payment-active',
+      reason: 'Paid via wrong bank account',
+      expected_version: expense.version,
+    });
+
+    await act(async () => {
+      options.onSuccess();
+    });
+    await waitFor(() => {
+      expect(queryState.refetch).toHaveBeenCalledOnce();
+      expect(historyState.refetch).toHaveBeenCalledOnce();
+    });
+  });
+
+  it('handles 409 conflict during void payment and refetches data', async () => {
+    queryState.data = expense;
+    historyState.data = history;
+
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1?tab=payments',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.payments.void_action' }),
+    );
+
+    fireEvent.change(screen.getByLabelText('expenses.payments.void_reason'), {
+      target: { value: 'Void duplicate' },
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.payments.void_confirm' }),
+    );
+
+    const [, options] = voidPaymentMutation.mutate.mock.calls[0];
+    await act(async () => {
+      options.onError({ response: { status: 409 } });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('expenses.payments.void_conflict'),
+      ).toBeInTheDocument();
+      expect(queryState.refetch).toHaveBeenCalledOnce();
+      expect(historyState.refetch).toHaveBeenCalledOnce();
+    });
+  });
+
+  it('does not show void action button when user lacks finance permission', async () => {
+    permissionState.canManageFinance = false;
+    queryState.data = expense;
+    historyState.data = history;
+
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+
+    expect(
+      screen.queryByRole('button', { name: 'expenses.payments.void_action' }),
+    ).toBeNull();
   });
 });
