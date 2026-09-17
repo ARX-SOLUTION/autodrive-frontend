@@ -74,6 +74,10 @@ vi.mock('@/services/expenseService', () => ({
     mutate: mocks.useCreateExpensePayment,
     isPending: false,
   }),
+  useVoidExpensePayment: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
 }));
 
 const expense: Expense = {

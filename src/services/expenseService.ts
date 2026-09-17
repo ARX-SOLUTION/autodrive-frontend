@@ -32,6 +32,7 @@ import type {
   ExpenseTriageCountsFilters,
   CancelExpensePayload,
   DeleteExpensePayload,
+  VoidExpensePaymentPayload,
 } from '@/types/expense';
 import type { ListResponse } from '@/types/list';
 import type {
@@ -534,6 +535,29 @@ export const useDeleteExpense = (expenseId: string) => {
     onSuccess: () => {
       invalidateExpenseQueries(queryClient, expenseId);
       track('expense_delete');
+    },
+    onError: () => {
+      invalidateExpenseQueries(queryClient, expenseId);
+    },
+  });
+};
+
+export const useVoidExpensePayment = (expenseId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      paymentId,
+      ...payload
+    }: { paymentId: string } & VoidExpensePaymentPayload) => {
+      const { data } = await axiosInstance.patch<unknown>(
+        `/expenses/${expenseId}/payments/${paymentId}/void`,
+        payload,
+      );
+      return parseItemEnvelope<ExpensePayment>(data, 'payment');
+    },
+    onSuccess: () => {
+      invalidateExpenseQueries(queryClient, expenseId);
+      track('expense_payment_void');
     },
     onError: () => {
       invalidateExpenseQueries(queryClient, expenseId);

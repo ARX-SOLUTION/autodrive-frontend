@@ -50,6 +50,8 @@ export interface ExpensePayment {
   recorded_by_id: string;
   idempotency_key: string;
   voided_at: string | null;
+  voided_by_id?: string | null;
+  void_reason?: string | null;
   created_at: string;
 }
 
@@ -64,6 +66,11 @@ export interface CreateExpensePaymentPayload {
   date: string;
   note?: string | null;
   idempotency_key: string;
+  expected_version: number;
+}
+
+export interface VoidExpensePaymentPayload {
+  reason: string;
   expected_version: number;
 }
 
