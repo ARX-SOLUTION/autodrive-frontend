@@ -106,7 +106,7 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(import.meta.dirname, './src'),
     },
     dedupe: [
       'react',
@@ -118,25 +118,21 @@ export default defineConfig(({ mode }) => ({
     ],
   },
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         // Keep only genuinely optional heavy libraries in explicit chunks.
         // Broad framework/vendor buckets create circular chunks and pull
         // route-only TanStack Table/Virtual code into the initial shell.
-        onlyExplicitManualChunks: true,
-        manualChunks(id) {
-          if (!id.includes('node_modules')) return;
-          if (
-            id.includes('/.pnpm/react@') ||
-            id.includes('/.pnpm/react-dom@') ||
-            id.includes('/.pnpm/scheduler@')
-          ) {
-            return 'react-core';
-          }
-          if (id.includes('/xlsx/')) return 'export-xlsx';
-          if (id.includes('/recharts/') || id.includes('/d3-')) {
-            return 'charts-vendor';
-          }
+        codeSplitting: {
+          includeDependenciesRecursively: false,
+          groups: [
+            {
+              name: 'react-core',
+              test: /\/\.pnpm\/(?:react|react-dom|scheduler)@/,
+            },
+            { name: 'export-xlsx', test: /\/xlsx\// },
+            { name: 'charts-vendor', test: /\/recharts\/|\/d3-/ },
+          ],
         },
       },
     },

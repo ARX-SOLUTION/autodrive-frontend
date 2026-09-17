@@ -260,7 +260,12 @@ const TeacherDashboard = () => {
 
           <SectionCard title={t('dashboard.result_title')} className="cv-auto">
             <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={resultData} layout="vertical" barSize={24}>
+              <BarChart
+                accessibilityLayer={false}
+                data={resultData}
+                layout="vertical"
+                barSize={24}
+              >
                 <CartesianGrid
                   strokeDasharray="2 4"
                   stroke="hsl(var(--border))"
@@ -275,7 +280,7 @@ const TeacherDashboard = () => {
                 />
                 <Tooltip
                   {...CHART_STYLE}
-                  formatter={(v: number) => [formatNumber(v), '']}
+                  formatter={(v) => [formatNumber(Number(v ?? 0)), '']}
                 />
                 <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                   {resultData.map((_, i) => (

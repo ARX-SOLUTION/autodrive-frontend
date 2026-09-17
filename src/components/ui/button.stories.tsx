@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { CircleNotch, EnvelopeSimple } from '@phosphor-icons/react';
 
 import { Button } from './button';

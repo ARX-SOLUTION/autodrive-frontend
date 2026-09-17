@@ -427,6 +427,7 @@ const LegacyMainDashboard = () => {
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <AreaChart
+                accessibilityLayer={false}
                 data={revenueSeries}
                 margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
               >
@@ -457,8 +458,8 @@ const LegacyMainDashboard = () => {
                 />
                 <Tooltip
                   {...CHART_STYLE}
-                  formatter={(v: number) => [
-                    `${formatNumber(v)} ${currency}`,
+                  formatter={(v) => [
+                    `${formatNumber(Number(v ?? 0))} ${currency}`,
                     t('dashboard.revenue_label'),
                   ]}
                 />
@@ -488,7 +489,7 @@ const LegacyMainDashboard = () => {
             <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-2">
               <div className="relative mx-auto aspect-square w-full max-w-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart accessibilityLayer={false}>
                     <Pie
                       data={donutData}
                       dataKey="value"
@@ -504,8 +505,8 @@ const LegacyMainDashboard = () => {
                     </Pie>
                     <Tooltip
                       {...CHART_STYLE}
-                      formatter={(v: number, _n, props) => [
-                        `${formatNumber(v)} (${(props as { payload?: { pct?: number } }).payload?.pct ?? 0}%)`,
+                      formatter={(v, _n, props) => [
+                        `${formatNumber(Number(v ?? 0))} (${(props as { payload?: { pct?: number } }).payload?.pct ?? 0}%)`,
                         '',
                       ]}
                     />
@@ -571,6 +572,7 @@ const LegacyMainDashboard = () => {
               height={Math.max(180, topBranches.length * 40)}
             >
               <BarChart
+                accessibilityLayer={false}
                 data={topBranches}
                 layout="vertical"
                 margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
@@ -594,8 +596,8 @@ const LegacyMainDashboard = () => {
                 />
                 <Tooltip
                   {...CHART_STYLE}
-                  formatter={(v: number) => [
-                    `${formatNumber(v)} ${currency}`,
+                  formatter={(v) => [
+                    `${formatNumber(Number(v ?? 0))} ${currency}`,
                     t('dashboard.top_branches_revenue'),
                   ]}
                 />
@@ -772,7 +774,11 @@ const LegacyMainDashboard = () => {
           subtitle={t('dashboard.top_branches_sub')}
         >
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={analytics.branch_stats} barSize={22}>
+            <BarChart
+              accessibilityLayer={false}
+              data={analytics.branch_stats}
+              barSize={22}
+            >
               <CartesianGrid
                 strokeDasharray="2 4"
                 stroke="hsl(var(--border))"
@@ -795,13 +801,17 @@ const LegacyMainDashboard = () => {
               />
               <Tooltip
                 {...CHART_STYLE}
-                formatter={(v: number, name: string) =>
+                formatter={(v, name) =>
                   name === t('dashboard.students_section')
-                    ? [formatNumber(v), name]
-                    : [`${formatNumber(v)} ${currency}`, name]
+                    ? [formatNumber(Number(v ?? 0)), name ?? '']
+                    : [
+                        `${formatNumber(Number(v ?? 0))} ${currency}`,
+                        name ?? '',
+                      ]
                 }
               />
               <Legend
+                itemSorter={null}
                 wrapperStyle={{
                   fontSize: 11,
                   color: 'hsl(var(--muted-foreground))',
