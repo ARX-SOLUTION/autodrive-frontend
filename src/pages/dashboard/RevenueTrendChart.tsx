@@ -157,6 +157,7 @@ const RevenueTrendChart = ({
       <div className="h-64 w-full sm:h-72">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
+            accessibilityLayer={false}
             data={chartData}
             margin={{ top: 12, right: 0, left: -18, bottom: 0 }}
           >

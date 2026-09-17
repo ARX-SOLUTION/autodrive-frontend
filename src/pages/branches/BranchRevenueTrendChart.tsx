@@ -33,6 +33,7 @@ export const BranchRevenueTrendChart = ({
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
+          accessibilityLayer={false}
           data={data}
           margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
         >
@@ -74,7 +75,7 @@ export const BranchRevenueTrendChart = ({
               border: '1px solid hsl(var(--border))',
               borderRadius: 10,
             }}
-            formatter={(value: number) => [formatMoney(value), '']}
+            formatter={(value) => [formatMoney(Number(value ?? 0)), '']}
           />
           <Area
             type="monotone"

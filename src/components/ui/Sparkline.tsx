@@ -25,6 +25,7 @@ export const Sparkline = ({ data, tone }: SparklineProps) => {
     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 opacity-60">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
+          accessibilityLayer={false}
           data={points}
           margin={{ top: 4, right: 0, left: 0, bottom: 0 }}
         >
