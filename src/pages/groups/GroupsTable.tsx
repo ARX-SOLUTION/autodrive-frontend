@@ -161,29 +161,31 @@ const GroupsTable = ({
           </div>
         ) : (
           <div className="flex items-center justify-center gap-1">
-            <button
-              aria-label={t('common.edit')}
-              title={t('common.edit')}
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(g);
-              }}
-              className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-            >
-              <PencilSimple className="h-3.5 w-3.5" />
-            </button>
             {canManageGroups && (
-              <button
-                aria-label={t('common.delete')}
-                title={t('common.delete')}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(g.id);
-                }}
-                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-              >
-                <Trash className="h-3.5 w-3.5" />
-              </button>
+              <>
+                <button
+                  aria-label={t('common.edit')}
+                  title={t('common.edit')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(g);
+                  }}
+                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                >
+                  <PencilSimple className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  aria-label={t('common.delete')}
+                  title={t('common.delete')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(g.id);
+                  }}
+                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                >
+                  <Trash className="h-3.5 w-3.5" />
+                </button>
+              </>
             )}
           </div>
         );

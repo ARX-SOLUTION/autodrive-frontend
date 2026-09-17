@@ -186,9 +186,11 @@ const GroupsPage = () => {
         description={t('groups.count', { count: (groups || []).length })}
         icon={<Stack className="h-3.5 w-3.5" aria-hidden="true" />}
         actions={
-          <Button className="gap-2" onClick={openCreate}>
-            <Plus className="h-4 w-4" /> {t('groups.add')}
-          </Button>
+          canManageGroups ? (
+            <Button className="gap-2" onClick={openCreate}>
+              <Plus className="h-4 w-4" /> {t('groups.add')}
+            </Button>
+          ) : undefined
         }
       />
 
