@@ -60,6 +60,7 @@ import {
   makeStudentFormSchema,
   toCreateStudentPayload,
   type CreateStudentPayload,
+  type StudentFormInput,
   type StudentFormValues,
 } from './StudentModalForm';
 
@@ -115,7 +116,7 @@ const StudentModal = ({
       userBranchId: user?.branch_id,
     });
 
-  const form = useForm<StudentFormValues>({
+  const form = useForm<StudentFormInput, unknown, StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
     defaultValues: defaultFormValues(),
   });

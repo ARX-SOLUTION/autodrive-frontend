@@ -142,9 +142,9 @@ const buildSchemas = (t: (key: string) => string) => {
   });
 
   const step2 = z.object({
-    branch_id: z.string().uuid(t('students.wizard.branch_required')),
-    course_id: z.string().uuid(t('students.wizard.course_required')),
-    group_id: z.string().uuid().optional().or(z.literal('')),
+    branch_id: z.guid(t('students.wizard.branch_required')),
+    course_id: z.guid(t('students.wizard.course_required')),
+    group_id: z.guid().optional().or(z.literal('')),
     start_date: z
       .string()
       .min(1, t('students.wizard.start_date_required'))
@@ -155,8 +155,8 @@ const buildSchemas = (t: (key: string) => string) => {
     completion_date: z.string().optional(),
     lead_source: z.enum(LEAD_SOURCE_VALUES).optional(),
     lead_source_other: z.string().optional(),
-    referred_by_student_id: z.string().uuid().optional().or(z.literal('')),
-    referred_by_user_id: z.string().uuid().optional().or(z.literal('')),
+    referred_by_student_id: z.guid().optional().or(z.literal('')),
+    referred_by_user_id: z.guid().optional().or(z.literal('')),
   });
 
   const step3 = z.object({
