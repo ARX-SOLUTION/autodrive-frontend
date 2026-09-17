@@ -21,10 +21,10 @@ const ResizablePanelGroup = ({
 }: ResizablePanelGroupProps) => (
   <ResizablePrimitive.Group
     className={cn(
-      'flex h-full w-full data-[panel-group-direction=vertical]:flex-col',
+      'flex h-full w-full',
+      direction === 'vertical' && 'flex-col',
       className,
     )}
-    data-panel-group-direction={direction}
     orientation={direction}
     {...props}
   />
