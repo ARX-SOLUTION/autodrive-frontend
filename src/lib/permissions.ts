@@ -55,7 +55,7 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   manageUsers: OWNERS,
   recordPayment: OPS,
   manageStudents: OPS,
-  manageGroups: OPS,
+  manageGroups: ['dev', 'owner', 'manager'],
   manageSchedule: OPS,
   takeAttendance: OPERATIONAL_ROLES,
   // Teacher creates an ad-hoc lesson for their own (server-scoped) group and

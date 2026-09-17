@@ -8,8 +8,8 @@ import { renderWithRouter } from '@/test/utils/renderWithRouter';
 // Characterization tests for GroupsPage, written BEFORE decomposing the page
 // into src/pages/groups/* — they pin the page's observable behavior:
 // (1) rows/cards render from list data, (2) URL params drive the useGroups
-// fetch params, (3) explicit empty state, (4) role gating (delete button +
-// branch filter are owner/dev-side, teacher is pinned to own branch).
+// fetch params, (3) explicit empty state, (4) role gating (mutation controls +
+// branch filter are capability-driven, branch roles are pinned to own branch).
 
 const h = vi.hoisted(() => ({
   auth: { role: 'owner', branch_id: null as string | null },
@@ -215,8 +215,10 @@ describe('GroupsPage empty state', () => {
 });
 
 describe('GroupsPage role gating', () => {
-  it('owner sees delete buttons and the branch filter select', async () => {
+  it('owner sees mutation controls and the branch filter select', async () => {
     await renderPage();
+    expect(screen.getByRole('button', { name: 'groups.add' })).toBeTruthy();
+    expect(screen.getAllByLabelText('common.edit').length).toBeGreaterThan(0);
     expect(screen.getAllByLabelText('common.delete').length).toBeGreaterThan(0);
     // Course type is a pressed-button group; only branch select remains for cross-tenant roles.
     expect(screen.getAllByRole('combobox').length).toBe(1);
@@ -225,13 +227,23 @@ describe('GroupsPage role gating', () => {
     ).toBeTruthy();
   });
 
-  it('teacher gets no delete button, no branch filter, and is pinned to own branch', async () => {
+  it('operator keeps group read access without mutation controls', async () => {
+    h.auth.role = 'operator';
+    h.auth.branch_id = 'b1';
+    await renderPage();
+    expect(screen.getAllByText('Alpha guruh')).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: 'groups.add' })).toBeNull();
+    expect(screen.queryAllByLabelText('common.edit')).toHaveLength(0);
+    expect(screen.queryAllByLabelText('common.delete')).toHaveLength(0);
+  });
+
+  it('teacher gets no mutation controls or branch filter and is pinned to own branch', async () => {
     h.auth.role = 'teacher';
     h.auth.branch_id = 'b1';
     await renderPage();
-    expect(screen.queryAllByLabelText('common.delete').length).toBe(0);
-    // Edit stays available regardless of manageGroups.
-    expect(screen.getAllByLabelText('common.edit').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'groups.add' })).toBeNull();
+    expect(screen.queryAllByLabelText('common.edit')).toHaveLength(0);
+    expect(screen.queryAllByLabelText('common.delete')).toHaveLength(0);
     // Course type is a pressed-button group; no branch picker for teachers.
     expect(screen.queryAllByRole('combobox').length).toBe(0);
     expect(

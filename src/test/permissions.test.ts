@@ -27,6 +27,7 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
   it('manager can manage staff/students but not branches or audit', () => {
     expect(roleCan('manager', 'manageStaff')).toBe(true);
     expect(roleCan('manager', 'manageStudents')).toBe(true);
+    expect(roleCan('manager', 'manageGroups')).toBe(true);
     expect(roleCan('manager', 'viewExpenses')).toBe(true);
     expect(roleCan('manager', 'manageCompanyFinance')).toBe(false);
     expect(roleCan('manager', 'manageBranches')).toBe(false);
@@ -34,9 +35,18 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
     expect(roleCan('manager', 'viewAudit')).toBe(false);
   });
 
+  it('limits group mutations to dev, owner, and manager', () => {
+    expect(roleCan('dev', 'manageGroups')).toBe(true);
+    expect(roleCan('owner', 'manageGroups')).toBe(true);
+    expect(roleCan('manager', 'manageGroups')).toBe(true);
+    expect(roleCan('operator', 'manageGroups')).toBe(false);
+    expect(roleCan('teacher', 'manageGroups')).toBe(false);
+    expect(roleCan('accountant', 'manageGroups')).toBe(false);
+  });
+
   it('operator handles day-to-day but cannot add staff', () => {
     expect(roleCan('operator', 'recordPayment')).toBe(true);
-    expect(roleCan('operator', 'manageGroups')).toBe(true);
+    expect(roleCan('operator', 'manageGroups')).toBe(false);
     expect(roleCan('operator', 'manageStaff')).toBe(false);
     expect(roleCan('operator', 'manageBranches')).toBe(false);
   });
