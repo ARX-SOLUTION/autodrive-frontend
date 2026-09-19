@@ -1,5 +1,6 @@
 packages:
   - '.'
+verifyDepsBeforeRun: error
 allowBuilds:
   '@swc/core': true
   esbuild: true
