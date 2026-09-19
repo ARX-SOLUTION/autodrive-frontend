@@ -146,7 +146,7 @@ importers:
         specifier: ^19.0.0
         version: 19.2.8(react@19.2.8)
       react-hook-form:
-        specifier: 7.82.0
+        specifier: ^7.82.0
         version: 7.82.0(react@19.2.8)
       react-i18next:
         specifier: ^17.0.11
