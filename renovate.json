@@ -1,0 +1,38 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "security:minimumReleaseAgeNpm"],
+  "dependencyDashboard": true,
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
+  "labels": ["dependencies"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 5am on monday"]
+  },
+  "packageRules": [
+    {
+      "description": "Keep the React runtime and type packages together.",
+      "matchPackageNames": [
+        "@types/react",
+        "@types/react-dom",
+        "react",
+        "react-dom"
+      ],
+      "groupName": "React"
+    },
+    {
+      "description": "Keep the TypeScript and linting toolchain together.",
+      "matchPackageNames": [
+        "@eslint/js",
+        "eslint",
+        "oxlint",
+        "oxlint-tsgolint",
+        "typescript",
+        "typescript-eslint"
+      ],
+      "groupName": "TypeScript and lint tooling"
+    }
+  ]
+}

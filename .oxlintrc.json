@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "warn"
+  },
+  "ignorePatterns": ["dist", "storybook-static"],
+  "rules": {},
+  "env": {
+    "browser": true,
+    "builtin": true,
+    "es2022": true
+  }
+}
