@@ -22,6 +22,8 @@ export interface Expense {
   due_date: string | null;
   payee: string | null;
   note: string | null;
+  teacher_id?: string | null;
+  period_month?: string | null;
   paid_amount: string;
   remaining_amount: string;
   status: ExpenseStatus;

@@ -14,6 +14,7 @@
     "students": "Talabalar",
     "payments": "To'lovlar",
     "expenses": "Xarajatlar",
+    "my_settlements": "Mening hisob-kitoblarim",
     "documents": "Hujjatlar",
     "operators": "Operatorlar",
     "teachers": "O'qituvchilar",
@@ -949,6 +950,27 @@
       "submitting": "Saqlanmoqda…",
       "conflict": "Xarajat boshqa foydalanuvchi tomonidan o'zgartirildi. Yangilangan ma'lumotni tekshirib, qayta yuboring.",
       "paid_delete_locked": "To'langan xarajatni o'chirib bo'lmaydi. Buning o'rniga bekor qiling; kiritilgan to'lovlar moliyaviy chiqim sifatida tarixda qoladi."
+    }
+  },
+  "my_settlements": {
+    "title": "Mening hisob-kitoblarim",
+    "subtitle": "Oylik hisob-kitoblar va to'lov tarixingiz",
+    "loading": "Hisob-kitoblar yuklanmoqda",
+    "empty": "Hali hisob-kitob yo'q",
+    "empty_desc": "Moliya siz uchun hisob-kitob yozganda, u shu yerda ko'rinadi.",
+    "load_error": "Hisob-kitoblarni yuklab bo'lmadi",
+    "load_error_desc": "Aloqani tekshirib, qayta urinib ko'ring.",
+    "not_found": "Hisob-kitob topilmadi",
+    "not_found_desc": "Yozuv o'chirilgan yoki unga ruxsatingiz yo'q.",
+    "paid": "To'langan",
+    "remaining": "Qolgan",
+    "summary": {
+      "total": "Hisob-kitoblar",
+      "open": "Shu sahifadagi ochiq",
+      "remaining": "Shu sahifadagi qoldiq"
+    },
+    "detail": {
+      "back": "Hisob-kitoblarga qaytish"
     }
   },
   "audit": {

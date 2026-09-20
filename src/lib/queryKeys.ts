@@ -75,7 +75,8 @@ export const expenseKeys = {
 /** Teacher self-view (`GET /teacher-settlements/me`) — invalidated on settlement create. */
 export const teacherSettlementKeys = {
   all: ['teacher-settlements'] as const,
-  me: () => ['teacher-settlements', 'me'] as const,
+  me: (page = 1, limit = 10) =>
+    ['teacher-settlements', 'me', { page, limit }] as const,
   meDetail: (id: string | number | undefined) =>
     ['teacher-settlements', 'me', 'detail', id] as const,
 };

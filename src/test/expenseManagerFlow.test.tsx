@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => ({
   useExpenseBranchOptions: vi.fn(),
   useExpense: vi.fn(),
   useExpenseHistory: vi.fn(),
+  useMySettlementDetail: vi.fn(),
   useCreateExpensePayment: vi.fn(),
   useCancelExpense: vi.fn(),
   useDeleteExpense: vi.fn(),
@@ -37,10 +38,11 @@ vi.mock('@/store/authStore', () => ({
 }));
 
 vi.mock('@/hooks/useCan', () => ({
-  useCan: (capability: string) =>
-    capability === 'viewExpenses'
-      ? state.canViewExpenses
-      : state.canManageFinance,
+  useCan: (capability: string) => {
+    if (capability === 'viewExpenses') return state.canViewExpenses;
+    if (capability === 'manageCompanyFinance') return state.canManageFinance;
+    return false;
+  },
 }));
 
 vi.mock('@/services/expenseService', () => ({
@@ -70,6 +72,7 @@ vi.mock('@/services/expenseService', () => ({
   }),
   useExpense: mocks.useExpense,
   useExpenseHistory: mocks.useExpenseHistory,
+  useMySettlementDetail: mocks.useMySettlementDetail,
   useCancelExpense: mocks.useCancelExpense,
   useDeleteExpense: mocks.useDeleteExpense,
   useCreateExpensePayment: () => ({
@@ -170,6 +173,12 @@ beforeEach(() => {
   mocks.useExpenseBranchOptions.mockReset().mockReturnValue({ data: [] });
   mocks.useExpense.mockReset().mockReturnValue(detailState);
   mocks.useExpenseHistory.mockReset().mockReturnValue(historyState);
+  mocks.useMySettlementDetail.mockReset().mockReturnValue({
+    data: undefined,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
   mocks.useCreateExpensePayment.mockReset();
   mocks.useCancelExpense.mockReset().mockReturnValue({
     mutate: vi.fn(),

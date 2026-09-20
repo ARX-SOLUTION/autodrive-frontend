@@ -11,6 +11,11 @@ const ALL_CAPS = Object.keys(CAPABILITIES) as Capability[];
 describe('permissions matrix (bd autodrive-6ef.2)', () => {
   it('dev and owner have every capability (dev ⊇ owner)', () => {
     for (const cap of ALL_CAPS) {
+      if (cap === 'viewOwnSettlements') {
+        expect(roleCan('owner', cap)).toBe(false);
+        expect(roleCan('dev', cap)).toBe(false);
+        continue;
+      }
       expect(roleCan('owner', cap)).toBe(true);
       if (
         cap === 'viewExpenses' ||
@@ -54,6 +59,7 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
   it('teacher can only take attendance and view the dashboard', () => {
     expect(roleCan('teacher', 'takeAttendance')).toBe(true);
     expect(roleCan('teacher', 'viewDashboard')).toBe(true);
+    expect(roleCan('teacher', 'viewOwnSettlements')).toBe(true);
     expect(roleCan('teacher', 'recordPayment')).toBe(false);
     expect(roleCan('teacher', 'manageStudents')).toBe(false);
   });

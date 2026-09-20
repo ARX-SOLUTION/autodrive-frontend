@@ -12,6 +12,7 @@ import {
   useExpenseBranchOptions,
   useExpense,
   useExpenseHistory,
+  useMySettlements,
   useExpensesPage,
   useUpdateExpense,
   toExpenseQueryParams,
@@ -55,6 +56,45 @@ describe('useExpense capability gating', () => {
     expect(expenseQuery.result.current.fetchStatus).toBe('idle');
     expect(historyQuery.result.current.fetchStatus).toBe('idle');
     expect(axiosInstance.get).not.toHaveBeenCalled();
+  });
+
+  it('requests the selected teacher-settlement page', async () => {
+    useAuthStore.getState().setAuth('token', {
+      id: 'teacher-1',
+      email: 'teacher@example.com',
+      role: 'teacher',
+      company_id: 'company-1',
+      branch_id: 'branch-1',
+    });
+    vi.mocked(axiosInstance.get).mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          data: [],
+          meta: {
+            total: 11,
+            page: 2,
+            limit: 10,
+            totalPages: 2,
+            hasNextPage: false,
+            hasPreviousPage: true,
+          },
+        },
+      },
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    const { result } = renderHook(() => useMySettlements(2), {
+      wrapper: makeWrapper(queryClient),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(axiosInstance.get).toHaveBeenCalledWith(
+      '/teacher-settlements/me',
+      expect.objectContaining({ params: { page: 2, limit: 10 } }),
+    );
   });
 
   it('keeps manager history/options disabled and keys detail/list by JWT branch', () => {

@@ -22,13 +22,21 @@ const queryState = vi.hoisted(() => ({
 const permissionState = vi.hoisted(() => ({
   canViewExpenses: true,
   canManageFinance: true,
+  canViewOwnSettlements: false,
 }));
 const expenseHooks = vi.hoisted(() => ({
   useExpense: vi.fn(),
   useExpenseHistory: vi.fn(),
+  useMySettlementDetail: vi.fn(),
 }));
 const historyState = vi.hoisted(() => ({
   data: null as ExpenseHistory | null,
+  isLoading: false,
+  isError: false,
+  refetch: vi.fn(),
+}));
+const mySettlementState = vi.hoisted(() => ({
+  data: undefined as ExpenseHistory | undefined,
   isLoading: false,
   isError: false,
   refetch: vi.fn(),
@@ -70,10 +78,12 @@ const teacherOptionsState = vi.hoisted(() => ({
 
 expenseHooks.useExpense.mockImplementation(() => queryState);
 expenseHooks.useExpenseHistory.mockImplementation(() => historyState);
+expenseHooks.useMySettlementDetail.mockImplementation(() => mySettlementState);
 
 vi.mock('@/services/expenseService', () => ({
   useExpense: expenseHooks.useExpense,
   useExpenseHistory: expenseHooks.useExpenseHistory,
+  useMySettlementDetail: expenseHooks.useMySettlementDetail,
   useExpenseBranchOptions: () => ({ data: [] }),
   useExpenseTeacherOptions: () => teacherOptionsState,
   useCreateExpensePayment: () => paymentMutation,
@@ -86,10 +96,14 @@ vi.mock('@/services/expenseService', () => ({
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/hooks/useCan', () => ({
-  useCan: (capability: string) =>
-    capability === 'viewExpenses'
-      ? permissionState.canViewExpenses
-      : permissionState.canManageFinance,
+  useCan: (capability: string) => {
+    if (capability === 'viewExpenses') return permissionState.canViewExpenses;
+    if (capability === 'manageCompanyFinance')
+      return permissionState.canManageFinance;
+    if (capability === 'viewOwnSettlements')
+      return permissionState.canViewOwnSettlements;
+    return false;
+  },
 }));
 
 const expense: Expense = {
@@ -157,6 +171,10 @@ afterEach(() => {
   historyState.isLoading = false;
   historyState.isError = false;
   historyState.refetch.mockReset();
+  mySettlementState.data = undefined;
+  mySettlementState.isLoading = false;
+  mySettlementState.isError = false;
+  mySettlementState.refetch.mockReset();
   paymentMutation.isPending = false;
   paymentMutation.mutate.mockReset();
   lifecycleMutation.isPending = false;
@@ -175,14 +193,51 @@ afterEach(() => {
   vi.mocked(toast.error).mockReset();
   permissionState.canViewExpenses = true;
   permissionState.canManageFinance = true;
+  permissionState.canViewOwnSettlements = false;
   expenseHooks.useExpense.mockReset().mockImplementation(() => queryState);
   expenseHooks.useExpenseHistory
     .mockReset()
     .mockImplementation(() => historyState);
+  expenseHooks.useMySettlementDetail
+    .mockReset()
+    .mockImplementation(() => mySettlementState);
   cleanup();
 });
 
 describe('ExpenseDetailPage', () => {
+  it('uses teacher-scoped settlement data without finance actions', async () => {
+    permissionState.canViewExpenses = false;
+    permissionState.canManageFinance = false;
+    permissionState.canViewOwnSettlements = true;
+    const ownSettlement = {
+      ...expense,
+      category: 'teacher_settlement' as const,
+      teacher_id: 'teacher-1',
+    };
+    mySettlementState.data = {
+      ...history,
+      expense: ownSettlement,
+    };
+
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/my-settlements/expense-1',
+      routePattern: '/my-settlements/$id',
+      params: { id: 'expense-1' },
+    });
+
+    expect(expenseHooks.useExpense).toHaveBeenCalledWith(undefined);
+    expect(expenseHooks.useExpenseHistory).toHaveBeenCalledWith(undefined);
+    expect(expenseHooks.useMySettlementDetail).toHaveBeenCalledWith(
+      'expense-1',
+    );
+    expect(screen.getByText('Office rent')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', {
+        name: 'expenses.payments.void_action',
+      }),
+    ).not.toBeInTheDocument();
+  });
+
   it('renders server-provided expense totals and metadata', async () => {
     queryState.data = expense;
     historyState.data = history;

@@ -27,6 +27,7 @@ export type AppRoutePath =
   | '/students'
   | '/payments'
   | '/expenses'
+  | '/my-settlements'
   | '/branches'
   | '/operators'
   | '/teachers'
@@ -109,6 +110,13 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Wallet,
     section: 'workspace',
     cap: 'viewExpenses',
+  },
+  {
+    path: '/my-settlements',
+    labelKey: 'nav.my_settlements',
+    icon: Wallet,
+    section: 'workspace',
+    cap: 'viewOwnSettlements',
   },
   {
     path: '/branches',

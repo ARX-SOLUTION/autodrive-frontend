@@ -262,6 +262,7 @@ export const Sidebar = ({
     viewAudit: useCan('viewAudit'),
     recordPayment: useCan('recordPayment'),
     viewExpenses: useCan('viewExpenses'),
+    viewOwnSettlements: useCan('viewOwnSettlements'),
   };
   const canSee = (item: NavItem) => !item.cap || gate[item.cap] === true;
   const visibleItems = NAV_ITEMS.filter(canSee);
