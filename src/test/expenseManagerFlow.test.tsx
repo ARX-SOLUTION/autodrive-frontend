@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
   useOverdueExpenseSweep: vi.fn(),
   useExpenseTriageCounts: vi.fn(),
   useExpenseBranchOptions: vi.fn(),
+  useExpenseVehicleOptions: vi.fn(),
   useExpense: vi.fn(),
   useExpenseHistory: vi.fn(),
   useMySettlementDetail: vi.fn(),
@@ -60,6 +61,7 @@ vi.mock('@/services/expenseService', () => ({
   useOverdueExpenseSweep: mocks.useOverdueExpenseSweep,
   useExpenseTriageCounts: mocks.useExpenseTriageCounts,
   useExpenseBranchOptions: mocks.useExpenseBranchOptions,
+  useExpenseVehicleOptions: mocks.useExpenseVehicleOptions,
   useExpenseTeacherOptions: () => ({ data: [] }),
   useCreateTeacherSettlement: () => ({ mutate: vi.fn(), isPending: false }),
   useCreateExpense: () => ({
@@ -89,6 +91,8 @@ const expense: Expense = {
   id: 'expense-1',
   branch_id: 'branch-1',
   branch_name: 'Chilonzor',
+  vehicle_id: null,
+  vehicle_plate_number: null,
   created_by_id: 'manager-1',
   category: 'supplies',
   title: 'Office supplies',
@@ -171,6 +175,17 @@ beforeEach(() => {
     refetch: vi.fn(),
   });
   mocks.useExpenseBranchOptions.mockReset().mockReturnValue({ data: [] });
+  mocks.useExpenseVehicleOptions.mockReset().mockReturnValue({
+    data: [
+      {
+        id: 'v1',
+        plate_number: '01 A 123 BC',
+        branch_id: 'branch-1',
+        make: 'Chevrolet',
+        model: 'Cobalt',
+      },
+    ],
+  });
   mocks.useExpense.mockReset().mockReturnValue(detailState);
   mocks.useExpenseHistory.mockReset().mockReturnValue(historyState);
   mocks.useMySettlementDetail.mockReset().mockReturnValue({
@@ -255,6 +270,38 @@ describe('manager expense scope', () => {
     expect(payload).not.toHaveProperty('branch_id');
   });
 
+  it('can link a manager expense to a vehicle in the JWT branch', async () => {
+    await renderWithRouter(<ExpensesPage />, {
+      initialEntry: '/expenses',
+      routePattern: '/expenses',
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'expenses.add' }));
+    expect(mocks.useExpenseVehicleOptions.mock.calls.at(-1)?.[0]).toBe(
+      'branch-1',
+    );
+    fireEvent.click(screen.getByLabelText('expenses.form.vehicle'));
+    fireEvent.click(screen.getByRole('option', { name: /01 A 123 BC/ }));
+    fireEvent.change(screen.getByLabelText(/expenses\.table\.title/), {
+      target: { value: 'Oil change' },
+    });
+    fireEvent.change(screen.getByLabelText(/expenses\.form\.amount/), {
+      target: { value: '100' },
+    });
+    fireEvent.change(screen.getByLabelText(/expenses\.form\.expense_date/), {
+      target: { value: '2026-09-20' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.form.submit' }),
+    );
+    await waitFor(() => expect(mocks.createExpense).toHaveBeenCalledOnce());
+    expect(mocks.createExpense.mock.calls[0][0]).toMatchObject({
+      vehicle_id: 'v1',
+    });
+    expect(mocks.createExpense.mock.calls[0][0]).not.toHaveProperty(
+      'branch_id',
+    );
+  });
+
   it('shows only own unpaid edit and never exposes payment history/actions', async () => {
     await renderWithRouter(<ExpenseDetailPage />, {
       initialEntry: '/expenses/expense-1',
@@ -287,6 +334,62 @@ describe('manager expense scope', () => {
       title: 'Updated supplies',
     });
     expect(request).not.toHaveProperty('branch_id');
+  });
+
+  it('keeps a transferred vehicle link on an unrelated edit and shows its historical plate', async () => {
+    mocks.useExpense.mockReturnValue({
+      ...detailState,
+      data: {
+        ...expense,
+        vehicle_id: 'v-old',
+        vehicle_plate_number: 'OLD 001',
+      },
+    });
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1',
+      routePattern: '/expenses/$id',
+      params: { id: expense.id },
+    });
+    expect(screen.getByText('OLD 001')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }));
+    fireEvent.change(await screen.findByLabelText(/expenses\.table\.title/), {
+      target: { value: 'Updated supplies' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.form.update_submit' }),
+    );
+    await waitFor(() => expect(mocks.updateExpense).toHaveBeenCalledOnce());
+    expect(mocks.updateExpense.mock.calls[0][0]).not.toHaveProperty(
+      'vehicle_id',
+    );
+  });
+
+  it('explicitly clears a historical vehicle link with null', async () => {
+    mocks.useExpense.mockReturnValue({
+      ...detailState,
+      data: {
+        ...expense,
+        vehicle_id: 'v-old',
+        vehicle_plate_number: 'OLD 001',
+      },
+    });
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1',
+      routePattern: '/expenses/$id',
+      params: { id: expense.id },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }));
+    fireEvent.click(screen.getByLabelText('expenses.form.vehicle'));
+    fireEvent.click(
+      screen.getByRole('option', { name: 'expenses.form.vehicle_none' }),
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.form.update_submit' }),
+    );
+    await waitFor(() => expect(mocks.updateExpense).toHaveBeenCalledOnce());
+    expect(mocks.updateExpense.mock.calls[0][0]).toMatchObject({
+      vehicle_id: null,
+    });
   });
 
   it('keeps the manager draft visible when a concurrent payment wins', async () => {

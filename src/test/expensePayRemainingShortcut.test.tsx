@@ -16,6 +16,8 @@ const expense = (status: ExpenseStatus, index: number): Expense => ({
   id: `expense-${index}`,
   branch_id: 'branch-1',
   branch_name: 'Chilonzor',
+  vehicle_id: null,
+  vehicle_plate_number: null,
   created_by_id: 'owner-1',
   category: 'rent',
   title: `${status} expense`,

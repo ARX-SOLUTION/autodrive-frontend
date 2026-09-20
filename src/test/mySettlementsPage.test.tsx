@@ -21,6 +21,8 @@ const settlement = (over: Partial<Expense> = {}): Expense => ({
   id: '33333333-3333-4333-8333-333333333333',
   branch_id: '22222222-2222-4222-8222-222222222222',
   branch_name: 'Markaziy',
+  vehicle_id: null,
+  vehicle_plate_number: null,
   created_by_id: '55555555-5555-4555-8555-555555555555',
   category: 'teacher_settlement',
   title: "O'qituvchi hisob-kitobi",

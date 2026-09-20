@@ -86,6 +86,7 @@ vi.mock('@/services/expenseService', () => ({
   useMySettlementDetail: expenseHooks.useMySettlementDetail,
   useExpenseBranchOptions: () => ({ data: [] }),
   useExpenseTeacherOptions: () => teacherOptionsState,
+  useExpenseVehicleOptions: () => ({ data: [] }),
   useCreateExpensePayment: () => paymentMutation,
   useCancelExpense: () => cancelMutation,
   useDeleteExpense: () => deleteMutation,
@@ -110,6 +111,8 @@ const expense: Expense = {
   id: 'expense-1',
   branch_id: 'branch-1',
   branch_name: 'Chorsu',
+  vehicle_id: null,
+  vehicle_plate_number: null,
   created_by_id: 'owner-1',
   category: 'rent',
   title: 'Office rent',
@@ -430,7 +433,12 @@ describe('ExpenseDetailPage', () => {
   });
 
   it('lets finance users edit metadata after payment and cancel with reason/version', async () => {
-    const paidExpense = { ...expense, has_payment_history: true };
+    const paidExpense = {
+      ...expense,
+      vehicle_id: 'vehicle-old',
+      vehicle_plate_number: 'OLD 001',
+      has_payment_history: true,
+    };
     queryState.data = paidExpense;
     historyState.data = { ...history, expense: paidExpense };
     await renderWithRouter(<ExpenseDetailPage />, {
@@ -446,6 +454,7 @@ describe('ExpenseDetailPage', () => {
     expect(
       screen.getByLabelText(/expenses\.form\.expense_date/),
     ).toBeDisabled();
+    expect(screen.getByLabelText('expenses.form.vehicle')).toBeDisabled();
     fireEvent.change(titleInput, { target: { value: 'Updated rent note' } });
     fireEvent.click(
       screen.getByRole('button', { name: 'expenses.form.update_submit' }),
@@ -460,6 +469,9 @@ describe('ExpenseDetailPage', () => {
     expect(updateMutation.mutate.mock.calls[0][0]).not.toHaveProperty('amount');
     expect(updateMutation.mutate.mock.calls[0][0]).not.toHaveProperty(
       'branch_id',
+    );
+    expect(updateMutation.mutate.mock.calls[0][0]).not.toHaveProperty(
+      'vehicle_id',
     );
 
     cleanup();
@@ -488,6 +500,77 @@ describe('ExpenseDetailPage', () => {
     expect(cancelMutation.mutate.mock.calls[0][0]).toEqual({
       reason: 'Vendor contract ended',
       expected_version: expense.version,
+    });
+  });
+
+  it('keeps a transferred vehicle link on an unrelated finance edit', async () => {
+    const transferredVehicleExpense = {
+      ...expense,
+      vehicle_id: 'vehicle-old',
+      vehicle_plate_number: 'OLD 001',
+      paid_amount: '0.00',
+      remaining_amount: expense.amount,
+      status: 'planned' as const,
+      has_payment_history: false,
+    };
+    queryState.data = transferredVehicleExpense;
+    historyState.data = {
+      ...history,
+      expense: transferredVehicleExpense,
+      payments: [],
+    };
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }));
+    fireEvent.change(await screen.findByLabelText(/expenses\.table\.title/), {
+      target: { value: 'Updated rent note' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.form.update_submit' }),
+    );
+
+    await waitFor(() => expect(updateMutation.mutate).toHaveBeenCalledOnce());
+    const payload = updateMutation.mutate.mock.calls[0][0];
+    expect(payload).not.toHaveProperty('branch_id');
+    expect(payload).not.toHaveProperty('vehicle_id');
+  });
+
+  it('clears the vehicle when finance explicitly moves the expense to company-wide', async () => {
+    const linkedExpense = {
+      ...expense,
+      vehicle_id: 'vehicle-old',
+      vehicle_plate_number: 'OLD 001',
+      paid_amount: '0.00',
+      remaining_amount: expense.amount,
+      status: 'planned' as const,
+      has_payment_history: false,
+    };
+    queryState.data = linkedExpense;
+    historyState.data = { ...history, expense: linkedExpense, payments: [] };
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }));
+    fireEvent.click(screen.getByLabelText(/expenses\.form\.branch/));
+    fireEvent.click(
+      screen.getByRole('option', { name: 'expenses.form.company_wide' }),
+    );
+    expect(screen.getByLabelText('expenses.form.vehicle')).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.form.update_submit' }),
+    );
+
+    await waitFor(() => expect(updateMutation.mutate).toHaveBeenCalledOnce());
+    expect(updateMutation.mutate.mock.calls[0][0]).toMatchObject({
+      branch_id: null,
+      vehicle_id: null,
     });
   });
 
@@ -1055,6 +1138,7 @@ describe('ExpenseFormDialog settlement mode', () => {
       { initialEntry: '/expenses', routePattern: '/expenses' },
     );
 
+    expect(screen.queryByLabelText('expenses.form.vehicle')).toBeNull();
     expect(screen.queryByText('Chorsu')).not.toBeInTheDocument();
     expect(
       screen.getByText('expenses.settlement.branch_pending'),

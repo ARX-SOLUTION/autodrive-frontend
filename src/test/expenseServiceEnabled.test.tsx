@@ -10,6 +10,7 @@ import {
   useCancelExpense,
   useCreateExpensePayment,
   useExpenseBranchOptions,
+  useExpenseVehicleOptions,
   useExpense,
   useExpenseHistory,
   useMySettlements,
@@ -128,6 +129,46 @@ describe('useExpense capability gating', () => {
     });
     const listKey = expensesPageQueryOptions({ branchId: 'branch-1' }).queryKey;
     expect(listKey[2]).toMatchObject({ jwtBranchId: 'branch-1' });
+  });
+
+  it('loads vehicle picker options for a chosen branch without exposing them to a direct dev session', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const denied = renderHook(() => useExpenseVehicleOptions('branch-1'), {
+      wrapper: makeWrapper(queryClient),
+    });
+    expect(denied.result.current.fetchStatus).toBe('idle');
+
+    useAuthStore.getState().setAuth('token', {
+      id: 'owner-1',
+      email: 'owner@example.com',
+      role: 'owner',
+      company_id: 'company-1',
+    });
+    vi.mocked(axiosInstance.get).mockResolvedValue({
+      data: {
+        success: true,
+        data: [
+          {
+            id: 'v1',
+            plate_number: '01 A 123 BC',
+            branch_id: 'branch-1',
+            make: 'Chevrolet',
+            model: 'Cobalt',
+          },
+        ],
+      },
+    });
+    const allowed = renderHook(() => useExpenseVehicleOptions('branch-1'), {
+      wrapper: makeWrapper(queryClient),
+    });
+    await waitFor(() => expect(allowed.result.current.isSuccess).toBe(true));
+    expect(allowed.result.current.data?.[0]?.plate_number).toBe('01 A 123 BC');
+    expect(axiosInstance.get).toHaveBeenCalledWith(
+      '/expenses/vehicle-options',
+      expect.objectContaining({ params: { branch_id: 'branch-1' } }),
+    );
   });
 
   it('invalidates expense detail/list and finance summary after a payment', async () => {

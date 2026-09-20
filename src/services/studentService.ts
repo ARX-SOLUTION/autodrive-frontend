@@ -282,8 +282,14 @@ export const useRestoreStudent = () => {
   });
 };
 
-export const searchStudents = async (q: string): Promise<Student[]> => {
-  const result = await fetchStudentsPage({ search: q, page: 1, limit: 50 });
+export const searchStudents = async (
+  q: string,
+  signal?: AbortSignal,
+): Promise<Student[]> => {
+  const result = await fetchStudentsPage(
+    { search: q, page: 1, limit: 50 },
+    signal,
+  );
   return result.data;
 };
 

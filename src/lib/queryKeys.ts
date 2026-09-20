@@ -41,6 +41,16 @@ export const userKeys = baseKeys('users');
 export const teacherKeys = baseKeys('teachers');
 export const studentKeys = baseKeys('students');
 export const branchKeys = baseKeys('branches');
+export const vehicleKeys = baseKeys('vehicles');
+export const trainingProgramKeys = baseKeys('training-programs');
+export const trainingEnrollmentKeys = baseKeys('training-enrollments');
+export const drivingSessionKeys = {
+  ...baseKeys('driving-sessions'),
+  summary: (enrollmentId: string) =>
+    ['driving-sessions', 'summary', enrollmentId] as const,
+  report: (enrollmentId: string) =>
+    ['driving-sessions', 'report', enrollmentId] as const,
+};
 export const courseKeys = baseKeys('courses');
 export const lessonKeys = baseKeys('lessons');
 export const auditLogKeys = baseKeys('audit-logs');
@@ -64,6 +74,8 @@ export const expenseKeys = {
   ...baseKeys('expenses'),
   branchOptions: (companyId: string | undefined) =>
     ['expenses', 'branch-options', companyId] as const,
+  vehicleOptions: (filters: Filters = {}) =>
+    ['expenses', 'vehicle-options', filters] as const,
   teacherOptions: (companyId: string | undefined) =>
     ['expenses', 'teacher-options', companyId] as const,
   triageCounts: (filters: Filters = {}) =>

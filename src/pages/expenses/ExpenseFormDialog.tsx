@@ -16,12 +16,14 @@ import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import { useCan } from '@/hooks/useCan';
+import { useAuthStore } from '@/store/authStore';
 import { groupDigits } from '@/lib/money';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import {
   useCreateExpense,
   useCreateTeacherSettlement,
   useExpenseTeacherOptions,
+  useExpenseVehicleOptions,
   useUpdateExpense,
 } from '@/services/expenseService';
 import type {
@@ -112,6 +114,7 @@ const makeExpenseFormSchema = (t: (key: string) => string) =>
       ),
     payee: z.string().trim().optional(),
     note: z.string().trim().optional(),
+    vehicleId: z.string(),
   });
 
 const makeSettlementFormSchema = (t: (key: string) => string) =>
@@ -163,6 +166,7 @@ export const ExpenseFormDialog = ({
   const canManageFinance = useCan('manageCompanyFinance');
   const isManager = canViewExpenses && !canManageFinance;
   const isSettlement = mode === 'settlement' && !editExpense;
+  const userBranchId = useAuthStore((state) => state.user?.branch_id);
   const createExpense = useCreateExpense();
   const createSettlement = useCreateTeacherSettlement();
   const updateExpense = useUpdateExpense();
@@ -191,6 +195,7 @@ export const ExpenseFormDialog = ({
           dueDate: editExpense.due_date ?? '',
           payee: editExpense.payee ?? '',
           note: editExpense.note ?? '',
+          vehicleId: editExpense.vehicle_id ?? '',
         }
       : {
           branchTarget: 'company',
@@ -201,6 +206,7 @@ export const ExpenseFormDialog = ({
           dueDate: '',
           payee: '',
           note: '',
+          vehicleId: '',
         };
 
   const settlementDefaults = (): SettlementFormValues => ({
@@ -224,6 +230,19 @@ export const ExpenseFormDialog = ({
   });
 
   const activeForm = isSettlement ? settlementForm : expenseForm;
+  const branchTarget = useWatch({
+    control: expenseForm.control,
+    name: 'branchTarget',
+  });
+  const vehicleBranchId = isManager
+    ? (userBranchId ?? undefined)
+    : branchTarget === 'company'
+      ? undefined
+      : branchTarget;
+  const vehicleOptions = useExpenseVehicleOptions(
+    vehicleBranchId,
+    open && !isSettlement,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -291,7 +310,12 @@ export const ExpenseFormDialog = ({
         payee: commonPayload.payee,
         note: commonPayload.note,
         expected_version: editExpense.version,
-        ...(!isManager && !financialFieldsLocked
+        ...(expenseForm.getFieldState('vehicleId').isDirty
+          ? { vehicle_id: values.vehicleId || null }
+          : {}),
+        ...(!isManager &&
+        !financialFieldsLocked &&
+        expenseForm.getFieldState('branchTarget').isDirty
           ? {
               branch_id:
                 values.branchTarget === 'company' ? null : values.branchTarget,
@@ -329,6 +353,7 @@ export const ExpenseFormDialog = ({
               values.branchTarget === 'company' ? null : values.branchTarget,
           }),
       idempotency_key: idempotencyKeyRef.current,
+      ...(values.vehicleId ? { vehicle_id: values.vehicleId } : {}),
     };
 
     const submitMutation = () =>
@@ -605,7 +630,13 @@ export const ExpenseFormDialog = ({
                         </FormLabel>
                         <Select
                           value={field.value}
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            expenseForm.setValue('vehicleId', '', {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            });
+                          }}
                           disabled={financialFieldsLocked}
                         >
                           <FormControl>
@@ -631,6 +662,83 @@ export const ExpenseFormDialog = ({
                     )}
                   />
                 )}
+
+                <FormField
+                  control={expenseForm.control}
+                  name="vehicleId"
+                  render={({ field }) => {
+                    const options = vehicleOptions.data ?? [];
+                    const showHistorical =
+                      !!editExpense?.vehicle_id &&
+                      field.value === editExpense.vehicle_id &&
+                      vehicleBranchId === editExpense.branch_id &&
+                      !options.some((option) => option.id === field.value);
+                    return (
+                      <FormItem>
+                        <FormLabel>{t('expenses.form.vehicle')}</FormLabel>
+                        <Select
+                          value={field.value || 'none'}
+                          onValueChange={(value) =>
+                            field.onChange(value === 'none' ? '' : value)
+                          }
+                          disabled={
+                            financialFieldsLocked ||
+                            !vehicleBranchId ||
+                            vehicleOptions.isLoading
+                          }
+                        >
+                          <FormControl>
+                            <SelectTrigger
+                              aria-label={t('expenses.form.vehicle')}
+                              className="bg-secondary border-border"
+                            >
+                              <SelectValue
+                                placeholder={t('expenses.form.vehicle_none')}
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">
+                              {t('expenses.form.vehicle_none')}
+                            </SelectItem>
+                            {showHistorical && (
+                              <SelectItem value={editExpense.vehicle_id!}>
+                                {editExpense.vehicle_plate_number ??
+                                  editExpense.vehicle_id}{' '}
+                                ({t('expenses.form.vehicle_historical')})
+                              </SelectItem>
+                            )}
+                            {options.map((option) => (
+                              <SelectItem key={option.id} value={option.id}>
+                                {option.plate_number} · {option.make}{' '}
+                                {option.model}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {!vehicleBranchId && (
+                          <p className="text-xs text-muted-foreground">
+                            {t('expenses.form.vehicle_requires_branch')}
+                          </p>
+                        )}
+                        {vehicleOptions.isError && (
+                          <div className="flex items-center gap-2 text-xs text-destructive">
+                            {t('expenses.form.vehicle_load_error')}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => void vehicleOptions.refetch()}
+                            >
+                              {t('common.retry')}
+                            </Button>
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
 
                 <FormField
                   control={expenseForm.control}

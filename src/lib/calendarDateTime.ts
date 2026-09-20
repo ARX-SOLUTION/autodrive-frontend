@@ -58,3 +58,35 @@ export const isoToParts = (iso: string): DateTimeParts => {
 
 export const nowTashkentParts = (): DateTimeParts =>
   tashkentPartsFromUtcMs(Date.now());
+
+const displayInstant = (value: string): Date =>
+  new Date(value.length === 10 ? `${value}T12:00:00+05:00` : value);
+
+const formatUzDate = (instant: Date): string => {
+  const [year, month, day] = isoToParts(instant.toISOString()).date.split('-');
+  return `${day}.${month}.${year}`;
+};
+
+export const formatTashkentDate = (value: string, locale = 'uz'): string => {
+  const instant = displayInstant(value);
+  if (locale.startsWith('uz')) return formatUzDate(instant);
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+    timeZone: 'Asia/Tashkent',
+  }).format(instant);
+};
+
+export const formatTashkentDateTime = (
+  value: string,
+  locale = 'uz',
+): string => {
+  const instant = displayInstant(value);
+  if (locale.startsWith('uz')) {
+    return `${formatUzDate(instant)} ${isoToParts(instant.toISOString()).time}`;
+  }
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'Asia/Tashkent',
+  }).format(instant);
+};

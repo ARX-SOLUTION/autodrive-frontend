@@ -57,6 +57,15 @@ describe('Sidebar navigation', () => {
     expect(screen.getByText('nav.dashboard')).toBeTruthy();
   });
 
+  it('includes fleet and driving sections when their capabilities are allowed', async () => {
+    await renderSidebar();
+    expect(screen.getByLabelText('nav.vehicles')).toBeTruthy();
+    expect(screen.getByLabelText('nav.fleet_map')).toBeTruthy();
+    expect(screen.getByLabelText('nav.training_programs')).toBeTruthy();
+    expect(screen.getByLabelText('nav.training_enrollments')).toBeTruthy();
+    expect(screen.getByLabelText('nav.driving_sessions')).toBeTruthy();
+  });
+
   it('exposes a 40px desktop toggle with its expanded state', async () => {
     const onDesktopExpandedChange = vi.fn();
     await renderSidebar(false, '/dashboard', true, onDesktopExpandedChange);
