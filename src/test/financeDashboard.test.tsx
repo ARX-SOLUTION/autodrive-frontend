@@ -26,6 +26,7 @@ const summaryState = vi.hoisted(() => ({
   isError: false,
   isFetching: false,
   refetch: vi.fn(),
+  query: undefined as unknown,
 }));
 
 vi.mock('@/store/authStore', () => ({
@@ -33,16 +34,19 @@ vi.mock('@/store/authStore', () => ({
 }));
 
 vi.mock('@/services/dashboardService', () => ({
-  useFinanceSummary: () => ({
-    data:
-      summaryState.isLoading || summaryState.isError
-        ? undefined
-        : summaryState.data,
-    isLoading: summaryState.isLoading,
-    isError: summaryState.isError,
-    isFetching: summaryState.isFetching,
-    refetch: summaryState.refetch,
-  }),
+  useFinanceSummary: (query: unknown) => {
+    summaryState.query = query;
+    return {
+      data:
+        summaryState.isLoading || summaryState.isError
+          ? undefined
+          : summaryState.data,
+      isLoading: summaryState.isLoading,
+      isError: summaryState.isError,
+      isFetching: summaryState.isFetching,
+      refetch: summaryState.refetch,
+    };
+  },
 }));
 
 afterEach(() => {
@@ -57,6 +61,8 @@ afterEach(() => {
     outstanding_expenses: '300.00',
     teacher_payable: '100.00',
   };
+  auth.user.branch_id = undefined;
+  summaryState.query = undefined;
   vi.clearAllMocks();
 });
 
@@ -67,6 +73,14 @@ const renderFinanceDashboard = () =>
   });
 
 describe('FinanceDashboard', () => {
+  it('keeps an accountant summary company-wide even when its JWT includes a branch', async () => {
+    auth.user.branch_id = 'branch-a';
+
+    await renderFinanceDashboard();
+
+    expect(summaryState.query).not.toHaveProperty('branchId');
+  });
+
   it('shows a skeleton while finance summary is loading', async () => {
     summaryState.isLoading = true;
     await renderFinanceDashboard();

@@ -3,7 +3,6 @@ import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Wallet, CaretRight } from '@phosphor-icons/react';
 import { useUrlParams } from '@/hooks/useUrlParams';
-import { useAuthStore } from '@/store/authStore';
 import { FinanceSummarySection } from './FinanceSummarySection';
 import type { FinanceSummaryQuery } from '@/services/dashboardService';
 
@@ -18,16 +17,14 @@ const startOfMonthInUz = () => `${todayInUz().slice(0, 8)}01`;
 /** Accountant-only finance dashboard (lazy route chunk). */
 const FinanceDashboard = () => {
   const { t } = useTranslation();
-  const user = useAuthStore((state) => state.user);
   const { searchParams: params } = useUrlParams();
 
   const query = useMemo<FinanceSummaryQuery>(
     () => ({
       from: params.get('from') || startOfMonthInUz(),
       to: params.get('to') || todayInUz(),
-      branchId: user?.branch_id ?? undefined,
     }),
-    [params, user?.branch_id],
+    [params],
   );
 
   return (
