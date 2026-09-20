@@ -43,6 +43,7 @@ import { useCan } from '@/hooks/useCan';
 import { CourseType } from '@/types/student';
 import { cn } from '@/lib/utils';
 import { formatMoney, groupDigits } from '@/lib/money';
+import { FinanceSummarySection } from './FinanceSummarySection';
 
 const RevenueTrendChart = lazy(() => import('./RevenueTrendChart'));
 
@@ -680,7 +681,10 @@ const CompanyRevenueDashboard = () => {
     {
       key: 'financial',
       label: t('dashboard.v2.financial_block.title', 'Moliya va qarzdorlik'),
-      buttonLabel: t('dashboard.v2.analysis_financial', 'Moliya'),
+      buttonLabel: t(
+        'dashboard.v2.analysis_financial',
+        'Tushum va talaba qarzdorligi',
+      ),
       description: t(
         'dashboard.v2.financial_block.subtitle',
         'Qarz muddati, tushum sifati va kurslar kesimi.',
@@ -817,6 +821,16 @@ const CompanyRevenueDashboard = () => {
         onRefresh={() => void refetch()}
         isFetching={isFetching}
       />
+
+      {(user?.role === 'owner' || user?.role === 'manager') && (
+        <FinanceSummarySection
+          query={{
+            branchId: query.branchId,
+            from: query.from || startOfMonthInUz(),
+            to: query.to || todayInUz(),
+          }}
+        />
+      )}
 
       <section className="overflow-hidden rounded-lg border border-border bg-card">
         <div

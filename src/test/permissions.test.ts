@@ -64,9 +64,9 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
     expect(roleCan('teacher', 'manageStudents')).toBe(false);
   });
 
-  it('accountant has no operational capability', () => {
+  it('accountant has no operational capability except T8B dashboard', () => {
     expect(roleCan('accountant', 'accessOperations')).toBe(false);
-    expect(roleCan('accountant', 'viewDashboard')).toBe(false);
+    expect(roleCan('accountant', 'viewDashboard')).toBe(true);
     expect(roleCan('accountant', 'recordPayment')).toBe(false);
   });
 

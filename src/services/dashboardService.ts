@@ -258,3 +258,52 @@ export const useCompanyOverview = (query: CompanyOverviewQuery = {}) => {
   const enabled = !!query.branchId || isCrossTenant || !!query.companyId;
   return useQuery(companyOverviewQueryOptions(query, enabled));
 };
+
+export interface FinanceSummaryQuery {
+  branchId?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface FinanceSummary {
+  from: string;
+  to: string;
+  income: string;
+  paid_expenses: string;
+  cash_flow_balance: string;
+  outstanding_expenses: string;
+  teacher_payable: string;
+}
+
+export const financeSummaryQueryOptions = (
+  query: FinanceSummaryQuery = {},
+  enabled = true,
+) =>
+  queryOptions({
+    queryKey: dashboardKeys.financeSummary({
+      branchId: query.branchId,
+      from: query.from,
+      to: query.to,
+    }),
+    enabled,
+    queryFn: async ({ signal }) => {
+      const { data: res } = await axiosInstance.get<unknown>(
+        '/dashboard/finance-summary',
+        {
+          params: {
+            branch_id: query.branchId,
+            from: query.from,
+            to: query.to,
+          },
+          signal,
+        },
+      );
+      return parseItemEnvelope<FinanceSummary>(res, 'finance-summary');
+    },
+    staleTime: 30_000,
+  });
+
+export const useFinanceSummary = (
+  query: FinanceSummaryQuery = {},
+  enabled = true,
+) => useQuery(financeSummaryQueryOptions(query, enabled));

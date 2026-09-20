@@ -96,12 +96,12 @@ describe('Sidebar teacher nav trim (autodrive-vh0.2)', () => {
     expect(screen.getByLabelText('nav.payments')).toBeTruthy();
   });
 
-  it('shows an accountant only finance and profile entries in T2', async () => {
+  it('shows an accountant finance dashboard, expenses, and profile in T8B', async () => {
     role = 'accountant';
     await renderSidebar();
     expect(screen.getByLabelText('nav.profile')).toBeTruthy();
     expect(screen.getByLabelText('nav.expenses')).toBeTruthy();
-    expect(screen.queryByLabelText('nav.dashboard')).toBeNull();
+    expect(screen.getByLabelText('nav.dashboard')).toBeTruthy();
     expect(screen.queryByLabelText('nav.students')).toBeNull();
   });
 });

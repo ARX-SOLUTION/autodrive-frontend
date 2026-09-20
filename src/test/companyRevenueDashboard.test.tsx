@@ -16,7 +16,7 @@ globalThis.ResizeObserver =
 const auth = vi.hoisted(() => ({
   user: {
     name: 'Demo Owner',
-    role: 'owner' as 'owner' | 'manager',
+    role: 'owner' as 'owner' | 'manager' | 'dev' | 'operator',
     branch_id: undefined as string | undefined,
   },
 }));
@@ -148,6 +148,31 @@ const overviewState = vi.hoisted(() => ({
   refetch: vi.fn(),
 }));
 
+vi.mock('@/pages/dashboard/RevenueTrendChart', () => ({
+  default: () => (
+    <div data-testid="revenue-payment-chart">
+      <button
+        type="button"
+        data-testid="chart-metric-revenue"
+        aria-pressed="true"
+        className="border-primary"
+      />
+      <button
+        type="button"
+        data-testid="chart-metric-payments"
+        aria-pressed="true"
+        className="border-primary"
+        onClick={(event) => {
+          const button = event.currentTarget;
+          button.setAttribute('aria-pressed', 'false');
+          button.className = 'border-transparent';
+        }}
+      />
+      <span>dashboard.v2.average_payment</span>
+    </div>
+  ),
+}));
+
 vi.mock('@/services/dashboardService', () => ({
   useCompanyOverview: () => ({
     ...overview,
@@ -159,6 +184,21 @@ vi.mock('@/services/dashboardService', () => ({
     isFetching: false,
     isError: overviewState.isError,
     refetch: overviewState.refetch,
+  }),
+  useFinanceSummary: () => ({
+    data: {
+      from: '2026-07-01',
+      to: '2026-07-10',
+      income: '100.00',
+      paid_expenses: '40.00',
+      cash_flow_balance: '60.00',
+      outstanding_expenses: '20.00',
+      teacher_payable: '5.00',
+    },
+    isLoading: false,
+    isError: false,
+    isFetching: false,
+    refetch: vi.fn(),
   }),
 }));
 
@@ -192,6 +232,36 @@ describe('CompanyRevenueDashboard', () => {
     expect(screen.getByText('dashboard.v2.error_title')).toBeInTheDocument();
     fireEvent.click(screen.getByText('common.retry'));
     expect(overviewState.refetch).toHaveBeenCalled();
+  });
+
+  it('shows FinanceSummarySection for owner and renames revenue analysis label', async () => {
+    await renderDashboard();
+    expect(screen.getByTestId('finance-summary-section')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: 'dashboard.v2.financial_block.title',
+      }),
+    ).toHaveTextContent('dashboard.v2.analysis_financial');
+    expect(screen.queryByText(/profit/i)).toBeNull();
+    expect(screen.queryByText(/sof foyda/i)).toBeNull();
+  });
+
+  it('shows FinanceSummarySection for manager', async () => {
+    auth.user = { name: 'Manager', role: 'manager', branch_id: 'branch-1' };
+    await renderDashboard();
+    expect(screen.getByTestId('finance-summary-section')).toBeInTheDocument();
+  });
+
+  it('hides FinanceSummarySection from direct dev', async () => {
+    auth.user = { name: 'Dev', role: 'dev', branch_id: undefined };
+    await renderDashboard();
+    expect(screen.queryByTestId('finance-summary-section')).toBeNull();
+  });
+
+  it('hides FinanceSummarySection from operator', async () => {
+    auth.user = { name: 'Operator', role: 'operator', branch_id: 'branch-1' };
+    await renderDashboard();
+    expect(screen.queryByTestId('finance-summary-section')).toBeNull();
   });
 
   it('renders Hierarchy B KPI strip (autodrive-9s5j dedupe)', async () => {

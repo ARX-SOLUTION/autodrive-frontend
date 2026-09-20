@@ -47,12 +47,12 @@ describe('CommandPalette teacher nav trim (autodrive-vh0.2)', () => {
     expect(screen.getByText('nav.payments')).toBeTruthy();
   });
 
-  it('shows only finance/profile commands to an accountant in T2', async () => {
+  it('shows finance dashboard, expenses, and profile commands to an accountant in T8B', async () => {
     role = 'accountant';
     await renderPalette();
     expect(screen.getByText('nav.profile')).toBeTruthy();
     expect(screen.getByText('nav.expenses')).toBeTruthy();
-    expect(screen.queryByText('nav.dashboard')).toBeNull();
+    expect(screen.getByText('nav.dashboard')).toBeTruthy();
     expect(screen.queryByText('nav.students')).toBeNull();
   });
 });
