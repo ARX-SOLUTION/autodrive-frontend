@@ -200,6 +200,26 @@ vi.mock('@/services/dashboardService', () => ({
     isFetching: false,
     refetch: vi.fn(),
   }),
+  useExpenseBreakdown: () => ({
+    data: {
+      from: '2026-07-01',
+      to: '2026-07-10',
+      total: '40.00',
+      company_wide: { total: '0.00' },
+      by_branch: [
+        {
+          branch_id: 'branch-1',
+          branch_name: 'Chorsu',
+          total: '40.00',
+        },
+      ],
+      by_category: [{ category: 'rent', total: '40.00' }],
+    },
+    isLoading: false,
+    isError: false,
+    isFetching: false,
+    refetch: vi.fn(),
+  }),
 }));
 
 afterEach(() => {

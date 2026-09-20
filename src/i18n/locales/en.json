@@ -382,7 +382,17 @@
       "subtitle": "Cash flow for the selected period and current obligations.",
       "error_title": "Could not load finance metrics",
       "empty": "No finance activity for the selected period",
-      "breakdown_empty": "Branch and category breakdown is not available yet",
+      "expense_breakdown": {
+        "title": "Expense ledger breakdown",
+        "subtitle": "Open selected-period records by branch or category.",
+        "ledger_total": "Ledger total",
+        "by_branch": "By branch",
+        "by_category": "By category",
+        "company_wide": "Company-wide",
+        "empty": "No expense records for the selected period",
+        "error_title": "Could not load the expense breakdown",
+        "drill_down": "Open {{label}} expenses"
+      },
       "income": "Income",
       "paid_expenses": "Paid expenses",
       "cash_flow_balance": "Cash flow balance",

@@ -275,6 +275,30 @@ export interface FinanceSummary {
   teacher_payable: string;
 }
 
+export interface ExpenseBreakdown {
+  from: string;
+  to: string;
+  total: string;
+  company_wide: { total: string };
+  by_branch: Array<{
+    branch_id: string;
+    branch_name: string;
+    total: string;
+  }>;
+  by_category: Array<{
+    category:
+      | 'rent'
+      | 'utilities'
+      | 'vehicle'
+      | 'marketing'
+      | 'supplies'
+      | 'administrative'
+      | 'teacher_settlement'
+      | 'other';
+    total: string;
+  }>;
+}
+
 export const financeSummaryQueryOptions = (
   query: FinanceSummaryQuery = {},
   enabled = true,
@@ -307,3 +331,36 @@ export const useFinanceSummary = (
   query: FinanceSummaryQuery = {},
   enabled = true,
 ) => useQuery(financeSummaryQueryOptions(query, enabled));
+
+export const expenseBreakdownQueryOptions = (
+  query: FinanceSummaryQuery = {},
+  enabled = true,
+) =>
+  queryOptions({
+    queryKey: dashboardKeys.expenseBreakdown({
+      branchId: query.branchId,
+      from: query.from,
+      to: query.to,
+    }),
+    enabled,
+    queryFn: async ({ signal }) => {
+      const { data: res } = await axiosInstance.get<unknown>(
+        '/dashboard/expense-breakdown',
+        {
+          params: {
+            branch_id: query.branchId,
+            from: query.from,
+            to: query.to,
+          },
+          signal,
+        },
+      );
+      return parseItemEnvelope<ExpenseBreakdown>(res, 'expense-breakdown');
+    },
+    staleTime: 30_000,
+  });
+
+export const useExpenseBreakdown = (
+  query: FinanceSummaryQuery = {},
+  enabled = true,
+) => useQuery(expenseBreakdownQueryOptions(query, enabled));

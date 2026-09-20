@@ -382,7 +382,17 @@
       "subtitle": "Tanlangan davr naqd oqimi va joriy majburiyatlar.",
       "error_title": "Moliya ko'rsatkichlarini yuklab bo'lmadi",
       "empty": "Tanlangan davr uchun moliya harakati yo‘q",
-      "breakdown_empty": "Filial va kategoriya taqsimoti hali yo‘q",
+      "expense_breakdown": {
+        "title": "Xarajatlar reestri kesimi",
+        "subtitle": "Tanlangan davrdagi yozuvlarni filial yoki kategoriya bo‘yicha oching.",
+        "ledger_total": "Reestr jami",
+        "by_branch": "Filiallar bo‘yicha",
+        "by_category": "Kategoriya bo‘yicha",
+        "company_wide": "Kompaniya bo‘yicha",
+        "empty": "Tanlangan davrda xarajat yozuvlari yo‘q",
+        "error_title": "Xarajatlar kesimini yuklab bo‘lmadi",
+        "drill_down": "{{label}} xarajatlarini ochish"
+      },
       "income": "Tushum",
       "paid_expenses": "To‘langan xarajatlar",
       "cash_flow_balance": "Naqd oqim balansi",
