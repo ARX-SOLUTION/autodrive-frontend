@@ -1,4 +1,4 @@
-import { screen, cleanup, waitFor } from '@testing-library/react';
+import { screen, cleanup } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import DashboardRouter from '@/pages/dashboard/DashboardRouter';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
@@ -22,6 +22,9 @@ vi.mock('@/store/authStore', () => ({
 }));
 vi.mock('@/pages/dashboard/TeacherDashboard', () => ({
   default: () => <div data-testid="teacher-dashboard-marker" />,
+}));
+vi.mock('@/pages/dashboard/FinanceDashboard', () => ({
+  default: () => <div data-testid="finance-dashboard-marker" />,
 }));
 vi.mock('@/pages/dashboard/CompanyRevenueDashboard', () => ({
   default: () => <div data-testid="company-revenue-dashboard-marker" />,
@@ -113,13 +116,12 @@ describe('DashboardRouter role routing (autodrive-vh0.6 regression)', () => {
     expect(screen.queryByTestId('teacher-dashboard-marker')).toBeNull();
   });
 
-  it('redirects an accountant from a direct dashboard visit without mounting a dashboard', async () => {
+  it('routes an accountant to FinanceDashboard only', async () => {
     user = { name: 'Accountant', role: 'accountant' };
-    const { router } = await renderDashboardPage();
-
-    await waitFor(() =>
-      expect(router.state.location.pathname).toBe('/expenses'),
-    );
+    await renderDashboardPage();
+    expect(
+      await screen.findByTestId('finance-dashboard-marker'),
+    ).toBeInTheDocument();
     expect(screen.queryByTestId('teacher-dashboard-marker')).toBeNull();
     expect(screen.queryByTestId('company-revenue-dashboard-marker')).toBeNull();
     expect(screen.queryByTestId('legacy-dashboard-marker')).toBeNull();

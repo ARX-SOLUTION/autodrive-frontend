@@ -308,7 +308,7 @@
       "analysis_title": "Detailed analysis",
       "analysis_subtitle": "Choose an area to understand what is driving the result.",
       "analysis_tabs_label": "Analysis area",
-      "analysis_financial": "Finance",
+      "analysis_financial": "Revenue and student receivables",
       "analysis_academic": "Learning",
       "analysis_staff": "Team",
       "financial_block": {
@@ -376,6 +376,22 @@
       "upcoming_empty_desc": "You have no lessons scheduled yet.",
       "no_groups_title": "No groups yet",
       "no_groups_desc": "You haven't been assigned to a group yet. Contact your manager."
+    },
+    "finance_summary": {
+      "title": "Finance metrics",
+      "subtitle": "Cash flow for the selected period and current obligations.",
+      "error_title": "Could not load finance metrics",
+      "empty": "No finance activity for the selected period",
+      "breakdown_empty": "Branch and category breakdown is not available yet",
+      "income": "Income",
+      "paid_expenses": "Paid expenses",
+      "cash_flow_balance": "Cash flow balance",
+      "outstanding_expenses": "Outstanding expenses",
+      "teacher_payable": "Teacher payable"
+    },
+    "finance_dashboard": {
+      "title": "Finance dashboard",
+      "subtitle": "Cash flow, obligations, and teacher payables."
     }
   },
   "branches": {

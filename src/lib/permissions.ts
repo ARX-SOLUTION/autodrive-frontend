@@ -70,7 +70,8 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   // have unconditional delete via the role check in AttendancePage.
   manageOwnLesson: ['dev', 'owner', 'manager', 'teacher'],
   viewAudit: OWNERS,
-  viewDashboard: OPERATIONAL_ROLES,
+  // T8B: accountant joins via FinanceDashboard only (not operational CRM).
+  viewDashboard: [...OPERATIONAL_ROLES, 'accountant'],
   // Finance is intentionally not part of the dev superset. Direct platform
   // sessions are denied by the backend; an impersonated owner is evaluated
   // with the effective owner role instead.

@@ -11,6 +11,9 @@ const CompanyRevenueDashboard = lazy(
 const TeacherDashboard = lazy(
   () => import('@/pages/dashboard/TeacherDashboard'),
 );
+const FinanceDashboard = lazy(
+  () => import('@/pages/dashboard/FinanceDashboard'),
+);
 
 const DashboardRouter = () => {
   const user = useAuthStore((state) => state.user);
@@ -30,6 +33,14 @@ const DashboardRouter = () => {
     return (
       <Suspense fallback={fallback}>
         <TeacherDashboard />
+      </Suspense>
+    );
+  }
+
+  if (user?.role === 'accountant') {
+    return (
+      <Suspense fallback={fallback}>
+        <FinanceDashboard />
       </Suspense>
     );
   }

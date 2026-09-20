@@ -43,7 +43,7 @@ const initialBytes = initialBaseBytes + largestLocaleBytes;
 assertBudget('Initial JS plus selected locale', initialBytes, 200 * kib);
 
 const routeChunks = assetNames.filter((name) =>
-  /^(?:login-|_authenticated(?:[.-])|CompanyRevenueDashboard-|TeacherDashboard-).+\.js$/.test(
+  /^(?:login-|_authenticated(?:[.-])|CompanyRevenueDashboard-|TeacherDashboard-|FinanceDashboard-).+\.js$/.test(
     name,
   ),
 );
@@ -75,10 +75,21 @@ const companyDashboardSource = readFileSync(
   new URL(`assets/${companyDashboard}`, distDir),
   'utf8',
 );
+const financeDashboard = assetNames.find((name) =>
+  /^FinanceDashboard-.+\.js$/.test(name),
+);
+if (!financeDashboard) {
+  throw new Error('Finance dashboard chunk was not found.');
+}
+const financeDashboardSource = readFileSync(
+  new URL(`assets/${financeDashboard}`, distDir),
+  'utf8',
+);
 const staticChartsImport = /(?:from|import)\s*["']\.\/charts-vendor-/;
 for (const [name, source] of [
   [dashboardRoute, dashboardRouteSource],
   [companyDashboard, companyDashboardSource],
+  [financeDashboard, financeDashboardSource],
 ]) {
   if (staticChartsImport.test(source)) {
     throw new Error(`${name} eagerly depends on charts-vendor.`);

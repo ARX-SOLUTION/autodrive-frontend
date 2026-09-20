@@ -308,7 +308,7 @@
       "analysis_title": "Batafsil tahlil",
       "analysis_subtitle": "Yo‘nalishni tanlab, natija ortidagi sabablarni ko‘ring.",
       "analysis_tabs_label": "Tahlil yo‘nalishi",
-      "analysis_financial": "Moliya",
+      "analysis_financial": "Tushum va talaba qarzdorligi",
       "analysis_academic": "O‘quv",
       "analysis_staff": "Jamoa",
       "financial_block": {
@@ -376,6 +376,22 @@
       "upcoming_empty_desc": "Hozircha rejalashtirilgan darslaringiz yo’q.",
       "no_groups_title": "Hali guruh yo’q",
       "no_groups_desc": "Sizga hali guruh biriktirilmagan. Menejeringizga murojaat qiling."
+    },
+    "finance_summary": {
+      "title": "Moliya ko‘rsatkichlari",
+      "subtitle": "Tanlangan davr naqd oqimi va joriy majburiyatlar.",
+      "error_title": "Moliya ko'rsatkichlarini yuklab bo'lmadi",
+      "empty": "Tanlangan davr uchun moliya harakati yo‘q",
+      "breakdown_empty": "Filial va kategoriya taqsimoti hali yo‘q",
+      "income": "Tushum",
+      "paid_expenses": "To‘langan xarajatlar",
+      "cash_flow_balance": "Naqd oqim balansi",
+      "outstanding_expenses": "Qolgan majburiyatlar",
+      "teacher_payable": "O‘qituvchi to‘lovlari"
+    },
+    "finance_dashboard": {
+      "title": "Moliya paneli",
+      "subtitle": "Naqd oqimi, majburiyatlar va o‘qituvchi to‘lovlari."
     }
   },
   "branches": {
