@@ -1,7 +1,9 @@
 import { Wallet, Warning } from '@phosphor-icons/react';
 import { useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@/components/layout/PageHeader';
+import PaginationControls from '@/components/ui/PaginationControls';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useCan } from '@/hooks/useCan';
@@ -60,9 +62,11 @@ const MySettlementsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const canViewOwn = useCan('viewOwnSettlements');
-  const query = useMySettlements(canViewOwn);
+  const [currentPage, setCurrentPage] = useState(1);
+  const query = useMySettlements(currentPage, canViewOwn);
   const settlements = query.data?.data ?? [];
   const total = query.data?.meta.total ?? 0;
+  const totalPages = Math.max(1, query.data?.meta.totalPages ?? 1);
 
   const openDetail = (id: string) => {
     void navigate({ to: '/my-settlements/$id', params: { id } });
@@ -138,6 +142,12 @@ const MySettlementsPage = () => {
           </div>
         )}
       </div>
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };

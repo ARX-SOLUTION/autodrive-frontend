@@ -495,22 +495,27 @@ export const useExpenseTeacherOptions = (enabled = true) => {
   );
 };
 
-export const mySettlementsQueryOptions = (enabled = true) =>
+const MY_SETTLEMENTS_PAGE_SIZE = 10;
+
+export const mySettlementsQueryOptions = (page = 1, enabled = true) =>
   queryOptions({
-    queryKey: [...teacherSettlementKeys.me(), expenseIdentity()] as const,
+    queryKey: [
+      ...teacherSettlementKeys.me(page, MY_SETTLEMENTS_PAGE_SIZE),
+      expenseIdentity(),
+    ] as const,
     enabled,
     queryFn: async ({ signal }) => {
       const { data } = await axiosInstance.get<unknown>(
         '/teacher-settlements/me',
-        { signal },
+        { params: { page, limit: MY_SETTLEMENTS_PAGE_SIZE }, signal },
       );
       return parseListEnvelope<Expense>(data, 'teacher-settlements');
     },
   });
 
-export const useMySettlements = (enabled = true) => {
+export const useMySettlements = (page = 1, enabled = true) => {
   const canViewOwn = useCan('viewOwnSettlements');
-  return useQuery(mySettlementsQueryOptions(enabled && canViewOwn));
+  return useQuery(mySettlementsQueryOptions(page, enabled && canViewOwn));
 };
 
 export const mySettlementDetailQueryOptions = (id?: string, enabled = !!id) =>

@@ -42,8 +42,19 @@ const settlement = (over: Partial<Expense> = {}): Expense => ({
   ...over,
 });
 
-const pageOf = (rows: Expense[]) => ({
-  data: { data: rows, meta: { total: rows.length, totalPages: 1 } },
+const pageOf = (
+  rows: Expense[],
+  meta: Partial<{ total: number; page: number; totalPages: number }> = {},
+) => ({
+  data: {
+    data: rows,
+    meta: {
+      total: rows.length,
+      page: 1,
+      totalPages: 1,
+      ...meta,
+    },
+  },
   isLoading: false,
   isFetching: false,
   isError: false,
@@ -108,6 +119,17 @@ describe('MySettlementsPage', () => {
     expect(
       screen.getByText('my_settlements.summary.total'),
     ).toBeInTheDocument();
-    expect(useMySettlementsMock).toHaveBeenCalledWith(true);
+    expect(useMySettlementsMock).toHaveBeenCalledWith(1, true);
+  });
+
+  it('moves to the selected server page', async () => {
+    useMySettlementsMock.mockImplementation((page: number) =>
+      pageOf([settlement()], { total: 11, page, totalPages: 2 }),
+    );
+
+    await renderPage();
+    fireEvent.click(screen.getByRole('button', { name: 'common.next' }));
+
+    expect(useMySettlementsMock).toHaveBeenLastCalledWith(2, true);
   });
 });
