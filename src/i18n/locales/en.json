@@ -874,7 +874,20 @@
       "updating": "Saving...",
       "update_conflict": "This expense changed elsewhere. Review the refreshed values and submit again.",
       "invalid_amount": "Amount must be positive with two decimal places",
-      "invalid_date": "Enter a valid date"
+      "invalid_date": "Enter a valid date",
+      "invalid_period_month": "Enter a valid month (YYYY-MM)"
+    },
+    "settlement": {
+      "add": "Add teacher settlement",
+      "form_title": "New teacher settlement",
+      "form_description": "Create a monthly settlement for one teacher. Branch is taken from the teacher assignment.",
+      "teacher": "Teacher",
+      "teacher_placeholder": "Select a teacher",
+      "branch_context": "Teacher branch",
+      "branch_pending": "Select a teacher to see their branch",
+      "period_month": "Settlement month",
+      "submit": "Create settlement",
+      "created": "Teacher settlement created successfully"
     },
     "detail": {
       "title": "Expense details",

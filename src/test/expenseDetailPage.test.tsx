@@ -7,8 +7,11 @@ import {
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import ExpenseDetailPage from '@/pages/ExpenseDetailPage';
+import { ExpenseFormDialog } from '@/pages/expenses/ExpenseFormDialog';
 import type { Expense, ExpenseHistory } from '@/types/expense';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
+import { toast } from 'sonner';
+import { within } from '@testing-library/react';
 
 const queryState = vi.hoisted(() => ({
   data: null as Expense | null,
@@ -54,6 +57,16 @@ const voidPaymentMutation = vi.hoisted(() => ({
   isPending: false,
   mutate: vi.fn(),
 }));
+const settlementMutation = vi.hoisted(() => ({
+  isPending: false,
+  mutate: vi.fn(),
+}));
+const teacherOptionsState = vi.hoisted(() => ({
+  data: [
+    { id: 'teacher-1', name: 'Aziz Karimov', branch_id: 'branch-1' },
+    { id: 'teacher-2', name: 'Malika Yusupova', branch_id: 'branch-2' },
+  ],
+}));
 
 expenseHooks.useExpense.mockImplementation(() => queryState);
 expenseHooks.useExpenseHistory.mockImplementation(() => historyState);
@@ -62,13 +75,16 @@ vi.mock('@/services/expenseService', () => ({
   useExpense: expenseHooks.useExpense,
   useExpenseHistory: expenseHooks.useExpenseHistory,
   useExpenseBranchOptions: () => ({ data: [] }),
+  useExpenseTeacherOptions: () => teacherOptionsState,
   useCreateExpensePayment: () => paymentMutation,
   useCancelExpense: () => cancelMutation,
   useDeleteExpense: () => deleteMutation,
   useCreateExpense: () => lifecycleMutation,
+  useCreateTeacherSettlement: () => settlementMutation,
   useUpdateExpense: () => updateMutation,
   useVoidExpensePayment: () => voidPaymentMutation,
 }));
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/hooks/useCan', () => ({
   useCan: (capability: string) =>
     capability === 'viewExpenses'
@@ -153,6 +169,10 @@ afterEach(() => {
   updateMutation.mutate.mockReset();
   voidPaymentMutation.isPending = false;
   voidPaymentMutation.mutate.mockReset();
+  settlementMutation.isPending = false;
+  settlementMutation.mutate.mockReset();
+  vi.mocked(toast.success).mockReset();
+  vi.mocked(toast.error).mockReset();
   permissionState.canViewExpenses = true;
   permissionState.canManageFinance = true;
   expenseHooks.useExpense.mockReset().mockImplementation(() => queryState);
@@ -944,5 +964,114 @@ describe('ExpenseDetailPage', () => {
     expect(
       screen.queryByRole('button', { name: 'expenses.payments.void_action' }),
     ).toBeNull();
+  });
+});
+
+describe('ExpenseFormDialog settlement mode', () => {
+  const branches = [{ id: 'branch-1', name: 'Chorsu' }];
+
+  const pickTeacher = (name: string) => {
+    fireEvent.click(screen.getByLabelText(/expenses\.settlement\.teacher/));
+    fireEvent.click(within(screen.getByRole('listbox')).getByText(name));
+  };
+
+  const fillSettlementForm = () => {
+    pickTeacher('Aziz Karimov');
+    fireEvent.change(
+      screen.getByLabelText(/expenses\.settlement\.period_month/),
+      { target: { value: '2026-09' } },
+    );
+    fireEvent.change(screen.getByLabelText(/expenses\.table\.title/), {
+      target: { value: 'September settlement' },
+    });
+    fireEvent.change(screen.getByLabelText(/expenses\.form\.amount/), {
+      target: { value: '150000.00' },
+    });
+  };
+
+  it('submits teacher/month settlement without branch_id', async () => {
+    await renderWithRouter(
+      <ExpenseFormDialog
+        open
+        mode="settlement"
+        branches={branches}
+        onClose={vi.fn()}
+      />,
+      { initialEntry: '/expenses', routePattern: '/expenses' },
+    );
+
+    expect(screen.queryByText('Chorsu')).not.toBeInTheDocument();
+    expect(
+      screen.getByText('expenses.settlement.branch_pending'),
+    ).toBeInTheDocument();
+    fillSettlementForm();
+    expect(screen.getByText('Chorsu')).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.settlement.submit' }),
+    );
+
+    await waitFor(() => {
+      expect(settlementMutation.mutate).toHaveBeenCalledOnce();
+    });
+
+    const [payload] = settlementMutation.mutate.mock.calls[0];
+    expect(payload).toMatchObject({
+      teacher_id: 'teacher-1',
+      period_month: '2026-09',
+      title: 'September settlement',
+      amount: '150000.00',
+      due_date: null,
+      payee: null,
+      note: null,
+    });
+    expect(payload).toHaveProperty('idempotency_key');
+    expect(payload).not.toHaveProperty('branch_id');
+    expect(payload).not.toHaveProperty('category');
+  });
+
+  it('surfaces duplicate-month / foreign-teacher server errors', async () => {
+    await renderWithRouter(
+      <ExpenseFormDialog
+        open
+        mode="settlement"
+        branches={branches}
+        onClose={vi.fn()}
+      />,
+      { initialEntry: '/expenses', routePattern: '/expenses' },
+    );
+
+    fillSettlementForm();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.settlement.submit' }),
+    );
+
+    await waitFor(() => {
+      expect(settlementMutation.mutate).toHaveBeenCalledOnce();
+    });
+
+    const [, options] = settlementMutation.mutate.mock.calls[0];
+    await act(async () => {
+      options.onError({
+        response: {
+          status: 409,
+          data: {
+            error: {
+              message:
+                'Active settlement already exists for this teacher and month',
+            },
+          },
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Active settlement already exists for this teacher and month',
+        expect.objectContaining({
+          action: expect.objectContaining({ label: 'common.retry' }),
+        }),
+      );
+    });
   });
 });

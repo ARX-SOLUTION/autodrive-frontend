@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import {
@@ -18,7 +18,12 @@ import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import { useCan } from '@/hooks/useCan';
 import { groupDigits } from '@/lib/money';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
-import { useCreateExpense, useUpdateExpense } from '@/services/expenseService';
+import {
+  useCreateExpense,
+  useCreateTeacherSettlement,
+  useExpenseTeacherOptions,
+  useUpdateExpense,
+} from '@/services/expenseService';
 import type {
   Expense,
   ExpenseBranchOption,
@@ -67,6 +72,16 @@ const formatAmountInput = (value: string) => {
 };
 
 const MONEY_PATTERN = /^(?:0|[1-9]\d{0,9})\.\d{2}$/;
+const PERIOD_MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+const amountField = (t: (key: string) => string) =>
+  z
+    .string()
+    .trim()
+    .refine((value) => {
+      const canonical = canonicalAmount(value);
+      return MONEY_PATTERN.test(canonical) && Number(canonical) > 0;
+    }, t('expenses.form.invalid_amount'));
 
 const makeExpenseFormSchema = (t: (key: string) => string) =>
   z.object({
@@ -81,13 +96,7 @@ const makeExpenseFormSchema = (t: (key: string) => string) =>
       'other',
     ]),
     title: z.string().trim().min(1, t('common.required')),
-    amount: z
-      .string()
-      .trim()
-      .refine((value) => {
-        const canonical = canonicalAmount(value);
-        return MONEY_PATTERN.test(canonical) && Number(canonical) > 0;
-      }, t('expenses.form.invalid_amount')),
+    amount: amountField(t),
     expenseDate: z
       .string()
       .trim()
@@ -105,11 +114,39 @@ const makeExpenseFormSchema = (t: (key: string) => string) =>
     note: z.string().trim().optional(),
   });
 
+const makeSettlementFormSchema = (t: (key: string) => string) =>
+  z.object({
+    teacherId: z.string().min(1, t('common.required')),
+    periodMonth: z
+      .string()
+      .trim()
+      .regex(PERIOD_MONTH_PATTERN, t('expenses.form.invalid_period_month')),
+    title: z.string().trim().min(1, t('common.required')),
+    amount: amountField(t),
+    dueDate: z
+      .string()
+      .trim()
+      .optional()
+      .or(z.literal(''))
+      .refine(
+        (value) => !value || isBusinessDate(value),
+        t('expenses.form.invalid_date'),
+      ),
+    payee: z.string().trim().optional(),
+    note: z.string().trim().optional(),
+  });
+
 type ExpenseFormValues = z.infer<ReturnType<typeof makeExpenseFormSchema>>;
+type SettlementFormValues = z.infer<
+  ReturnType<typeof makeSettlementFormSchema>
+>;
+
+export type ExpenseFormMode = 'expense' | 'settlement';
 
 interface ExpenseFormDialogProps {
   open: boolean;
   branches: ExpenseBranchOption[];
+  mode?: ExpenseFormMode;
   editExpense?: Expense | null;
   onClose: () => void;
 }
@@ -117,6 +154,7 @@ interface ExpenseFormDialogProps {
 export const ExpenseFormDialog = ({
   open,
   branches,
+  mode = 'expense',
   editExpense = null,
   onClose,
 }: ExpenseFormDialogProps) => {
@@ -124,8 +162,13 @@ export const ExpenseFormDialog = ({
   const canViewExpenses = useCan('viewExpenses');
   const canManageFinance = useCan('manageCompanyFinance');
   const isManager = canViewExpenses && !canManageFinance;
+  const isSettlement = mode === 'settlement' && !editExpense;
   const createExpense = useCreateExpense();
+  const createSettlement = useCreateTeacherSettlement();
   const updateExpense = useUpdateExpense();
+  const { data: teachers = [] } = useExpenseTeacherOptions(
+    isSettlement && open,
+  );
   const idempotencyKeyRef = useRef(crypto.randomUUID());
   const [conflict, setConflict] = useState(false);
   const financialFieldsLocked = Boolean(
@@ -134,7 +177,7 @@ export const ExpenseFormDialog = ({
       editExpense.paid_amount !== '0.00'),
   );
 
-  const defaultValues = (): ExpenseFormValues =>
+  const expenseDefaults = (): ExpenseFormValues =>
     editExpense
       ? {
           branchTarget: editExpense.branch_id ?? 'company',
@@ -160,28 +203,69 @@ export const ExpenseFormDialog = ({
           note: '',
         };
 
-  const form = useForm<ExpenseFormValues>({
-    resolver: zodResolver(makeExpenseFormSchema(t)),
-    defaultValues: defaultValues(),
+  const settlementDefaults = (): SettlementFormValues => ({
+    teacherId: '',
+    periodMonth: '',
+    title: '',
+    amount: '',
+    dueDate: '',
+    payee: '',
+    note: '',
   });
+
+  const expenseForm = useForm<ExpenseFormValues>({
+    resolver: zodResolver(makeExpenseFormSchema(t)),
+    defaultValues: expenseDefaults(),
+  });
+
+  const settlementForm = useForm<SettlementFormValues>({
+    resolver: zodResolver(makeSettlementFormSchema(t)),
+    defaultValues: settlementDefaults(),
+  });
+
+  const activeForm = isSettlement ? settlementForm : expenseForm;
 
   useEffect(() => {
     if (!open) return;
-    form.reset(defaultValues());
-    if (!editExpense) idempotencyKeyRef.current = crypto.randomUUID();
+    if (isSettlement) {
+      settlementForm.reset(settlementDefaults());
+      idempotencyKeyRef.current = crypto.randomUUID();
+    } else {
+      expenseForm.reset(expenseDefaults());
+      if (!editExpense) idempotencyKeyRef.current = crypto.randomUUID();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, editExpense?.id]);
+  }, [open, editExpense?.id, isSettlement]);
 
-  const isPending = createExpense.isPending || updateExpense.isPending;
+  const selectedTeacherId = useWatch({
+    control: settlementForm.control,
+    name: 'teacherId',
+  });
+  const selectedTeacher = useMemo(
+    () => teachers.find((teacher) => teacher.id === selectedTeacherId),
+    [teachers, selectedTeacherId],
+  );
+  const selectedBranchLabel = useMemo(() => {
+    if (!selectedTeacher) return null;
+    const branchName = branches.find(
+      (branch) => branch.id === selectedTeacher.branch_id,
+    )?.name;
+    return branchName ?? selectedTeacher.branch_id;
+  }, [branches, selectedTeacher]);
+
+  const isPending =
+    createExpense.isPending ||
+    createSettlement.isPending ||
+    updateExpense.isPending;
   const closeDialog = () => {
     setConflict(false);
     onClose();
   };
 
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
-    useConfirmedClose(form.formState.isDirty || isPending, closeDialog);
+    useConfirmedClose(activeForm.formState.isDirty || isPending, closeDialog);
 
-  const onSubmit = (values: ExpenseFormValues) => {
+  const onExpenseSubmit = (values: ExpenseFormValues) => {
     setConflict(false);
     const commonPayload = {
       category: values.category,
@@ -260,9 +344,37 @@ export const ExpenseFormDialog = ({
     submitMutation();
   };
 
-  // Keep the RHF ref read inside the submit event rather than during render.
+  const onSettlementSubmit = (values: SettlementFormValues) => {
+    const payload = {
+      teacher_id: values.teacherId,
+      period_month: values.periodMonth,
+      title: values.title.trim(),
+      amount: canonicalAmount(values.amount),
+      due_date: values.dueDate?.trim() || null,
+      payee: values.payee?.trim() || null,
+      note: values.note?.trim() || null,
+      idempotency_key: idempotencyKeyRef.current,
+    };
+
+    const submitMutation = () =>
+      createSettlement.mutate(payload, {
+        onSuccess: () => {
+          toast.success(t('expenses.settlement.created'));
+          idempotencyKeyRef.current = crypto.randomUUID();
+          closeDialog();
+        },
+        onError: (error) => mutationErrorToast(error, t, submitMutation),
+      });
+
+    submitMutation();
+  };
+
   const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
-    form.handleSubmit(onSubmit)(event);
+    if (isSettlement) {
+      settlementForm.handleSubmit(onSettlementSubmit)(event);
+      return;
+    }
+    expenseForm.handleSubmit(onExpenseSubmit)(event);
   };
 
   return (
@@ -271,47 +383,49 @@ export const ExpenseFormDialog = ({
         <DialogContent className="glass-card border-border sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-heading">
-              {editExpense
-                ? t('expenses.form.edit_title')
-                : t('expenses.form.title')}
+              {isSettlement
+                ? t('expenses.settlement.form_title')
+                : editExpense
+                  ? t('expenses.form.edit_title')
+                  : t('expenses.form.title')}
             </DialogTitle>
             <DialogDescription>
-              {editExpense
-                ? t('expenses.form.edit_description')
-                : t('expenses.form.description')}
+              {isSettlement
+                ? t('expenses.settlement.form_description')
+                : editExpense
+                  ? t('expenses.form.edit_description')
+                  : t('expenses.form.description')}
             </DialogDescription>
           </DialogHeader>
 
-          <Form {...form}>
-            <form onSubmit={handleFormSubmit} className="space-y-4">
-              {!isManager && (
+          {isSettlement ? (
+            <Form {...settlementForm}>
+              <form onSubmit={handleFormSubmit} className="space-y-4">
                 <FormField
-                  control={form.control}
-                  name="branchTarget"
+                  control={settlementForm.control}
+                  name="teacherId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel required>
-                        {t('expenses.form.branch')}
+                        {t('expenses.settlement.teacher')}
                       </FormLabel>
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
-                        disabled={financialFieldsLocked}
                       >
                         <FormControl>
                           <SelectTrigger className="bg-secondary border-border">
                             <SelectValue
-                              placeholder={t('expenses.form.company_wide')}
+                              placeholder={t(
+                                'expenses.settlement.teacher_placeholder',
+                              )}
                             />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="company">
-                            {t('expenses.form.company_wide')}
-                          </SelectItem>
-                          {branches.map((branch) => (
-                            <SelectItem key={branch.id} value={branch.id}>
-                              {branch.name}
+                          {teachers.map((teacher) => (
+                            <SelectItem key={teacher.id} value={teacher.id}>
+                              {teacher.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -320,76 +434,60 @@ export const ExpenseFormDialog = ({
                     </FormItem>
                   )}
                 />
-              )}
 
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>
-                      {t('expenses.form.category')}
-                    </FormLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      disabled={financialFieldsLocked}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="bg-secondary border-border">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="rent">
-                          {t('expenses.category.rent')}
-                        </SelectItem>
-                        <SelectItem value="utilities">
-                          {t('expenses.category.utilities')}
-                        </SelectItem>
-                        <SelectItem value="vehicle">
-                          {t('expenses.category.vehicle')}
-                        </SelectItem>
-                        <SelectItem value="marketing">
-                          {t('expenses.category.marketing')}
-                        </SelectItem>
-                        <SelectItem value="supplies">
-                          {t('expenses.category.supplies')}
-                        </SelectItem>
-                        <SelectItem value="administrative">
-                          {t('expenses.category.administrative')}
-                        </SelectItem>
-                        <SelectItem value="other">
-                          {t('expenses.category.other')}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <div className="rounded-md border border-border bg-secondary/60 px-3 py-2 text-sm">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {t('expenses.settlement.branch_context')}
+                  </p>
+                  <p className="mt-1 text-foreground">
+                    {selectedBranchLabel ??
+                      t('expenses.settlement.branch_pending')}
+                  </p>
+                </div>
 
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>{t('expenses.table.title')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        className="bg-secondary border-border"
-                        aria-required="true"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
-                  control={form.control}
+                  control={settlementForm.control}
+                  name="periodMonth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel required>
+                        {t('expenses.settlement.period_month')}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="month"
+                          className="bg-secondary border-border"
+                          aria-required="true"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={settlementForm.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel required>
+                        {t('expenses.table.title')}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="bg-secondary border-border"
+                          aria-required="true"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={settlementForm.control}
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
@@ -404,7 +502,6 @@ export const ExpenseFormDialog = ({
                           placeholder={t('expenses.form.amount_placeholder')}
                           className="bg-secondary border-border"
                           aria-required="true"
-                          disabled={financialFieldsLocked}
                           value={
                             field.value ? formatAmountInput(field.value) : ''
                           }
@@ -420,41 +517,295 @@ export const ExpenseFormDialog = ({
                   )}
                 />
 
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={settlementForm.control}
+                    name="dueDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('expenses.form.due_date')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="date"
+                            className="bg-secondary border-border"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={settlementForm.control}
+                    name="payee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('expenses.form.payee')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            className="bg-secondary border-border"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
-                  control={form.control}
-                  name="expenseDate"
+                  control={settlementForm.control}
+                  name="note"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('expenses.form.note')}</FormLabel>
+                      <FormControl>
+                        <textarea
+                          {...field}
+                          rows={4}
+                          className={cn(
+                            'flex min-h-20 w-full rounded-md border border-border bg-secondary px-3 py-2 text-sm outline-none',
+                            'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                          )}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={attemptClose}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending
+                      ? t('expenses.form.creating')
+                      : t('expenses.settlement.submit')}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          ) : (
+            <Form {...expenseForm}>
+              <form onSubmit={handleFormSubmit} className="space-y-4">
+                {!isManager && (
+                  <FormField
+                    control={expenseForm.control}
+                    name="branchTarget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel required>
+                          {t('expenses.form.branch')}
+                        </FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          disabled={financialFieldsLocked}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="bg-secondary border-border">
+                              <SelectValue
+                                placeholder={t('expenses.form.company_wide')}
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="company">
+                              {t('expenses.form.company_wide')}
+                            </SelectItem>
+                            {branches.map((branch) => (
+                              <SelectItem key={branch.id} value={branch.id}>
+                                {branch.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                <FormField
+                  control={expenseForm.control}
+                  name="category"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel required>
-                        {t('expenses.form.expense_date')}
+                        {t('expenses.form.category')}
+                      </FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={financialFieldsLocked}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-secondary border-border">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="rent">
+                            {t('expenses.category.rent')}
+                          </SelectItem>
+                          <SelectItem value="utilities">
+                            {t('expenses.category.utilities')}
+                          </SelectItem>
+                          <SelectItem value="vehicle">
+                            {t('expenses.category.vehicle')}
+                          </SelectItem>
+                          <SelectItem value="marketing">
+                            {t('expenses.category.marketing')}
+                          </SelectItem>
+                          <SelectItem value="supplies">
+                            {t('expenses.category.supplies')}
+                          </SelectItem>
+                          <SelectItem value="administrative">
+                            {t('expenses.category.administrative')}
+                          </SelectItem>
+                          <SelectItem value="other">
+                            {t('expenses.category.other')}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={expenseForm.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel required>
+                        {t('expenses.table.title')}
                       </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          type="date"
                           className="bg-secondary border-border"
                           aria-required="true"
-                          disabled={financialFieldsLocked}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={expenseForm.control}
+                    name="amount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel required>
+                          {t('expenses.form.amount')}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="text"
+                            inputMode="decimal"
+                            placeholder={t('expenses.form.amount_placeholder')}
+                            className="bg-secondary border-border"
+                            aria-required="true"
+                            disabled={financialFieldsLocked}
+                            value={
+                              field.value ? formatAmountInput(field.value) : ''
+                            }
+                            onChange={(event) =>
+                              field.onChange(
+                                formatAmountInput(event.target.value),
+                              )
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={expenseForm.control}
+                    name="expenseDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel required>
+                          {t('expenses.form.expense_date')}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="date"
+                            className="bg-secondary border-border"
+                            aria-required="true"
+                            disabled={financialFieldsLocked}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={expenseForm.control}
+                    name="dueDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('expenses.form.due_date')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="date"
+                            className="bg-secondary border-border"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={expenseForm.control}
+                    name="payee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('expenses.form.payee')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            className="bg-secondary border-border"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
-                  control={form.control}
-                  name="dueDate"
+                  control={expenseForm.control}
+                  name="note"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('expenses.form.due_date')}</FormLabel>
+                      <FormLabel>{t('expenses.form.note')}</FormLabel>
                       <FormControl>
-                        <Input
+                        <textarea
                           {...field}
-                          type="date"
-                          className="bg-secondary border-border"
+                          rows={4}
+                          className={cn(
+                            'flex min-h-20 w-full rounded-md border border-border bg-secondary px-3 py-2 text-sm outline-none',
+                            'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                          )}
                         />
                       </FormControl>
                       <FormMessage />
@@ -462,66 +813,32 @@ export const ExpenseFormDialog = ({
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="payee"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('expenses.form.payee')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          className="bg-secondary border-border"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={attemptClose}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending
+                      ? editExpense
+                        ? t('expenses.form.updating')
+                        : t('expenses.form.creating')
+                      : editExpense
+                        ? t('expenses.form.update_submit')
+                        : t('expenses.form.submit')}
+                  </Button>
+                  {conflict && (
+                    <p className="text-sm text-destructive" role="alert">
+                      {t('expenses.form.update_conflict')}
+                    </p>
                   )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="note"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('expenses.form.note')}</FormLabel>
-                    <FormControl>
-                      <textarea
-                        {...field}
-                        rows={4}
-                        className={cn(
-                          'flex min-h-20 w-full rounded-md border border-border bg-secondary px-3 py-2 text-sm outline-none',
-                          'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                        )}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" type="button" onClick={attemptClose}>
-                  {t('common.cancel')}
-                </Button>
-                <Button type="submit" disabled={isPending}>
-                  {isPending
-                    ? editExpense
-                      ? t('expenses.form.updating')
-                      : t('expenses.form.creating')
-                    : editExpense
-                      ? t('expenses.form.update_submit')
-                      : t('expenses.form.submit')}
-                </Button>
-                {conflict && (
-                  <p className="text-sm text-destructive" role="alert">
-                    {t('expenses.form.update_conflict')}
-                  </p>
-                )}
-              </div>
-            </form>
-          </Form>
+                </div>
+              </form>
+            </Form>
+          )}
         </DialogContent>
       </Dialog>
 

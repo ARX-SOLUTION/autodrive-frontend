@@ -64,10 +64,20 @@ export const expenseKeys = {
   ...baseKeys('expenses'),
   branchOptions: (companyId: string | undefined) =>
     ['expenses', 'branch-options', companyId] as const,
+  teacherOptions: (companyId: string | undefined) =>
+    ['expenses', 'teacher-options', companyId] as const,
   triageCounts: (filters: Filters = {}) =>
     ['expenses', 'triage-counts', filters] as const,
   overdueSweep: (filters: Filters = {}) =>
     ['expenses', 'overdue-sweep', filters] as const,
+};
+
+/** Teacher self-view (`GET /teacher-settlements/me`) — invalidated on settlement create. */
+export const teacherSettlementKeys = {
+  all: ['teacher-settlements'] as const,
+  me: () => ['teacher-settlements', 'me'] as const,
+  meDetail: (id: string | number | undefined) =>
+    ['teacher-settlements', 'me', 'detail', id] as const,
 };
 
 export const attendanceKeys = {

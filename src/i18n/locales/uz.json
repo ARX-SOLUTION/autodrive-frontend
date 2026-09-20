@@ -874,7 +874,20 @@
       "updating": "Saqlanmoqda...",
       "update_conflict": "Xarajat boshqa foydalanuvchi tomonidan o'zgartirildi. Yangilangan ma'lumotni tekshirib, qayta yuboring.",
       "invalid_amount": "Summa 0 dan katta va ikki kasrli bo'lishi kerak",
-      "invalid_date": "To'g'ri sana kiriting"
+      "invalid_date": "To'g'ri sana kiriting",
+      "invalid_period_month": "Oy formati YYYY-MM bo'lishi kerak"
+    },
+    "settlement": {
+      "add": "O'qituvchi hisob-kitobi",
+      "form_title": "Yangi o'qituvchi hisob-kitobi",
+      "form_description": "Bitta o'qituvchi uchun oylik hisob-kitob yarating. Filial o'qituvchi biriktirilganidan olinadi.",
+      "teacher": "O'qituvchi",
+      "teacher_placeholder": "O'qituvchini tanlang",
+      "branch_context": "O'qituvchi filiali",
+      "branch_pending": "Filialni ko'rish uchun o'qituvchini tanlang",
+      "period_month": "Hisob-kitob oyi",
+      "submit": "Hisob-kitob yaratish",
+      "created": "O'qituvchi hisob-kitobi muvaffaqiyatli yaratildi"
     },
     "detail": {
       "title": "Xarajat tafsilotlari",

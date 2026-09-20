@@ -30,7 +30,12 @@ vi.mock('@/services/expenseService', async (importOriginal) => {
     useOverdueExpenseSweep: useOverdueExpenseSweepMock,
     useExpenseTriageCounts: useExpenseTriageCountsMock,
     useExpenseBranchOptions: useExpenseBranchOptionsMock,
+    useExpenseTeacherOptions: () => ({ data: [] }),
     useCreateExpense: () => ({ mutate: createExpenseMock, isPending: false }),
+    useCreateTeacherSettlement: () => ({
+      mutate: vi.fn(),
+      isPending: false,
+    }),
     useUpdateExpense: () => ({
       mutate: useUpdateExpenseMock,
       isPending: false,

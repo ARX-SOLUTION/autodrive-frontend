@@ -104,6 +104,18 @@ export type CreateExpenseRequest = {
   idempotency_key: string;
 };
 
+/** Owner/accountant monthly settlement create. Never accepts `branch_id`. */
+export type CreateTeacherSettlementRequest = {
+  teacher_id: string;
+  period_month: string;
+  title: string;
+  amount: string;
+  due_date?: string | null;
+  payee?: string | null;
+  note?: string | null;
+  idempotency_key: string;
+};
+
 export type ExpensesQuery = {
   branch_id?: string;
   scope?: 'company';
