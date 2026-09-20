@@ -430,7 +430,18 @@ const ExpensesPage = () => {
     refetch: refetchBranches,
   } = useExpenseBranchOptions();
   const [formOpen, setFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<'expense' | 'settlement'>('expense');
   const [monthCloseOpen, setMonthCloseOpen] = useState(false);
+
+  const openExpenseForm = () => {
+    setFormMode('expense');
+    setFormOpen(true);
+  };
+
+  const openSettlementForm = () => {
+    setFormMode('settlement');
+    setFormOpen(true);
+  };
 
   const hasAnyFilter =
     (!isManager && branchFilter !== 'all') ||
@@ -512,7 +523,17 @@ const ExpensesPage = () => {
                 {t('expenses.month_close.action')}
               </Button>
             )}
-            <Button className="gap-2" onClick={() => setFormOpen(true)}>
+            {canManageFinance && (
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={openSettlementForm}
+              >
+                <Plus className="h-4 w-4" aria-hidden="true" />{' '}
+                {t('expenses.settlement.add')}
+              </Button>
+            )}
+            <Button className="gap-2" onClick={openExpenseForm}>
               <Plus className="h-4 w-4" aria-hidden="true" />{' '}
               {t('expenses.add')}
             </Button>
@@ -597,6 +618,7 @@ const ExpensesPage = () => {
 
       <ExpenseFormDialog
         open={formOpen}
+        mode={formMode}
         branches={isManager ? [] : branches}
         onClose={() => setFormOpen(false)}
       />

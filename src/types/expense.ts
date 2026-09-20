@@ -79,6 +79,25 @@ export interface ExpenseBranchOption {
   name: string;
 }
 
+/** Active teachers with a branch — from GET /expenses/teacher-options. */
+export interface ExpenseTeacherOption {
+  id: string;
+  name: string;
+  branch_id: string;
+}
+
+/** POST /teacher-settlements — never includes branch_id. */
+export interface CreateTeacherSettlementPayload {
+  teacher_id: string;
+  period_month: string;
+  title: string;
+  amount: string;
+  due_date?: string | null;
+  payee?: string | null;
+  note?: string | null;
+  idempotency_key: string;
+}
+
 export interface ExpenseMonthCloseCsvFilters {
   month: string;
   branchId?: string;

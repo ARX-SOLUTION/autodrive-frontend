@@ -58,6 +58,8 @@ vi.mock('@/services/expenseService', () => ({
   useOverdueExpenseSweep: mocks.useOverdueExpenseSweep,
   useExpenseTriageCounts: mocks.useExpenseTriageCounts,
   useExpenseBranchOptions: mocks.useExpenseBranchOptions,
+  useExpenseTeacherOptions: () => ({ data: [] }),
+  useCreateTeacherSettlement: () => ({ mutate: vi.fn(), isPending: false }),
   useCreateExpense: () => ({ mutate: vi.fn(), isPending: false }),
   useUpdateExpense: () => ({ mutate: vi.fn(), isPending: false }),
 }));
@@ -456,9 +458,9 @@ describe('ExpenseOverdueSweep', () => {
       expect(
         screen.queryByText('expenses.overdue_sweep.shortcut_help'),
       ).not.toBeInTheDocument();
-      expect(add.mock.calls.filter(([type]) => type === 'keydown')).toHaveLength(
-        0,
-      );
+      expect(
+        add.mock.calls.filter(([type]) => type === 'keydown'),
+      ).toHaveLength(0);
     },
   );
 

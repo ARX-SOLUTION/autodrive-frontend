@@ -12,17 +12,23 @@ import {
   parseItemEnvelope,
   parseListEnvelope,
 } from '@/lib/apiEnvelope';
-import { dashboardKeys, expenseKeys } from '@/lib/queryKeys';
+import {
+  dashboardKeys,
+  expenseKeys,
+  teacherSettlementKeys,
+} from '@/lib/queryKeys';
 import { track } from '@/lib/umami';
 import { tashkentTodayCalendarDate } from '@/lib/tashkentDate';
 import type {
   CreateExpensePayload,
   CreateExpensePaymentPayload,
+  CreateTeacherSettlementPayload,
   UpdateExpensePayload,
   Expense,
   ExpenseHistory,
   ExpensePayment,
   ExpenseBranchOption,
+  ExpenseTeacherOption,
   ExpenseMonthCloseCsvFilters,
   ExpenseCategory,
   ExpenseListFilters,
@@ -463,6 +469,32 @@ export const useExpenseBranchOptions = () => {
   );
 };
 
+export const teacherOptionsQueryOptions = (
+  companyId: string | undefined,
+  enabled = true,
+) =>
+  queryOptions({
+    queryKey: expenseKeys.teacherOptions(companyId),
+    enabled: enabled && !!companyId,
+    staleTime: 5 * 60_000,
+    queryFn: async ({ signal }) => {
+      const { data } = await axiosInstance.get<unknown>(
+        '/expenses/teacher-options',
+        { signal },
+      );
+      return parseListEnvelope<ExpenseTeacherOption>(data, 'expense-teachers')
+        .data;
+    },
+  });
+
+export const useExpenseTeacherOptions = (enabled = true) => {
+  const canManageFinance = useCan('manageCompanyFinance');
+  const companyId = useAuthStore((state) => state.user?.company_id);
+  return useQuery(
+    teacherOptionsQueryOptions(companyId, enabled && canManageFinance),
+  );
+};
+
 export const useCreateExpense = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -476,6 +508,32 @@ export const useCreateExpense = () => {
         queryKey: dashboardKeys.financeSummary(),
       });
       track('expense_create');
+    },
+  });
+};
+
+export const useCreateTeacherSettlement = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: CreateTeacherSettlementPayload) => {
+      const { data } = await axiosInstance.post<unknown>(
+        '/teacher-settlements',
+        payload,
+      );
+      return parseItemEnvelope<Expense>(data, 'expense');
+    },
+    onSuccess: (expense) => {
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: expenseKeys.detail(expense.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: dashboardKeys.financeSummary(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: teacherSettlementKeys.all,
+      });
+      track('teacher_settlement_create');
     },
   });
 };
