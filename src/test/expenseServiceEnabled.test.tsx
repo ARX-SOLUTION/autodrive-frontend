@@ -184,6 +184,9 @@ describe('useExpense capability gating', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: dashboardKeys.financeSummary(),
     });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: dashboardKeys.expenseBreakdown(),
+    });
   });
 
   it('refreshes expense state after an update conflict', async () => {
@@ -221,6 +224,9 @@ describe('useExpense capability gating', () => {
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: dashboardKeys.financeSummary(),
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: dashboardKeys.expenseBreakdown(),
     });
   });
 
@@ -270,6 +276,9 @@ describe('useExpense capability gating', () => {
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: dashboardKeys.financeSummary(),
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: dashboardKeys.expenseBreakdown(),
     });
   });
 });

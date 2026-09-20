@@ -135,6 +135,17 @@ const expenseIdentity = (branchId?: string) => {
 const expenseHistoryKey = (id: string | undefined) =>
   [...expenseKeys.detail(id), 'history'] as const;
 
+const invalidateFinanceDashboardQueries = (
+  queryClient: ReturnType<typeof useQueryClient>,
+) => {
+  queryClient.invalidateQueries({
+    queryKey: dashboardKeys.financeSummary(),
+  });
+  queryClient.invalidateQueries({
+    queryKey: dashboardKeys.expenseBreakdown(),
+  });
+};
+
 const invalidateExpenseQueries = (
   queryClient: ReturnType<typeof useQueryClient>,
   id: string,
@@ -142,9 +153,7 @@ const invalidateExpenseQueries = (
   queryClient.invalidateQueries({ queryKey: expenseKeys.all });
   queryClient.invalidateQueries({ queryKey: expenseKeys.detail(id) });
   queryClient.invalidateQueries({ queryKey: expenseHistoryKey(id) });
-  queryClient.invalidateQueries({
-    queryKey: dashboardKeys.financeSummary(),
-  });
+  invalidateFinanceDashboardQueries(queryClient);
 };
 
 export const fetchExpenseMonthCloseCsv = async (
@@ -548,9 +557,7 @@ export const useCreateExpense = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: expenseKeys.all });
-      queryClient.invalidateQueries({
-        queryKey: dashboardKeys.financeSummary(),
-      });
+      invalidateFinanceDashboardQueries(queryClient);
       track('expense_create');
     },
   });
@@ -571,9 +578,7 @@ export const useCreateTeacherSettlement = () => {
       queryClient.invalidateQueries({
         queryKey: expenseKeys.detail(expense.id),
       });
-      queryClient.invalidateQueries({
-        queryKey: dashboardKeys.financeSummary(),
-      });
+      invalidateFinanceDashboardQueries(queryClient);
       queryClient.invalidateQueries({
         queryKey: teacherSettlementKeys.all,
       });

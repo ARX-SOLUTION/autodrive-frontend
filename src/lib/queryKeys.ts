@@ -104,6 +104,8 @@ export const dashboardKeys = {
     ['dashboard', 'company', filters] as const,
   financeSummary: (filters: Filters = {}) =>
     ['dashboard', 'finance-summary', filters] as const,
+  expenseBreakdown: (filters: Filters = {}) =>
+    ['dashboard', 'expense-breakdown', filters] as const,
 };
 
 export const examKeys = {
