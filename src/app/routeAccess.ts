@@ -12,6 +12,7 @@ export const ROUTE_CAPABILITIES = {
   '/groups/$id': 'accessOperations',
   '/vehicles': 'viewVehicles',
   '/vehicles/$id': 'viewVehicles',
+  '/fleet-map': 'viewFleetMap',
   '/training-programs': 'viewTrainingPrograms',
   '/training-enrollments': 'viewTrainingEnrollments',
   '/training-enrollments/$id': 'viewTrainingEnrollments',

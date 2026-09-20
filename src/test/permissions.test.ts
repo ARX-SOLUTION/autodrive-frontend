@@ -133,6 +133,15 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
     expect(roleCan('accountant', 'manageVehicles')).toBe(false);
   });
 
+  it('keeps fleet tracking out of staff and finance roles', () => {
+    for (const role of ['dev', 'owner', 'manager'] as const) {
+      expect(roleCan(role, 'viewFleetMap')).toBe(true);
+    }
+    for (const role of ['operator', 'teacher', 'accountant'] as const) {
+      expect(roleCan(role, 'viewFleetMap')).toBe(false);
+    }
+  });
+
   it('separates driving instructor submission from manager-only review', () => {
     expect(roleCan('teacher', 'submitDrivingSession')).toBe(true);
     expect(roleCan('owner', 'submitDrivingSession')).toBe(false);

@@ -22,6 +22,7 @@ export type Capability =
   | 'manageStudents'
   | 'manageGroups'
   | 'viewVehicles'
+  | 'viewFleetMap'
   | 'manageVehicles'
   | 'viewTrainingPrograms'
   | 'manageTrainingPrograms'
@@ -70,6 +71,7 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   manageStudents: OPS,
   manageGroups: ['dev', 'owner', 'manager'],
   viewVehicles: OPERATIONAL_ROLES,
+  viewFleetMap: ['dev', 'owner', 'manager'],
   manageVehicles: ['dev', 'owner', 'manager'],
   viewTrainingPrograms: OPERATIONAL_ROLES,
   manageTrainingPrograms: OWNERS,

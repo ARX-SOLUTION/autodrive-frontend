@@ -14,6 +14,7 @@ import {
   ListChecks,
   BookOpen,
   Car,
+  MapTrifold,
 } from '@phosphor-icons/react';
 import type { Capability } from '@/lib/permissions';
 
@@ -25,6 +26,7 @@ export type AppRoutePath =
   | '/attendance'
   | '/groups'
   | '/vehicles'
+  | '/fleet-map'
   | '/training-programs'
   | '/training-enrollments'
   | '/driving-sessions'
@@ -94,6 +96,13 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Car,
     section: 'workspace',
     cap: 'viewVehicles',
+  },
+  {
+    path: '/fleet-map',
+    labelKey: 'nav.fleet_map',
+    icon: MapTrifold,
+    section: 'workspace',
+    cap: 'viewFleetMap',
   },
   {
     path: '/training-programs',
