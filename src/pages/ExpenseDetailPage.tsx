@@ -19,6 +19,7 @@ import {
   useExpense,
   useExpenseBranchOptions,
   useExpenseHistory,
+  useMySettlementDetail,
   useVoidExpensePayment,
 } from '@/services/expenseService';
 import type {
@@ -67,11 +68,18 @@ const ExpenseDetailPage = () => {
   const { t } = useTranslation();
   const { searchParams, setSearchParams } = useUrlParams();
   const canViewExpenses = useCan('viewExpenses');
+  const canViewOwnSettlements = useCan('viewOwnSettlements');
   const canManageFinance = useCan('manageCompanyFinance');
   const authUser = useAuthStore((state) => state.user);
   const isManager = canViewExpenses && !canManageFinance;
-  const expenseQuery = useExpense(id);
-  const historyQuery = useExpenseHistory(id);
+  const isOwnSettlementView =
+    canViewOwnSettlements && location.pathname.startsWith('/my-settlements/');
+  const canAccessDetail = canViewExpenses || isOwnSettlementView;
+  const expenseQuery = useExpense(isOwnSettlementView ? undefined : id);
+  const mySettlementQuery = useMySettlementDetail(
+    isOwnSettlementView ? id : undefined,
+  );
+  const historyQuery = useExpenseHistory(isOwnSettlementView ? undefined : id);
   const branchOptionsQuery = useExpenseBranchOptions();
   const payRemainingConsumedFor = useRef<string | null>(null);
   const payRemainingRequestGeneration = useRef(0);
@@ -104,12 +112,21 @@ const ExpenseDetailPage = () => {
   const [voidPaymentTarget, setVoidPaymentTarget] =
     useState<ExpensePayment | null>(null);
   const [voidPaymentConflict, setVoidPaymentConflict] = useState(false);
-  const expense = expenseQuery.data;
+  const activeDetailQuery = isOwnSettlementView
+    ? mySettlementQuery
+    : expenseQuery;
+  const expense = isOwnSettlementView
+    ? mySettlementQuery.data?.expense
+    : expenseQuery.data;
   const isNotFound =
-    (expenseQuery.error as { response?: { status?: number } } | null)?.response
-      ?.status === 404;
-  const hasPayRemainingIntent = searchParams.get('action') === 'pay_remaining';
+    (activeDetailQuery.error as { response?: { status?: number } } | null)
+      ?.response?.status === 404;
+  const hasPayRemainingIntent =
+    !isOwnSettlementView && searchParams.get('action') === 'pay_remaining';
   const backToExpenses = () => {
+    if (isOwnSettlementView) {
+      return navigate({ to: '/my-settlements' });
+    }
     const returnAttentionValues = searchParams.getAll('return_attention');
     const returnAttention =
       returnAttentionValues.length === 1 &&
@@ -215,7 +232,7 @@ const ExpenseDetailPage = () => {
     setSearchParams,
   ]);
 
-  if (!canViewExpenses) {
+  if (!canAccessDetail) {
     return (
       <EntityDetailShell
         onBack={() => navigate({ to: '/dashboard' })}
@@ -226,44 +243,70 @@ const ExpenseDetailPage = () => {
     );
   }
 
-  if (expenseQuery.isLoading) {
+  if (activeDetailQuery.isLoading) {
     return (
       <EntityDetailShell
         onBack={backToExpenses}
-        backLabel={t('expenses.detail.back')}
+        backLabel={
+          isOwnSettlementView
+            ? t('my_settlements.detail.back')
+            : t('expenses.detail.back')
+        }
         isLoading
         isError={false}
       />
     );
   }
 
-  if (expenseQuery.isError) {
+  if (activeDetailQuery.isError) {
     return (
       <EntityDetailShell
         onBack={backToExpenses}
-        backLabel={t('expenses.detail.back')}
+        backLabel={
+          isOwnSettlementView
+            ? t('my_settlements.detail.back')
+            : t('expenses.detail.back')
+        }
         isLoading={false}
         isError
         errorTitle={t(
-          isNotFound ? 'expenses.not_found' : 'expenses.load_error',
+          isNotFound
+            ? isOwnSettlementView
+              ? 'my_settlements.not_found'
+              : 'expenses.not_found'
+            : isOwnSettlementView
+              ? 'my_settlements.load_error'
+              : 'expenses.load_error',
         )}
-        errorDescription={isNotFound ? t('expenses.not_found_desc') : undefined}
+        errorDescription={
+          isNotFound
+            ? t(
+                isOwnSettlementView
+                  ? 'my_settlements.not_found_desc'
+                  : 'expenses.not_found_desc',
+              )
+            : undefined
+        }
         errorIcon={isNotFound ? ShieldCheck : Warning}
-        onRetry={isNotFound ? undefined : () => void expenseQuery.refetch()}
+        onRetry={
+          isNotFound ? undefined : () => void activeDetailQuery.refetch()
+        }
         retryLabel={isNotFound ? undefined : t('common.retry')}
       />
     );
   }
 
-  const canViewPaymentHistory = canManageFinance;
+  const canViewPaymentHistory = canManageFinance || isOwnSettlementView;
   const initialTab =
     (searchParams.get('tab') === 'payments' || hasPayRemainingIntent) &&
     canViewPaymentHistory
       ? 'payments'
       : 'info';
-  const serverExpense = canViewPaymentHistory
-    ? (historyQuery.data?.expense ?? expense)
-    : expense;
+  const serverExpense = isOwnSettlementView
+    ? (mySettlementQuery.data?.expense ?? expense)
+    : canManageFinance
+      ? (historyQuery.data?.expense ?? expense)
+      : expense;
   if (!serverExpense) {
     return (
       <EntityDetailShell
@@ -382,7 +425,11 @@ const ExpenseDetailPage = () => {
   return (
     <EntityDetailShell
       onBack={backToExpenses}
-      backLabel={t('expenses.detail.back')}
+      backLabel={
+        isOwnSettlementView
+          ? t('my_settlements.detail.back')
+          : t('expenses.detail.back')
+      }
       isLoading={false}
       isError={false}
       header={
@@ -530,85 +577,103 @@ const ExpenseDetailPage = () => {
               <h2 className="font-heading text-lg font-semibold">
                 {t('expenses.payments.title')}
               </h2>
-              {historyQuery.isLoading && (
-                <p className="text-sm text-muted-foreground">
-                  {t('expenses.payments.loading')}
-                </p>
-              )}
-              {historyQuery.isError && (
-                <div className="flex items-center gap-3 text-sm">
-                  <span>{t('expenses.payments.error')}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void historyQuery.refetch()}
-                  >
-                    {t('common.retry')}
-                  </Button>
-                </div>
-              )}
-              {!historyQuery.isLoading &&
-                !historyQuery.isError &&
-                historyQuery.data?.payments.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {t('expenses.payments.empty')}
-                  </p>
-                )}
-              {historyQuery.data?.payments.map((payment) => (
-                <div
-                  key={payment.id}
-                  className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2 text-sm"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={
-                        payment.voided_at
-                          ? 'text-muted-foreground line-through'
-                          : ''
-                      }
-                    >
-                      {formatAmount(payment.amount, t('expenses.currency'))} ·{' '}
-                      {t(`expenses.payments.methods.${payment.payment_method}`)}{' '}
-                      · {payment.date}
-                    </span>
-                    {payment.voided_at && payment.void_reason && (
-                      <span className="text-xs text-muted-foreground italic">
-                        ({payment.void_reason})
-                      </span>
+              {(() => {
+                const paymentsQuery = isOwnSettlementView
+                  ? mySettlementQuery
+                  : historyQuery;
+                const payments = isOwnSettlementView
+                  ? (mySettlementQuery.data?.payments ?? [])
+                  : (historyQuery.data?.payments ?? []);
+                return (
+                  <>
+                    {paymentsQuery.isLoading && (
+                      <p className="text-sm text-muted-foreground">
+                        {t('expenses.payments.loading')}
+                      </p>
                     )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {payment.voided_at ? (
-                      <Badge
-                        variant="outline"
-                        className="border-destructive/30 text-destructive bg-destructive/5"
+                    {paymentsQuery.isError && (
+                      <div className="flex items-center gap-3 text-sm">
+                        <span>{t('expenses.payments.error')}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void paymentsQuery.refetch()}
+                        >
+                          {t('common.retry')}
+                        </Button>
+                      </div>
+                    )}
+                    {!paymentsQuery.isLoading &&
+                      !paymentsQuery.isError &&
+                      payments.length === 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          {t('expenses.payments.empty')}
+                        </p>
+                      )}
+                    {payments.map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2 text-sm"
                       >
-                        {t('expenses.payments.voided')}
-                      </Badge>
-                    ) : (
-                      <>
-                        <Badge variant="secondary">
-                          {t('expenses.payments.active')}
-                        </Badge>
-                        {canManageFinance && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            onClick={() => {
-                              setVoidPaymentTarget(payment);
-                              setVoidPaymentConflict(false);
-                            }}
-                            disabled={voidPaymentMutation.isPending}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={
+                              payment.voided_at
+                                ? 'text-muted-foreground line-through'
+                                : ''
+                            }
                           >
-                            {t('expenses.payments.void_action')}
-                          </Button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
+                            {formatAmount(
+                              payment.amount,
+                              t('expenses.currency'),
+                            )}{' '}
+                            ·{' '}
+                            {t(
+                              `expenses.payments.methods.${payment.payment_method}`,
+                            )}{' '}
+                            · {payment.date}
+                          </span>
+                          {payment.voided_at && payment.void_reason && (
+                            <span className="text-xs text-muted-foreground italic">
+                              ({payment.void_reason})
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {payment.voided_at ? (
+                            <Badge
+                              variant="outline"
+                              className="border-destructive/30 text-destructive bg-destructive/5"
+                            >
+                              {t('expenses.payments.voided')}
+                            </Badge>
+                          ) : (
+                            <>
+                              <Badge variant="secondary">
+                                {t('expenses.payments.active')}
+                              </Badge>
+                              {canManageFinance && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                  onClick={() => {
+                                    setVoidPaymentTarget(payment);
+                                    setVoidPaymentConflict(false);
+                                  }}
+                                  disabled={voidPaymentMutation.isPending}
+                                >
+                                  {t('expenses.payments.void_action')}
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                );
+              })()}
               {canManageFinance &&
                 serverExpense.status !== 'cancelled' &&
                 serverExpense.status !== 'paid' && (

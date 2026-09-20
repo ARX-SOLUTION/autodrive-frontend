@@ -495,6 +495,45 @@ export const useExpenseTeacherOptions = (enabled = true) => {
   );
 };
 
+export const mySettlementsQueryOptions = (enabled = true) =>
+  queryOptions({
+    queryKey: [...teacherSettlementKeys.me(), expenseIdentity()] as const,
+    enabled,
+    queryFn: async ({ signal }) => {
+      const { data } = await axiosInstance.get<unknown>(
+        '/teacher-settlements/me',
+        { signal },
+      );
+      return parseListEnvelope<Expense>(data, 'teacher-settlements');
+    },
+  });
+
+export const useMySettlements = (enabled = true) => {
+  const canViewOwn = useCan('viewOwnSettlements');
+  return useQuery(mySettlementsQueryOptions(enabled && canViewOwn));
+};
+
+export const mySettlementDetailQueryOptions = (id?: string, enabled = !!id) =>
+  queryOptions({
+    queryKey: [
+      ...teacherSettlementKeys.meDetail(id),
+      expenseIdentity(),
+    ] as const,
+    enabled,
+    queryFn: async ({ signal }) => {
+      const { data } = await axiosInstance.get<unknown>(
+        `/teacher-settlements/me/${id}`,
+        { signal },
+      );
+      return parseItemEnvelope<ExpenseHistory>(data, 'teacher-settlement');
+    },
+  });
+
+export const useMySettlementDetail = (id?: string) => {
+  const canViewOwn = useCan('viewOwnSettlements');
+  return useQuery(mySettlementDetailQueryOptions(id, canViewOwn && !!id));
+};
+
 export const useCreateExpense = () => {
   const queryClient = useQueryClient();
   return useMutation({

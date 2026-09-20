@@ -29,6 +29,8 @@ import { Route as AuthenticatedExpensesIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedExpensesIdRouteImport } from './routes/_authenticated.expenses.$id';
 import { Route as AuthenticatedGroupsIndexRouteImport } from './routes/_authenticated.groups.index';
 import { Route as AuthenticatedGroupsIdRouteImport } from './routes/_authenticated.groups.$id';
+import { Route as AuthenticatedMySettlementsIndexRouteImport } from './routes/_authenticated.my-settlements.index';
+import { Route as AuthenticatedMySettlementsIdRouteImport } from './routes/_authenticated.my-settlements.$id';
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated.students.index';
 import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authenticated.students.$id';
 import { Route as AuthenticatedUsersIndexRouteImport } from './routes/_authenticated.users.index';
@@ -137,6 +139,18 @@ const AuthenticatedGroupsIdRoute = AuthenticatedGroupsIdRouteImport.update({
   path: '/groups/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any);
+const AuthenticatedMySettlementsIndexRoute =
+  AuthenticatedMySettlementsIndexRouteImport.update({
+    id: '/my-settlements/',
+    path: '/my-settlements/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any);
+const AuthenticatedMySettlementsIdRoute =
+  AuthenticatedMySettlementsIdRouteImport.update({
+    id: '/my-settlements/$id',
+    path: '/my-settlements/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any);
 const AuthenticatedStudentsIndexRoute =
   AuthenticatedStudentsIndexRouteImport.update({
     id: '/students/',
@@ -174,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/courses/$id': typeof AuthenticatedCoursesIdRoute;
   '/expenses/$id': typeof AuthenticatedExpensesIdRoute;
   '/groups/$id': typeof AuthenticatedGroupsIdRoute;
+  '/my-settlements/$id': typeof AuthenticatedMySettlementsIdRoute;
   '/students/$id': typeof AuthenticatedStudentsIdRoute;
   '/users/$id': typeof AuthenticatedUsersIdRoute;
   '/audit/': typeof AuthenticatedAuditIndexRoute;
@@ -181,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/courses/': typeof AuthenticatedCoursesIndexRoute;
   '/expenses/': typeof AuthenticatedExpensesIndexRoute;
   '/groups/': typeof AuthenticatedGroupsIndexRoute;
+  '/my-settlements/': typeof AuthenticatedMySettlementsIndexRoute;
   '/students/': typeof AuthenticatedStudentsIndexRoute;
   '/users/': typeof AuthenticatedUsersIndexRoute;
 }
@@ -199,6 +215,7 @@ export interface FileRoutesByTo {
   '/courses/$id': typeof AuthenticatedCoursesIdRoute;
   '/expenses/$id': typeof AuthenticatedExpensesIdRoute;
   '/groups/$id': typeof AuthenticatedGroupsIdRoute;
+  '/my-settlements/$id': typeof AuthenticatedMySettlementsIdRoute;
   '/students/$id': typeof AuthenticatedStudentsIdRoute;
   '/users/$id': typeof AuthenticatedUsersIdRoute;
   '/audit': typeof AuthenticatedAuditIndexRoute;
@@ -206,6 +223,7 @@ export interface FileRoutesByTo {
   '/courses': typeof AuthenticatedCoursesIndexRoute;
   '/expenses': typeof AuthenticatedExpensesIndexRoute;
   '/groups': typeof AuthenticatedGroupsIndexRoute;
+  '/my-settlements': typeof AuthenticatedMySettlementsIndexRoute;
   '/students': typeof AuthenticatedStudentsIndexRoute;
   '/users': typeof AuthenticatedUsersIndexRoute;
 }
@@ -226,6 +244,7 @@ export interface FileRoutesById {
   '/_authenticated/courses/$id': typeof AuthenticatedCoursesIdRoute;
   '/_authenticated/expenses/$id': typeof AuthenticatedExpensesIdRoute;
   '/_authenticated/groups/$id': typeof AuthenticatedGroupsIdRoute;
+  '/_authenticated/my-settlements/$id': typeof AuthenticatedMySettlementsIdRoute;
   '/_authenticated/students/$id': typeof AuthenticatedStudentsIdRoute;
   '/_authenticated/users/$id': typeof AuthenticatedUsersIdRoute;
   '/_authenticated/audit/': typeof AuthenticatedAuditIndexRoute;
@@ -233,6 +252,7 @@ export interface FileRoutesById {
   '/_authenticated/courses/': typeof AuthenticatedCoursesIndexRoute;
   '/_authenticated/expenses/': typeof AuthenticatedExpensesIndexRoute;
   '/_authenticated/groups/': typeof AuthenticatedGroupsIndexRoute;
+  '/_authenticated/my-settlements/': typeof AuthenticatedMySettlementsIndexRoute;
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute;
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute;
 }
@@ -253,6 +273,7 @@ export interface FileRouteTypes {
     | '/courses/$id'
     | '/expenses/$id'
     | '/groups/$id'
+    | '/my-settlements/$id'
     | '/students/$id'
     | '/users/$id'
     | '/audit/'
@@ -260,6 +281,7 @@ export interface FileRouteTypes {
     | '/courses/'
     | '/expenses/'
     | '/groups/'
+    | '/my-settlements/'
     | '/students/'
     | '/users/';
   fileRoutesByTo: FileRoutesByTo;
@@ -278,6 +300,7 @@ export interface FileRouteTypes {
     | '/courses/$id'
     | '/expenses/$id'
     | '/groups/$id'
+    | '/my-settlements/$id'
     | '/students/$id'
     | '/users/$id'
     | '/audit'
@@ -285,6 +308,7 @@ export interface FileRouteTypes {
     | '/courses'
     | '/expenses'
     | '/groups'
+    | '/my-settlements'
     | '/students'
     | '/users';
   id:
@@ -304,6 +328,7 @@ export interface FileRouteTypes {
     | '/_authenticated/courses/$id'
     | '/_authenticated/expenses/$id'
     | '/_authenticated/groups/$id'
+    | '/_authenticated/my-settlements/$id'
     | '/_authenticated/students/$id'
     | '/_authenticated/users/$id'
     | '/_authenticated/audit/'
@@ -311,6 +336,7 @@ export interface FileRouteTypes {
     | '/_authenticated/courses/'
     | '/_authenticated/expenses/'
     | '/_authenticated/groups/'
+    | '/_authenticated/my-settlements/'
     | '/_authenticated/students/'
     | '/_authenticated/users/';
   fileRoutesById: FileRoutesById;
@@ -463,6 +489,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGroupsIdRouteImport;
       parentRoute: typeof AuthenticatedRoute;
     };
+    '/_authenticated/my-settlements/': {
+      id: '/_authenticated/my-settlements/';
+      path: '/my-settlements';
+      fullPath: '/my-settlements/';
+      preLoaderRoute: typeof AuthenticatedMySettlementsIndexRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    '/_authenticated/my-settlements/$id': {
+      id: '/_authenticated/my-settlements/$id';
+      path: '/my-settlements/$id';
+      fullPath: '/my-settlements/$id';
+      preLoaderRoute: typeof AuthenticatedMySettlementsIdRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
     '/_authenticated/students/': {
       id: '/_authenticated/students/';
       path: '/students';
@@ -507,6 +547,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCoursesIdRoute: typeof AuthenticatedCoursesIdRoute;
   AuthenticatedExpensesIdRoute: typeof AuthenticatedExpensesIdRoute;
   AuthenticatedGroupsIdRoute: typeof AuthenticatedGroupsIdRoute;
+  AuthenticatedMySettlementsIdRoute: typeof AuthenticatedMySettlementsIdRoute;
   AuthenticatedStudentsIdRoute: typeof AuthenticatedStudentsIdRoute;
   AuthenticatedUsersIdRoute: typeof AuthenticatedUsersIdRoute;
   AuthenticatedAuditIndexRoute: typeof AuthenticatedAuditIndexRoute;
@@ -514,6 +555,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCoursesIndexRoute: typeof AuthenticatedCoursesIndexRoute;
   AuthenticatedExpensesIndexRoute: typeof AuthenticatedExpensesIndexRoute;
   AuthenticatedGroupsIndexRoute: typeof AuthenticatedGroupsIndexRoute;
+  AuthenticatedMySettlementsIndexRoute: typeof AuthenticatedMySettlementsIndexRoute;
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute;
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute;
 }
@@ -531,6 +573,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCoursesIdRoute: AuthenticatedCoursesIdRoute,
   AuthenticatedExpensesIdRoute: AuthenticatedExpensesIdRoute,
   AuthenticatedGroupsIdRoute: AuthenticatedGroupsIdRoute,
+  AuthenticatedMySettlementsIdRoute: AuthenticatedMySettlementsIdRoute,
   AuthenticatedStudentsIdRoute: AuthenticatedStudentsIdRoute,
   AuthenticatedUsersIdRoute: AuthenticatedUsersIdRoute,
   AuthenticatedAuditIndexRoute: AuthenticatedAuditIndexRoute,
@@ -538,6 +581,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCoursesIndexRoute: AuthenticatedCoursesIndexRoute,
   AuthenticatedExpensesIndexRoute: AuthenticatedExpensesIndexRoute,
   AuthenticatedGroupsIndexRoute: AuthenticatedGroupsIndexRoute,
+  AuthenticatedMySettlementsIndexRoute: AuthenticatedMySettlementsIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
 };

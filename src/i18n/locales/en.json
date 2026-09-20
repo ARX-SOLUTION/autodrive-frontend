@@ -14,6 +14,7 @@
     "students": "Students",
     "payments": "Payments",
     "expenses": "Expenses",
+    "my_settlements": "My settlements",
     "documents": "Documents",
     "operators": "Operators",
     "teachers": "Teachers",
@@ -949,6 +950,27 @@
       "submitting": "Saving…",
       "conflict": "This expense changed elsewhere. Review the refreshed values and submit again.",
       "paid_delete_locked": "Paid expenses cannot be deleted. Cancel the expense instead; its recorded payments remain historical cash outflow."
+    }
+  },
+  "my_settlements": {
+    "title": "My settlements",
+    "subtitle": "Your monthly settlements and payment history",
+    "loading": "Loading settlements",
+    "empty": "No settlements yet",
+    "empty_desc": "When finance records a settlement for you, it will appear here.",
+    "load_error": "Unable to load settlements",
+    "load_error_desc": "Check your connection and try again.",
+    "not_found": "Settlement not found",
+    "not_found_desc": "The settlement was deleted or you do not have access to it.",
+    "paid": "Paid",
+    "remaining": "Remaining",
+    "summary": {
+      "total": "Settlements",
+      "open": "Open",
+      "remaining": "Remaining on this page"
+    },
+    "detail": {
+      "back": "Back to my settlements"
     }
   },
   "audit": {

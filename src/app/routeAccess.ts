@@ -4,6 +4,8 @@ export const ROUTE_CAPABILITIES = {
   '/dashboard': 'viewDashboard',
   '/expenses': 'viewExpenses',
   '/expenses/$id': 'viewExpenses',
+  '/my-settlements': 'viewOwnSettlements',
+  '/my-settlements/$id': 'viewOwnSettlements',
   '/schedule': 'accessOperations',
   '/attendance': 'accessOperations',
   '/groups': 'accessOperations',

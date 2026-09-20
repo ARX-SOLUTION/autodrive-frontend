@@ -26,9 +26,16 @@ const permissionState = vi.hoisted(() => ({
 const expenseHooks = vi.hoisted(() => ({
   useExpense: vi.fn(),
   useExpenseHistory: vi.fn(),
+  useMySettlementDetail: vi.fn(),
 }));
 const historyState = vi.hoisted(() => ({
   data: null as ExpenseHistory | null,
+  isLoading: false,
+  isError: false,
+  refetch: vi.fn(),
+}));
+const mySettlementState = vi.hoisted(() => ({
+  data: undefined as ExpenseHistory | undefined,
   isLoading: false,
   isError: false,
   refetch: vi.fn(),
@@ -70,10 +77,12 @@ const teacherOptionsState = vi.hoisted(() => ({
 
 expenseHooks.useExpense.mockImplementation(() => queryState);
 expenseHooks.useExpenseHistory.mockImplementation(() => historyState);
+expenseHooks.useMySettlementDetail.mockImplementation(() => mySettlementState);
 
 vi.mock('@/services/expenseService', () => ({
   useExpense: expenseHooks.useExpense,
   useExpenseHistory: expenseHooks.useExpenseHistory,
+  useMySettlementDetail: expenseHooks.useMySettlementDetail,
   useExpenseBranchOptions: () => ({ data: [] }),
   useExpenseTeacherOptions: () => teacherOptionsState,
   useCreateExpensePayment: () => paymentMutation,
@@ -86,10 +95,12 @@ vi.mock('@/services/expenseService', () => ({
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/hooks/useCan', () => ({
-  useCan: (capability: string) =>
-    capability === 'viewExpenses'
-      ? permissionState.canViewExpenses
-      : permissionState.canManageFinance,
+  useCan: (capability: string) => {
+    if (capability === 'viewExpenses') return permissionState.canViewExpenses;
+    if (capability === 'manageCompanyFinance')
+      return permissionState.canManageFinance;
+    return false;
+  },
 }));
 
 const expense: Expense = {

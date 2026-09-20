@@ -29,6 +29,7 @@ export type Capability =
   | 'viewExpenses'
   | 'navigateExpenseOverdueSweep'
   | 'manageCompanyFinance'
+  | 'viewOwnSettlements'
   | 'viewDeleted';
 
 // Role groups — named so the matrix reads as intent, not a wall of literals.
@@ -76,6 +77,8 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   viewExpenses: ['owner', 'accountant', 'manager'],
   navigateExpenseOverdueSweep: ['owner', 'manager'],
   manageCompanyFinance: ['owner', 'accountant'],
+  // Teacher self-view of own settlements — activated at T8A; never finance roles.
+  viewOwnSettlements: ['teacher'],
   // autodrive-cg9: "show deleted" toggle + restore action on the students/
   // groups/users/branches list pages. No existing capability means this --
   // manageBranches/manageUsers/manageStudents/manageGroups are each scoped
