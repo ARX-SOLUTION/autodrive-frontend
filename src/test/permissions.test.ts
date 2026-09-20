@@ -11,7 +11,11 @@ const ALL_CAPS = Object.keys(CAPABILITIES) as Capability[];
 describe('permissions matrix (bd autodrive-6ef.2)', () => {
   it('dev and owner have every capability (dev ⊇ owner)', () => {
     for (const cap of ALL_CAPS) {
-      if (cap === 'viewOwnSettlements') {
+      if (
+        cap === 'viewOwnSettlements' ||
+        cap === 'submitDrivingSession' ||
+        cap === 'reviewDrivingSessions'
+      ) {
         expect(roleCan('owner', cap)).toBe(false);
         expect(roleCan('dev', cap)).toBe(false);
         continue;
@@ -20,7 +24,8 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
       if (
         cap === 'viewExpenses' ||
         cap === 'manageCompanyFinance' ||
-        cap === 'navigateExpenseOverdueSweep'
+        cap === 'navigateExpenseOverdueSweep' ||
+        cap === 'cancelDrivingSessions'
       ) {
         expect(roleCan('dev', cap)).toBe(false);
       } else {
@@ -107,6 +112,38 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
     expect(roleCan('manager', 'viewDeleted')).toBe(false);
     expect(roleCan('operator', 'viewDeleted')).toBe(false);
     expect(roleCan('teacher', 'viewDeleted')).toBe(false);
+  });
+
+  it('fleet is operational, but only owner and manager may mutate vehicles', () => {
+    for (const role of [
+      'dev',
+      'owner',
+      'manager',
+      'operator',
+      'teacher',
+    ] as const) {
+      expect(roleCan(role, 'viewVehicles')).toBe(true);
+    }
+    expect(roleCan('accountant', 'viewVehicles')).toBe(false);
+    for (const role of ['dev', 'owner', 'manager'] as const) {
+      expect(roleCan(role, 'manageVehicles')).toBe(true);
+    }
+    expect(roleCan('operator', 'manageVehicles')).toBe(false);
+    expect(roleCan('teacher', 'manageVehicles')).toBe(false);
+    expect(roleCan('accountant', 'manageVehicles')).toBe(false);
+  });
+
+  it('separates driving instructor submission from manager-only review', () => {
+    expect(roleCan('teacher', 'submitDrivingSession')).toBe(true);
+    expect(roleCan('owner', 'submitDrivingSession')).toBe(false);
+    expect(roleCan('manager', 'submitDrivingSession')).toBe(false);
+    expect(roleCan('teacher', 'reviewDrivingSessions')).toBe(false);
+    expect(roleCan('owner', 'reviewDrivingSessions')).toBe(false);
+    expect(roleCan('manager', 'reviewDrivingSessions')).toBe(true);
+    expect(roleCan('operator', 'scheduleDrivingSessions')).toBe(true);
+    expect(roleCan('teacher', 'viewDrivingSummary')).toBe(false);
+    expect(roleCan('operator', 'viewDrivingSummary')).toBe(true);
+    expect(roleCan('accountant', 'viewDrivingSessions')).toBe(false);
   });
 
   it('isCrossTenantRole is owner or dev only', () => {

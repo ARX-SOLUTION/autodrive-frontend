@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatTashkentDate,
+  formatTashkentDateTime,
   isoToParts,
   nowTashkentParts,
   partsToIso,
@@ -42,6 +44,25 @@ describe('partsToIso / isoToParts round-trip', () => {
       date: '2026-07-11',
       time: '02:00',
     });
+  });
+});
+
+describe('Tashkent display dates', () => {
+  it('uses readable Uzbek dates instead of browser-dependent month codes', () => {
+    expect(formatTashkentDateTime('2026-09-20T05:00:00.000Z', 'uz')).toBe(
+      '20.09.2026 10:00',
+    );
+    expect(formatTashkentDate('2030-12-31', 'uz')).toBe('31.12.2030');
+    expect(formatTashkentDateTime('2026-09-20T05:00:00.000Z')).toBe(
+      '20.09.2026 10:00',
+    );
+  });
+
+  it('keeps the existing localized format for Russian and English', () => {
+    expect(formatTashkentDateTime('2026-09-20T05:00:00.000Z', 'ru')).toContain(
+      '10:00',
+    );
+    expect(formatTashkentDate('2030-12-31', 'en')).toContain('2030');
   });
 });
 

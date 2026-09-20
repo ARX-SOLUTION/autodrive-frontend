@@ -21,6 +21,18 @@ export type Capability =
   | 'recordPayment'
   | 'manageStudents'
   | 'manageGroups'
+  | 'viewVehicles'
+  | 'manageVehicles'
+  | 'viewTrainingPrograms'
+  | 'manageTrainingPrograms'
+  | 'viewTrainingEnrollments'
+  | 'createTrainingEnrollment'
+  | 'viewDrivingSessions'
+  | 'viewDrivingSummary'
+  | 'scheduleDrivingSessions'
+  | 'submitDrivingSession'
+  | 'reviewDrivingSessions'
+  | 'cancelDrivingSessions'
   | 'manageSchedule'
   | 'takeAttendance'
   | 'manageOwnLesson'
@@ -57,6 +69,18 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   recordPayment: OPS,
   manageStudents: OPS,
   manageGroups: ['dev', 'owner', 'manager'],
+  viewVehicles: OPERATIONAL_ROLES,
+  manageVehicles: ['dev', 'owner', 'manager'],
+  viewTrainingPrograms: OPERATIONAL_ROLES,
+  manageTrainingPrograms: OWNERS,
+  viewTrainingEnrollments: OPERATIONAL_ROLES,
+  createTrainingEnrollment: ['dev', 'owner', 'manager'],
+  viewDrivingSessions: OPERATIONAL_ROLES,
+  viewDrivingSummary: OPS,
+  scheduleDrivingSessions: OPS,
+  submitDrivingSession: ['teacher'],
+  reviewDrivingSessions: ['manager'],
+  cancelDrivingSessions: ['owner', 'manager', 'operator'],
   manageSchedule: OPS,
   takeAttendance: OPERATIONAL_ROLES,
   // Teacher creates an ad-hoc lesson for their own (server-scoped) group and

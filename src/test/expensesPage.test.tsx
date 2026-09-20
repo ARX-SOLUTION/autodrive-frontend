@@ -11,6 +11,7 @@ const {
   useOverdueExpenseSweepMock,
   useExpenseTriageCountsMock,
   useExpenseBranchOptionsMock,
+  useExpenseVehicleOptionsMock,
   useUpdateExpenseMock,
 } = vi.hoisted(() => ({
   createExpenseMock: vi.fn(),
@@ -18,6 +19,7 @@ const {
   useOverdueExpenseSweepMock: vi.fn(),
   useExpenseTriageCountsMock: vi.fn(),
   useExpenseBranchOptionsMock: vi.fn(),
+  useExpenseVehicleOptionsMock: vi.fn(),
   useUpdateExpenseMock: vi.fn(),
 }));
 
@@ -30,6 +32,7 @@ vi.mock('@/services/expenseService', async (importOriginal) => {
     useOverdueExpenseSweep: useOverdueExpenseSweepMock,
     useExpenseTriageCounts: useExpenseTriageCountsMock,
     useExpenseBranchOptions: useExpenseBranchOptionsMock,
+    useExpenseVehicleOptions: useExpenseVehicleOptionsMock,
     useExpenseTeacherOptions: () => ({ data: [] }),
     useCreateExpense: () => ({ mutate: createExpenseMock, isPending: false }),
     useCreateTeacherSettlement: () => ({
@@ -48,6 +51,8 @@ const EXPENSES: Expense[] = [
     id: 'e1',
     branch_id: 'b1',
     branch_name: 'Chilonzor',
+    vehicle_id: 'v1',
+    vehicle_plate_number: '01 A 123 BC',
     created_by_id: 'u1',
     category: 'rent',
     title: 'Ofis ijarasi',
@@ -83,6 +88,18 @@ beforeEach(() => {
   createExpenseMock.mockReset();
   useExpenseBranchOptionsMock.mockReset().mockReturnValue({
     data: [{ id: 'b1', name: 'Chilonzor' }],
+    isLoading: false,
+  });
+  useExpenseVehicleOptionsMock.mockReset().mockReturnValue({
+    data: [
+      {
+        id: 'v1',
+        plate_number: '01 A 123 BC',
+        branch_id: 'b1',
+        make: 'Chevrolet',
+        model: 'Cobalt',
+      },
+    ],
     isLoading: false,
   });
   useExpenseTriageCountsMock.mockReset().mockReturnValue({
@@ -228,6 +245,7 @@ describe('ExpensesPage', () => {
       screen.getByRole('combobox', { name: 'expenses.table.status' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Ofis ijarasi')).toBeInTheDocument();
+    expect(screen.getAllByText('01 A 123 BC').length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByText('Ofis ijarasi'));
     expect(router.state.location.pathname).toBe('/expenses/e1');
@@ -294,5 +312,35 @@ describe('ExpensesPage', () => {
         expect.any(Object),
       ),
     );
+  });
+
+  it('clears the vehicle when the selected branch changes', async () => {
+    await renderPage();
+    fireEvent.click(screen.getByRole('button', { name: 'expenses.add' }));
+    fireEvent.click(screen.getByLabelText(/expenses\.form\.branch/));
+    fireEvent.click(screen.getByRole('option', { name: 'Chilonzor' }));
+    expect(useExpenseVehicleOptionsMock.mock.calls.at(-1)?.[0]).toBe('b1');
+    fireEvent.click(screen.getByLabelText('expenses.form.vehicle'));
+    fireEvent.click(screen.getByRole('option', { name: /01 A 123 BC/ }));
+    fireEvent.click(screen.getByLabelText(/expenses\.form\.branch/));
+    fireEvent.click(
+      screen.getByRole('option', { name: 'expenses.form.company_wide' }),
+    );
+    expect(screen.getByLabelText('expenses.form.vehicle')).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText(/expenses\.table\.title/), {
+      target: { value: 'Fuel' },
+    });
+    fireEvent.change(screen.getByLabelText(/expenses\.form\.amount/), {
+      target: { value: '100' },
+    });
+    fireEvent.change(screen.getByLabelText(/expenses\.form\.expense_date/), {
+      target: { value: '2026-09-20' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.form.submit' }),
+    );
+    await waitFor(() => expect(createExpenseMock).toHaveBeenCalledOnce());
+    expect(createExpenseMock.mock.calls[0][0]).not.toHaveProperty('vehicle_id');
   });
 });

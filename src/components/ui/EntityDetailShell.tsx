@@ -78,7 +78,7 @@ const BackButton = ({
   <button
     type="button"
     onClick={onClick}
-    className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+    className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline print:hidden"
   >
     <ArrowLeft className="h-4 w-4" /> {label}
   </button>

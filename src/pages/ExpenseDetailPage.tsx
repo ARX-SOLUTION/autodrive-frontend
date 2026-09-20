@@ -548,6 +548,12 @@ const ExpenseDetailPage = () => {
                 serverExpense.branch_name ?? t('expenses.form.company_wide')
               }
             />
+            {serverExpense.vehicle_plate_number && (
+              <DetailField
+                label={t('expenses.detail.vehicle')}
+                value={serverExpense.vehicle_plate_number}
+              />
+            )}
             <DetailField
               label={t('expenses.detail.payee')}
               value={serverExpense.payee ?? t('common.na')}

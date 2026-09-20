@@ -13,6 +13,7 @@ import {
   Calendar,
   ListChecks,
   BookOpen,
+  Car,
 } from '@phosphor-icons/react';
 import type { Capability } from '@/lib/permissions';
 
@@ -23,6 +24,10 @@ export type AppRoutePath =
   | '/schedule'
   | '/attendance'
   | '/groups'
+  | '/vehicles'
+  | '/training-programs'
+  | '/training-enrollments'
+  | '/driving-sessions'
   | '/courses'
   | '/students'
   | '/payments'
@@ -82,6 +87,34 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Stack,
     section: 'learning',
     cap: 'accessOperations',
+  },
+  {
+    path: '/vehicles',
+    labelKey: 'nav.vehicles',
+    icon: Car,
+    section: 'workspace',
+    cap: 'viewVehicles',
+  },
+  {
+    path: '/training-programs',
+    labelKey: 'nav.training_programs',
+    icon: BookOpen,
+    section: 'learning',
+    cap: 'viewTrainingPrograms',
+  },
+  {
+    path: '/training-enrollments',
+    labelKey: 'nav.training_enrollments',
+    icon: GraduationCap,
+    section: 'learning',
+    cap: 'viewTrainingEnrollments',
+  },
+  {
+    path: '/driving-sessions',
+    labelKey: 'nav.driving_sessions',
+    icon: Car,
+    section: 'learning',
+    cap: 'viewDrivingSessions',
   },
   {
     path: '/courses',

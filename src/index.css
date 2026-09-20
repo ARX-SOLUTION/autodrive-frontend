@@ -365,3 +365,24 @@
     height: 0;
   }
 }
+
+@media print {
+  body:has(.learner-print-report) aside,
+  body:has(.learner-print-report) header.sticky,
+  body:has(.learner-print-report) #main-content > div > nav {
+    display: none !important;
+  }
+
+  body:has(.learner-print-report) div:has(> #main-content) {
+    margin-left: 0 !important;
+  }
+
+  body:has(.learner-print-report) #main-content {
+    padding: 0 !important;
+  }
+
+  .learner-print-report tr,
+  .learner-print-report dl > div {
+    break-inside: avoid;
+  }
+}

@@ -21,6 +21,8 @@ const makeExpense = (id: string, overdueDays = 1): Expense => ({
   id,
   branch_id: 'branch-1',
   branch_name: 'Chilonzor',
+  vehicle_id: null,
+  vehicle_plate_number: null,
   created_by_id: 'owner-1',
   category: 'rent',
   title: `Expense ${id}`,

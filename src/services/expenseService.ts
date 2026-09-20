@@ -28,6 +28,7 @@ import type {
   ExpenseHistory,
   ExpensePayment,
   ExpenseBranchOption,
+  ExpenseVehicleOption,
   ExpenseTeacherOption,
   ExpenseMonthCloseCsvFilters,
   ExpenseCategory,
@@ -475,6 +476,39 @@ export const useExpenseBranchOptions = () => {
   const companyId = useAuthStore((state) => state.user?.company_id);
   return useQuery(
     branchOptionsQueryOptions(companyId, canViewExpenses && canManageFinance),
+  );
+};
+
+export const expenseVehicleOptionsQueryOptions = (
+  branchId: string | undefined,
+  enabled = true,
+) =>
+  queryOptions({
+    queryKey: expenseKeys.vehicleOptions({ ...expenseIdentity(branchId) }),
+    enabled: enabled && !!branchId,
+    queryFn: async ({ signal }) => {
+      const { data } = await axiosInstance.get<unknown>(
+        '/expenses/vehicle-options',
+        {
+          params: { branch_id: branchId },
+          signal,
+        },
+      );
+      return parseListEnvelope<ExpenseVehicleOption>(data, 'expense-vehicles')
+        .data;
+    },
+  });
+
+export const useExpenseVehicleOptions = (branchId?: string, enabled = true) => {
+  const canViewExpenses = useCan('viewExpenses');
+  const user = useAuthStore((state) => state.user);
+  const scopedBranchId =
+    user?.role === 'manager' ? (user.branch_id ?? undefined) : branchId;
+  return useQuery(
+    expenseVehicleOptionsQueryOptions(
+      scopedBranchId,
+      enabled && canViewExpenses && !!user?.company_id,
+    ),
   );
 };
 
