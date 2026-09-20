@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import TrainingEnrollmentDetailPage from '@/pages/TrainingEnrollmentDetailPage';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
-const actions = vi.hoisted(() => ({ create: vi.fn() }));
+const actions = vi.hoisted(() => ({ create: vi.fn(), vehicles: vi.fn() }));
 
 vi.mock('@/hooks/useCan', () => ({
   useCan: (cap: string) => cap === 'scheduleDrivingSessions',
@@ -57,32 +57,49 @@ vi.mock('@/services/drivingSessionService', () => ({
   }),
 }));
 vi.mock('@/services/vehicleService', () => ({
-  useVehiclesPage: () => ({
-    data: {
-      data: [
-        {
-          id: 'v1',
-          plate_number: '01 A 123 BC',
-          make: 'Chevrolet',
-          model: 'Cobalt',
-          categories: ['B'],
-          available_for_booking: true,
-        },
-        {
-          id: 'v2',
-          plate_number: '01 A 999 BC',
-          make: 'Chevrolet',
-          model: 'Cobalt',
-          categories: ['B'],
-          available_for_booking: false,
-        },
-      ],
-    },
-  }),
+  useVehiclesPage: (filters: { page?: number }) => {
+    actions.vehicles(filters);
+    return {
+      data: {
+        data:
+          filters.page === 2
+            ? [
+                {
+                  id: 'v51',
+                  plate_number: '01 A 555 BC',
+                  make: 'Chevrolet',
+                  model: 'Cobalt',
+                  categories: ['B'],
+                  available_for_booking: true,
+                },
+              ]
+            : [
+                {
+                  id: 'v1',
+                  plate_number: '01 A 123 BC',
+                  make: 'Chevrolet',
+                  model: 'Cobalt',
+                  categories: ['B'],
+                  available_for_booking: true,
+                },
+                {
+                  id: 'v2',
+                  plate_number: '01 A 999 BC',
+                  make: 'Chevrolet',
+                  model: 'Cobalt',
+                  categories: ['B'],
+                  available_for_booking: false,
+                },
+              ],
+        meta: { totalPages: 2 },
+      },
+    };
+  },
 }));
 
 afterEach(() => {
   actions.create.mockClear();
+  actions.vehicles.mockClear();
   cleanup();
 });
 
@@ -122,6 +139,21 @@ describe('scheduling from an enrollment', () => {
         ends_at: '2026-09-20T08:00:00Z',
       },
       expect.any(Object),
+    );
+  });
+
+  it('lets a scheduler select a car beyond the first 50 results', async () => {
+    await renderWithRouter(<TrainingEnrollmentDetailPage />, {
+      initialEntry: '/training-enrollments/e1',
+      routePattern: '/training-enrollments/$id',
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'driving.schedule' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.next' }));
+    const vehicle = screen.getByRole('combobox', { name: 'driving.vehicle' });
+    expect(vehicle.querySelector('option[value="v51"]')).toBeTruthy();
+    expect(vehicle.querySelector('option[value="v1"]')).toBeNull();
+    expect(actions.vehicles).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 2, limit: 50, branchId: 'b1' }),
     );
   });
 });

@@ -48,6 +48,7 @@ const ScheduleDialog = ({
   const navigate = useNavigate();
   const create = useCreateDrivingSession();
   const [vehicleSearch, setVehicleSearch] = useState('');
+  const [vehiclePage, setVehiclePage] = useState(1);
   const [vehicleId, setVehicleId] = useState('');
   const [instructorId, setInstructorId] = useState('');
   const [startsAt, setStartsAt] = useState('');
@@ -58,6 +59,7 @@ const ScheduleDialog = ({
     branchId: enrollment.branch_id,
     category: enrollment.category ?? undefined,
     search: search || undefined,
+    page: vehiclePage,
     limit: 50,
   });
   const { data: practiceTeachers = [] } = usePracticeInstructors(
@@ -73,6 +75,7 @@ const ScheduleDialog = ({
     ) ?? [];
   const close = () => {
     setVehicleSearch('');
+    setVehiclePage(1);
     setVehicleId('');
     setInstructorId('');
     setStartsAt('');
@@ -125,6 +128,7 @@ const ScheduleDialog = ({
               value={vehicleSearch}
               onChange={(event) => {
                 setVehicleSearch(event.target.value);
+                setVehiclePage(1);
                 setVehicleId('');
               }}
               placeholder={t('driving.vehicle_search_hint')}
@@ -146,11 +150,44 @@ const ScheduleDialog = ({
               ))}
             </select>
           </label>
-          {vehicles.data && availableVehicles.length === 0 && (
-            <p className="text-xs text-destructive">
-              {t('driving.no_available_vehicle')}
-            </p>
+          {(vehicles.data?.meta.totalPages ?? 0) > 1 && (
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={vehiclePage <= 1}
+                onClick={() => {
+                  setVehiclePage((page) => page - 1);
+                  setVehicleId('');
+                }}
+              >
+                {t('common.previous')}
+              </Button>
+              <span>
+                {vehiclePage} / {vehicles.data?.meta.totalPages}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={vehiclePage >= (vehicles.data?.meta.totalPages ?? 1)}
+                onClick={() => {
+                  setVehiclePage((page) => page + 1);
+                  setVehicleId('');
+                }}
+              >
+                {t('common.next')}
+              </Button>
+            </div>
           )}
+          {vehicles.data &&
+            availableVehicles.length === 0 &&
+            vehicles.data.meta.totalPages <= 1 && (
+              <p className="text-xs text-destructive">
+                {t('driving.no_available_vehicle')}
+              </p>
+            )}
           <label className="block space-y-1 text-sm">
             <span>{t('driving.instructor')}</span>
             <select

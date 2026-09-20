@@ -26,6 +26,7 @@ export interface TrainingEnrollment {
   branch_id: string;
   student: { id: string; first_name: string; last_name: string };
   program_id: string | null;
+  program_name: string | null;
   course_id: string | null;
   course_type: CourseType;
   category: VehicleCategory | null;

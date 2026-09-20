@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { GraduationCap, Plus } from '@phosphor-icons/react';
@@ -10,14 +10,16 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useBranches } from '@/services/branchService';
 import { searchStudents } from '@/services/studentService';
 import {
-  trainingProgramQueryOptions,
   useActiveTrainingPrograms,
   useCreateTrainingEnrollment,
   useTrainingEnrollmentsPage,
 } from '@/services/trainingService';
 import { studentKeys } from '@/lib/queryKeys';
 import { extractErrorMessage } from '@/lib/errors';
-import type { TrainingEnrollmentStatus } from '@/types/training';
+import type {
+  TrainingEnrollment,
+  TrainingEnrollmentStatus,
+} from '@/types/training';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -57,7 +59,7 @@ const EnrollmentDialog = ({
   const debouncedSearch = useDebounce(studentSearch.trim(), 250);
   const students = useQuery({
     queryKey: studentKeys.page({ search: debouncedSearch, limit: 50 }),
-    queryFn: () => searchStudents(debouncedSearch),
+    queryFn: ({ signal }) => searchStudents(debouncedSearch, signal),
     enabled: open && debouncedSearch.length >= 2,
   });
   const programs = useActiveTrainingPrograms(branchId, open);
@@ -196,21 +198,10 @@ const TrainingEnrollmentsPage = () => {
     status: status || undefined,
     page,
   });
-  const programIds = [
-    ...new Set(
-      enrollments.data?.data
-        .map((row) => row.program_id)
-        .filter((id): id is string => !!id) ?? [],
-    ),
-  ];
-  const programResults = useQueries({
-    queries: programIds.map((id) => trainingProgramQueryOptions(id)),
-  });
-  const programNames = new Map(
-    programIds.map((id, index) => [id, programResults[index].data?.name]),
-  );
-  const programName = (id: string | null) =>
-    id ? (programNames.get(id) ?? t('training.program')) : t('training.legacy');
+  const programName = (enrollment: TrainingEnrollment) =>
+    enrollment.program_id
+      ? (enrollment.program_name ?? t('training.program'))
+      : t('training.legacy');
   const branchName = (id: string) =>
     branches.find((branch) => branch.id === id)?.name ??
     (id === user?.branch_id ? user?.branch_name : id);
@@ -290,7 +281,7 @@ const TrainingEnrollmentsPage = () => {
               <DataCard
                 key={enrollment.id}
                 title={`${enrollment.student.last_name} ${enrollment.student.first_name}`}
-                subtitle={`${enrollment.category ?? '—'} · ${programName(enrollment.program_id)}`}
+                subtitle={`${enrollment.category ?? '—'} · ${programName(enrollment)}`}
                 onClick={() =>
                   navigate({
                     to: '/training-enrollments/$id',
