@@ -477,6 +477,8 @@
     "instructor_confirmation_notice": "O'quvchi rulda bo'lgani instruktor tasdig'iga asoslanadi. GPS mashina harakatini ko'rsatadi, o'quvchi shaxsini mustaqil isbotlamaydi.",
     "report_title": "O'quvchining amaliy haydash hisoboti",
     "report_unavailable": "To'liq hisobotga ruxsat yo'q",
+    "not_ready_title": "Haydash seanslari hozircha mavjud emas",
+    "not_ready_desc": "Seans rejalash va hisobot serverda ishga tushirilgach ochiladi. O'quv dasturi va o'qish yozuvlarini hozir ko'rishingiz mumkin.",
     "report_staff_only": "Instruktor faqat o'ziga biriktirilgan seanslarni ko'radi; to'liq soat balansi egasi, menejer va operatorga ko'rinadi.",
     "print_report": "Hisobotni chop etish",
     "view_report": "O'quvchi hisoboti",

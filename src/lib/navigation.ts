@@ -17,6 +17,7 @@ import {
   MapTrifold,
 } from '@phosphor-icons/react';
 import type { Capability } from '@/lib/permissions';
+import { drivingSessionsEnabled } from '@/lib/featureAvailability';
 
 export type NavSectionId = 'workspace' | 'learning' | 'team' | 'system';
 
@@ -61,7 +62,7 @@ export const NAV_SECTIONS: Array<{ id: NavSectionId; labelKey: string }> = [
 // This is the one source of truth for the sidebar and Command Palette. Route
 // guards still enforce authorization; these capability flags only control what
 // the client presents to a signed-in user.
-export const NAV_ITEMS: NavItem[] = [
+const allNavItems: NavItem[] = [
   {
     path: '/dashboard',
     labelKey: 'nav.dashboard',
@@ -203,3 +204,7 @@ export const NAV_ITEMS: NavItem[] = [
     pinnable: false,
   },
 ];
+
+export const NAV_ITEMS = allNavItems.filter(
+  (item) => drivingSessionsEnabled || item.path !== '/driving-sessions',
+);

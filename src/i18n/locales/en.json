@@ -477,6 +477,8 @@
     "instructor_confirmation_notice": "The instructor confirms who was driving. GPS records vehicle movement but does not independently prove learner identity.",
     "report_title": "Learner practical driving report",
     "report_unavailable": "Full report unavailable",
+    "not_ready_title": "Driving sessions are not available yet",
+    "not_ready_desc": "Scheduling and reports will open when the server support is ready. You can view training programs and enrollments now.",
     "report_staff_only": "Instructors see only their assigned sessions; the full balance is available to owners, managers, and operators.",
     "print_report": "Print report",
     "view_report": "Learner report",

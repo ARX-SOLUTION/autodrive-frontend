@@ -3,7 +3,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import TrainingEnrollmentDetailPage from '@/pages/TrainingEnrollmentDetailPage';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
-const actions = vi.hoisted(() => ({ create: vi.fn(), vehicles: vi.fn() }));
+const actions = vi.hoisted(() => ({
+  create: vi.fn(),
+  vehicles: vi.fn(),
+  sessionsEnabled: true,
+}));
+
+vi.mock('@/lib/featureAvailability', () => ({
+  get drivingSessionsEnabled() {
+    return actions.sessionsEnabled;
+  },
+}));
 
 vi.mock('@/hooks/useCan', () => ({
   useCan: (cap: string) => cap === 'scheduleDrivingSessions',
@@ -98,12 +108,25 @@ vi.mock('@/services/vehicleService', () => ({
 }));
 
 afterEach(() => {
+  actions.sessionsEnabled = true;
   actions.create.mockClear();
   actions.vehicles.mockClear();
   cleanup();
 });
 
 describe('scheduling from an enrollment', () => {
+  it('does not offer a scheduling action before the session API exists', async () => {
+    actions.sessionsEnabled = false;
+    await renderWithRouter(<TrainingEnrollmentDetailPage />, {
+      initialEntry: '/training-enrollments/e1',
+      routePattern: '/training-enrollments/$id',
+    });
+    expect(
+      screen.queryByRole('button', { name: 'driving.schedule' }),
+    ).toBeNull();
+    expect(actions.create).not.toHaveBeenCalled();
+  });
+
   it('offers only available cars and posts the exact student-car-instructor interval', async () => {
     await renderWithRouter(<TrainingEnrollmentDetailPage />, {
       initialEntry: '/training-enrollments/e1',

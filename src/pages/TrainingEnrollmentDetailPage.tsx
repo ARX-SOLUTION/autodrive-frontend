@@ -19,6 +19,7 @@ import { useVehiclesPage } from '@/services/vehicleService';
 import type { TrainingEnrollment } from '@/types/training';
 import { extractErrorMessage } from '@/lib/errors';
 import { formatTashkentDateTime } from '@/lib/calendarDateTime';
+import { drivingSessionsEnabled } from '@/lib/featureAvailability';
 import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/button';
@@ -266,10 +267,10 @@ const TrainingEnrollmentDetailPage = () => {
     refetch,
   } = useTrainingEnrollment(id ?? '');
   const { data: program } = useTrainingProgram(enrollment?.program_id ?? '');
+  const isLegacy =
+    enrollment?.status === 'legacy' || enrollment?.required_minutes == null;
   const reportId =
-    !canViewSummary ||
-    enrollment?.status === 'legacy' ||
-    enrollment?.required_minutes == null
+    !drivingSessionsEnabled || !canViewSummary || isLegacy
       ? ''
       : (enrollment?.id ?? '');
   const summary = useDrivingSummary(reportId);
@@ -311,7 +312,8 @@ const TrainingEnrollmentDetailPage = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {canSchedule &&
+            {drivingSessionsEnabled &&
+              canSchedule &&
               enrollment.status === 'active' &&
               enrollment.program_id && (
                 <Button onClick={() => setScheduleOpen(true)}>
@@ -319,7 +321,7 @@ const TrainingEnrollmentDetailPage = () => {
                   {t('driving.schedule')}
                 </Button>
               )}
-            {canViewSummary && (
+            {drivingSessionsEnabled && canViewSummary && (
               <Button
                 variant="outline"
                 onClick={() => window.print()}
@@ -476,16 +478,23 @@ const TrainingEnrollmentDetailPage = () => {
       ) : (
         <EmptyState
           title={t(
-            canViewSummary ? 'training.legacy' : 'driving.report_unavailable',
+            isLegacy
+              ? 'training.legacy'
+              : canViewSummary
+                ? 'driving.not_ready_title'
+                : 'driving.report_unavailable',
           )}
           description={t(
-            canViewSummary
+            isLegacy
               ? 'training.no_attendance_conversion'
-              : 'driving.report_staff_only',
+              : canViewSummary
+                ? 'driving.not_ready_desc'
+                : 'driving.report_staff_only',
           )}
         />
       )}
-      {canSchedule &&
+      {drivingSessionsEnabled &&
+        canSchedule &&
         enrollment.status === 'active' &&
         enrollment.program_id &&
         scheduleOpen && (
