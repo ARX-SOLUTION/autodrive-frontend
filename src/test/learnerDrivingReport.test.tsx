@@ -3,7 +3,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import TrainingEnrollmentDetailPage from '@/pages/TrainingEnrollmentDetailPage';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
-const access = vi.hoisted(() => ({ canViewSummary: true, summaryId: vi.fn() }));
+const access = vi.hoisted(() => ({
+  canViewSummary: true,
+  sessionsEnabled: true,
+  summaryId: vi.fn(),
+  reportId: vi.fn(),
+}));
+vi.mock('@/lib/featureAvailability', () => ({
+  get drivingSessionsEnabled() {
+    return access.sessionsEnabled;
+  },
+}));
 vi.mock('@/hooks/useCan', () => ({
   useCan: (cap: string) =>
     cap === 'viewDrivingSummary' && access.canViewSummary,
@@ -44,27 +54,32 @@ vi.mock('@/services/drivingSessionService', () => ({
       isError: false,
     };
   },
-  useDrivingSessionsForReport: () => ({
-    data: [
-      {
-        id: 'd1',
-        starts_at: '2026-09-20T07:00:00Z',
-        status: 'submitted',
-        planned_minutes: 60,
-        actual_minutes: 40,
-        approved_minutes: 0,
-        gps_exception_reason: null,
-        vehicle: { id: 'v1', plate_number: '01 A 123 BC' },
-        instructor: { id: 't1', name: 'Test Instructor' },
-      },
-    ],
-    isError: false,
-  }),
+  useDrivingSessionsForReport: (id: string) => {
+    access.reportId(id);
+    return {
+      data: [
+        {
+          id: 'd1',
+          starts_at: '2026-09-20T07:00:00Z',
+          status: 'submitted',
+          planned_minutes: 60,
+          actual_minutes: 40,
+          approved_minutes: 0,
+          gps_exception_reason: null,
+          vehicle: { id: 'v1', plate_number: '01 A 123 BC' },
+          instructor: { id: 't1', name: 'Test Instructor' },
+        },
+      ],
+      isError: false,
+    };
+  },
 }));
 
 afterEach(() => {
   access.canViewSummary = true;
+  access.sessionsEnabled = true;
   access.summaryId.mockClear();
+  access.reportId.mockClear();
   cleanup();
 });
 
@@ -101,5 +116,20 @@ describe('learner practical driving report', () => {
       screen.queryByRole('button', { name: 'driving.print_report' }),
     ).toBeNull();
     expect(screen.getByText('driving.report_staff_only')).toBeTruthy();
+  });
+
+  it('does not request unavailable session APIs and explains the staged rollout', async () => {
+    access.sessionsEnabled = false;
+    await renderWithRouter(<TrainingEnrollmentDetailPage />, {
+      initialEntry: '/training-enrollments/e1',
+      routePattern: '/training-enrollments/$id',
+    });
+    expect(access.summaryId).toHaveBeenCalledWith('');
+    expect(access.reportId).toHaveBeenCalledWith('');
+    expect(
+      screen.queryByRole('button', { name: 'driving.print_report' }),
+    ).toBeNull();
+    expect(screen.getByText('driving.not_ready_title')).toBeTruthy();
+    expect(screen.getByText('driving.not_ready_desc')).toBeTruthy();
   });
 });
