@@ -8,14 +8,14 @@ const originalAuth = useAuthStore.getState();
 
 afterEach(() => useAuthStore.setState(originalAuth));
 
-describe('driving availability before the session API exists', () => {
-  it('does not advertise the unavailable session page in navigation', () => {
+describe('driving availability after the session API is available', () => {
+  it('advertises the session page in navigation', () => {
     expect(NAV_ITEMS.some((item) => item.path === '/driving-sessions')).toBe(
-      false,
+      true,
     );
   });
 
-  it('blocks a direct session URL while keeping enrollments accessible', () => {
+  it('allows direct session URLs for roles that can view driving sessions', () => {
     useAuthStore.setState({
       hasHydrated: true,
       isAuthenticated: true,
@@ -23,7 +23,9 @@ describe('driving availability before the session API exists', () => {
     });
     const location = { pathname: '/driving-sessions', searchStr: '' };
 
-    expect(() => requireCapability(location, 'viewDrivingSessions')).toThrow();
+    expect(() =>
+      requireCapability(location, 'viewDrivingSessions'),
+    ).not.toThrow();
     expect(() =>
       requireCapability(location, 'viewTrainingEnrollments'),
     ).not.toThrow();
