@@ -57,13 +57,13 @@ describe('Sidebar navigation', () => {
     expect(screen.getByText('nav.dashboard')).toBeTruthy();
   });
 
-  it('shows fleet and enrollment pages but hides sessions until the API is ready', async () => {
+  it('shows fleet, enrollment, and driving session pages', async () => {
     await renderSidebar();
     expect(screen.getByLabelText('nav.vehicles')).toBeTruthy();
     expect(screen.getByLabelText('nav.fleet_map')).toBeTruthy();
     expect(screen.getByLabelText('nav.training_programs')).toBeTruthy();
     expect(screen.getByLabelText('nav.training_enrollments')).toBeTruthy();
-    expect(screen.queryByLabelText('nav.driving_sessions')).toBeNull();
+    expect(screen.getByLabelText('nav.driving_sessions')).toBeTruthy();
   });
 
   it('exposes a 40px desktop toggle with its expanded state', async () => {
