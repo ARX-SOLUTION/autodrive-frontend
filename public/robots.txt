@@ -1,32 +1,3 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: YandexBot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
-# AI search crawlers — allowed so the product can be cited by AI answers
-User-agent: GPTBot
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
+# App SPA — login/product UI; do not index. Marketing site owns the sitemap.
 User-agent: *
-Allow: /
-
-Sitemap: https://automaktab.uz/sitemap.xml
+Disallow: /
