@@ -13,6 +13,7 @@ const {
   useExpenseBranchOptionsMock,
   useExpenseVehicleOptionsMock,
   useUpdateExpenseMock,
+  useDeletedExpenseHistoryPageMock,
 } = vi.hoisted(() => ({
   createExpenseMock: vi.fn(),
   useExpensesPageMock: vi.fn(),
@@ -21,6 +22,7 @@ const {
   useExpenseBranchOptionsMock: vi.fn(),
   useExpenseVehicleOptionsMock: vi.fn(),
   useUpdateExpenseMock: vi.fn(),
+  useDeletedExpenseHistoryPageMock: vi.fn(),
 }));
 
 vi.mock('@/services/expenseService', async (importOriginal) => {
@@ -34,6 +36,7 @@ vi.mock('@/services/expenseService', async (importOriginal) => {
     useExpenseBranchOptions: useExpenseBranchOptionsMock,
     useExpenseVehicleOptions: useExpenseVehicleOptionsMock,
     useExpenseTeacherOptions: () => ({ data: [] }),
+    useDeletedExpenseHistoryPage: useDeletedExpenseHistoryPageMock,
     useCreateExpense: () => ({ mutate: createExpenseMock, isPending: false }),
     useCreateTeacherSettlement: () => ({
       mutate: vi.fn(),
@@ -115,6 +118,13 @@ beforeEach(() => {
     isError: false,
     refetch: vi.fn(),
   });
+  useDeletedExpenseHistoryPageMock.mockReset().mockReturnValue({
+    data: { data: [], meta: { total: 0, totalPages: 1 } },
+    isLoading: false,
+    isFetching: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
   useExpensesPageMock.mockReset().mockReturnValue({
     data: { data: EXPENSES, meta: { total: 1, totalPages: 1 } },
     isLoading: false,
@@ -129,6 +139,47 @@ afterEach(() => {
 });
 
 describe('ExpensesPage', () => {
+  it.each(['owner', 'accountant'] as const)(
+    'shows finance-only deleted history to %s users',
+    async (role) => {
+      useAuthStore.getState().setAuth('token', {
+        id: `${role}-1`,
+        email: `${role}@example.com`,
+        role,
+        company_id: 'company-1',
+      });
+
+      await renderPage();
+
+      expect(
+        screen.getByRole('button', {
+          name: 'expenses.deleted_history.action',
+        }),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it.each(['manager', 'operator', 'teacher', 'dev'] as const)(
+    'hides finance-only deleted history from %s users',
+    async (role) => {
+      useAuthStore.getState().setAuth('token', {
+        id: `${role}-1`,
+        email: `${role}@example.com`,
+        role,
+        company_id: 'company-1',
+        ...(role === 'manager' ? { branch_id: 'b1' } : {}),
+      });
+
+      await renderPage();
+
+      expect(
+        screen.queryByRole('button', {
+          name: 'expenses.deleted_history.action',
+        }),
+      ).not.toBeInTheDocument();
+    },
+  );
+
   it.each(['owner', 'accountant'] as const)(
     'shows the month-close export to %s users',
     async (role) => {

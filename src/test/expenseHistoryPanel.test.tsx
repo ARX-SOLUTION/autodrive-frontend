@@ -106,6 +106,29 @@ describe('ExpenseHistoryPanel', () => {
     expect(screen.queryByText('common.no_data')).toBeNull();
   });
 
+  it('renders a deletion reason on soft-delete events', () => {
+    timelineState.data = {
+      expense: {} as ExpenseHistory['expense'],
+      payments: [],
+      events: [
+        {
+          id: 'event-delete',
+          expense_id: 'expense-1',
+          expense_payment_id: null,
+          action: 'soft_deleted',
+          changes: { reason: 'Duplicate entry' },
+          created_at: '2026-09-24T10:00:00.000Z',
+          actor: { id: 'owner-1', name: 'Owner One', role: 'owner' },
+          impersonator: null,
+        },
+      ],
+    };
+    wrap(<ExpenseHistoryPanel expenseId="expense-1" />);
+
+    expect(screen.getByText('expenses.history.deletion_reason')).toBeTruthy();
+    expect(screen.getByText(/Duplicate entry/)).toBeTruthy();
+  });
+
   it('renders ordered safe actor and impersonator labels', () => {
     timelineState.data = {
       expense: {} as ExpenseHistory['expense'],

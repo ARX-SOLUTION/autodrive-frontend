@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   CalendarCheck,
+  ClockCounterClockwise,
   ClockCountdown,
   Plus,
   Receipt,
@@ -33,6 +34,7 @@ import { ExpenseOverdueSweep } from './expenses/ExpenseOverdueSweep';
 import { ExpensesTable } from './expenses/ExpensesTable';
 import { ExpenseFormDialog } from './expenses/ExpenseFormDialog';
 import { ExpenseMonthCloseDialog } from './expenses/ExpenseMonthCloseDialog';
+import { DeletedExpenseHistoryDialog } from './expenses/DeletedExpenseHistoryDialog';
 import type {
   ExpenseCategory,
   ExpenseListFilters,
@@ -432,6 +434,7 @@ const ExpensesPage = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'expense' | 'settlement'>('expense');
   const [monthCloseOpen, setMonthCloseOpen] = useState(false);
+  const [deletedHistoryOpen, setDeletedHistoryOpen] = useState(false);
 
   const openExpenseForm = () => {
     setFormMode('expense');
@@ -514,6 +517,16 @@ const ExpensesPage = () => {
         icon={<Wallet className="h-3.5 w-3.5" aria-hidden="true" />}
         actions={
           <div className="flex flex-wrap gap-2">
+            {canManageFinance && (
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => setDeletedHistoryOpen(true)}
+              >
+                <ClockCounterClockwise className="h-4 w-4" aria-hidden="true" />
+                {t('expenses.deleted_history.action')}
+              </Button>
+            )}
             {canManageFinance && (
               <Button
                 variant="outline"
@@ -622,6 +635,12 @@ const ExpensesPage = () => {
         branches={isManager ? [] : branches}
         onClose={() => setFormOpen(false)}
       />
+      {canManageFinance && deletedHistoryOpen && (
+        <DeletedExpenseHistoryDialog
+          open={deletedHistoryOpen}
+          onOpenChange={setDeletedHistoryOpen}
+        />
+      )}
       {canManageFinance && monthCloseOpen && (
         <ExpenseMonthCloseDialog
           open={monthCloseOpen}

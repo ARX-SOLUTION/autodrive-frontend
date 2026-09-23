@@ -82,6 +82,8 @@ export const expenseKeys = {
     ['expenses', 'triage-counts', filters] as const,
   overdueSweep: (filters: Filters = {}) =>
     ['expenses', 'overdue-sweep', filters] as const,
+  deletedHistory: (filters: Filters = {}) =>
+    ['expenses', 'history', 'deleted', filters] as const,
 };
 
 /** Teacher self-view (`GET /teacher-settlements/me`) — invalidated on settlement create. */

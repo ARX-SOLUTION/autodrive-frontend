@@ -142,6 +142,22 @@ export interface ExpenseMonthCloseCsvFilters {
   branchId?: string;
 }
 
+export interface DeletedExpenseHistorySummary {
+  id: string;
+  title: string;
+  category: ExpenseCategory;
+  amount: string;
+  branch_id: string | null;
+  branch_name: string | null;
+  deleted_at: string;
+}
+
+export interface DeletedExpenseHistoryFilters {
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
 export interface ExpenseListFilters {
   branchId?: string;
   scope?: 'company';
