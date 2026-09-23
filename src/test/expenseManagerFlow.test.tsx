@@ -130,6 +130,7 @@ const history: ExpenseHistory = {
       created_at: '2026-08-31T00:00:00.000Z',
     },
   ],
+  events: [],
 };
 
 const listState = {

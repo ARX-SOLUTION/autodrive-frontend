@@ -62,6 +62,33 @@ export interface ExpensePayment {
 export interface ExpenseHistory {
   expense: Expense;
   payments: ExpensePayment[];
+  events: ExpenseEvent[];
+}
+
+export type ExpenseEventAction =
+  | 'created'
+  | 'updated'
+  | 'cancelled'
+  | 'soft_deleted'
+  | 'payment_recorded'
+  | 'payment_voided'
+  | 'reviewed';
+
+export interface ExpenseEventActor {
+  id: string;
+  name: string;
+  role: string;
+}
+
+export interface ExpenseEvent {
+  id: string;
+  expense_id: string;
+  expense_payment_id: string | null;
+  action: ExpenseEventAction;
+  changes: Record<string, unknown>;
+  created_at: string;
+  actor: ExpenseEventActor;
+  impersonator: ExpenseEventActor | null;
 }
 
 export interface CreateExpensePaymentPayload {

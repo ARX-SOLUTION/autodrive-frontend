@@ -34,6 +34,7 @@ import { parseCalendarDate } from '@/lib/calendarDate';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { useAuthStore } from '@/store/authStore';
 import { ExpenseFormDialog } from './expenses/ExpenseFormDialog';
+import { ExpenseHistoryPanel } from './expenses/ExpenseHistoryPanel';
 import {
   ExpenseLifecycleDialog,
   type ExpenseLifecycleAction,
@@ -809,6 +810,7 @@ const ExpenseDetailPage = () => {
           </TabsContent>
         )}
       </Tabs>
+      {canManageFinance && id && <ExpenseHistoryPanel expenseId={id} />}
       {editOpen && (
         <ExpenseFormDialog
           open={editOpen}

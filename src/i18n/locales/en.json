@@ -1190,6 +1190,19 @@
       "void_success": "Payment successfully voided",
       "void_conflict": "Expense was updated by another user. Review the updated details and try again."
     },
+    "history": {
+      "title": "Expense history",
+      "actor_impersonated": "{{actor}} via {{impersonator}}",
+      "actions": {
+        "created": "Created",
+        "updated": "Updated",
+        "cancelled": "Cancelled",
+        "soft_deleted": "Deleted",
+        "payment_recorded": "Payment recorded",
+        "payment_voided": "Payment voided",
+        "reviewed": "Reviewed"
+      }
+    },
     "lifecycle": {
       "cancel_action": "Cancel expense",
       "delete_action": "Delete expense",

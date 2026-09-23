@@ -1190,6 +1190,19 @@
       "void_success": "To‘lov muvaffaqiyatli bekor qilindi",
       "void_conflict": "Xarajat boshqa foydalanuvchi tomonidan o‘zgartirildi. Yangilangan ma’lumotni tekshirib, qayta yuboring."
     },
+    "history": {
+      "title": "Xarajatlar tarixi",
+      "actor_impersonated": "{{actor}} ({{impersonator}} orqali)",
+      "actions": {
+        "created": "Yaratildi",
+        "updated": "Yangilandi",
+        "cancelled": "Bekor qilindi",
+        "soft_deleted": "O'chirildi",
+        "payment_recorded": "To'lov kiritildi",
+        "payment_voided": "To'lov bekor qilindi",
+        "reviewed": "Ko'rib chiqildi"
+      }
+    },
     "lifecycle": {
       "cancel_action": "Xarajatni bekor qilish",
       "delete_action": "Xarajatni o'chirish",

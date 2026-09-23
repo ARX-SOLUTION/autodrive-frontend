@@ -1190,6 +1190,19 @@
       "void_success": "Платеж успешно аннулирован",
       "void_conflict": "Расход изменился у другого пользователя. Проверьте обновлённые данные и отправьте снова."
     },
+    "history": {
+      "title": "История расходов",
+      "actor_impersonated": "{{actor}} через {{impersonator}}",
+      "actions": {
+        "created": "Создано",
+        "updated": "Обновлено",
+        "cancelled": "Отменено",
+        "soft_deleted": "Удалено",
+        "payment_recorded": "Платёж записан",
+        "payment_voided": "Платёж аннулирован",
+        "reviewed": "Проверено"
+      }
+    },
     "lifecycle": {
       "cancel_action": "Отменить расход",
       "delete_action": "Удалить расход",
