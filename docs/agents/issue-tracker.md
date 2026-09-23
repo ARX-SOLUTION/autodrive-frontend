@@ -1,23 +1,5 @@
-# Issue tracker: GitHub
+# Issue tracker: Beads workspace pointer
 
-Issues for this repo are tracked in GitHub Issues:
+This repository uses the workspace Beads tracker, not repo-local GitHub Issues. Read the canonical tracker workflow, `docs/agents/issue-tracker.md` in the workspace root (the nearest ancestor directory that contains `docs/agents/git-workflow.md`), before creating, updating, or closing work.
 
-https://github.com/ARX-SOLUTION/autodrive-frontend/issues
-
-Skills that interact with the issue tracker (`to-issues`, `triage`, `to-prd`, `qa`) use the `gh` CLI to create, read, and modify issues.
-
-## Usage
-
-```bash
-# Create a new issue
-gh issue create --title "..." --body "..."
-
-# List open issues
-gh issue list
-
-# View an issue
-gh issue view <number>
-
-# Add a label
-gh issue edit <number> --add-label "needs-triage"
-```
+Run `bd` from `/Users/admin/Developer/Projects/autodrive`. Prefix repo-scoped child tasks with `frontend:`.

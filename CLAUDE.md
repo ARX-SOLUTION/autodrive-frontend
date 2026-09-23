@@ -1,37 +1,26 @@
-# CLAUDE.md — autodrive-frontend (tenant CRM)
+# autodrive-frontend agent router
 
-React 18 + Vite + TS · shadcn/ui + Tailwind · Zustand (auth only) + TanStack Query · react-hook-form + zod · Vitest.
+The workspace-root `AGENTS.md` is canonical. This file adds tenant-CRM rules. Versions and scripts live in `package.json`; do not copy them here.
 
-**Shared rules — read on demand** (workspace-root `CLAUDE.md` is always loaded alongside this file):
+## Read on demand
 
-- Engineering rules (parallelism, simplicity, surgical changes, checkpoint discipline, best practices, cross-repo propagation, pre-flight checklist): `../docs/agents/engineering-rules.md`
-- Git workflow (pre-push sync, post-merge cleanup, post-PR conflict check): `../docs/agents/git-workflow.md`
-- Skills (ui-ux-pro-max, backend suite, Matt Pocock, etiquette): `../docs/agents/skills.md`
+Paths marked (workspace) are not in this repo: resolve them from the workspace root, the nearest ancestor directory that contains `docs/agents/git-workflow.md`. Unmarked paths are repo-relative.
 
-## Advisor first — plan before code
+| Trigger                                                            | Read                                           |
+| ------------------------------------------------------------------ | ---------------------------------------------- |
+| Product language, roles, and product boundaries                    | `CONTEXT.md`                                   |
+| Routes, state, UI architecture, generated API types, or i18n setup | `docs/architecture/overview.md`                |
+| API contracts, React conventions, or cross-repo propagation        | `docs/agents/engineering-rules.md` (workspace) |
+| Branch, commit, rebase, conflict, or PR work                       | `docs/agents/git-workflow.md` (workspace)      |
 
-**Advisor = Fable 5 / Opus 5 (plans) · Executor = Sonnet 5 (implements; subagents `model: sonnet`).** Complex task → explicit Advisor plan first (files, interfaces/signatures, error handling, edge cases, pass/fail validation criteria); the Executor implements it exactly. Trivial edits skip the Advisor. Executor hits ambiguity → flag back, never resolve silently. Unclear requirement → ask ONE specific question with grep evidence; simpler way exists → push back before coding. Full routing: root `CLAUDE.md`.
+## Frontend invariants
 
-## Verification — every significant change
+- User-facing text uses `t()` and every new key lands in `uz`, `ru`, and `en` with identical key sets.
+- Tenant identity comes from authenticated state; tenant query keys include `branchId`, and logout or branch switch clears or invalidates tenant cache.
+- Check the admin panel when a feature or backend contract has an equivalent surface there.
+
+## Validation
 
 `pnpm run typecheck && pnpm run lint && pnpm test -- --run && pnpm run build`
 
-⚠️ NEVER bare `npx tsc --noEmit`: root tsconfig uses project references (`files: []`) — a bare run checks nothing and exits 0. Always the pnpm script.
-
-## i18n — uz/ru/en MANDATORY (this repo only; admin panel is uz-only)
-
-- All user-facing text via `useTranslation()`/`t()` — no hardcoded strings anywhere (toasts, labels, placeholders, empty states, errors).
-- New page/component → add keys to `src/i18n/locales/{uz,ru,en}.json` BEFORE writing the component; all 3 locale files in the same PR; key sets must stay identical across locales.
-- Key naming: `"pagename.element.action"` — e.g. `students.table.name`, `attendance.status.present`.
-
-## Entity detail views
-
-Always a dedicated route + tabs (e.g. `/students/:id`) — deep-linkable, back-button-safe, `React.lazy`-splittable. Never modal-only. Edit stays a launched modal alongside the route. A row/card that opens a detail view navigates; it does not open a modal. Precedent: `StudentDetailPage`, `BranchDetailPage`.
-
-## Tenant discipline (FE)
-
-`branchId` comes from the JWT via `authStore` only — never independent FE state, never URL-as-auth-source. Query keys include `branchId`; branch switch → invalidate queries; logout → `queryClient.clear()`.
-
-## Parity
-
-A feature added here with an admin-panel page-type equivalent gets mirrored there (shared key names where possible).
+Use the `typecheck` script; a bare `tsc --noEmit` does not validate this project-reference setup.
