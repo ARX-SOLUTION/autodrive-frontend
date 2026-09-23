@@ -151,6 +151,10 @@
     "open": "Sana oralig'ini tanlash"
   },
   "login": {
+    "workspace_label": "Avtomaktab boshqaruv tizimi",
+    "workspace_title": "Avtomaktabingiz. Bitta tizimda.",
+    "workspace_description": "O‘quvchilar, dars jadvali va to‘lovlar. Kundalik ishlaringizni bir joydan boshqaring.",
+    "form_description": "Davom etish uchun hisobingizga kiring.",
     "title": "Tizimga kirish",
     "email_label": "Email",
     "email_placeholder": "Email manzilingiz",

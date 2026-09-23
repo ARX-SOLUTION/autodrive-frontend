@@ -151,6 +151,10 @@
     "open": "Choose date range"
   },
   "login": {
+    "workspace_label": "Driving school management",
+    "workspace_title": "Your driving school. One workspace.",
+    "workspace_description": "Students, schedules and payments. Manage your day-to-day work in one place.",
+    "form_description": "Sign in to your account to continue.",
     "title": "Sign in",
     "email_label": "Email",
     "email_placeholder": "Your email address",
