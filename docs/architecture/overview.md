@@ -40,20 +40,13 @@ UI architecture, state management, routes, tech stack, generated API types, cros
 
 ## Route Map (canonical app paths)
 
-| Path          | Page                                                | Access            |
-| ------------- | --------------------------------------------------- | ----------------- |
-| `/dashboard`  | Analytics dashboard with Recharts (bar, pie charts) | All authenticated |
-| `/branches`   | Branch management CRUD                              | Owner only        |
-| `/schedule`   | Schedule calendar + template management             | Manager, operator |
-| `/attendance` | Lesson attendance tracking                          | Teacher, operator |
-| `/groups`     | Group CRUD                                          | Manager, operator |
-| `/students`   | Student CRUD with payment data                      | Operator, manager |
-| `/payments`   | Payment list + debt management                      | Operator, manager |
-| `/operators`  | Operator staff management                           | Manager           |
-| `/teachers`   | Teacher staff management                            | Manager           |
-| `/users`      | User management                                     | Manager           |
-| `/audit`      | Audit log viewer                                    | Owner only        |
-| `/profile`    | User profile / settings                             | All authenticated |
+Route files live in `src/routes/`; `src/app/routeAccess.ts` maps each protected route to its capability, and `src/lib/permissions.ts` maps capabilities to roles. Read those sources before changing access rules.
+
+- Every authenticated route first uses `requireAuthenticated` from `src/app/routeGuards.ts`.
+- Operational pages exclude accountants. Accountants use the finance dashboard and expense routes.
+- Company user and branch administration require owner/dev access; manager staff-detail access is narrower than the company-wide user list.
+- Expense visibility is separate from finance mutation permission. Direct dev sessions do not receive company-finance capabilities; impersonation uses the effective owner role.
+- Teachers have their own settlement routes. Driving-session routes also honor feature availability.
 
 TanStack Router compiles file routes into route-local chunks; heavy chart and
 export dependencies are deferred to the routes that use them.
@@ -64,7 +57,7 @@ export dependencies are deferred to the routes that use them.
 
 | Category      | Technology                                   |
 | ------------- | -------------------------------------------- |
-| Framework     | React 19, Vite 6, TypeScript 6               |
+| Framework     | React, Vite, TypeScript (versions in `package.json`)               |
 | Styling       | Tailwind CSS, shadcn/ui, Radix UI primitives |
 | Server state  | TanStack Query 5                             |
 | Client state  | Zustand 5                                    |
@@ -115,7 +108,7 @@ The **autodrive-admin-panel** is a separate React app for platform-level adminis
 ## i18n Strategy
 
 - 3 languages: Uzbek (uz), Russian (ru), English (en).
-- Primary detection: `navigator.language` on first visit.
+- Default language on first visit: Uzbek (`uz`).
 - Override: stored in `localStorage` key `lang`.
 - Translation files: `src/i18n/locales/{uz,ru,en}.json`.
 - UI strings only — API data (student names, group names) stored in whatever language the operator entered.
