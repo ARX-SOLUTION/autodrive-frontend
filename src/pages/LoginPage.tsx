@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowRight, CircleNotch } from '@phosphor-icons/react';
+import { CircleNotch, Moon, Sun } from '@phosphor-icons/react';
 import { useLogin } from '@/services/authService';
 import { isRootDomain, navigateFullPage, rootDomainAppUrl } from '@/lib/domain';
 import { queryClient, resetAuthSessionState } from '@/lib/queryClient';
 import { Brand } from '@/components/layout/Brand';
+import { useTheme } from '@/hooks/useTheme';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +38,7 @@ type LoginFormValues = z.infer<ReturnType<typeof makeLoginFormSchema>>;
 
 const LoginPage = () => {
   const { t, i18n } = useTranslation();
+  const { theme, toggle } = useTheme();
   const [formError, setFormError] = useState<string | null>(null);
   const [demoIntentFailed, setDemoIntentFailed] = useState(false);
   const router = useRouter();
@@ -166,8 +168,25 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background px-5 py-6 sm:px-10 sm:py-8 lg:px-14">
-      <header className="mx-auto w-full max-w-6xl">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
         <Brand size="sm" />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggle}
+          aria-label={
+            theme === 'dark'
+              ? t('actions.theme_light')
+              : t('actions.theme_dark')
+          }
+          className="size-12 shrink-0 focus-visible:ring-foreground"
+        >
+          {theme === 'dark' ? (
+            <Sun aria-hidden="true" />
+          ) : (
+            <Moon aria-hidden="true" />
+          )}
+        </Button>
       </header>
 
       <main
@@ -183,20 +202,16 @@ const LoginPage = () => {
           </p>
           <h2
             id="login-workspace-title"
-            className="max-w-lg text-[clamp(2.75rem,4.5vw,4rem)] font-semibold leading-[1.08] tracking-[-0.045em]"
+            className="max-w-sm text-3xl font-medium leading-tight tracking-tight"
           >
             {t('login.workspace_title')}
           </h2>
           <p className="mt-6 max-w-sm text-base leading-relaxed text-muted-foreground">
             {t('login.workspace_description')}
           </p>
-          <div
-            aria-hidden="true"
-            className="mt-10 h-1 w-12 rounded-full bg-primary"
-          />
         </section>
 
-        <div className="mx-auto w-full max-w-md rounded-2xl border border-border/70 bg-card px-6 py-8 shadow-[0_12px_40px_-24px_hsl(var(--foreground)/0.18)] sm:px-10 sm:py-10">
+        <div className="mx-auto w-full max-w-md rounded-2xl border border-border/70 bg-card px-6 py-8 sm:px-10 sm:py-10">
           <div className="mb-8">
             <h1
               id="login-title"
@@ -235,7 +250,7 @@ const LoginPage = () => {
                           setFormError(null);
                         }}
                         placeholder={t('login.email_placeholder')}
-                        className="h-12 bg-background/50 px-3.5 md:text-base"
+                        className="h-12 border-muted-foreground bg-background/50 px-3.5 focus-visible:ring-foreground md:text-base"
                       />
                     </FormControl>
                     <FormMessage />
@@ -246,7 +261,7 @@ const LoginPage = () => {
                 control={form.control}
                 name="password"
                 render={({ field }) => (
-                  <FormItem className="[&_button]:h-12 [&_button]:w-12">
+                  <FormItem className="[&_button]:h-12 [&_button]:w-12 [&_button]:rounded-md [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-2 [&_button]:focus-visible:outline-foreground">
                     <FormLabel>{t('login.password_label')}</FormLabel>
                     <FormControl>
                       <PasswordInput
@@ -257,7 +272,7 @@ const LoginPage = () => {
                           setFormError(null);
                         }}
                         placeholder={t('login.password_placeholder')}
-                        className="h-12 bg-background/50 pl-3.5 pr-12 md:text-base"
+                        className="h-12 border-muted-foreground bg-background/50 pl-3.5 pr-12 focus-visible:ring-foreground md:text-base"
                       />
                     </FormControl>
                     <FormMessage />
@@ -274,7 +289,7 @@ const LoginPage = () => {
               )}
               <Button
                 type="submit"
-                className="h-12 w-full text-base font-semibold"
+                className="h-12 w-full text-base font-semibold focus-visible:ring-foreground"
                 disabled={login.isPending}
               >
                 {login.isPending ? (
@@ -284,7 +299,6 @@ const LoginPage = () => {
                   />
                 ) : null}
                 {login.isPending ? t('login.submitting') : t('login.submit')}
-                {!login.isPending && <ArrowRight aria-hidden="true" />}
               </Button>
               <div className="border-t border-border/70 pt-5">
                 {demoIntentFailed && (
@@ -298,7 +312,7 @@ const LoginPage = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-auto min-h-12 w-full whitespace-normal py-3 text-sm"
+                  className="h-auto min-h-12 w-full whitespace-normal border-muted-foreground py-3 text-sm focus-visible:ring-foreground"
                   onClick={() => handleDemoLogin(false)}
                   disabled={login.isPending}
                 >

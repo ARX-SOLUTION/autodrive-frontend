@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ThemeProvider } from 'next-themes';
 import LoginPage from '@/pages/LoginPage';
 import { queryClient } from '@/lib/queryClient';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
@@ -53,6 +54,32 @@ describe('LoginPage demo intent', () => {
 
   afterEach(() => {
     cleanup();
+  });
+
+  it('switches between light and dark without submitting the login form', async () => {
+    await renderWithRouter(
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="light"
+        enableSystem={false}
+        storageKey="login-theme-test"
+      >
+        <LoginPage />
+      </ThemeProvider>,
+      { initialEntry: '/login', routePattern: '/login' },
+    );
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'actions.theme_dark' }),
+    );
+    await waitFor(() => expect(document.documentElement).toHaveClass('dark'));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'actions.theme_light' }),
+    );
+    await waitFor(() => expect(document.documentElement).toHaveClass('light'));
+    expect(loginMutation.mutate).not.toHaveBeenCalled();
+    localStorage.removeItem('login-theme-test');
+    document.documentElement.classList.remove('light');
   });
 
   it('provides a named login landmark and preserves autofill and password visibility', async () => {
