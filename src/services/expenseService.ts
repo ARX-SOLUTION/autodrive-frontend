@@ -31,6 +31,8 @@ import type {
   ExpenseVehicleOption,
   ExpenseTeacherOption,
   ExpenseMonthCloseCsvFilters,
+  DeletedExpenseHistoryFilters,
+  DeletedExpenseHistorySummary,
   ExpenseCategory,
   ExpenseListFilters,
   ExpenseStatus,
@@ -68,6 +70,17 @@ const toExpenseTriageCountsQueryParams = (
   branch_id: filters.branchId,
   scope: filters.scope,
 });
+
+export const toDeletedExpenseHistoryQueryParams = (
+  filters: DeletedExpenseHistoryFilters,
+) => {
+  const search = filters.search?.trim().slice(0, 100);
+  return {
+    search: search || undefined,
+    page: filters.page,
+    limit: filters.limit,
+  };
+};
 
 export const toExpenseMonthCloseQueryParams = (
   filters: ExpenseMonthCloseCsvFilters,
@@ -189,6 +202,23 @@ export const fetchExpensesPage = async (
   return parseListEnvelope<Expense>(data, 'expenses');
 };
 
+export const fetchDeletedExpenseHistoryPage = async (
+  filters: DeletedExpenseHistoryFilters,
+  signal?: AbortSignal,
+): Promise<ListResponse<DeletedExpenseHistorySummary>> => {
+  const { data } = await axiosInstance.get<unknown>(
+    '/expenses/history/deleted',
+    {
+      params: toDeletedExpenseHistoryQueryParams(filters),
+      signal,
+    },
+  );
+  return parseListEnvelope<DeletedExpenseHistorySummary>(
+    data,
+    'deleted expenses',
+  );
+};
+
 export const expensesPageQueryOptions = (
   filters: ExpenseListFilters,
   enabled = true,
@@ -213,6 +243,33 @@ export const useExpensesPage = (
     expensesPageQueryOptions(
       filters,
       enabled && canViewExpenses && hasManagerScope,
+    ),
+  );
+};
+
+export const deletedExpenseHistoryQueryOptions = (
+  filters: DeletedExpenseHistoryFilters = {},
+  enabled = true,
+) =>
+  queryOptions({
+    queryKey: expenseKeys.deletedHistory({
+      ...expenseIdentity(),
+      ...toDeletedExpenseHistoryQueryParams(filters),
+    }),
+    enabled,
+    queryFn: ({ signal }) => fetchDeletedExpenseHistoryPage(filters, signal),
+  });
+
+export const useDeletedExpenseHistoryPage = (
+  filters: DeletedExpenseHistoryFilters = {},
+  enabled = true,
+) => {
+  const canManageFinance = useCan('manageCompanyFinance');
+  const companyId = useAuthStore((state) => state.user?.company_id);
+  return useQuery(
+    deletedExpenseHistoryQueryOptions(
+      filters,
+      enabled && canManageFinance && !!companyId,
     ),
   );
 };

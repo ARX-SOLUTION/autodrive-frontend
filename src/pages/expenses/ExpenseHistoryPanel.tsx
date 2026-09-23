@@ -25,6 +25,13 @@ const formatActor = (
   return t('expenses.history.actor_impersonated', { actor, impersonator });
 };
 
+const deletionReason = (event: ExpenseEvent) => {
+  const reason = event.changes.reason;
+  return typeof reason === 'string' && reason.trim()
+    ? reason.trim()
+    : undefined;
+};
+
 interface ExpenseHistoryPanelProps {
   expenseId: string;
 }
@@ -94,6 +101,14 @@ export const ExpenseHistoryPanel = ({
               <div className="text-xs text-muted-foreground">
                 {event.created_at}
               </div>
+              {event.action === 'soft_deleted' && deletionReason(event) && (
+                <div className="mt-2 break-words rounded-md bg-destructive/10 p-2 text-xs text-destructive">
+                  <span className="font-medium">
+                    {t('expenses.history.deletion_reason')}
+                  </span>
+                  : {deletionReason(event)}
+                </div>
+              )}
             </li>
           ))}
         </ol>

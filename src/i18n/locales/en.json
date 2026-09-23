@@ -1208,7 +1208,8 @@
         "payment_recorded": "Payment recorded",
         "payment_voided": "Payment voided",
         "reviewed": "Reviewed"
-      }
+      },
+      "deletion_reason": "Deletion reason"
     },
     "lifecycle": {
       "cancel_action": "Cancel expense",
@@ -1225,6 +1226,20 @@
       "submitting": "Saving…",
       "conflict": "This expense changed elsewhere. Review the refreshed values and submit again.",
       "paid_delete_locked": "Paid expenses cannot be deleted. Cancel the expense instead; its recorded payments remain historical cash outflow."
+    },
+    "deleted_history": {
+      "action": "Deleted history",
+      "title": "Deleted expense history",
+      "description": "Review deleted finance records and their audit timeline. This view is read-only.",
+      "search_label": "Search deleted expenses",
+      "search_placeholder": "Search title or payee",
+      "load_error": "Could not load deleted expenses.",
+      "empty": "No deleted expenses found",
+      "empty_description": "Deleted expenses matching the current search will appear here.",
+      "deleted_at": "Deleted {{date}}",
+      "page_status": "Page {{page}} of {{totalPages}}",
+      "select_title": "Select a deleted expense",
+      "select_description": "Choose a record from the list to view its preserved history."
     }
   },
   "my_settlements": {

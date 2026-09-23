@@ -1208,7 +1208,8 @@
         "payment_recorded": "To'lov kiritildi",
         "payment_voided": "To'lov bekor qilindi",
         "reviewed": "Ko'rib chiqildi"
-      }
+      },
+      "deletion_reason": "O'chirish sababi"
     },
     "lifecycle": {
       "cancel_action": "Xarajatni bekor qilish",
@@ -1225,6 +1226,20 @@
       "submitting": "Saqlanmoqda…",
       "conflict": "Xarajat boshqa foydalanuvchi tomonidan o'zgartirildi. Yangilangan ma'lumotni tekshirib, qayta yuboring.",
       "paid_delete_locked": "To'langan xarajatni o'chirib bo'lmaydi. Buning o'rniga bekor qiling; kiritilgan to'lovlar moliyaviy chiqim sifatida tarixda qoladi."
+    },
+    "deleted_history": {
+      "action": "O'chirilganlar tarixi",
+      "title": "O'chirilgan xarajatlar tarixi",
+      "description": "O'chirilgan moliyaviy yozuvlar va ularning audit tarixini ko'ring. Bu bo'lim faqat o'qish uchun.",
+      "search_label": "O'chirilgan xarajatlarni qidirish",
+      "search_placeholder": "Nomi yoki qabul qiluvchi bo'yicha qidiring",
+      "load_error": "O'chirilgan xarajatlarni yuklab bo'lmadi.",
+      "empty": "O'chirilgan xarajat topilmadi",
+      "empty_description": "Joriy qidiruvga mos o'chirilgan xarajatlar shu yerda ko'rinadi.",
+      "deleted_at": "{{date}} da o'chirilgan",
+      "page_status": "{{page}} / {{totalPages}}-sahifa",
+      "select_title": "O'chirilgan xarajatni tanlang",
+      "select_description": "Saqlangan tarixini ko'rish uchun ro'yxatdan yozuvni tanlang."
     }
   },
   "my_settlements": {
