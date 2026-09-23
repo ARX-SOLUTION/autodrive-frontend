@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { List } from '@phosphor-icons/react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { Breadcrumbs } from './Breadcrumbs';
@@ -26,11 +27,16 @@ const readDesktopSidebarExpanded = () => {
 export const AppLayout = () => {
   const { t } = useTranslation();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mapSidebarExpanded, setMapSidebarExpanded] = useState(false);
   const [desktopSidebarExpanded, setDesktopSidebarExpanded] = useState(
     readDesktopSidebarExpanded,
   );
   const location = useLocation();
   const { pathname, href } = location;
+  const isMapWorkspace = pathname.replace(/\/$/, '') === '/fleet-map';
+  const sidebarExpanded = isMapWorkspace
+    ? mapSidebarExpanded
+    : desktopSidebarExpanded;
   const prevPathnameRef = useRef(pathname);
   const mainRef = useRef<HTMLElement>(null);
   const palette = useCommandPalette();
@@ -75,28 +81,51 @@ export const AppLayout = () => {
         <Sidebar
           mobileOpen={mobileSidebarOpen}
           onMobileOpenChange={setMobileSidebarOpen}
-          desktopExpanded={desktopSidebarExpanded}
-          onDesktopExpandedChange={handleDesktopSidebarExpandedChange}
+          desktopExpanded={sidebarExpanded}
+          onDesktopExpandedChange={
+            isMapWorkspace
+              ? setMapSidebarExpanded
+              : handleDesktopSidebarExpandedChange
+          }
         />
         <div
           className={cn(
-            'flex min-h-dvh flex-col',
-            desktopSidebarExpanded ? 'lg:ml-64' : 'lg:ml-[72px]',
+            'relative flex flex-col',
+            isMapWorkspace ? 'h-dvh overflow-hidden' : 'min-h-dvh',
+            sidebarExpanded ? 'lg:ml-64' : 'lg:ml-[72px]',
           )}
         >
-          <Topbar
-            onMobileMenuClick={() => setMobileSidebarOpen(true)}
-            onCommandPaletteOpen={() => palette.setOpen(true)}
-          />
+          {isMapWorkspace ? (
+            <button
+              type="button"
+              aria-label={t('actions.sidebar')}
+              onClick={() => setMobileSidebarOpen(true)}
+              className="absolute left-3 top-3 z-40 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-background text-foreground shadow-md hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
+            >
+              <List className="h-5 w-5" aria-hidden="true" />
+            </button>
+          ) : (
+            <Topbar
+              onMobileMenuClick={() => setMobileSidebarOpen(true)}
+              onCommandPaletteOpen={() => palette.setOpen(true)}
+            />
+          )}
           <main
             ref={mainRef}
             id="main-content"
             tabIndex={-1}
-            className="flex-1 p-4 outline-none sm:p-6 md:p-8 lg:p-10"
+            className={cn(
+              'flex-1 outline-none',
+              isMapWorkspace ? 'min-h-0' : 'p-4 sm:p-6 md:p-8 lg:p-10',
+            )}
           >
-            <div className="mx-auto w-full max-w-screen-2xl">
-              <Breadcrumbs />
-              <div>
+            <div
+              className={
+                isMapWorkspace ? 'h-full' : 'mx-auto w-full max-w-screen-2xl'
+              }
+            >
+              {!isMapWorkspace && <Breadcrumbs />}
+              <div className={isMapWorkspace ? 'h-full' : undefined}>
                 <Suspense fallback={<PageLoader />}>
                   <Outlet />
                 </Suspense>
