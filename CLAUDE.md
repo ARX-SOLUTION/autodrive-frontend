@@ -4,12 +4,13 @@ The workspace-root `AGENTS.md` is canonical. This file adds tenant-CRM rules. Ve
 
 ## Read on demand
 
-| Trigger                                                              | Read                                  |
-| -------------------------------------------------------------------- | ------------------------------------- |
-| Product language, roles, routes, state, or UI architecture           | `CONTEXT.md`                          |
-| Testing, API contracts, React conventions, or cross-repo propagation | `../docs/agents/engineering-rules.md` |
-| Branch, commit, rebase, conflict, or PR work                         | `../docs/agents/git-workflow.md`      |
-| Reusable workflow or specialist guidance                             | `../docs/agents/skills.md`            |
+Paths marked (workspace) are not in this repo: resolve them from the workspace root, the nearest ancestor directory that contains `docs/agents/git-workflow.md`. Unmarked paths are repo-relative.
+
+| Trigger                                                     | Read                                           |
+| ----------------------------------------------------------- | ---------------------------------------------- |
+| Product language, roles, routes, state, or UI architecture  | `CONTEXT.md`                                   |
+| API contracts, React conventions, or cross-repo propagation | `docs/agents/engineering-rules.md` (workspace) |
+| Branch, commit, rebase, conflict, or PR work                | `docs/agents/git-workflow.md` (workspace)      |
 
 ## Frontend invariants
 
