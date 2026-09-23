@@ -163,6 +163,18 @@ const history: ExpenseHistory = {
       created_at: '2026-08-29T00:00:00.000Z',
     },
   ],
+  events: [
+    {
+      id: 'event-1',
+      expense_id: expense.id,
+      expense_payment_id: null,
+      action: 'created',
+      changes: { amount: '125000.00' },
+      created_at: '2026-08-31T12:00:00.000Z',
+      actor: { id: 'owner-1', name: 'Owner One', role: 'owner' },
+      impersonator: null,
+    },
+  ],
 };
 
 afterEach(() => {
@@ -268,6 +280,37 @@ describe('ExpenseDetailPage', () => {
     expect(screen.getByText(/2026-08-30/)).toBeInTheDocument();
   });
 
+  it('shows the expense event timeline for owner/accountant finance roles', async () => {
+    queryState.data = expense;
+    historyState.data = history;
+    permissionState.canManageFinance = true;
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+
+    expect(screen.getByTestId('expense-history-panel')).toBeInTheDocument();
+    expect(
+      screen.getByText('expenses.history.actions.created'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Owner One (roles.owner)')).toBeInTheDocument();
+  });
+
+  it('hides the expense event timeline for a manager', async () => {
+    queryState.data = expense;
+    historyState.data = history;
+    permissionState.canViewExpenses = true;
+    permissionState.canManageFinance = false;
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+
+    expect(screen.queryByTestId('expense-history-panel')).toBeNull();
+  });
+
   it.each([
     [
       'branch',
@@ -352,7 +395,11 @@ describe('ExpenseDetailPage', () => {
       screen.getByRole('tab', { name: 'expenses.payments.title' }),
     );
     expect(screen.getByText('expenses.payments.error')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    fireEvent.click(
+      within(
+        screen.getByText('expenses.payments.error').closest('section')!,
+      ).getByRole('button', { name: 'common.retry' }),
+    );
     expect(historyState.refetch).toHaveBeenCalledOnce();
   });
 
