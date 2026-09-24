@@ -1643,6 +1643,8 @@ export interface components {
       has_document?: boolean;
       initial_payment?: number;
       last_name: string;
+      /** @description Min 8 chars, must contain a digit */
+      learner_password?: string;
       /** @enum {string} */
       lead_source?:
         | 'referral'

@@ -35,6 +35,7 @@ const buildPayload = (): AddStudentPayload => ({
   payment_method: 'naqd',
   first_payment_date: '2026-07-16',
   contract_signed: true,
+  learner_password: 'password1',
 });
 
 describe('useCreateStudentWithPayment payload', () => {
@@ -67,6 +68,7 @@ describe('useCreateStudentWithPayment payload', () => {
       address: 'Tashkent, Chilonzor',
       gender: 'female',
       payment_method: 'naqd',
+      learner_password: 'password1',
     });
     expect(body).not.toHaveProperty('payment_type');
   });

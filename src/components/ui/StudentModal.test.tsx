@@ -60,6 +60,7 @@ describe('StudentModal calendar-date wiring (autodrive-qsgc.3)', () => {
 
     fireEvent.change(q('last_name'), { target: { value: 'Ivanov' } });
     fireEvent.change(q('first_name'), { target: { value: 'Ivan' } });
+    fireEvent.change(q('learner_password'), { target: { value: 'password1' } });
     fireEvent.change(q('phone'), { target: { value: '901234567' } });
 
     const completionDateInput = q('completion_date');
@@ -95,6 +96,7 @@ describe('StudentModal calendar-date wiring (autodrive-qsgc.3)', () => {
 
     fireEvent.change(q('last_name'), { target: { value: 'Petrov' } });
     fireEvent.change(q('first_name'), { target: { value: 'Petr' } });
+    fireEvent.change(q('learner_password'), { target: { value: 'password1' } });
     fireEvent.change(q('phone'), { target: { value: '911234567' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'common.add' }));
