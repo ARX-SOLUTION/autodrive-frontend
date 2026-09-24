@@ -6,6 +6,7 @@ import {
   Warning,
   PencilSimple,
   Plus,
+  EnvelopeSimple,
   ShieldCheck,
   Trash,
 } from '@phosphor-icons/react';
@@ -19,6 +20,7 @@ import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { StudentExamsTab } from '@/components/ui/StudentExamsTab';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { StudentPortalInvitationDialog } from '@/pages/students/StudentPortalInvitationDialog';
 import StudentModal, {
   type CreateStudentPayload,
 } from '@/components/ui/StudentModal';
@@ -61,8 +63,11 @@ const StudentDetailPage = () => {
   const role = useAuthStore((s) => s.user?.role);
   const canViewGroupHistory =
     role === 'owner' || role === 'manager' || role === 'dev';
+  const canInviteLearner =
+    role === 'owner' || role === 'manager' || role === 'operator';
 
   const [editOpen, setEditOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
   const [deletePaymentTarget, setDeletePaymentTarget] =
     useState<Payment | null>(null);
@@ -199,13 +204,25 @@ const StudentDetailPage = () => {
               </Badge>
             </div>
           </div>
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => setEditOpen(true)}
-          >
-            <PencilSimple className="h-4 w-4" /> {t('common.edit')}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {canInviteLearner && (
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => setInviteOpen(true)}
+              >
+                <EnvelopeSimple className="h-4 w-4" />{' '}
+                {t('students.detail.invite_button')}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => setEditOpen(true)}
+            >
+              <PencilSimple className="h-4 w-4" /> {t('common.edit')}
+            </Button>
+          </div>
         </div>
       }
     >
@@ -355,6 +372,14 @@ const StudentDetailPage = () => {
         courseType={student.course_type}
         operators={operators || []}
       />
+
+      {canInviteLearner && (
+        <StudentPortalInvitationDialog
+          studentId={student.id}
+          open={inviteOpen}
+          onClose={() => setInviteOpen(false)}
+        />
+      )}
 
       <PaymentModal
         open={payOpen}
