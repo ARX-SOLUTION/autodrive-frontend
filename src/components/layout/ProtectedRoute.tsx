@@ -4,7 +4,7 @@ import { CircleNotch } from '@phosphor-icons/react';
 import { useLocation, useRouter } from '@tanstack/react-router';
 
 const SpinGate = () => (
-  <div className="flex min-h-screen items-center justify-center bg-background">
+  <div className="flex min-h-dvh items-center justify-center bg-background">
     <div className="flex flex-col items-center gap-3 text-muted-foreground">
       <CircleNotch className="h-8 w-8 animate-spin" />
       <p className="text-sm">Sessiya tekshirilmoqda...</p>

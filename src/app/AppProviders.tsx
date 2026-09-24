@@ -22,7 +22,7 @@ export const SessionBootstrap = ({ children }: PropsWithChildren) => {
     (isAuthenticated && !token && (isLoading || restoreFailed))
   ) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-dvh items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
           <CircleNotch className="h-8 w-8 animate-spin" />
           <p className="text-sm">Sessiya tiklanmoqda...</p>

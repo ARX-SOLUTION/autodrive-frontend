@@ -93,6 +93,10 @@
   --radius-3xl: 0.75rem;
   --radius-4xl: 0.75rem;
 
+  --shadow-warm:
+    0 1px 2px hsl(var(--brand-navy) / 0.06),
+    0 14px 36px -20px hsl(var(--brand-navy) / 0.38);
+
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 }
@@ -233,6 +237,14 @@
   * {
     @apply border-border;
   }
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
   :where(button, [role='button']):not(:disabled):not([aria-disabled='true']) {
     cursor: pointer;
   }
@@ -316,6 +328,27 @@
   .cv-auto {
     content-visibility: auto;
     contain-intrinsic-size: auto none auto 320px;
+  }
+  /* Warm ambient backdrop for the product "front door" surfaces (login,
+     session gates, 404). Radial washes tinted with the brand amber + teal;
+     both washes stay visible in light and dark because the tokens flip
+     luminance per theme. */
+  .ambient-surface {
+    background-image:
+      radial-gradient(
+        56rem 36rem at 8% -12%,
+        hsl(var(--brand-orange) / 0.18),
+        transparent 60%
+      ),
+      radial-gradient(
+        48rem 36rem at 108% 120%,
+        hsl(var(--brand-blue-bright) / 0.16),
+        transparent 62%
+      );
+  }
+  /* Pointer-safe film grain that breaks digital flatness behind cards. */
+  .bg-grain {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
   }
 }
 
