@@ -207,6 +207,22 @@ export const studentDetailQueryOptions = (id?: string, enabled = !!id) =>
 export const useStudent = (id?: string) =>
   useQuery(studentDetailQueryOptions(id));
 
+export interface LearnerInvitation {
+  token: string;
+  expires_at: string;
+}
+
+export const useIssueLearnerInvitation = () =>
+  useMutation({
+    mutationFn: async ({ id, email }: { id: string; email: string }) => {
+      const { data } = await axiosInstance.post<unknown>(
+        `/students/${id}/learner-invitations`,
+        { email },
+      );
+      return parseItemEnvelope<LearnerInvitation>(data, 'learner invitation');
+    },
+  });
+
 export const useCreateStudent = () => {
   const qc = useQueryClient();
   return useMutation({

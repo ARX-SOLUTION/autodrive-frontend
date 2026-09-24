@@ -38,10 +38,18 @@ const studentQuery = vi.hoisted(() => ({
   isLoading: false,
   isError: false,
 }));
+const invitationMutation = vi.hoisted(() => ({
+  mutate: vi.fn(),
+  reset: vi.fn(),
+}));
 
 vi.mock('@/services/studentService', () => ({
   useStudent: () => studentQuery,
   useUpdateStudent: () => ({ mutate: vi.fn(), isPending: false }),
+  useIssueLearnerInvitation: () => ({
+    ...invitationMutation,
+    isPending: false,
+  }),
 }));
 
 const STUDENT = {
@@ -142,6 +150,29 @@ afterEach(() => {
   studentQuery.isLoading = false;
   studentQuery.isError = false;
   cleanup();
+  invitationMutation.mutate.mockClear();
+  invitationMutation.reset.mockClear();
+});
+
+describe('StudentDetailPage learner invitation', () => {
+  it('shows the invitation action only to roles allowed by the backend', async () => {
+    auth.role = 'manager';
+    await renderPage();
+    expect(screen.getByText('students.detail.invite_button')).toBeTruthy();
+    cleanup();
+
+    auth.role = 'teacher';
+    await renderPage();
+    expect(screen.queryByText('students.detail.invite_button')).toBeNull();
+  });
+
+  it('opens an email form for a manager', async () => {
+    auth.role = 'manager';
+    await renderPage();
+    fireEvent.click(screen.getByText('students.detail.invite_button'));
+    expect(screen.getByText('students.detail.invite_title')).toBeTruthy();
+    expect(screen.getByLabelText('students.detail.invite_email')).toBeTruthy();
+  });
 });
 
 describe('StudentDetailPage payments-tab gating', () => {

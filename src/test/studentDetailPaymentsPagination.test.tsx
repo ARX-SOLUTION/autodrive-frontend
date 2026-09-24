@@ -34,6 +34,7 @@ vi.mock('@/services/studentService', () => ({
     isError: false,
   }),
   useUpdateStudent: () => ({ mutate: vi.fn(), isPending: false }),
+  useIssueLearnerInvitation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/services/paymentService', () => ({
