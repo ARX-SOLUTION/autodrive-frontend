@@ -87,3 +87,6 @@ storybook-static/
 
 # Vercel
 .vercel/
+
+# graphify local knowledge graph output
+graphify-out/
