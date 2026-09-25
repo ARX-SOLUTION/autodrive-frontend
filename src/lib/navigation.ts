@@ -15,6 +15,8 @@ import {
   BookOpen,
   Car,
   MapTrifold,
+  Exam,
+  ClipboardText,
 } from '@phosphor-icons/react';
 import type { Capability } from '@/lib/permissions';
 import { drivingSessionsEnabled } from '@/lib/featureAvailability';
@@ -33,6 +35,8 @@ export type AppRoutePath =
   | '/driving-sessions'
   | '/courses'
   | '/students'
+  | '/questions'
+  | '/school-tests'
   | '/payments'
   | '/expenses'
   | '/my-settlements'
@@ -139,6 +143,20 @@ const allNavItems: NavItem[] = [
     icon: GraduationCap,
     section: 'learning',
     cap: 'accessOperations',
+  },
+  {
+    path: '/questions',
+    labelKey: 'nav.questions',
+    icon: Exam,
+    section: 'learning',
+    cap: 'viewSchoolLearning',
+  },
+  {
+    path: '/school-tests',
+    labelKey: 'nav.school_tests',
+    icon: ClipboardText,
+    section: 'learning',
+    cap: 'viewSchoolLearning',
   },
   {
     path: '/payments',
