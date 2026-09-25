@@ -96,6 +96,28 @@ for (const [name, source] of [
   }
 }
 
+const sidebarIcons = assetNames.find((name) =>
+  name.startsWith('sidebar-icons-'),
+);
+if (!sidebarIcons || !sidebarIcons.endsWith('.js')) {
+  throw new Error('Expected one sidebar-icons chunk for shell Phosphor icons.');
+}
+assertBudget(
+  `Sidebar icons ${sidebarIcons}`,
+  gzipBytes(`assets/${sidebarIcons}`),
+  48 * kib,
+);
+const sidebarIconMicroChunks = assetNames.filter((name) =>
+  /^(?:BookOpen|Buildings|Calendar|Car|CaretRight|Check|Circle|CircleNotch|ClipboardText|CreditCard|Exam|GraduationCap|Headphones|House|List|ListChecks|MagnifyingGlass|MapTrifold|Moon|Plus|PushPin|PushPinSlash|ShieldCheck|SidebarSimple|SignOut|SquaresFour|Stack|Sun|Translate|Tray|User|UserGear|UsersThree|Wallet|Warning|WifiSlash|X)\.es-/.test(
+    name,
+  ),
+);
+if (sidebarIconMicroChunks.length > 0) {
+  throw new Error(
+    `Sidebar Phosphor icons were split into micro-chunks: ${sidebarIconMicroChunks.join(', ')}`,
+  );
+}
+
 const optionalBudgets = [
   { prefix: 'charts-vendor-', limit: 100 * kib },
   { prefix: 'export-xlsx-', limit: 160 * kib },
@@ -156,6 +178,7 @@ console.log(
   [
     `Initial JS: ${formatKib(initialBytes)} / 200.00 KiB`,
     `Largest route: ${basename(largestRoute.name)} ${formatKib(largestRoute.bytes)} / 60.00 KiB`,
+    `Sidebar icons: ${basename(sidebarIcons)} ${formatKib(gzipBytes(`assets/${sidebarIcons}`))} / 48.00 KiB`,
     `PWA precache: ${precacheUrls.join(', ')}`,
   ].join('\n'),
 );
