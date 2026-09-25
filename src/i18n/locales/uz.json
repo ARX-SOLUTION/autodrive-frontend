@@ -167,10 +167,8 @@
     "rate_limit": "Ko'p urinishlar. Iltimos 1 daqiqa kuting.",
     "network_error": "Server bilan ulanish yo'q.",
     "company_inactive": "Kompaniyangiz hali faollashtirilmagan. Administrator bilan bog'laning.",
-    "demo": "Demo sifatida kirish",
-    "demo_retry": "Demo kirishini qayta urinish",
-    "demo_auto_error": "Demo avtomatik ochilmadi. Quyidagi tugma bilan qayta urinishingiz mumkin.",
-    "demo_hint": "Namuna ma'lumotlar bilan tanishing",
+    "demo": "Demo emailni to'ldirish",
+    "demo_hint": "Demo parolini kiriting, so'ng tizimga kiring",
     "session_expired": "Sessiya muddati tugadi, qaytadan kiring"
   },
   "dashboard": {

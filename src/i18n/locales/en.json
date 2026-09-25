@@ -167,10 +167,8 @@
     "rate_limit": "Too many attempts. Please wait 1 minute.",
     "network_error": "Unable to connect to the server.",
     "company_inactive": "Your company is not activated yet. Contact your administrator.",
-    "demo": "Sign in as demo",
-    "demo_retry": "Retry demo sign-in",
-    "demo_auto_error": "The demo did not open automatically. Retry with the button below.",
-    "demo_hint": "Explore with sample data",
+    "demo": "Fill demo email",
+    "demo_hint": "Enter the demo password, then sign in",
     "session_expired": "Session expired, please sign in again"
   },
   "dashboard": {

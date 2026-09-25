@@ -67,7 +67,7 @@ const submitLogin = () => {
     target: { value: 'demo@automaktab.uz' },
   });
   fireEvent.change(screen.getByLabelText('login.password_label'), {
-    target: { value: 'demo1234' },
+    target: { value: 'example-password' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'login.submit' }));
 };
