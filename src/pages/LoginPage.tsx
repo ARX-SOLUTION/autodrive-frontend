@@ -26,7 +26,6 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 import type { AuthResponse } from '@/types/user';
 import { getDefaultAuthenticatedRoute } from '@/lib/defaultAuthenticatedRoute';
-import { track } from '@/lib/umami';
 
 const makeLoginFormSchema = (t: (key: string) => string) =>
   z.object({
@@ -37,10 +36,9 @@ const makeLoginFormSchema = (t: (key: string) => string) =>
 type LoginFormValues = z.infer<ReturnType<typeof makeLoginFormSchema>>;
 
 const LoginPage = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { theme, toggle } = useTheme();
   const [formError, setFormError] = useState<string | null>(null);
-  const [demoIntentFailed, setDemoIntentFailed] = useState(false);
   const router = useRouter();
   const location = useLocation();
   const login = useLogin();
@@ -121,50 +119,25 @@ const LoginPage = () => {
     );
   };
 
-  const handleDemoLogin = useCallback(
-    (automatic = false) => {
-      setDemoIntentFailed(false);
-      login.mutate(
-        { email: 'demo@automaktab.uz', password: 'demo1234' },
-        {
-          onSuccess: (data) => {
-            const language = (i18n.resolvedLanguage ?? i18n.language).slice(
-              0,
-              2,
-            );
-            const locale = ['uz', 'ru', 'en'].includes(language)
-              ? language
-              : 'uz';
-            track('demo_enter', { locale });
-            onSuccess(data);
-          },
-          onError: (error) => {
-            if (automatic) {
-              setDemoIntentFailed(true);
-              return;
-            }
-            handleError(error);
-          },
-        },
-      );
-    },
-    [handleError, i18n.language, i18n.resolvedLanguage, login, onSuccess],
-  );
+  const fillDemoEmail = useCallback(() => {
+    form.setValue('email', 'demo@automaktab.uz', {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    form.setValue('password', '', { shouldDirty: true, shouldValidate: false });
+    setFormError(null);
+  }, [form]);
 
   useEffect(() => {
     const isDemoIntent =
       new URLSearchParams(location.searchStr).get('demo') === '1';
-    if (
-      !isDemoIntent ||
-      !hasCleanedInitialSession.current ||
-      hasTriedDemoIntent.current
-    ) {
+    if (!isDemoIntent || hasTriedDemoIntent.current) {
       return;
     }
 
     hasTriedDemoIntent.current = true;
-    handleDemoLogin(true);
-  }, [handleDemoLogin, location.searchStr]);
+    fillDemoEmail();
+  }, [fillDemoEmail, location.searchStr]);
 
   return (
     <div className="flex min-h-dvh flex-col bg-background px-5 py-6 sm:px-10 sm:py-8 lg:px-14">
@@ -301,22 +274,14 @@ const LoginPage = () => {
                 {login.isPending ? t('login.submitting') : t('login.submit')}
               </Button>
               <div className="border-t border-border/70 pt-5">
-                {demoIntentFailed && (
-                  <Alert
-                    variant="destructive"
-                    className="mb-3 border-destructive/25 bg-destructive/5 px-3.5 py-3 text-sm leading-relaxed dark:border-destructive/25"
-                  >
-                    {t('login.demo_auto_error')}
-                  </Alert>
-                )}
                 <Button
                   type="button"
                   variant="outline"
                   className="h-auto min-h-12 w-full whitespace-normal border-muted-foreground py-3 text-sm focus-visible:ring-foreground"
-                  onClick={() => handleDemoLogin(false)}
+                  onClick={fillDemoEmail}
                   disabled={login.isPending}
                 >
-                  {t(demoIntentFailed ? 'login.demo_retry' : 'login.demo')}
+                  {t('login.demo')}
                 </Button>
                 <p className="mt-3 text-center text-xs leading-relaxed text-muted-foreground">
                   {t('login.demo_hint')}
