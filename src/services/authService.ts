@@ -2,12 +2,11 @@ import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import type { AxiosError } from 'axios';
-import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { AuthResponse, User } from '@/types/user';
 import { track } from '@/lib/umami';
 import { resetAuthSessionState } from '@/lib/queryClient';
-import { parseItemEnvelope } from '@/lib/apiEnvelope';
+import { preconnectApi } from '@/lib/preconnectApi';
 import { authKeys } from '@/lib/queryKeys';
 import type {
   ChangePasswordRequest,
@@ -19,16 +18,19 @@ const SESSION_RESTORE_FAILURE_STATUSES = new Set([401, 429]);
 const getHttpStatus = (error: unknown): number | undefined =>
   (error as AxiosError | undefined)?.response?.status;
 
-const loginApi = async (creds: LoginRequest): Promise<AuthResponse> => {
-  const { data } = await axiosInstance.post<unknown>('/auth/login', creds);
-  return parseItemEnvelope<AuthResponse>(data, 'auth');
+const loadAuthApi = () => {
+  preconnectApi();
+  return import('@/services/authApi');
 };
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
   const setAuth = useAuthStore((s) => s.setAuth);
   return useMutation({
-    mutationFn: loginApi,
+    mutationFn: async (creds: LoginRequest) => {
+      const { loginRequest } = await loadAuthApi();
+      return loginRequest(creds);
+    },
     onSuccess: (data) => {
       setAuth(data.token, data.user);
       queryClient.setQueryData(authKeys.me(), data.user);
@@ -55,8 +57,8 @@ export const useRestoreSession = () => {
   const query = useQuery<User>({
     queryKey: authKeys.me(),
     queryFn: async ({ signal }) => {
-      const { data } = await axiosInstance.get<unknown>('/auth/me', { signal });
-      return parseItemEnvelope<User>(data, 'auth-me');
+      const { fetchCurrentUser } = await loadAuthApi();
+      return fetchCurrentUser(signal);
     },
     placeholderData: storedUser ?? undefined,
     staleTime: 0,
@@ -86,11 +88,8 @@ export const useChangePassword = () => {
   const setAuth = useAuthStore((s) => s.setAuth);
   return useMutation({
     mutationFn: async (dto: ChangePasswordRequest): Promise<AuthResponse> => {
-      const { data } = await axiosInstance.post<unknown>(
-        '/auth/change-password',
-        dto,
-      );
-      return parseItemEnvelope<AuthResponse>(data, 'auth');
+      const { changePasswordRequest } = await loadAuthApi();
+      return changePasswordRequest(dto);
     },
     onSuccess: (data) => {
       // The backend bumps tokenVersion (kills old sessions) and returns a
@@ -107,7 +106,10 @@ export const useLogout = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   return useMutation({
-    mutationFn: () => axiosInstance.post('/auth/logout'),
+    mutationFn: async () => {
+      const { logoutRequest } = await loadAuthApi();
+      return logoutRequest();
+    },
     onMutate: () => {
       logout();
       resetAuthSessionState(queryClient);

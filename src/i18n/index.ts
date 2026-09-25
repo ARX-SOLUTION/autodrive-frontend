@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { registerTranslator } from './fallback';
 import uz from './locales/uz.json';
 
 export const SUPPORTED_LANGS = ['uz', 'ru', 'en'] as const;
@@ -55,6 +56,11 @@ export const initI18n = () => {
       fallbackLng: 'uz',
       supportedLngs: [...SUPPORTED_LANGS],
       interpolation: { escapeValue: false },
+    });
+
+    registerTranslator((key, fallback) => {
+      const translated = i18n.t(key, { defaultValue: fallback });
+      return typeof translated === 'string' ? translated : fallback;
     });
 
     if (typeof document !== 'undefined') {

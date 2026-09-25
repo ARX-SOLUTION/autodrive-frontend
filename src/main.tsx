@@ -1,7 +1,12 @@
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import { initI18n } from './i18n';
+import { ensureI18n } from './i18n/ensure';
+
+const isLoginDocument = () => {
+  const path = window.location.pathname.replace(/\/+$/, '') || '/';
+  return path === '/login';
+};
 
 const SERVICE_WORKER_UPDATE_INTERVAL_MS = 60 * 60 * 1000;
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 60 * 1000;
@@ -67,8 +72,18 @@ if ('serviceWorker' in navigator) {
 }
 
 const bootstrap = async () => {
-  await initI18n();
+  if (!isLoginDocument()) {
+    await ensureI18n();
+  }
+
   createRoot(document.getElementById('root')!).render(<App />);
+
+  if (isLoginDocument()) {
+    const warmTranslations = () => {
+      void ensureI18n();
+    };
+    window.requestIdleCallback(warmTranslations, { timeout: 2_000 });
+  }
 
   void import('./lib/webVitals')
     .then(({ initWebVitals }) => initWebVitals())

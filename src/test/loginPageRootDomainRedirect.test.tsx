@@ -1,6 +1,7 @@
 import { screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LoginPage from '@/pages/LoginPage';
+import { getLoginCopy } from '@/pages/loginCopy';
 import { queryClient } from '@/lib/queryClient';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 import type { AuthResponse } from '@/types/user';
@@ -62,14 +63,16 @@ const renderLogin = (from: string) =>
     routePattern: '/login',
   });
 
+const copy = getLoginCopy('uz');
+
 const submitLogin = () => {
-  fireEvent.change(screen.getByLabelText('login.email_label'), {
+  fireEvent.change(screen.getByLabelText(copy.emailLabel), {
     target: { value: 'demo@automaktab.uz' },
   });
-  fireEvent.change(screen.getByLabelText('login.password_label'), {
+  fireEvent.change(screen.getByLabelText(copy.passwordLabel), {
     target: { value: 'example-password' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'login.submit' }));
+  fireEvent.click(screen.getByRole('button', { name: copy.submit }));
 };
 
 describe('LoginPage root-domain redirect (autodrive-dtj.2)', () => {
@@ -113,8 +116,6 @@ describe('LoginPage root-domain redirect (autodrive-dtj.2)', () => {
 
     submitLogin();
 
-    // react-hook-form's handleSubmit resolves the zod schema asynchronously,
-    // so the mutate() call (and thus the redirect) lands a tick after click.
     await waitFor(() =>
       expect(window.location.href).toBe(
         'https://app.automaktab.uz/students/42',
