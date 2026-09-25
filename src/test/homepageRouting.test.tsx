@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import App from '@/App';
+import { getLoginCopy } from '@/pages/loginCopy';
 import { useAuthStore } from '@/store/authStore';
 
-// Note: i18n is mocked in setup.ts: t(key) => key.
-// So we search for translation keys, not the actual strings.
+const copy = getLoginCopy('uz');
 
 describe('homepage routing', () => {
   beforeEach(() => {
@@ -17,8 +17,8 @@ describe('homepage routing', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('login.title')).toBeInTheDocument();
-    expect(screen.getByText('login.email_label')).toBeInTheDocument();
+    expect(await screen.findByText(copy.title)).toBeInTheDocument();
+    expect(screen.getByText(copy.emailLabel)).toBeInTheDocument();
   });
 
   it('still protects the dashboard route and sends anonymous users to login', async () => {
@@ -26,7 +26,7 @@ describe('homepage routing', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('login.title')).toBeInTheDocument();
-    expect(screen.getByText('login.email_label')).toBeInTheDocument();
+    expect(await screen.findByText(copy.title)).toBeInTheDocument();
+    expect(screen.getByText(copy.emailLabel)).toBeInTheDocument();
   });
 });

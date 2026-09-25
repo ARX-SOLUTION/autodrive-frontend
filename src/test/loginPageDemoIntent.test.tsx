@@ -2,6 +2,7 @@ import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ThemeProvider } from 'next-themes';
 import LoginPage from '@/pages/LoginPage';
+import { getLoginCopy } from '@/pages/loginCopy';
 import { queryClient } from '@/lib/queryClient';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
@@ -18,13 +19,9 @@ vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({ isAuthenticated: false, logout }),
 }));
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-    i18n: { language: 'uz', resolvedLanguage: 'uz' },
-  }),
-}));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+
+const copy = getLoginCopy('uz');
 
 describe('LoginPage demo intent', () => {
   beforeEach(() => {
@@ -63,12 +60,10 @@ describe('LoginPage demo intent', () => {
     );
 
     fireEvent.click(
-      await screen.findByRole('button', { name: 'actions.theme_dark' }),
+      await screen.findByRole('button', { name: copy.themeDark }),
     );
     await waitFor(() => expect(document.documentElement).toHaveClass('dark'));
-    fireEvent.click(
-      screen.getByRole('button', { name: 'actions.theme_light' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: copy.themeLight }));
     await waitFor(() => expect(document.documentElement).toHaveClass('light'));
     expect(loginMutation.mutate).not.toHaveBeenCalled();
     localStorage.removeItem('login-theme-test');
@@ -81,20 +76,18 @@ describe('LoginPage demo intent', () => {
       routePattern: '/login',
     });
 
-    expect(screen.getByRole('main')).toHaveAccessibleName('login.title');
+    expect(screen.getByRole('main')).toHaveAccessibleName(copy.title);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'login.title',
+      copy.title,
     );
-    expect(screen.getByLabelText('login.email_label')).toHaveAttribute(
+    expect(screen.getByLabelText(copy.emailLabel)).toHaveAttribute(
       'autocomplete',
       'email',
     );
-    const password = screen.getByLabelText('login.password_label');
+    const password = screen.getByLabelText(copy.passwordLabel);
     expect(password).toHaveAttribute('autocomplete', 'current-password');
     expect(password).toHaveAttribute('type', 'password');
-    fireEvent.click(
-      screen.getByRole('button', { name: 'common.show_password' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: copy.showPassword }));
     expect(password).toHaveAttribute('type', 'text');
     expect(loginMutation.mutate).not.toHaveBeenCalled();
   });
@@ -106,11 +99,29 @@ describe('LoginPage demo intent', () => {
       routePattern: '/login',
     });
 
-    expect(screen.getByRole('status')).toHaveTextContent('login.submitting');
+    expect(screen.getByRole('status')).toHaveTextContent(copy.submitting);
     expect(
-      screen.getByRole('button', { name: 'login.submitting' }),
+      screen.getByRole('button', { name: copy.submitting }),
     ).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'login.demo' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: copy.demo })).toBeDisabled();
+  });
+
+  it('requires email and password before calling login', async () => {
+    await renderWithRouter(<LoginPage />, {
+      initialEntry: '/login',
+      routePattern: '/login',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: copy.submit }));
+    expect(screen.getAllByText(copy.required)).toHaveLength(2);
+    expect(loginMutation.mutate).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText(copy.emailLabel), {
+      target: { value: 'staff@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: copy.submit }));
+    expect(screen.getAllByText(copy.required)).toHaveLength(1);
+    expect(loginMutation.mutate).not.toHaveBeenCalled();
   });
 
   it('keeps credential errors visible and clears them when the user edits', async () => {
@@ -123,15 +134,15 @@ describe('LoginPage demo intent', () => {
       routePattern: '/login',
     });
 
-    fireEvent.change(screen.getByLabelText('login.email_label'), {
+    fireEvent.change(screen.getByLabelText(copy.emailLabel), {
       target: { value: 'staff@example.com' },
     });
-    fireEvent.change(screen.getByLabelText('login.password_label'), {
+    fireEvent.change(screen.getByLabelText(copy.passwordLabel), {
       target: { value: 'example-password' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'login.submit' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('login.error');
-    fireEvent.change(screen.getByLabelText('login.password_label'), {
+    fireEvent.click(screen.getByRole('button', { name: copy.submit }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(copy.error);
+    fireEvent.change(screen.getByLabelText(copy.passwordLabel), {
       target: { value: 'corrected-password' },
     });
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -144,11 +155,11 @@ describe('LoginPage demo intent', () => {
     });
 
     await waitFor(() =>
-      expect(screen.getByLabelText('login.email_label')).toHaveValue(
+      expect(screen.getByLabelText(copy.emailLabel)).toHaveValue(
         'demo@automaktab.uz',
       ),
     );
-    expect(screen.getByLabelText('login.password_label')).toHaveValue('');
+    expect(screen.getByLabelText(copy.passwordLabel)).toHaveValue('');
     expect(loginMutation.mutate).not.toHaveBeenCalled();
   });
 
@@ -158,15 +169,15 @@ describe('LoginPage demo intent', () => {
       routePattern: '/login',
     });
 
-    fireEvent.change(screen.getByLabelText('login.password_label'), {
+    fireEvent.change(screen.getByLabelText(copy.passwordLabel), {
       target: { value: 'temporary' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'login.demo' }));
+    fireEvent.click(screen.getByRole('button', { name: copy.demo }));
 
-    expect(screen.getByLabelText('login.email_label')).toHaveValue(
+    expect(screen.getByLabelText(copy.emailLabel)).toHaveValue(
       'demo@automaktab.uz',
     );
-    expect(screen.getByLabelText('login.password_label')).toHaveValue('');
+    expect(screen.getByLabelText(copy.passwordLabel)).toHaveValue('');
     expect(loginMutation.mutate).not.toHaveBeenCalled();
   });
 
@@ -178,15 +189,13 @@ describe('LoginPage demo intent', () => {
     });
 
     await waitFor(() =>
-      expect(screen.getByLabelText('login.email_label')).toHaveValue(
+      expect(screen.getByLabelText(copy.emailLabel)).toHaveValue(
         'demo@automaktab.uz',
       ),
     );
-    expect(screen.getByLabelText('login.password_label')).toHaveValue('');
+    expect(screen.getByLabelText(copy.passwordLabel)).toHaveValue('');
     expect(loginMutation.mutate).not.toHaveBeenCalled();
-    expect(
-      screen.getByRole('button', { name: 'login.demo' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: copy.demo })).toBeInTheDocument();
   });
 
   it('signs in with the env password when one-click demo is enabled', async () => {
@@ -196,16 +205,14 @@ describe('LoginPage demo intent', () => {
       routePattern: '/login',
     });
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'login.demo_sign_in' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: copy.demoSignIn }));
 
     expect(loginMutation.mutate).toHaveBeenCalledWith(
       { email: 'demo@automaktab.uz', password: 'env-demo-secret' },
       expect.any(Object),
     );
-    expect(screen.getByLabelText('login.password_label')).toHaveValue('');
-    expect(screen.getByText('login.demo_sign_in_hint')).toBeInTheDocument();
+    expect(screen.getByLabelText(copy.passwordLabel)).toHaveValue('');
+    expect(screen.getByText(copy.demoSignInHint)).toBeInTheDocument();
   });
 
   it('submits one-click demo login from ?demo=1 when the production env is set', async () => {
@@ -221,7 +228,7 @@ describe('LoginPage demo intent', () => {
         expect.any(Object),
       ),
     );
-    expect(screen.getByLabelText('login.password_label')).toHaveValue('');
+    expect(screen.getByLabelText(copy.passwordLabel)).toHaveValue('');
   });
 
   it('shows a retry when automatic one-click demo login fails', async () => {
@@ -236,11 +243,11 @@ describe('LoginPage demo intent', () => {
     });
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'login.demo_auto_error',
+      copy.demoAutoError,
     );
     expect(
-      screen.getByRole('button', { name: 'login.demo_retry' }),
+      screen.getByRole('button', { name: copy.demoRetry }),
     ).toBeInTheDocument();
-    expect(screen.queryByText('login.error')).not.toBeInTheDocument();
+    expect(screen.queryByText(copy.error)).not.toBeInTheDocument();
   });
 });

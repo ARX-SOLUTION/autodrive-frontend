@@ -2,7 +2,6 @@ import { createFileRoute } from '@tanstack/react-router';
 import { requireCapability } from '@/app/routeGuards';
 import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
 import TrainingEnrollmentDetailPage from '@/pages/TrainingEnrollmentDetailPage';
-import { trainingEnrollmentQueryOptions } from '@/services/trainingService';
 
 export const Route = createFileRoute(
   '/_authenticated/training-enrollments/$id',
@@ -12,9 +11,12 @@ export const Route = createFileRoute(
       location,
       ROUTE_CAPABILITIES['/training-enrollments/$id'],
     ),
-  loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(
+  loader: async ({ context, params }) => {
+    const { trainingEnrollmentQueryOptions } =
+      await import('@/services/trainingService');
+    return context.queryClient.ensureQueryData(
       trainingEnrollmentQueryOptions(params.id),
-    ),
+    );
+  },
   component: TrainingEnrollmentDetailPage,
 });

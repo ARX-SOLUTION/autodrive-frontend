@@ -1,17 +1,10 @@
 import { Component, type ReactNode } from 'react';
 import { Warning } from '@phosphor-icons/react';
 import { EmptyState } from '@/components/ui/EmptyState';
-import i18n from '@/i18n';
+import { translateOrFallback } from '@/i18n/fallback';
 
 const RELOAD_AT_KEY = 'chunk-error-reload-at';
 const COOLDOWN_MS = 10_000;
-
-const translateOrFallback = (key: string, fallback: string) => {
-  const translated = i18n.t(key, { defaultValue: fallback });
-  return typeof translated === 'string' && translated.trim()
-    ? translated
-    : fallback;
-};
 
 // Stale chunk hash after a deploy: the already-loaded shell references an
 // asset URL the new build no longer has. One reload fetches the fresh

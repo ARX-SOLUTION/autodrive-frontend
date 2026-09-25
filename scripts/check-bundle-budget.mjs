@@ -106,6 +106,33 @@ for (const { prefix, limit } of optionalBudgets) {
   assertBudget(`Optional chunk ${name}`, gzipBytes(`assets/${name}`), limit);
 }
 
+if (/fonts\.googleapis|fonts\.gstatic|api\.automaktab\.uz/.test(html)) {
+  throw new Error(
+    'index.html still references Google Fonts or preconnects the API.',
+  );
+}
+if (!/manrope-latin-[^"]+\.woff2/.test(html)) {
+  throw new Error('index.html is missing the Manrope latin preload.');
+}
+for (const assetPath of initialAssetPaths) {
+  if (/\/(?:apiEnvelope|form|i18n)-[^/]+\.js$/.test(assetPath)) {
+    throw new Error(`Login shell still preloads ${assetPath}.`);
+  }
+}
+const loginChunk = assetNames.find(
+  (name) => name.startsWith('login-') && name.endsWith('.js'),
+);
+if (!loginChunk) throw new Error('Login route chunk was not found.');
+const loginSource = readFileSync(
+  new URL(`assets/${loginChunk}`, distDir),
+  'utf8',
+);
+if (/apiEnvelope-|\/form-|i18next|ZodError/.test(loginSource)) {
+  throw new Error(
+    'Login route chunk still depends on axios/i18n or the form stack.',
+  );
+}
+
 const serviceWorker = readFileSync(new URL('./sw.js', distDir), 'utf8');
 const precacheUrls = [...serviceWorker.matchAll(/"url":"([^"]+)"/g)].map(
   ([, url]) => url,

@@ -3,11 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      href="/src/fonts/manrope-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      fetchpriority="high"
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.png" />
@@ -46,11 +48,14 @@
     />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://automaktab.uz/og-banner.png" />
-    <link rel="preconnect" href="https://api.automaktab.uz" crossorigin />
     <script>
-      // Apply theme before React mounts to avoid FOUC
+      // Apply theme and saved language before React mounts to avoid FOUC.
       (function () {
         try {
+          var lang = (localStorage.getItem('lang') || '').slice(0, 2);
+          if (lang === 'uz' || lang === 'ru' || lang === 'en') {
+            document.documentElement.lang = lang;
+          }
           var stored = localStorage.getItem('theme');
           var prefersDark = window.matchMedia(
             '(prefers-color-scheme: dark)',
@@ -76,6 +81,13 @@
         <a href="https://automaktab.uz/">automaktab.uz</a> manzilini oching.
       </p>
     </noscript>
+    <script type="module">
+      const path = location.pathname.replace(/\/+$/, '') || '/';
+      if (path !== '/login') {
+        const { ensureI18n } = await import('/src/i18n/ensure.ts');
+        await ensureI18n();
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
