@@ -142,3 +142,15 @@ export const telegramKeys = {
   all: ['telegram'] as const,
   linkStatus: () => ['telegram', 'link-status'] as const,
 };
+
+export const questionKeys = {
+  ...baseKeys('questions'),
+  availableForTests: (filters: Filters = {}) =>
+    ['questions', 'available-for-tests', filters] as const,
+};
+
+export const schoolTestKeys = {
+  ...baseKeys('school-tests'),
+  assignments: (templateId: string | undefined) =>
+    ['school-tests', 'assignments', templateId] as const,
+};

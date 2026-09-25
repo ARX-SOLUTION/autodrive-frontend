@@ -43,7 +43,9 @@ export type Capability =
   | 'navigateExpenseOverdueSweep'
   | 'manageCompanyFinance'
   | 'viewOwnSettlements'
-  | 'viewDeleted';
+  | 'viewDeleted'
+  | 'viewSchoolLearning'
+  | 'manageSchoolLearning';
 
 // Role groups — named so the matrix reads as intent, not a wall of literals.
 const OWNERS: readonly UserRole[] = ['dev', 'owner'];
@@ -113,6 +115,11 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   // already gate a different, unrelated feature. A dedicated OWNERS-only
   // capability keeps `useCan('viewDeleted')` self-documenting at each of
   // the four call sites instead of overloading an unrelated one.
+  // School question bank + test templates (#260). View mirrors backend GET
+  // roles (incl. operator inspect). Manage mirrors create/publish/assign
+  // (teacher/manager/owner/dev) — never platform_public authoring in CRM.
+  viewSchoolLearning: OPERATIONAL_ROLES,
+  manageSchoolLearning: ['dev', 'owner', 'manager', 'teacher'],
   viewDeleted: OWNERS,
 };
 

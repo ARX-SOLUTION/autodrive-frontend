@@ -34,6 +34,10 @@ import { Route as AuthenticatedGroupsIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedGroupsIdRouteImport } from './routes/_authenticated.groups.$id'
 import { Route as AuthenticatedMySettlementsIndexRouteImport } from './routes/_authenticated.my-settlements.index'
 import { Route as AuthenticatedMySettlementsIdRouteImport } from './routes/_authenticated.my-settlements.$id'
+import { Route as AuthenticatedQuestionsIndexRouteImport } from './routes/_authenticated.questions.index'
+import { Route as AuthenticatedQuestionsIdRouteImport } from './routes/_authenticated.questions.$id'
+import { Route as AuthenticatedSchoolTestsIndexRouteImport } from './routes/_authenticated.school-tests.index'
+import { Route as AuthenticatedSchoolTestsIdRouteImport } from './routes/_authenticated.school-tests.$id'
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated.students.index'
 import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authenticated.students.$id'
 import { Route as AuthenticatedTrainingEnrollmentsIndexRouteImport } from './routes/_authenticated.training-enrollments.index'
@@ -177,6 +181,30 @@ const AuthenticatedMySettlementsIdRoute =
     path: '/my-settlements/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedQuestionsIndexRoute =
+  AuthenticatedQuestionsIndexRouteImport.update({
+    id: '/questions/',
+    path: '/questions/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedQuestionsIdRoute =
+  AuthenticatedQuestionsIdRouteImport.update({
+    id: '/questions/$id',
+    path: '/questions/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSchoolTestsIndexRoute =
+  AuthenticatedSchoolTestsIndexRouteImport.update({
+    id: '/school-tests/',
+    path: '/school-tests/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSchoolTestsIdRoute =
+  AuthenticatedSchoolTestsIdRouteImport.update({
+    id: '/school-tests/$id',
+    path: '/school-tests/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedStudentsIndexRoute =
   AuthenticatedStudentsIndexRouteImport.update({
     id: '/students/',
@@ -245,6 +273,8 @@ export interface FileRoutesByFullPath {
   '/expenses/$id': typeof AuthenticatedExpensesIdRoute
   '/groups/$id': typeof AuthenticatedGroupsIdRoute
   '/my-settlements/$id': typeof AuthenticatedMySettlementsIdRoute
+  '/questions/$id': typeof AuthenticatedQuestionsIdRoute
+  '/school-tests/$id': typeof AuthenticatedSchoolTestsIdRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/training-enrollments/$id': typeof AuthenticatedTrainingEnrollmentsIdRoute
   '/users/$id': typeof AuthenticatedUsersIdRoute
@@ -257,6 +287,8 @@ export interface FileRoutesByFullPath {
   '/fleet-map/': typeof AuthenticatedFleetMapIndexRoute
   '/groups/': typeof AuthenticatedGroupsIndexRoute
   '/my-settlements/': typeof AuthenticatedMySettlementsIndexRoute
+  '/questions/': typeof AuthenticatedQuestionsIndexRoute
+  '/school-tests/': typeof AuthenticatedSchoolTestsIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
   '/training-enrollments/': typeof AuthenticatedTrainingEnrollmentsIndexRoute
   '/training-programs/': typeof AuthenticatedTrainingProgramsIndexRoute
@@ -280,6 +312,8 @@ export interface FileRoutesByTo {
   '/expenses/$id': typeof AuthenticatedExpensesIdRoute
   '/groups/$id': typeof AuthenticatedGroupsIdRoute
   '/my-settlements/$id': typeof AuthenticatedMySettlementsIdRoute
+  '/questions/$id': typeof AuthenticatedQuestionsIdRoute
+  '/school-tests/$id': typeof AuthenticatedSchoolTestsIdRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/training-enrollments/$id': typeof AuthenticatedTrainingEnrollmentsIdRoute
   '/users/$id': typeof AuthenticatedUsersIdRoute
@@ -292,6 +326,8 @@ export interface FileRoutesByTo {
   '/fleet-map': typeof AuthenticatedFleetMapIndexRoute
   '/groups': typeof AuthenticatedGroupsIndexRoute
   '/my-settlements': typeof AuthenticatedMySettlementsIndexRoute
+  '/questions': typeof AuthenticatedQuestionsIndexRoute
+  '/school-tests': typeof AuthenticatedSchoolTestsIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
   '/training-enrollments': typeof AuthenticatedTrainingEnrollmentsIndexRoute
   '/training-programs': typeof AuthenticatedTrainingProgramsIndexRoute
@@ -317,6 +353,8 @@ export interface FileRoutesById {
   '/_authenticated/expenses/$id': typeof AuthenticatedExpensesIdRoute
   '/_authenticated/groups/$id': typeof AuthenticatedGroupsIdRoute
   '/_authenticated/my-settlements/$id': typeof AuthenticatedMySettlementsIdRoute
+  '/_authenticated/questions/$id': typeof AuthenticatedQuestionsIdRoute
+  '/_authenticated/school-tests/$id': typeof AuthenticatedSchoolTestsIdRoute
   '/_authenticated/students/$id': typeof AuthenticatedStudentsIdRoute
   '/_authenticated/training-enrollments/$id': typeof AuthenticatedTrainingEnrollmentsIdRoute
   '/_authenticated/users/$id': typeof AuthenticatedUsersIdRoute
@@ -329,6 +367,8 @@ export interface FileRoutesById {
   '/_authenticated/fleet-map/': typeof AuthenticatedFleetMapIndexRoute
   '/_authenticated/groups/': typeof AuthenticatedGroupsIndexRoute
   '/_authenticated/my-settlements/': typeof AuthenticatedMySettlementsIndexRoute
+  '/_authenticated/questions/': typeof AuthenticatedQuestionsIndexRoute
+  '/_authenticated/school-tests/': typeof AuthenticatedSchoolTestsIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
   '/_authenticated/training-enrollments/': typeof AuthenticatedTrainingEnrollmentsIndexRoute
   '/_authenticated/training-programs/': typeof AuthenticatedTrainingProgramsIndexRoute
@@ -354,6 +394,8 @@ export interface FileRouteTypes {
     | '/expenses/$id'
     | '/groups/$id'
     | '/my-settlements/$id'
+    | '/questions/$id'
+    | '/school-tests/$id'
     | '/students/$id'
     | '/training-enrollments/$id'
     | '/users/$id'
@@ -366,6 +408,8 @@ export interface FileRouteTypes {
     | '/fleet-map/'
     | '/groups/'
     | '/my-settlements/'
+    | '/questions/'
+    | '/school-tests/'
     | '/students/'
     | '/training-enrollments/'
     | '/training-programs/'
@@ -389,6 +433,8 @@ export interface FileRouteTypes {
     | '/expenses/$id'
     | '/groups/$id'
     | '/my-settlements/$id'
+    | '/questions/$id'
+    | '/school-tests/$id'
     | '/students/$id'
     | '/training-enrollments/$id'
     | '/users/$id'
@@ -401,6 +447,8 @@ export interface FileRouteTypes {
     | '/fleet-map'
     | '/groups'
     | '/my-settlements'
+    | '/questions'
+    | '/school-tests'
     | '/students'
     | '/training-enrollments'
     | '/training-programs'
@@ -425,6 +473,8 @@ export interface FileRouteTypes {
     | '/_authenticated/expenses/$id'
     | '/_authenticated/groups/$id'
     | '/_authenticated/my-settlements/$id'
+    | '/_authenticated/questions/$id'
+    | '/_authenticated/school-tests/$id'
     | '/_authenticated/students/$id'
     | '/_authenticated/training-enrollments/$id'
     | '/_authenticated/users/$id'
@@ -437,6 +487,8 @@ export interface FileRouteTypes {
     | '/_authenticated/fleet-map/'
     | '/_authenticated/groups/'
     | '/_authenticated/my-settlements/'
+    | '/_authenticated/questions/'
+    | '/_authenticated/school-tests/'
     | '/_authenticated/students/'
     | '/_authenticated/training-enrollments/'
     | '/_authenticated/training-programs/'
@@ -627,6 +679,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMySettlementsIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/questions/': {
+      id: '/_authenticated/questions/'
+      path: '/questions'
+      fullPath: '/questions/'
+      preLoaderRoute: typeof AuthenticatedQuestionsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/questions/$id': {
+      id: '/_authenticated/questions/$id'
+      path: '/questions/$id'
+      fullPath: '/questions/$id'
+      preLoaderRoute: typeof AuthenticatedQuestionsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/school-tests/': {
+      id: '/_authenticated/school-tests/'
+      path: '/school-tests'
+      fullPath: '/school-tests/'
+      preLoaderRoute: typeof AuthenticatedSchoolTestsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/school-tests/$id': {
+      id: '/_authenticated/school-tests/$id'
+      path: '/school-tests/$id'
+      fullPath: '/school-tests/$id'
+      preLoaderRoute: typeof AuthenticatedSchoolTestsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/students/': {
       id: '/_authenticated/students/'
       path: '/students'
@@ -708,6 +788,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedExpensesIdRoute: typeof AuthenticatedExpensesIdRoute
   AuthenticatedGroupsIdRoute: typeof AuthenticatedGroupsIdRoute
   AuthenticatedMySettlementsIdRoute: typeof AuthenticatedMySettlementsIdRoute
+  AuthenticatedQuestionsIdRoute: typeof AuthenticatedQuestionsIdRoute
+  AuthenticatedSchoolTestsIdRoute: typeof AuthenticatedSchoolTestsIdRoute
   AuthenticatedStudentsIdRoute: typeof AuthenticatedStudentsIdRoute
   AuthenticatedTrainingEnrollmentsIdRoute: typeof AuthenticatedTrainingEnrollmentsIdRoute
   AuthenticatedUsersIdRoute: typeof AuthenticatedUsersIdRoute
@@ -720,6 +802,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFleetMapIndexRoute: typeof AuthenticatedFleetMapIndexRoute
   AuthenticatedGroupsIndexRoute: typeof AuthenticatedGroupsIndexRoute
   AuthenticatedMySettlementsIndexRoute: typeof AuthenticatedMySettlementsIndexRoute
+  AuthenticatedQuestionsIndexRoute: typeof AuthenticatedQuestionsIndexRoute
+  AuthenticatedSchoolTestsIndexRoute: typeof AuthenticatedSchoolTestsIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
   AuthenticatedTrainingEnrollmentsIndexRoute: typeof AuthenticatedTrainingEnrollmentsIndexRoute
   AuthenticatedTrainingProgramsIndexRoute: typeof AuthenticatedTrainingProgramsIndexRoute
@@ -742,6 +826,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedExpensesIdRoute: AuthenticatedExpensesIdRoute,
   AuthenticatedGroupsIdRoute: AuthenticatedGroupsIdRoute,
   AuthenticatedMySettlementsIdRoute: AuthenticatedMySettlementsIdRoute,
+  AuthenticatedQuestionsIdRoute: AuthenticatedQuestionsIdRoute,
+  AuthenticatedSchoolTestsIdRoute: AuthenticatedSchoolTestsIdRoute,
   AuthenticatedStudentsIdRoute: AuthenticatedStudentsIdRoute,
   AuthenticatedTrainingEnrollmentsIdRoute:
     AuthenticatedTrainingEnrollmentsIdRoute,
@@ -756,6 +842,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFleetMapIndexRoute: AuthenticatedFleetMapIndexRoute,
   AuthenticatedGroupsIndexRoute: AuthenticatedGroupsIndexRoute,
   AuthenticatedMySettlementsIndexRoute: AuthenticatedMySettlementsIndexRoute,
+  AuthenticatedQuestionsIndexRoute: AuthenticatedQuestionsIndexRoute,
+  AuthenticatedSchoolTestsIndexRoute: AuthenticatedSchoolTestsIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
   AuthenticatedTrainingEnrollmentsIndexRoute:
     AuthenticatedTrainingEnrollmentsIndexRoute,

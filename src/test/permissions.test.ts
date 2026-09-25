@@ -155,6 +155,24 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
     expect(roleCan('accountant', 'viewDrivingSessions')).toBe(false);
   });
 
+  it('school learning view includes operator; manage excludes operator', () => {
+    for (const role of [
+      'dev',
+      'owner',
+      'manager',
+      'operator',
+      'teacher',
+    ] as const) {
+      expect(roleCan(role, 'viewSchoolLearning')).toBe(true);
+    }
+    expect(roleCan('accountant', 'viewSchoolLearning')).toBe(false);
+    for (const role of ['dev', 'owner', 'manager', 'teacher'] as const) {
+      expect(roleCan(role, 'manageSchoolLearning')).toBe(true);
+    }
+    expect(roleCan('operator', 'manageSchoolLearning')).toBe(false);
+    expect(roleCan('accountant', 'manageSchoolLearning')).toBe(false);
+  });
+
   it('isCrossTenantRole is owner or dev only', () => {
     expect(isCrossTenantRole('owner')).toBe(true);
     expect(isCrossTenantRole('dev')).toBe(true);
