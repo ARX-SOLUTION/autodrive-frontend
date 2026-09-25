@@ -138,6 +138,7 @@
     "update_available": "Yangi versiya mavjud",
     "update_reload": "Yangilash",
     "offline_banner": "Internet aloqasi yo'q",
+    "demo_banner": "Demo markaz. Ma'lumotlar har tun soat 03:00 da (Toshkent vaqti) tiklanadi.",
     "tab_info": "Ma'lumot"
   },
   "datepicker": {
@@ -171,6 +172,10 @@
     "company_inactive": "Kompaniyangiz hali faollashtirilmagan. Administrator bilan bog'laning.",
     "demo": "Demo emailni to'ldirish",
     "demo_hint": "Demo parolini kiriting, so'ng tizimga kiring",
+    "demo_sign_in": "Demo sifatida kirish",
+    "demo_sign_in_hint": "Namunaviy ma'lumotlar bilan demo markaz ochiladi",
+    "demo_retry": "Demo kirishni qayta urinish",
+    "demo_auto_error": "Demo avtomatik ochilmadi. Pastdagi tugma bilan qayta urinib ko'ring.",
     "session_expired": "Sessiya muddati tugadi, qaytadan kiring"
   },
   "dashboard": {

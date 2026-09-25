@@ -62,7 +62,7 @@ mumkin. Keyinchalik istagan vaqtda talabani guruhga biriktirish mumkin.
 ## Havolalar
 
 - Sayt / ilova: https://automaktab.uz/
-- Demo: bosh sahifada "Demo emailni to'ldirish" (demo@automaktab.uz) — parolni qo'lda kiriting
+- Demo: kirish sahifasida demo tugmasi (demo@automaktab.uz). Ishlab chiqarish ilovasida bir bosishda kiriladi. Demo markaz ma'lumotlari har tun soat 03:00 da (Toshkent vaqti) tiklanadi
 - API: https://api.automaktab.uz/
 - Telegram (demo va narx): https://t.me/Xamidullo_xudoyberdiyev
 - Telefon: +998 94 611 00 66

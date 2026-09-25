@@ -26,6 +26,11 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 import type { AuthResponse } from '@/types/user';
 import { getDefaultAuthenticatedRoute } from '@/lib/defaultAuthenticatedRoute';
+import {
+  DEMO_LOGIN_EMAIL,
+  getDemoLoginPassword,
+  isOneClickDemoLoginEnabled,
+} from '@/lib/demoSession';
 
 const makeLoginFormSchema = (t: (key: string) => string) =>
   z.object({
@@ -39,6 +44,7 @@ const LoginPage = () => {
   const { t } = useTranslation();
   const { theme, toggle } = useTheme();
   const [formError, setFormError] = useState<string | null>(null);
+  const [demoIntentFailed, setDemoIntentFailed] = useState(false);
   const router = useRouter();
   const location = useLocation();
   const login = useLogin();
@@ -120,7 +126,7 @@ const LoginPage = () => {
   };
 
   const fillDemoEmail = useCallback(() => {
-    form.setValue('email', 'demo@automaktab.uz', {
+    form.setValue('email', DEMO_LOGIN_EMAIL, {
       shouldDirty: true,
       shouldValidate: true,
     });
@@ -128,16 +134,57 @@ const LoginPage = () => {
     setFormError(null);
   }, [form]);
 
+  const startDemoLogin = useCallback(
+    (automatic: boolean) => {
+      if (!isOneClickDemoLoginEnabled()) {
+        fillDemoEmail();
+        return;
+      }
+
+      const password = getDemoLoginPassword();
+      setDemoIntentFailed(false);
+      setFormError(null);
+      form.setValue('email', DEMO_LOGIN_EMAIL, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      form.setValue('password', '', {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+      login.mutate(
+        { email: DEMO_LOGIN_EMAIL, password },
+        {
+          onSuccess,
+          onError: (error) => {
+            if (automatic) {
+              setDemoIntentFailed(true);
+              return;
+            }
+            handleError(error);
+          },
+        },
+      );
+    },
+    [fillDemoEmail, form, handleError, login, onSuccess],
+  );
+
   useEffect(() => {
     const isDemoIntent =
       new URLSearchParams(location.searchStr).get('demo') === '1';
-    if (!isDemoIntent || hasTriedDemoIntent.current) {
+    if (
+      !isDemoIntent ||
+      !hasCleanedInitialSession.current ||
+      hasTriedDemoIntent.current
+    ) {
       return;
     }
 
     hasTriedDemoIntent.current = true;
-    fillDemoEmail();
-  }, [fillDemoEmail, location.searchStr]);
+    startDemoLogin(true);
+  }, [location.searchStr, startDemoLogin]);
+
+  const oneClickDemo = isOneClickDemoLoginEnabled();
 
   return (
     <div className="flex min-h-dvh flex-col bg-background px-5 py-6 sm:px-10 sm:py-8 lg:px-14">
@@ -274,17 +321,35 @@ const LoginPage = () => {
                 {login.isPending ? t('login.submitting') : t('login.submit')}
               </Button>
               <div className="border-t border-border/70 pt-5">
+                {demoIntentFailed && (
+                  <Alert
+                    variant="destructive"
+                    className="mb-3 border-destructive/25 bg-destructive/5 px-3.5 py-3 text-sm leading-relaxed dark:border-destructive/25"
+                  >
+                    {t('login.demo_auto_error')}
+                  </Alert>
+                )}
                 <Button
                   type="button"
                   variant="outline"
                   className="h-auto min-h-12 w-full whitespace-normal border-muted-foreground py-3 text-sm focus-visible:ring-foreground"
-                  onClick={fillDemoEmail}
+                  onClick={() => startDemoLogin(false)}
                   disabled={login.isPending}
                 >
-                  {t('login.demo')}
+                  {t(
+                    demoIntentFailed
+                      ? 'login.demo_retry'
+                      : oneClickDemo
+                        ? 'login.demo_sign_in'
+                        : 'login.demo',
+                  )}
                 </Button>
                 <p className="mt-3 text-center text-xs leading-relaxed text-muted-foreground">
-                  {t('login.demo_hint')}
+                  {t(
+                    oneClickDemo
+                      ? 'login.demo_sign_in_hint'
+                      : 'login.demo_hint',
+                  )}
                 </p>
               </div>
             </form>

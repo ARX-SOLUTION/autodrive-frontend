@@ -41,7 +41,13 @@ describe('LoginPage demo intent', () => {
 
   afterEach(() => {
     cleanup();
+    vi.unstubAllEnvs();
   });
+
+  const enableOneClickDemo = (password = 'env-demo-secret') => {
+    vi.stubEnv('VITE_ENABLE_DEMO_LOGIN', 'true');
+    vi.stubEnv('VITE_DEMO_PASSWORD', password);
+  };
 
   it('switches between light and dark without submitting the login form', async () => {
     await renderWithRouter(
@@ -162,5 +168,79 @@ describe('LoginPage demo intent', () => {
     );
     expect(screen.getByLabelText('login.password_label')).toHaveValue('');
     expect(loginMutation.mutate).not.toHaveBeenCalled();
+  });
+
+  it('keeps email-only demo when the password is set without the enable flag', async () => {
+    vi.stubEnv('VITE_DEMO_PASSWORD', 'env-demo-secret');
+    await renderWithRouter(<LoginPage />, {
+      initialEntry: '/login?demo=1',
+      routePattern: '/login',
+    });
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('login.email_label')).toHaveValue(
+        'demo@automaktab.uz',
+      ),
+    );
+    expect(screen.getByLabelText('login.password_label')).toHaveValue('');
+    expect(loginMutation.mutate).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('button', { name: 'login.demo' }),
+    ).toBeInTheDocument();
+  });
+
+  it('signs in with the env password when one-click demo is enabled', async () => {
+    enableOneClickDemo();
+    await renderWithRouter(<LoginPage />, {
+      initialEntry: '/login',
+      routePattern: '/login',
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'login.demo_sign_in' }),
+    );
+
+    expect(loginMutation.mutate).toHaveBeenCalledWith(
+      { email: 'demo@automaktab.uz', password: 'env-demo-secret' },
+      expect.any(Object),
+    );
+    expect(screen.getByLabelText('login.password_label')).toHaveValue('');
+    expect(screen.getByText('login.demo_sign_in_hint')).toBeInTheDocument();
+  });
+
+  it('submits one-click demo login from ?demo=1 when the production env is set', async () => {
+    enableOneClickDemo('another-env-secret');
+    await renderWithRouter(<LoginPage />, {
+      initialEntry: '/login?demo=1',
+      routePattern: '/login',
+    });
+
+    await waitFor(() =>
+      expect(loginMutation.mutate).toHaveBeenCalledWith(
+        { email: 'demo@automaktab.uz', password: 'another-env-secret' },
+        expect.any(Object),
+      ),
+    );
+    expect(screen.getByLabelText('login.password_label')).toHaveValue('');
+  });
+
+  it('shows a retry when automatic one-click demo login fails', async () => {
+    enableOneClickDemo();
+    loginMutation.mutate.mockImplementation(
+      (_credentials: unknown, options: { onError: (error: unknown) => void }) =>
+        options.onError({ response: { status: 401 } }),
+    );
+    await renderWithRouter(<LoginPage />, {
+      initialEntry: '/login?demo=1',
+      routePattern: '/login',
+    });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'login.demo_auto_error',
+    );
+    expect(
+      screen.getByRole('button', { name: 'login.demo_retry' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('login.error')).not.toBeInTheDocument();
   });
 });

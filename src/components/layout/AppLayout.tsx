@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { List } from '@phosphor-icons/react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { DemoSessionBanner } from './DemoSessionBanner';
 import { Breadcrumbs } from './Breadcrumbs';
 import { useCommandPalette } from './useCommandPalette';
 import { PageLoader } from './PageLoader';
@@ -95,30 +96,34 @@ export const AppLayout = () => {
             sidebarExpanded ? 'lg:ml-64' : 'lg:ml-[72px]',
           )}
         >
-          {isMapWorkspace ? (
-            <button
-              type="button"
-              aria-label={t('actions.sidebar')}
-              onClick={() => setMobileSidebarOpen(true)}
-              className="absolute left-3 top-3 z-40 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-background text-foreground shadow-md hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
-            >
-              <List className="h-5 w-5" aria-hidden="true" />
-            </button>
-          ) : (
-            <Topbar
-              onMobileMenuClick={() => setMobileSidebarOpen(true)}
-              onCommandPaletteOpen={() => palette.setOpen(true)}
-            />
-          )}
+          <div className={cn(!isMapWorkspace && 'sticky top-0 z-30')}>
+            <DemoSessionBanner />
+            {!isMapWorkspace && (
+              <Topbar
+                onMobileMenuClick={() => setMobileSidebarOpen(true)}
+                onCommandPaletteOpen={() => palette.setOpen(true)}
+              />
+            )}
+          </div>
           <main
             ref={mainRef}
             id="main-content"
             tabIndex={-1}
             className={cn(
               'flex-1 outline-none',
-              isMapWorkspace ? 'min-h-0' : 'p-4 sm:p-6 md:p-8 lg:p-10',
+              isMapWorkspace ? 'relative min-h-0' : 'p-4 sm:p-6 md:p-8 lg:p-10',
             )}
           >
+            {isMapWorkspace && (
+              <button
+                type="button"
+                aria-label={t('actions.sidebar')}
+                onClick={() => setMobileSidebarOpen(true)}
+                className="absolute left-3 top-3 z-40 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-background text-foreground shadow-md hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
+              >
+                <List className="h-5 w-5" aria-hidden="true" />
+              </button>
+            )}
             <div
               className={
                 isMapWorkspace ? 'h-full' : 'mx-auto w-full max-w-screen-2xl'
