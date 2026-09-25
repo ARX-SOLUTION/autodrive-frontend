@@ -87,7 +87,7 @@ export const Topbar = ({
   ) as string;
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-hair bg-background/[88%] px-4 backdrop-blur-[14px] sm:px-6 lg:px-8">
+    <header className="flex h-16 items-center gap-3 border-b border-hair bg-background/[88%] px-4 backdrop-blur-[14px] sm:px-6 lg:px-8">
       <button
         type="button"
         aria-label={t('actions.sidebar') as string}

@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
+import { useAuthStore } from '@/store/authStore';
 import { AppLayout } from './AppLayout';
 
 // react-hooks/set-state-in-effect fix: setMobileSidebarOpen(false) moved
@@ -42,6 +43,12 @@ vi.mock('./CommandPalette', () => ({
 vi.mock('./PageLoader', () => ({ PageLoader: () => null }));
 
 afterEach(() => {
+  useAuthStore.setState({
+    token: null,
+    user: null,
+    isAuthenticated: false,
+    hasHydrated: true,
+  });
   localStorage.clear();
   cleanup();
 });
@@ -90,5 +97,66 @@ describe('AppLayout mobile sidebar auto-close on navigation', () => {
     expect(screen.getByRole('main').parentElement!.className).toContain(
       'lg:ml-[72px]',
     );
+  });
+});
+
+describe('AppLayout demo company banner', () => {
+  it('shows the reset notice for a demo company slug', async () => {
+    useAuthStore.setState({
+      user: {
+        id: 'manager-1',
+        email: 'manager@example.com',
+        role: 'manager',
+        company_slug: 'automaktab-demo-2026',
+      },
+      isAuthenticated: true,
+      hasHydrated: true,
+    });
+
+    await renderWithRouter(<AppLayout />, {
+      initialEntry: '/home',
+      routePattern: '/home',
+    });
+
+    expect(screen.getByRole('status')).toHaveTextContent('common.demo_banner');
+  });
+
+  it('shows the reset notice for the demo login email', async () => {
+    useAuthStore.setState({
+      user: {
+        id: 'demo-owner',
+        email: 'demo@automaktab.uz',
+        role: 'owner',
+      },
+      isAuthenticated: true,
+      hasHydrated: true,
+    });
+
+    await renderWithRouter(<AppLayout />, {
+      initialEntry: '/home',
+      routePattern: '/home',
+    });
+
+    expect(screen.getByRole('status')).toHaveTextContent('common.demo_banner');
+  });
+
+  it('hides the reset notice for another company', async () => {
+    useAuthStore.setState({
+      user: {
+        id: 'owner-1',
+        email: 'owner@school.uz',
+        role: 'owner',
+        company_slug: 'another-school',
+      },
+      isAuthenticated: true,
+      hasHydrated: true,
+    });
+
+    await renderWithRouter(<AppLayout />, {
+      initialEntry: '/home',
+      routePattern: '/home',
+    });
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });

@@ -138,6 +138,7 @@
     "update_available": "A new version is available",
     "update_reload": "Reload",
     "offline_banner": "No internet connection",
+    "demo_banner": "Demo center. Data resets every night at 03:00 Tashkent time.",
     "tab_info": "Info"
   },
   "datepicker": {
@@ -171,6 +172,10 @@
     "company_inactive": "Your company is not activated yet. Contact your administrator.",
     "demo": "Fill demo email",
     "demo_hint": "Enter the demo password, then sign in",
+    "demo_sign_in": "Sign in as demo",
+    "demo_sign_in_hint": "Opens the demo center with sample data",
+    "demo_retry": "Retry demo sign-in",
+    "demo_auto_error": "The demo did not open automatically. Retry with the button below.",
     "session_expired": "Session expired, please sign in again"
   },
   "dashboard": {

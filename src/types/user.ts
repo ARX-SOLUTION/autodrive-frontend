@@ -18,6 +18,7 @@ export interface User {
   branch_id?: string | null;
   branch_name?: string;
   company_id?: string;
+  company_slug?: string | null;
   company_status?: CompanyStatus;
   company_features?: Record<string, boolean>;
   phone?: string;
