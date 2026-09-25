@@ -33,7 +33,11 @@ import {
   type CourseTypeTab,
 } from '@/components/ui/course-type-tabs';
 import { useBranches } from '@/services/branchService';
-import { useCompanyOverview } from '@/services/dashboardService';
+import {
+  useCompanyOverview,
+  useExpenseBreakdown,
+  useFinanceSummary,
+} from '@/services/dashboardService';
 import type {
   CompanyOverview,
   CompanyOverviewQuery,
@@ -578,6 +582,19 @@ const CompanyRevenueDashboard = () => {
   );
   const { data, isLoading, isFetching, isError, refetch } =
     useCompanyOverview(query);
+  const showFinanceSummary = user?.role === 'owner' || user?.role === 'manager';
+  const financeQuery = useMemo(
+    () => ({
+      branchId: query.branchId,
+      from: query.from || startOfMonthInUz(),
+      to: query.to || todayInUz(),
+    }),
+    [query.branchId, query.from, query.to],
+  );
+  // The finance section stays behind the overview skeleton, but these GETs
+  // must start now. Waiting for that return serializes finance behind overview.
+  useFinanceSummary(financeQuery, showFinanceSummary);
+  useExpenseBreakdown(financeQuery, showFinanceSummary);
 
   const updateParam = (key: string, value?: string) => {
     const next = new URLSearchParams(params);
@@ -822,15 +839,7 @@ const CompanyRevenueDashboard = () => {
         isFetching={isFetching}
       />
 
-      {(user?.role === 'owner' || user?.role === 'manager') && (
-        <FinanceSummarySection
-          query={{
-            branchId: query.branchId,
-            from: query.from || startOfMonthInUz(),
-            to: query.to || todayInUz(),
-          }}
-        />
-      )}
+      {showFinanceSummary && <FinanceSummarySection query={financeQuery} />}
 
       <section className="overflow-hidden rounded-lg border border-border bg-card">
         <div

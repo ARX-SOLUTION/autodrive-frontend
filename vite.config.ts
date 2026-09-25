@@ -6,6 +6,53 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
+// Icons imported by the authenticated shell (nav, sidebar, topbar, and the
+// UI primitives those layouts pull in). csr + defs stay in one chunk;
+// IconBase/context are the shared Phosphor runtime those modules import.
+const SIDEBAR_PHOSPHOR_ICONS = [
+  'BookOpen',
+  'Buildings',
+  'Calendar',
+  'Car',
+  'CaretRight',
+  'Check',
+  'Circle',
+  'CircleNotch',
+  'ClipboardText',
+  'CreditCard',
+  'Exam',
+  'GraduationCap',
+  'Headphones',
+  'House',
+  'List',
+  'ListChecks',
+  'MagnifyingGlass',
+  'MapTrifold',
+  'Moon',
+  'Plus',
+  'PushPin',
+  'PushPinSlash',
+  'ShieldCheck',
+  'SidebarSimple',
+  'SignOut',
+  'SquaresFour',
+  'Stack',
+  'Sun',
+  'Translate',
+  'Tray',
+  'User',
+  'UserGear',
+  'UsersThree',
+  'Wallet',
+  'Warning',
+  'WifiSlash',
+  'X',
+].join('|');
+
+const sidebarPhosphorIconChunk = new RegExp(
+  `/@phosphor-icons/react/dist/(?:csr|defs)/(?:${SIDEBAR_PHOSPHOR_ICONS})\\.es\\.js$|/@phosphor-icons/react/dist/lib/(?:IconBase|context)\\.es\\.js$`,
+);
+
 const assertProductionApiBaseUrl = (value: string | undefined) => {
   const apiBaseUrl = value?.trim();
 
@@ -132,6 +179,12 @@ export default defineConfig(({ mode }) => ({
             },
             { name: 'export-xlsx', test: /\/xlsx\// },
             { name: 'charts-vendor', test: /\/recharts\/|\/d3-/ },
+            {
+              // Authenticated shell icons are shared with route chunks, so
+              // Rolldown otherwise emits one HTTP request per Phosphor file.
+              name: 'sidebar-icons',
+              test: sidebarPhosphorIconChunk,
+            },
           ],
         },
       },
