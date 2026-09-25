@@ -78,7 +78,9 @@ describe('StudentModal total_price pre-fill from Course', () => {
     );
 
     fireEvent.change(q('last_name'), { target: { value: 'Karimov' } });
+    fireEvent.change(q('learner_password'), { target: { value: 'password1' } });
     fireEvent.change(q('first_name'), { target: { value: 'Aziz' } });
+    fireEvent.change(q('learner_password'), { target: { value: 'password1' } });
     fireEvent.change(q('phone'), { target: { value: '901234567' } });
     fireEvent.change(q('total_price'), { target: { value: '2000000' } });
     expect(digitsOnly(q('total_price').value)).toBe('2000000');

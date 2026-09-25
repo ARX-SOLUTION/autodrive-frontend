@@ -43,6 +43,7 @@ const setup = () => {
   );
   fireEvent.change(q('last_name'), { target: { value: 'Karimov' } });
   fireEvent.change(q('first_name'), { target: { value: 'Aziz' } });
+  fireEvent.change(q('learner_password'), { target: { value: 'password1' } });
   return { onSubmit };
 };
 

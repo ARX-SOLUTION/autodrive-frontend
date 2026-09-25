@@ -24,6 +24,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StudentExamsTab } from './StudentExamsTab';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -104,7 +105,10 @@ const StudentModal = ({
   const { data: branches } = useBranches();
   const { data: groups } = useGroups();
 
-  const studentFormSchema = useMemo(() => makeStudentFormSchema(t), [t]);
+  const studentFormSchema = useMemo(
+    () => makeStudentFormSchema(t, { requireLearnerPassword: !student }),
+    [t, student],
+  );
 
   const branchList = branches || [];
 
@@ -141,6 +145,7 @@ const StudentModal = ({
       completion_date: '',
       contract_number: '',
       registered_by: '',
+      learner_password: '',
     });
     form.setFocus('last_name');
   };
@@ -462,6 +467,28 @@ const StudentModal = ({
                           </FormItem>
                         )}
                       />
+                      {!student && (
+                        <FormField
+                          control={form.control}
+                          name="learner_password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel required>
+                                {t('students.learner_password')}
+                              </FormLabel>
+                              <FormControl>
+                                <PasswordInput
+                                  {...field}
+                                  autoComplete="new-password"
+                                  aria-required="true"
+                                  className="bg-secondary border-border"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
                       <FormField
                         control={form.control}
                         name="branch_id"

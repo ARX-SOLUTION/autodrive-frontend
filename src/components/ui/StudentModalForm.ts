@@ -5,11 +5,20 @@ import type { CourseType, Student } from '@/types/student';
 
 export type CreateStudentPayload = CreateStudentRequest;
 
-export const makeStudentFormSchema = (t: (key: string) => string) =>
+export const makeStudentFormSchema = (
+  t: (key: string) => string,
+  opts: { requireLearnerPassword?: boolean } = {},
+) =>
   z.object({
     first_name: z.string().min(1, t('students.validation_required')),
     last_name: z.string().min(1, t('students.validation_required')),
     phone: z.string().refine(isValidUzPhone, t('students.phone_invalid')),
+    learner_password: opts.requireLearnerPassword
+      ? z
+          .string()
+          .min(8, t('students.learner_password_requirements'))
+          .regex(/[0-9]/, t('students.learner_password_requirements'))
+      : z.string().optional(),
     course_type: z.enum(['tezkor', 'avto_maktab']),
     branch_id: z.string().min(1, t('students.validation_branch')),
     payment_method: z.enum(['naqd', 'karta', 'perechisleniya']).optional(),
@@ -70,6 +79,7 @@ export const getCreateStudentFormValues = ({
   notes: '',
   status: 'active',
   registered_by: '',
+  learner_password: '',
 });
 
 export const getEditStudentFormValues = (student: Student) => ({
@@ -94,6 +104,7 @@ export const getEditStudentFormValues = (student: Student) => ({
   notes: student.notes === undefined ? '' : student.notes,
   status: student.status || ('active' as const),
   registered_by: student.registered_by_id || '',
+  learner_password: '',
 });
 
 export const toCreateStudentPayload = (
@@ -105,6 +116,9 @@ export const toCreateStudentPayload = (
     first_name: values.first_name,
     last_name: values.last_name,
     phone: uzPhoneE164(values.phone),
+    ...(values.learner_password
+      ? { learner_password: values.learner_password }
+      : {}),
     course_type: courseType,
     total_price: Number(values.total_price),
     payment_method: values.payment_method || undefined,

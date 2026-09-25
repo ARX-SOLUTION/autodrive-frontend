@@ -6,7 +6,7 @@ import {
   Warning,
   PencilSimple,
   Plus,
-  EnvelopeSimple,
+  Key,
   ShieldCheck,
   Trash,
 } from '@phosphor-icons/react';
@@ -20,7 +20,7 @@ import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { StudentExamsTab } from '@/components/ui/StudentExamsTab';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { StudentPortalInvitationDialog } from '@/pages/students/StudentPortalInvitationDialog';
+import { StudentLearnerLoginDialog } from '@/pages/students/StudentLearnerLoginDialog';
 import StudentModal, {
   type CreateStudentPayload,
 } from '@/components/ui/StudentModal';
@@ -63,11 +63,14 @@ const StudentDetailPage = () => {
   const role = useAuthStore((s) => s.user?.role);
   const canViewGroupHistory =
     role === 'owner' || role === 'manager' || role === 'dev';
-  const canInviteLearner =
-    role === 'owner' || role === 'manager' || role === 'operator';
+  const canManageLearnerLogin =
+    role === 'owner' ||
+    role === 'manager' ||
+    role === 'operator' ||
+    role === 'dev';
 
   const [editOpen, setEditOpen] = useState(false);
-  const [inviteOpen, setInviteOpen] = useState(false);
+  const [learnerLoginOpen, setLearnerLoginOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
   const [deletePaymentTarget, setDeletePaymentTarget] =
     useState<Payment | null>(null);
@@ -205,14 +208,13 @@ const StudentDetailPage = () => {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {canInviteLearner && (
+            {canManageLearnerLogin && (
               <Button
                 variant="outline"
                 className="gap-2"
-                onClick={() => setInviteOpen(true)}
+                onClick={() => setLearnerLoginOpen(true)}
               >
-                <EnvelopeSimple className="h-4 w-4" />{' '}
-                {t('students.detail.invite_button')}
+                <Key className="h-4 w-4" /> {t('students.detail.login_button')}
               </Button>
             )}
             <Button
@@ -373,11 +375,12 @@ const StudentDetailPage = () => {
         operators={operators || []}
       />
 
-      {canInviteLearner && (
-        <StudentPortalInvitationDialog
+      {canManageLearnerLogin && (
+        <StudentLearnerLoginDialog
           studentId={student.id}
-          open={inviteOpen}
-          onClose={() => setInviteOpen(false)}
+          hasLearnerAccount={Boolean(student.has_learner_account)}
+          open={learnerLoginOpen}
+          onClose={() => setLearnerLoginOpen(false)}
         />
       )}
 

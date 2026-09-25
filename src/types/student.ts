@@ -73,4 +73,7 @@ export interface Student {
 
   // GET /students/:id (detail only) — other students this student referred.
   referrals_count?: number;
+
+  // Present on detail reads — whether a learner portal login exists.
+  has_learner_account?: boolean;
 }

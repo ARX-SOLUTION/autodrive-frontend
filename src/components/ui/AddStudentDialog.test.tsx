@@ -129,6 +129,12 @@ describe('AddStudentDialog calendar-date wiring (autodrive-qsgc.3)', () => {
       'students.wizard.amount_placeholder',
     );
     fireEvent.change(amountInput, { target: { value: '500000' } });
+    fireEvent.change(
+      document.querySelector(
+        'input[name="learner_password"]',
+      ) as HTMLInputElement,
+      { target: { value: 'password1' } },
+    );
     typeDate('first_payment_date', '2026-01-12');
     fireEvent.click(screen.getByRole('checkbox'));
 

@@ -207,21 +207,24 @@ export const studentDetailQueryOptions = (id?: string, enabled = !!id) =>
 export const useStudent = (id?: string) =>
   useQuery(studentDetailQueryOptions(id));
 
-export interface LearnerInvitation {
-  token: string;
-  expires_at: string;
-}
-
-export const useIssueLearnerInvitation = () =>
-  useMutation({
-    mutationFn: async ({ id, email }: { id: string; email: string }) => {
-      const { data } = await axiosInstance.post<unknown>(
-        `/students/${id}/learner-invitations`,
-        { email },
+export const useUpsertLearnerAccount = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, password }: { id: string; password: string }) => {
+      const { data } = await axiosInstance.put<unknown>(
+        `/students/${id}/learner-account`,
+        { password },
       );
-      return parseItemEnvelope<LearnerInvitation>(data, 'learner invitation');
+      return parseItemEnvelope<{ has_learner_account: true }>(
+        data,
+        'learner account',
+      );
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: studentKeys.detail(vars.id) });
     },
   });
+};
 
 export const useCreateStudent = () => {
   const qc = useQueryClient();
@@ -341,6 +344,7 @@ export const useCreateStudentWithPayment = () => {
         lead_source_other: payload.lead_source_other,
         referred_by_student_id: payload.referred_by_student_id,
         referred_by_user_id: payload.referred_by_user_id,
+        learner_password: payload.learner_password,
       };
       const { data: studentData } = await axiosInstance.post<unknown>(
         '/students',
