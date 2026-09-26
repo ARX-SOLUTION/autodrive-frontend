@@ -348,6 +348,7 @@ const TrainingEnrollmentsPage = () => {
             onPageChange={setPage}
             pageSize={pageSize}
             onPageSizeChange={setPageSize}
+            totalItems={enrollments.data.meta.total}
           />
         </>
       ) : (

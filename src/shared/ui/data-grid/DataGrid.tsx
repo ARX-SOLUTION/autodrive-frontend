@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { PageSizeSelect } from '@/components/ui/PageSizeSelect';
+import PaginationControls from '@/components/ui/PaginationControls';
 import { cn } from '@/lib/utils';
 import {
   dataGridFeatures,
@@ -450,44 +450,17 @@ export function DataGrid<TData extends RowData>({
       ) : null}
 
       {hasPagination ? (
-        <nav
-          className={
-            showPageSize
-              ? 'flex flex-wrap items-center justify-between gap-3 pt-4'
-              : 'flex items-center justify-center gap-3 pt-4'
-          }
-          aria-label={labels.table}
-        >
-          {showPageSize ? (
-            <PageSizeSelect
-              value={pagination.pageSize}
-              onChange={onPageSizeChange}
-            />
-          ) : null}
-          {showPager ? (
-            <div className="flex items-center justify-center gap-3">
-              <button
-                type="button"
-                aria-label={labels.previousPage}
-                disabled={!table.getCanPreviousPage()}
-                onClick={() => table.previousPage()}
-              >
-                ‹
-              </button>
-              <span aria-live="polite">
-                {pagination.pageIndex + 1} / {pagination.pageCount}
-              </span>
-              <button
-                type="button"
-                aria-label={labels.nextPage}
-                disabled={!table.getCanNextPage()}
-                onClick={() => table.nextPage()}
-              >
-                ›
-              </button>
-            </div>
-          ) : null}
-        </nav>
+        <PaginationControls
+          currentPage={pagination.pageIndex + 1}
+          totalPages={Math.max(pagination.pageCount, 1)}
+          onPageChange={(page) => table.setPageIndex(page - 1)}
+          pageSize={pagination.pageSize}
+          onPageSizeChange={onPageSizeChange}
+          totalItems={pagination.rowCount}
+          previousLabel={labels.previousPage}
+          nextLabel={labels.nextPage}
+          ariaLabel={labels.table}
+        />
       ) : null}
     </div>
   );

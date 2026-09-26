@@ -181,6 +181,7 @@ const MySettlementsPage = () => {
         onPageChange={setCurrentPage}
         pageSize={pageSize}
         onPageSizeChange={setPageSize}
+        totalItems={total}
       />
     </div>
   );

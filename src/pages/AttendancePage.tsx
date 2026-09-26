@@ -464,6 +464,7 @@ const AttendancePage = () => {
             onPageChange={setCurrentPage}
             pageSize={pageSize}
             onPageSizeChange={setPageSize}
+            totalItems={lessonsData?.total}
           />
         </div>
       )}

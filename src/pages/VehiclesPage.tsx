@@ -214,6 +214,7 @@ const VehiclesPage = () => {
             onPageChange={setPage}
             pageSize={pageSize}
             onPageSizeChange={setPageSize}
+            totalItems={vehicles.data.meta.total}
           />
         </>
       ) : (

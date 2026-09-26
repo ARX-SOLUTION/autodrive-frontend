@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   DEFAULT_PAGE_SIZE,
+  formatListPageRange,
   LIST_PAGE_SIZE_STORAGE_KEY,
   matchesListQuery,
   pageCountFor,
@@ -73,5 +74,9 @@ describe('list query helpers', () => {
     expect(slicePage(['a', 'b', 'c', 'd'], 2, 2)).toEqual(['c', 'd']);
     expect(pageCountFor(0, 10)).toBe(1);
     expect(pageCountFor(11, 10)).toBe(2);
+    expect(formatListPageRange(1, 10, 500)).toBe('1–10 / 500');
+    expect(formatListPageRange(3, 10, 25)).toBe('21–25 / 25');
+    expect(formatListPageRange(1, 10, 0)).toBeNull();
+    expect(formatListPageRange(4, 10, 25)).toBeNull();
   });
 });

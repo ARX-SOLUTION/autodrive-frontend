@@ -118,6 +118,7 @@ const SchoolTestsPage = () => {
           onPageChange={setPage}
           pageSize={pageSize}
           onPageSizeChange={setPageSize}
+          totalItems={templates.data.meta.total}
         />
       ) : null}
 
