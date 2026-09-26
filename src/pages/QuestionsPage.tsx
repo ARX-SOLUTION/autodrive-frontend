@@ -199,6 +199,7 @@ const QuestionsPage = () => {
           onPageChange={setPage}
           pageSize={pageSize}
           onPageSizeChange={setPageSize}
+          totalItems={questions.data.meta.total}
         />
       ) : null}
 

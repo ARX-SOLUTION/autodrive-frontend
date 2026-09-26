@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DeletedExpenseHistoryDialog } from '@/pages/expenses/DeletedExpenseHistoryDialog';
+import { formatListPageRange } from '@/lib/listQuery';
 import { useAuthStore } from '@/store/authStore';
 import type { DeletedExpenseHistorySummary } from '@/types/expense';
 
@@ -159,6 +160,8 @@ describe('DeletedExpenseHistoryDialog', () => {
       limit: 10,
     });
     expect(screen.getByText('Fuel duplicate')).toBeInTheDocument();
-    expect(screen.getByText('Page 1 of 1')).toBeInTheDocument();
+    expect(
+      screen.getByText(formatListPageRange(1, 10, rows.length) ?? ''),
+    ).toBeInTheDocument();
   });
 });

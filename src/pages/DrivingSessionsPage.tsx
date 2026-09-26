@@ -185,6 +185,7 @@ const DrivingSessionsPage = () => {
             onPageChange={setPage}
             pageSize={pageSize}
             onPageSizeChange={setPageSize}
+            totalItems={sessions.data.meta.total}
           />
         </>
       ) : (

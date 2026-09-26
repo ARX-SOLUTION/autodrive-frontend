@@ -12,8 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import PaginationControls from '@/components/ui/PaginationControls';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -250,36 +250,15 @@ export const DeletedExpenseHistoryDialog = ({
                 )}
               </div>
 
-              <div className="flex items-center justify-between gap-3 border-t border-border p-3 text-sm text-muted-foreground">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage <= 1 || query.isFetching}
-                >
-                  {t('common.previous')}
-                </Button>
-                <span className="tabular-nums">
-                  {t('expenses.deleted_history.page_status', {
-                    page: currentPage,
-                    totalPages: displayedTotalPages,
-                  })}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage(
-                      Math.min(displayedTotalPages, currentPage + 1),
-                    )
-                  }
-                  disabled={
-                    currentPage >= displayedTotalPages || query.isFetching
-                  }
-                >
-                  {t('common.next')}
-                </Button>
-              </div>
+              <PaginationControls
+                className="border-t border-border px-3 pb-3"
+                currentPage={currentPage}
+                totalPages={displayedTotalPages}
+                onPageChange={setCurrentPage}
+                pageSize={PAGE_SIZE}
+                totalItems={query.data?.meta.total}
+                disabled={query.isFetching}
+              />
             </section>
 
             <section className="p-4 lg:min-h-0 lg:overflow-y-auto">

@@ -121,6 +121,7 @@ const CoursesPage = () => {
         onPageChange={setPage}
         pageSize={pageSize}
         onPageSizeChange={setPageSize}
+        totalItems={courseRows.length}
       />
 
       <CourseFormDialog

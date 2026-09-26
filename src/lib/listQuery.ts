@@ -109,3 +109,25 @@ export const slicePage = <T>(
 
 export const pageCountFor = (total: number, pageSize: number): number =>
   Math.max(1, pageSize > 0 ? Math.ceil(total / pageSize) : 1);
+
+/** Visible row window, e.g. `1–10 / 500`. Empty totals stay unlabeled. */
+export const formatListPageRange = (
+  currentPage: number,
+  pageSize: number,
+  totalItems: number,
+): string | null => {
+  if (
+    !Number.isFinite(currentPage) ||
+    currentPage < 1 ||
+    !Number.isFinite(pageSize) ||
+    pageSize < 1 ||
+    !Number.isFinite(totalItems) ||
+    totalItems < 1
+  ) {
+    return null;
+  }
+  const from = (currentPage - 1) * pageSize + 1;
+  if (from > totalItems) return null;
+  const to = Math.min(currentPage * pageSize, totalItems);
+  return `${from}–${to} / ${totalItems}`;
+};

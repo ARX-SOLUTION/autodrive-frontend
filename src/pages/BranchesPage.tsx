@@ -520,6 +520,7 @@ const BranchesPage = () => {
           onPageChange={setPage}
           pageSize={pageSize}
           onPageSizeChange={setPageSize}
+          totalItems={filteredBranches.length}
         />
       ) : null}
 

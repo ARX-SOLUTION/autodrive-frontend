@@ -20,4 +20,29 @@ describe('PaginationControls i18n', () => {
     expect(screen.queryByText('Oldingi')).toBeNull();
     expect(screen.queryByText('Keyingi')).toBeNull();
   });
+
+  it('shows the row range and a page-size combobox in one footer', () => {
+    render(
+      <PaginationControls
+        currentPage={2}
+        totalPages={5}
+        onPageChange={vi.fn()}
+        pageSize={10}
+        onPageSizeChange={vi.fn()}
+        totalItems={42}
+      />,
+    );
+
+    expect(screen.getByText('11–20 / 42')).toBeTruthy();
+    expect(
+      screen.getByRole('combobox', { name: 'common.rows_per_page' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'common.previous' }),
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: '2' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
 });

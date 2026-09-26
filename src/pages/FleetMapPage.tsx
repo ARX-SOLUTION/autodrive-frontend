@@ -7,8 +7,6 @@ import {
   ArrowClockwise,
   ArrowSquareOut,
   Car,
-  CaretLeft,
-  CaretRight,
   FunnelSimple,
   MagnifyingGlass,
   MapTrifold,
@@ -16,6 +14,7 @@ import {
 } from '@phosphor-icons/react';
 import axios from 'axios';
 import { EmptyState } from '@/components/ui/EmptyState';
+import PaginationControls from '@/components/ui/PaginationControls';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -503,35 +502,17 @@ const FleetMapPage = () => {
           </div>
 
           {vehicles.data && !vehicles.isError ? (
-            <div className="flex min-h-14 shrink-0 items-center justify-between gap-2 border-t border-border/70 px-3 py-2">
-              <button
-                type="button"
-                aria-label={t('common.previous')}
-                disabled={page <= 1}
-                onClick={() => {
-                  setPage((current) => Math.max(1, current - 1));
-                  setSelectedId(null);
-                }}
-                className="flex h-11 w-11 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <CaretLeft className="h-5 w-5" aria-hidden="true" />
-              </button>
-              <span className="text-sm font-medium tabular-nums text-foreground">
-                {t('fleet_map.page_status', { page, totalPages })}
-              </span>
-              <button
-                type="button"
-                aria-label={t('common.next')}
-                disabled={page >= totalPages}
-                onClick={() => {
-                  setPage((current) => Math.min(totalPages, current + 1));
-                  setSelectedId(null);
-                }}
-                className="flex h-11 w-11 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <CaretRight className="h-5 w-5" aria-hidden="true" />
-              </button>
-            </div>
+            <PaginationControls
+              className="shrink-0 border-t border-border/70 px-3"
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={(next) => {
+                setPage(next);
+                setSelectedId(null);
+              }}
+              pageSize={20}
+              totalItems={totalVehicles}
+            />
           ) : null}
         </section>
 

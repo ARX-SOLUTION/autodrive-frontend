@@ -183,6 +183,7 @@ const AuditLogPage = () => {
           onPageChange={setPage}
           pageSize={pageSize}
           onPageSizeChange={setPageSize}
+          totalItems={total}
         />
       </section>
     </div>

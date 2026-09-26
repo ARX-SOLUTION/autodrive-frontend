@@ -505,6 +505,7 @@ const StudentsPage = () => {
         onPageChange={setCurrentPage}
         pageSize={pageSize}
         onPageSizeChange={setPageSize}
+        totalItems={totalStudents}
       />
 
       <StudentsDialogs
