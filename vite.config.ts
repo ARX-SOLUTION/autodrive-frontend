@@ -182,7 +182,7 @@ export default defineConfig(({ mode }) => ({
             {
               // Authenticated route icons are shared with route chunks, so
               // Rolldown otherwise emits one HTTP request per Phosphor file.
-              name: 'route-icons',
+              name: 'sidebar-icons',
               test: routePhosphorIconChunk,
             },
           ],
