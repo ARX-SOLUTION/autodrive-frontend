@@ -1833,5 +1833,21 @@
       "closed": "Yopiq"
     },
     "analytics_pending": "Ball, pass/fail va zaif mavzular backend analytics (#216) chiqgach koʻrinadi. Hozir biriktirish oynalarini kuzating."
+  },
+  "crm_tour": {
+    "sidebar_title": "Menyu",
+    "sidebar_body": "Boshqaruv paneli, talabalar va toʻlovlar shu menyuda.",
+    "dashboard_title": "Filtrlar va yigʻindilar",
+    "dashboard_body": "Shu yerdagi filtrlardan foydalaning. Sahifadagi yigʻindilar shu tanlovga qarab oʻzgaradi.",
+    "students_title": "Talabalar roʻyxati",
+    "students_body": "Ism yozing. Shu yerdagi qatorlar mos talabalarni koʻrsatadi.",
+    "payment_title": "Toʻlov qabul qilish",
+    "payment_body": "To'lov qo'shish tugmasi talaba hozir toʻlagan summa formasini ochadi.",
+    "skip": "Oʻtkazish",
+    "back": "Orqaga",
+    "next": "Keyingi",
+    "done": "Tayyor",
+    "progress": "{{current}} / {{total}}",
+    "save_error": "Yoʻriqnoma yopildi, lekin bu saqlanmadi. Keyingi kirishda yana chiqishi mumkin."
   }
 }

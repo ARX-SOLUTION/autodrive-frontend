@@ -8,8 +8,12 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   hasHydrated: boolean;
+  // Not persisted. Stays false until login or a settled /auth/me, so a stale
+  // stored user cannot open the CRM tour before the server flag is known.
+  sessionValidated: boolean;
   setAuth: (token: string, user: User) => void;
   setUser: (user: User) => void;
+  setSessionValidated: (value: boolean) => void;
   logout: () => void;
   isOwner: () => boolean;
   isDev: () => boolean;
@@ -25,18 +29,27 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       hasHydrated: false,
+      sessionValidated: false,
       setAuth: (token, user) =>
-        set({ token, user, isAuthenticated: true, hasHydrated: true }),
+        set({
+          token,
+          user,
+          isAuthenticated: true,
+          hasHydrated: true,
+          sessionValidated: true,
+        }),
       // Revalidate the session (fresh user/role) without touching the
       // persisted token — used by useRestoreSession on every mount.
       setUser: (user) =>
         set({ user, isAuthenticated: true, hasHydrated: true }),
+      setSessionValidated: (sessionValidated) => set({ sessionValidated }),
       logout: () =>
         set({
           token: null,
           user: null,
           isAuthenticated: false,
           hasHydrated: true,
+          sessionValidated: false,
         }),
       isOwner: () => get().user?.role === 'owner',
       isDev: () => get().user?.role === 'dev',

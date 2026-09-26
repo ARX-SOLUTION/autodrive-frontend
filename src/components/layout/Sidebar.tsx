@@ -90,6 +90,7 @@ const DesktopSidebar = ({
 
     <nav
       id="desktop-sidebar-navigation"
+      data-tour="crm-sidebar-desktop"
       aria-label={sidebarLabel}
       className="app-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4"
     >
@@ -132,6 +133,7 @@ const MobileSidebar = ({
         </div>
 
         <nav
+          data-tour="crm-sidebar-mobile"
           aria-label={sidebarLabel}
           className="app-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4"
         >

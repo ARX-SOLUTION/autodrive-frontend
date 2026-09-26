@@ -21,6 +21,12 @@ export const fetchCurrentUser = async (signal?: AbortSignal): Promise<User> => {
   return parseItemEnvelope<User>(data, 'auth-me');
 };
 
+/** Idempotent. Sets crm_tour_completed_at when it is still null and returns me. */
+export const completeCrmTourRequest = async (): Promise<User> => {
+  const { data } = await axiosInstance.patch<unknown>('/auth/me/crm-tour');
+  return parseItemEnvelope<User>(data, 'auth-me');
+};
+
 export const changePasswordRequest = async (
   dto: ChangePasswordRequest,
 ): Promise<AuthResponse> => {

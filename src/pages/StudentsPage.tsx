@@ -416,86 +416,88 @@ const StudentsPage = () => {
         onCreate={openCreate}
       />
 
-      <StudentsFilterBar
-        courseType={courseType}
-        setCourseType={setCourseType}
-        isCrossTenant={isCrossTenant}
-        canManageStaff={canManageStaff}
-        branchId={branchId}
-        setBranchId={setBranchId}
-        branches={branches || []}
-        operatorId={operatorId}
-        setOperatorId={setOperatorId}
-        operators={operators || []}
-        operatorsLoading={isOperatorsLoading}
-        userBranchId={user?.branch_id}
-        hasGroup={hasGroup}
-        setHasGroup={setHasGroup}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        setDateRange={setDateRange}
-        search={search}
-        setSearch={setSearch}
-        canViewDeleted={canViewDeleted}
-        includeDeleted={includeDeleted}
-        setIncludeDeleted={changeIncludeDeleted}
-      />
+      <div data-tour="crm-students" className="space-y-6">
+        <StudentsFilterBar
+          courseType={courseType}
+          setCourseType={setCourseType}
+          isCrossTenant={isCrossTenant}
+          canManageStaff={canManageStaff}
+          branchId={branchId}
+          setBranchId={setBranchId}
+          branches={branches || []}
+          operatorId={operatorId}
+          setOperatorId={setOperatorId}
+          operators={operators || []}
+          operatorsLoading={isOperatorsLoading}
+          userBranchId={user?.branch_id}
+          hasGroup={hasGroup}
+          setHasGroup={setHasGroup}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          setDateRange={setDateRange}
+          search={search}
+          setSearch={setSearch}
+          canViewDeleted={canViewDeleted}
+          includeDeleted={includeDeleted}
+          setIncludeDeleted={changeIncludeDeleted}
+        />
 
-      {/* Table */}
-      <div className="relative">
-        {isFetching && !isLoading && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
-            <CircleNotch className="h-6 w-6 animate-spin text-primary" />
-          </div>
-        )}
-        <div
-          className={cn(
-            'glass-card overflow-hidden transition-opacity duration-200',
-            isFetching && !isLoading && 'opacity-50',
+        {/* Table */}
+        <div className="relative">
+          {isFetching && !isLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
+              <CircleNotch className="h-6 w-6 animate-spin text-primary" />
+            </div>
           )}
-        >
-          <StudentsTable
-            students={sorted}
-            isLoading={isLoading}
-            isFetching={isFetching}
-            isError={isStudentsError}
-            onRetry={() => refetchStudents()}
-            totalStudents={totalStudents}
-            startIndex={startIndex}
-            currentPage={currentPage}
-            pageSize={pageSize}
-            pageCount={serverTotalPages}
-            onPageChange={setCurrentPage}
-            courseType={courseType}
-            sortField={sortField}
-            sortDir={sortDir}
-            toggleSort={toggleSort}
-            canManageStudents={canManageStudents}
-            isCrossTenant={isCrossTenant}
-            canViewPayments={canViewPayments}
-            onOpenStudent={openStudent}
-            onEdit={openEdit}
-            onDelete={setDeleteId}
-            onCreate={openCreate}
-            canViewDeleted={canViewDeleted}
-            onRestore={setRestoreId}
-          />
+          <div
+            className={cn(
+              'glass-card overflow-hidden transition-opacity duration-200',
+              isFetching && !isLoading && 'opacity-50',
+            )}
+          >
+            <StudentsTable
+              students={sorted}
+              isLoading={isLoading}
+              isFetching={isFetching}
+              isError={isStudentsError}
+              onRetry={() => refetchStudents()}
+              totalStudents={totalStudents}
+              startIndex={startIndex}
+              currentPage={currentPage}
+              pageSize={pageSize}
+              pageCount={serverTotalPages}
+              onPageChange={setCurrentPage}
+              courseType={courseType}
+              sortField={sortField}
+              sortDir={sortDir}
+              toggleSort={toggleSort}
+              canManageStudents={canManageStudents}
+              isCrossTenant={isCrossTenant}
+              canViewPayments={canViewPayments}
+              onOpenStudent={openStudent}
+              onEdit={openEdit}
+              onDelete={setDeleteId}
+              onCreate={openCreate}
+              canViewDeleted={canViewDeleted}
+              onRestore={setRestoreId}
+            />
 
-          <StudentsMobileList
-            students={sorted}
-            isLoading={isLoading}
-            isError={isStudentsError}
-            onRetry={() => refetchStudents()}
-            canManageStudents={canManageStudents}
-            isCrossTenant={isCrossTenant}
-            canViewPayments={canViewPayments}
-            onOpenStudent={openStudent}
-            onEdit={openEdit}
-            onDelete={setDeleteId}
-            onCreate={openCreate}
-            canViewDeleted={canViewDeleted}
-            onRestore={setRestoreId}
-          />
+            <StudentsMobileList
+              students={sorted}
+              isLoading={isLoading}
+              isError={isStudentsError}
+              onRetry={() => refetchStudents()}
+              canManageStudents={canManageStudents}
+              isCrossTenant={isCrossTenant}
+              canViewPayments={canViewPayments}
+              onOpenStudent={openStudent}
+              onEdit={openEdit}
+              onDelete={setDeleteId}
+              onCreate={openCreate}
+              canViewDeleted={canViewDeleted}
+              onRestore={setRestoreId}
+            />
+          </div>
         </div>
       </div>
 

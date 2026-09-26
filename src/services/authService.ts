@@ -51,6 +51,7 @@ export const useLogin = () => {
 export const useRestoreSession = () => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const setUser = useAuthStore((s) => s.setUser);
+  const setSessionValidated = useAuthStore((s) => s.setSessionValidated);
   const logout = useAuthStore((s) => s.logout);
   const queryClient = useQueryClient();
   const storedUser = useAuthStore((s) => s.user);
@@ -78,7 +79,19 @@ export const useRestoreSession = () => {
     if (query.data) {
       setUser(query.data);
     }
-  }, [query.data, sessionRestoreError, setUser, logout, queryClient]);
+    if (query.isFetched && !query.isPlaceholderData) {
+      setSessionValidated(true);
+    }
+  }, [
+    query.data,
+    query.isFetched,
+    query.isPlaceholderData,
+    sessionRestoreError,
+    setUser,
+    setSessionValidated,
+    logout,
+    queryClient,
+  ]);
 
   return { ...query, restoreFailed: sessionRestoreError };
 };

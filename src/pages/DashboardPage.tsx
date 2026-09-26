@@ -301,7 +301,10 @@ const LegacyMainDashboard = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div
+          data-tour="crm-dashboard"
+          className="flex flex-wrap items-center gap-2"
+        >
           <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
             <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden />
             {t('dashboard.live_label')}

@@ -323,7 +323,10 @@ const FilterBar = ({
   const controlClassName =
     'h-10 cursor-pointer rounded-md border border-border bg-card px-2.5 text-sm transition-[background-color,border-color] duration-150 hover:border-primary/40 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
   return (
-    <div className="flex flex-wrap items-center gap-2 border-y border-hair py-3">
+    <div
+      data-tour="crm-dashboard"
+      className="flex flex-wrap items-center gap-2 border-y border-hair py-3"
+    >
       <DateRangePicker
         from={from}
         to={to}

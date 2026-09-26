@@ -48,6 +48,7 @@ afterEach(() => {
     user: null,
     isAuthenticated: false,
     hasHydrated: true,
+    sessionValidated: false,
   });
   localStorage.clear();
   cleanup();
@@ -127,9 +128,11 @@ describe('AppLayout demo company banner', () => {
         id: 'demo-owner',
         email: 'demo@automaktab.uz',
         role: 'owner',
+        crm_tour_completed_at: null,
       },
       isAuthenticated: true,
       hasHydrated: true,
+      sessionValidated: true,
     });
 
     await renderWithRouter(<AppLayout />, {
@@ -138,6 +141,9 @@ describe('AppLayout demo company banner', () => {
     });
 
     expect(screen.getByRole('status')).toHaveTextContent('common.demo_banner');
+    expect(
+      screen.queryByRole('heading', { name: 'crm_tour.sidebar_title' }),
+    ).not.toBeInTheDocument();
   });
 
   it('hides the reset notice for another company', async () => {
