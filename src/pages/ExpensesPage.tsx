@@ -11,6 +11,10 @@ import {
   X,
 } from '@phosphor-icons/react';
 import { useUrlParams } from '@/hooks/useUrlParams';
+import { useDebounce } from '@/hooks/useDebounce';
+import { usePageSize } from '@/hooks/useListQueryState';
+import { matchesListQuery } from '@/lib/listQuery';
+import { ListSearchField } from '@/components/ui/ListSearchField';
 import { useCan } from '@/hooks/useCan';
 import { useAuthStore } from '@/store/authStore';
 import {
@@ -43,7 +47,6 @@ import type {
   ExpenseTriageCountsFilters,
 } from '@/types/expense';
 
-const SERVER_PAGE_SIZE = 20;
 const DISMISSED_VALUE = '1';
 const TASHKENT_OFFSET_MS = 5 * 60 * 60 * 1000;
 
@@ -278,6 +281,11 @@ const ExpensesPage = () => {
     : undefined;
 
   const { searchParams, setParam, setParams } = useUrlParams();
+  const { pageSize, setPageSize } = usePageSize();
+  const expenseSearch = searchParams.get('q') ?? '';
+  const setExpenseSearch = (value: string) =>
+    setParams({ q: value.length > 0 ? value : undefined, page: undefined });
+  const debouncedExpenseSearch = useDebounce(expenseSearch, 300);
 
   const branchFilter = isManager
     ? (managerBranchId ?? 'all')
@@ -379,7 +387,7 @@ const ExpensesPage = () => {
     dateFrom: dateFrom ? toLocalDateStr(dateFrom) : undefined,
     dateTo: dateTo ? toLocalDateStr(dateTo) : undefined,
     page: currentPage,
-    limit: SERVER_PAGE_SIZE,
+    limit: pageSize,
   };
   const triageFilters: ExpenseTriageCountsFilters = {
     branchId: expenseFilters.branchId,
@@ -452,7 +460,8 @@ const ExpensesPage = () => {
     statusFilter !== 'all' ||
     !!attentionFilter ||
     !!dateFrom ||
-    !!dateTo;
+    !!dateTo ||
+    expenseSearch.length > 0;
 
   const clearAll = () =>
     setParams({
@@ -464,6 +473,7 @@ const ExpensesPage = () => {
       date_from: undefined,
       date_to: undefined,
       page: undefined,
+      q: undefined,
     });
 
   const dismissDailyBrief = () => {
@@ -492,9 +502,19 @@ const ExpensesPage = () => {
     });
 
   const canRenderExpenseData = canViewExpenses && hasManagerScope;
-  const visibleExpenses = canRenderExpenseData
-    ? (expensesPage?.data ?? [])
-    : [];
+  const visibleExpenses = useMemo(() => {
+    const rows = canRenderExpenseData ? (expensesPage?.data ?? []) : [];
+    return rows.filter((expense) =>
+      matchesListQuery(
+        debouncedExpenseSearch,
+        expense.title,
+        expense.payee,
+        expense.note,
+        expense.branch_name,
+        expense.category,
+      ),
+    );
+  }, [canRenderExpenseData, debouncedExpenseSearch, expensesPage?.data]);
   const visibleOverdueExpenses = canRenderExpenseData ? overdueExpenses : [];
   const totalExpenses = canRenderExpenseData
     ? (expensesPage?.meta.total ?? 0)
@@ -566,6 +586,12 @@ const ExpensesPage = () => {
         />
       )}
 
+      <ListSearchField
+        value={expenseSearch}
+        onChange={setExpenseSearch}
+        placeholder={t('expenses.title')}
+      />
+
       <ExpensesFilterBar
         branches={branches}
         showBranchFilter={!isManager}
@@ -620,7 +646,8 @@ const ExpensesPage = () => {
               isError={isPageError}
               onRetry={() => void refetchPage()}
               currentPage={currentPage}
-              pageSize={SERVER_PAGE_SIZE}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
               totalExpenses={totalExpenses}
               totalPages={totalPages}
               onPageChange={setCurrentPage}

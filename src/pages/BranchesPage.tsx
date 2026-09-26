@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -57,6 +57,10 @@ import {
 } from '@/lib/phoneFormater';
 import { Branch } from '@/types/branch';
 import { useCan } from '@/hooks/useCan';
+import { useListQueryState } from '@/hooks/useListQueryState';
+import { matchesListQuery, pageCountFor, slicePage } from '@/lib/listQuery';
+import { ListSearchField } from '@/components/ui/ListSearchField';
+import PaginationControls from '@/components/ui/PaginationControls';
 import { branchDeleteDescArgs } from './branchDeleteDescArgs';
 import { PageHeader } from '@/components/layout/PageHeader';
 
@@ -95,6 +99,15 @@ const BranchesPage = () => {
   // autodrive-cg9: owner-only "show deleted" toggle -- local state (not
   // URL), defaults off.
   const [includeDeleted, setIncludeDeleted] = useState(false);
+  const {
+    page,
+    pageSize,
+    search,
+    debouncedSearch,
+    setPage,
+    setPageSize,
+    setSearch,
+  } = useListQueryState();
   const { data: branches, isLoading } = useBranches(
     true,
     // Defensive even though the toggle only renders for an owner: never let
@@ -110,6 +123,24 @@ const BranchesPage = () => {
   const [editItem, setEditItem] = useState<Branch | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [restoreId, setRestoreId] = useState<string | null>(null);
+
+  const filteredBranches = useMemo(
+    () =>
+      (branches ?? []).filter((branch) =>
+        matchesListQuery(
+          debouncedSearch,
+          branch.name,
+          branch.location,
+          branch.phone,
+          branch.manager_name,
+        ),
+      ),
+    [branches, debouncedSearch],
+  );
+  const pagedBranches = slicePage(filteredBranches, page, pageSize);
+  const listEmpty = !isLoading && (branches ?? []).length === 0;
+  const searchMiss =
+    !isLoading && (branches ?? []).length > 0 && filteredBranches.length === 0;
 
   const form = useForm<BranchFormValues>({
     resolver: zodResolver(makeBranchFormSchema(t)),
@@ -244,6 +275,8 @@ const BranchesPage = () => {
         }
       />
 
+      <ListSearchField value={search} onChange={setSearch} />
+
       <div className="hidden md:block">
         <div className="overflow-x-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -251,21 +284,25 @@ const BranchesPage = () => {
               [...Array(4)].map((_, i) => (
                 <Skeleton key={i} className="h-36 rounded-xl" />
               ))
-            ) : (branches || []).length === 0 ? (
+            ) : listEmpty || searchMiss ? (
               <div className="md:col-span-2">
                 <EmptyState
                   icon={Buildings}
-                  title={t('branches.not_found')}
-                  description={t('branches.not_found_desc')}
+                  title={t(
+                    searchMiss ? 'common.no_data' : 'branches.not_found',
+                  )}
+                  description={
+                    searchMiss ? undefined : t('branches.not_found_desc')
+                  }
                   action={
-                    canManageBranches
+                    canManageBranches && !searchMiss
                       ? { label: t('branches.add'), onClick: openCreate }
                       : undefined
                   }
                 />
               </div>
             ) : (
-              (branches || []).map((b) => (
+              pagedBranches.map((b) => (
                 <div
                   key={b.id}
                   onClick={(e) =>
@@ -384,8 +421,8 @@ const BranchesPage = () => {
           [...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-28 w-full rounded-lg" />
           ))
-        ) : branches && branches.length > 0 ? (
-          branches.map((b) => (
+        ) : pagedBranches.length > 0 ? (
+          pagedBranches.map((b) => (
             <DataCard
               key={b.id}
               title={
@@ -465,16 +502,26 @@ const BranchesPage = () => {
         ) : (
           <EmptyState
             icon={Buildings}
-            title={t('branches.not_found')}
-            description={t('branches.not_found_desc')}
+            title={t(searchMiss ? 'common.no_data' : 'branches.not_found')}
+            description={searchMiss ? undefined : t('branches.not_found_desc')}
             action={
-              canManageBranches
+              canManageBranches && !searchMiss
                 ? { label: t('branches.add'), onClick: openCreate }
                 : undefined
             }
           />
         )}
       </div>
+
+      {!isLoading && (branches ?? []).length > 0 ? (
+        <PaginationControls
+          currentPage={page}
+          totalPages={pageCountFor(filteredBranches.length, pageSize)}
+          onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+        />
+      ) : null}
 
       <Dialog open={modalOpen} onOpenChange={(o) => !o && attemptClose()}>
         <DialogContent className="max-w-md bg-card border-border">

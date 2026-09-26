@@ -139,7 +139,8 @@
     "update_reload": "Reload",
     "offline_banner": "No internet connection",
     "demo_banner": "Demo center. Data resets every night at 03:00 Tashkent time.",
-    "tab_info": "Info"
+    "tab_info": "Info",
+    "rows_per_page": "Rows per page"
   },
   "datepicker": {
     "placeholder": "Pick a date",
@@ -1450,7 +1451,17 @@
       "daily_report_label": "Daily report",
       "daily_report_enabled": "Daily report enabled.",
       "daily_report_disabled": "Daily report disabled."
-    }
+    },
+    "menu_label": "Account menu",
+    "open_profile": "Profile settings",
+    "company": "Company",
+    "company_slug": "Company code",
+    "company_status": "Status",
+    "preferences": "Preferences",
+    "branches_link": "Branches",
+    "status_active": "Active",
+    "status_pending": "Pending",
+    "status_suspended": "Suspended"
   },
   "attendance": {
     "title": "Attendance",

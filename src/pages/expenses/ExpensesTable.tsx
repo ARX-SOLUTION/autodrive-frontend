@@ -23,6 +23,7 @@ interface ExpensesTableProps {
   totalExpenses: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
 }
 
 const columnHelper = createDataGridColumnHelper<Expense>();
@@ -131,6 +132,7 @@ export const ExpensesTable = ({
   totalExpenses,
   totalPages,
   onPageChange,
+  onPageSizeChange,
 }: ExpensesTableProps) => {
   const { t } = useTranslation();
   const canManageFinance = useCan('manageCompanyFinance');
@@ -251,6 +253,7 @@ export const ExpensesTable = ({
       onPaginationChange={(pagination) =>
         onPageChange(pagination.pageIndex + 1)
       }
+      onPageSizeChange={onPageSizeChange}
       sorting={[]}
       onSortingChange={() => undefined}
       columnFilters={[]}

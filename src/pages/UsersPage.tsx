@@ -16,6 +16,7 @@ import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useAuthStore } from '@/store/authStore';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUrlParams } from '@/hooks/useUrlParams';
+import { usePageSize } from '@/hooks/useListQueryState';
 import { extractErrorMessage } from '@/lib/errors';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { Button } from '@/components/ui/button';
@@ -62,7 +63,6 @@ const formatDate = (d?: string) => {
   }
 };
 
-const SERVER_PAGE_SIZE = 25;
 const userColumnHelper = createDataGridColumnHelper<User>();
 const NO_COLUMN_FILTERS: ColumnFiltersState = [];
 const ignoreColumnFiltersChange = () => undefined;
@@ -122,6 +122,7 @@ const UserLifecycleButton = ({ user, onSelect }: UserLifecycleButtonProps) => {
 
 const UsersPage = () => {
   const { t } = useTranslation();
+  const { pageSize, setPageSize } = usePageSize();
   const navigate = useNavigate();
   const isCrossTenant = useIsCrossTenant();
   const canViewDeleted = useCan('viewDeleted');
@@ -176,7 +177,7 @@ const UsersPage = () => {
     isFetching,
     isError,
     refetch,
-  } = useUsersPage(userRole, currentPage, SERVER_PAGE_SIZE, {
+  } = useUsersPage(userRole, currentPage, pageSize, {
     search: debouncedSearch,
     branchId: userRole === 'accountant' ? undefined : branchId,
     isActive,
@@ -290,7 +291,7 @@ const UsersPage = () => {
     });
   };
 
-  const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
+  const startIndex = (currentPage - 1) * pageSize;
   const usersTitle = t('users.title');
   const columns = useMemo(
     () =>
@@ -504,11 +505,12 @@ const UsersPage = () => {
           getRowId={(user) => user.id}
           pagination={{
             pageIndex: currentPage - 1,
-            pageSize: SERVER_PAGE_SIZE,
+            pageSize: pageSize,
             rowCount: usersPage?.meta.total ?? users.length,
             pageCount: totalPages,
           }}
           onPaginationChange={({ pageIndex }) => setCurrentPage(pageIndex + 1)}
+          onPageSizeChange={setPageSize}
           sorting={sorting}
           onSortingChange={setSorting}
           columnFilters={NO_COLUMN_FILTERS}

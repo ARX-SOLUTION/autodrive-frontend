@@ -284,7 +284,7 @@ describe('ExpensesPage', () => {
       category: 'rent',
       status: 'paid',
       page: 2,
-      limit: 20,
+      limit: 10,
     });
     expect(
       screen.getByRole('combobox', { name: 'common.branch' }),

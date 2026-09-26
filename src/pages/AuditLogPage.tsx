@@ -6,7 +6,8 @@ import { toLocalDateStr } from '@/services/studentService';
 import { parseCalendarDate } from '@/lib/calendarDate';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUrlParams } from '@/hooks/useUrlParams';
-import { Button } from '@/components/ui/button';
+import { usePageSize } from '@/hooks/useListQueryState';
+import PaginationControls from '@/components/ui/PaginationControls';
 import { ShieldCheck } from '@phosphor-icons/react';
 import { AuditFilterBar } from '@/pages/audit/AuditFilterBar';
 import { AuditTable } from '@/pages/audit/AuditTable';
@@ -22,6 +23,7 @@ const AuditLogPage = () => {
   // (src/hooks/useUrlParams.ts). Sort stays local (no other list page's
   // sort is URL-synced either).
   const { searchParams, setParam, setParams } = useUrlParams();
+  const { pageSize, setPageSize } = usePageSize();
 
   const search = searchParams.get('q') ?? '';
   const setSearch = (v: string) => setParam('q', v || undefined);
@@ -58,7 +60,6 @@ const AuditLogPage = () => {
   const page = Number(searchParams.get('page')) || 1;
   const setPage = (p: number) =>
     setParam('page', p > 1 ? String(p) : undefined);
-  const LIMIT = 50;
 
   const [sortField, setSortField] = useState('createdAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -93,12 +94,12 @@ const AuditLogPage = () => {
     startDate: dateFrom,
     endDate: dateTo,
     page,
-    limit: LIMIT,
+    limit: pageSize,
   });
 
   const logs = data?.data || [];
   const total = data?.meta?.total || 0;
-  const totalPages = Math.max(1, Math.ceil(total / LIMIT));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const sorted = sortAuditLogs(logs, sortField, sortDir);
 
@@ -163,7 +164,7 @@ const AuditLogPage = () => {
           isLoading={isLoading}
           isError={isError}
           onRetry={() => refetch()}
-          startIndex={(page - 1) * LIMIT}
+          startIndex={(page - 1) * pageSize}
           sortField={sortField}
           sortDir={sortDir}
           onToggleSort={toggleSort}
@@ -176,29 +177,13 @@ const AuditLogPage = () => {
           onRetry={() => refetch()}
         />
 
-        {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage(page - 1)}
-            >
-              {t('common.previous')}
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              {page} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages}
-              onClick={() => setPage(page + 1)}
-            >
-              {t('common.next')}
-            </Button>
-          </div>
-        )}
+        <PaginationControls
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+        />
       </section>
     </div>
   );

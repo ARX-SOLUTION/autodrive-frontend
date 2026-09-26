@@ -2,6 +2,11 @@ import { createFileRoute } from '@tanstack/react-router';
 import StudentsPage from '@/pages/StudentsPage';
 import { requireCapability } from '@/app/routeGuards';
 import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
+import {
+  parseRouteLimit,
+  parseRoutePage,
+  type PageSizeOption,
+} from '@/lib/listQuery';
 
 type StudentListSearch = {
   action?: 'create';
@@ -12,7 +17,9 @@ type StudentListSearch = {
   has_debt?: boolean;
   has_group?: boolean;
   include_deleted?: boolean;
+  limit?: PageSizeOption;
   operator_id?: string;
+  page?: number;
   q?: string;
   referred_by_student_id?: string;
   referred_by_user_id?: string;
@@ -43,8 +50,10 @@ export const Route = createFileRoute('/_authenticated/students/')({
       search.include_deleted === 'true' || search.include_deleted === true
         ? true
         : undefined,
+    limit: parseRouteLimit(search.limit),
     operator_id:
       typeof search.operator_id === 'string' ? search.operator_id : undefined,
+    page: parseRoutePage(search.page),
     q: typeof search.q === 'string' ? search.q : undefined,
     referred_by_student_id:
       typeof search.referred_by_student_id === 'string'

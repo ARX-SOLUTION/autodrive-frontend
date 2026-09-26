@@ -1,9 +1,12 @@
 import { Wallet, Warning } from '@phosphor-icons/react';
 import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { ListSearchField } from '@/components/ui/ListSearchField';
 import PaginationControls from '@/components/ui/PaginationControls';
+import { useListQueryState } from '@/hooks/useListQueryState';
+import { matchesListQuery } from '@/lib/listQuery';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useCan } from '@/hooks/useCan';
@@ -62,9 +65,30 @@ const MySettlementsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const canViewOwn = useCan('viewOwnSettlements');
-  const [currentPage, setCurrentPage] = useState(1);
-  const query = useMySettlements(currentPage, canViewOwn);
-  const settlements = query.data?.data ?? [];
+  const {
+    page: currentPage,
+    pageSize,
+    search,
+    debouncedSearch,
+    setPage: setCurrentPage,
+    setPageSize,
+    setSearch,
+  } = useListQueryState();
+  const query = useMySettlements(currentPage, canViewOwn, pageSize);
+  const settlements = useMemo(() => query.data?.data ?? [], [query.data]);
+  const visibleSettlements = useMemo(
+    () =>
+      settlements.filter((settlement) =>
+        matchesListQuery(
+          debouncedSearch,
+          settlement.title,
+          settlement.branch_name,
+          settlement.period_month,
+          settlement.expense_date,
+        ),
+      ),
+    [settlements, debouncedSearch],
+  );
   const total = query.data?.meta.total ?? 0;
   const totalPages = Math.max(1, query.data?.meta.totalPages ?? 1);
 
@@ -92,6 +116,12 @@ const MySettlementsPage = () => {
         title={t('my_settlements.title')}
         description={t('my_settlements.subtitle')}
         icon={<Wallet className="h-3.5 w-3.5" aria-hidden="true" />}
+      />
+
+      <ListSearchField
+        value={search}
+        onChange={setSearch}
+        placeholder={t('expenses.title')}
       />
 
       <MySettlementsSummaryPanel
@@ -130,9 +160,11 @@ const MySettlementsPage = () => {
             title={t('my_settlements.empty')}
             description={t('my_settlements.empty_desc')}
           />
+        ) : visibleSettlements.length === 0 ? (
+          <EmptyState icon={Wallet} title={t('common.no_data')} />
         ) : (
           <div>
-            {settlements.map((settlement) => (
+            {visibleSettlements.map((settlement) => (
               <SettlementRow
                 key={settlement.id}
                 settlement={settlement}
@@ -147,6 +179,8 @@ const MySettlementsPage = () => {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
       />
     </div>
   );

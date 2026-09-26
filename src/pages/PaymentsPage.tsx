@@ -5,6 +5,7 @@ import PaymentModal, {
 import { useDebounce } from '@/hooks/useDebounce';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useUrlParams } from '@/hooks/useUrlParams';
+import { usePageSize } from '@/hooks/useListQueryState';
 import { cn } from '@/lib/utils';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { useBranches } from '@/services/branchService';
@@ -38,6 +39,7 @@ const PaymentsPage = () => {
   // them (autodrive-6cq.5.8) — same setParam/setParams pattern as
   // StudentsPage (src/hooks/useUrlParams.ts).
   const { searchParams, setParam, setParams } = useUrlParams();
+  const { pageSize, setPageSize } = usePageSize();
 
   const defaultBranchId = isCrossTenant
     ? undefined
@@ -97,7 +99,6 @@ const PaymentsPage = () => {
 
   const [isExporting, setIsExporting] = useState(false);
 
-  const SERVER_PAGE_SIZE = 50;
   const debouncedSearch = useDebounce(search, 300);
   const activeCourseType =
     courseTypeFilter !== 'all' ? courseTypeFilter : undefined;
@@ -148,7 +149,7 @@ const PaymentsPage = () => {
     dateFrom,
     dateTo,
     effectivePage,
-    SERVER_PAGE_SIZE,
+    pageSize,
     {
       search: debouncedSearch,
       paymentStatus: activePaymentStatus,
@@ -334,10 +335,11 @@ const PaymentsPage = () => {
               isError={isPaymentsError}
               onRetry={() => void refetchPayments()}
               currentPage={currentPage}
-              pageSize={SERVER_PAGE_SIZE}
+              pageSize={pageSize}
               totalPayments={totalPayments}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
               sortField={sortField}
               sortDir={sortDir}
               onSortChange={setSort}

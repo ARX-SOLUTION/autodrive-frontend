@@ -143,7 +143,7 @@ describe('PaymentsPage characterization', () => {
     expect(dateFrom).toEqual(parseCalendarDate('2026-07-01'));
     expect(dateTo).toEqual(parseCalendarDate('2026-07-10'));
     expect(page).toBe(2);
-    expect(limit).toBe(50);
+    expect(limit).toBe(10);
     expect(opts).toMatchObject({
       search: 'aziz',
       paymentStatus: 'paid',

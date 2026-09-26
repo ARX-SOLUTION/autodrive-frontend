@@ -7,6 +7,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import PaginationControls from '@/components/ui/PaginationControls';
+import { ListSearchField } from '@/components/ui/ListSearchField';
+import { useListQueryState } from '@/hooks/useListQueryState';
+import { matchesListQuery } from '@/lib/listQuery';
 import {
   useLessons,
   useCreateLesson,
@@ -188,13 +191,32 @@ const LessonCard = ({
 const AttendancePage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 50;
+  const {
+    page: currentPage,
+    pageSize,
+    search,
+    debouncedSearch,
+    setPage: setCurrentPage,
+    setPageSize,
+    setSearch,
+  } = useListQueryState();
   const { data: lessonsData, isLoading } = useLessons(currentPage, pageSize);
   // Memoised so the reference is stable: the `|| []` fallback would otherwise
   // allocate a new array every render, re-firing the deep-link effect below on
   // each one (its ref guard hid the symptom, but the work was still repeated).
   const lessons = useMemo(() => lessonsData?.data || [], [lessonsData]);
+  const visibleLessons = useMemo(
+    () =>
+      lessons.filter((lesson) =>
+        matchesListQuery(
+          debouncedSearch,
+          lesson.title,
+          lesson.group_name,
+          lesson.lesson_type,
+        ),
+      ),
+    [lessons, debouncedSearch],
+  );
   const totalPages = lessonsData?.total
     ? Math.ceil(lessonsData.total / pageSize)
     : Math.max(1, lessons.length < pageSize ? currentPage : currentPage + 1);
@@ -392,44 +414,56 @@ const AttendancePage = () => {
         }
       />
 
+      <ListSearchField
+        value={search}
+        onChange={setSearch}
+        placeholder={t('attendance.lesson_title')}
+      />
+
       {isLoading ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Skeleton key={i} className="h-28 w-full" />
           ))}
         </div>
-      ) : !lessons?.length ? (
+      ) : !lessons.length ? (
         <EmptyState
           title={t('attendance.not_found')}
           description={t('attendance.not_found_desc')}
         />
       ) : (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {lessons.map((lesson) => (
-              <LessonCard
-                key={lesson.id}
-                lesson={lesson}
-                typeLabel={lessonTypeLabel[lesson.lesson_type]}
-                teacherName={groupTeacherMap.get(lesson.group_id)}
-                canEdit={canEditLesson(lesson)}
-                canDelete={canDeleteLesson(lesson)}
-                onOpen={() => openLesson(lesson)}
-                onEdit={() => openEdit(lesson)}
-                onDelete={() => setDeleteId(lesson.id)}
-                onNavigateGroup={() =>
-                  navigate({
-                    to: '/groups/$id',
-                    params: { id: lesson.group_id },
-                  })
-                }
-              />
-            ))}
-          </div>
+          {visibleLessons.length === 0 ? (
+            <EmptyState title={t('common.no_data')} />
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {visibleLessons.map((lesson) => (
+                <LessonCard
+                  key={lesson.id}
+                  lesson={lesson}
+                  typeLabel={lessonTypeLabel[lesson.lesson_type]}
+                  teacherName={groupTeacherMap.get(lesson.group_id)}
+                  canEdit={canEditLesson(lesson)}
+                  canDelete={canDeleteLesson(lesson)}
+                  onOpen={() => openLesson(lesson)}
+                  onEdit={() => openEdit(lesson)}
+                  onDelete={() => setDeleteId(lesson.id)}
+                  onNavigateGroup={() =>
+                    navigate({
+                      to: '/groups/$id',
+                      params: { id: lesson.group_id },
+                    })
+                  }
+                />
+              ))}
+            </div>
+          )}
           <PaginationControls
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
           />
         </div>
       )}

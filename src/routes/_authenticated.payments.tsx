@@ -2,6 +2,11 @@ import { createFileRoute } from '@tanstack/react-router';
 import { requireCapability } from '@/app/routeGuards';
 import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
 import PaymentsPage from '@/pages/PaymentsPage';
+import {
+  parseRouteLimit,
+  parseRoutePage,
+  type PageSizeOption,
+} from '@/lib/listQuery';
 
 export type PaymentsSearch = {
   action?: 'create';
@@ -9,6 +14,7 @@ export type PaymentsSearch = {
   course_type?: 'tezkor' | 'avto_maktab';
   date_from?: string;
   date_to?: string;
+  limit?: PageSizeOption;
   method?: string;
   page?: number;
   q?: string;
@@ -29,8 +35,9 @@ export const Route = createFileRoute('/_authenticated/payments')({
     date_from:
       typeof search.date_from === 'string' ? search.date_from : undefined,
     date_to: typeof search.date_to === 'string' ? search.date_to : undefined,
+    limit: parseRouteLimit(search.limit),
     method: typeof search.method === 'string' ? search.method : undefined,
-    page: typeof search.page === 'number' ? search.page : undefined,
+    page: parseRoutePage(search.page),
     q: typeof search.q === 'string' ? search.q : undefined,
     sort_by: typeof search.sort_by === 'string' ? search.sort_by : undefined,
     sort_dir:

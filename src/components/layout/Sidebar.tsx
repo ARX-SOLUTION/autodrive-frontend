@@ -2,19 +2,13 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
-import { useLogout } from '@/services/authService';
 import { useCan } from '@/hooks/useCan';
 import type { Capability } from '@/lib/permissions';
-import {
-  SignOut,
-  PushPin,
-  PushPinSlash,
-  SidebarSimple,
-} from '@phosphor-icons/react';
+import { PushPin, PushPinSlash, SidebarSimple } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { NAV_ITEMS, NAV_SECTIONS, type NavItem } from '@/lib/navigation';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { SidebarAccountCard } from './SidebarAccountCard';
 import {
   Tooltip,
   TooltipContent,
@@ -49,11 +43,6 @@ interface DesktopSidebarProps {
   sidebarLabel: string;
   branchLabel: string;
   navigation: ReactNode;
-  initials: string;
-  userLabel?: string;
-  roleLabel: string;
-  logoutLabel: string;
-  onLogout: () => void;
 }
 
 const DesktopSidebar = ({
@@ -62,11 +51,6 @@ const DesktopSidebar = ({
   sidebarLabel,
   branchLabel,
   navigation,
-  initials,
-  userLabel,
-  roleLabel,
-  logoutLabel,
-  onLogout,
 }: DesktopSidebarProps) => (
   <aside
     data-state={expanded ? 'expanded' : 'collapsed'}
@@ -113,39 +97,7 @@ const DesktopSidebar = ({
     </nav>
 
     <div className="border-t border-sidebar-border p-3">
-      <div
-        className={cn(
-          'flex items-center gap-2',
-          expanded
-            ? 'rounded-xl bg-sidebar-accent/80 p-2 shadow-[0_1px_2px_hsl(var(--foreground)/0.05)]'
-            : 'flex-col',
-        )}
-      >
-        <Avatar className="h-9 w-9 shrink-0 rounded-[10px]">
-          <AvatarFallback className="rounded-[10px] bg-background text-xs font-semibold text-foreground">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        {expanded && (
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-sidebar-foreground">
-              {userLabel}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {roleLabel}
-            </p>
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={onLogout}
-          aria-label={logoutLabel}
-          title={logoutLabel}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-background hover:text-destructive active:scale-[0.96]"
-        >
-          <SignOut className="h-4 w-4" />
-        </button>
-      </div>
+      <SidebarAccountCard expanded={expanded} />
     </div>
   </aside>
 );
@@ -156,11 +108,6 @@ interface MobileSidebarProps {
   sidebarLabel: string;
   branchLabel: string;
   navigation: ReactNode;
-  initials: string;
-  userLabel?: string;
-  roleLabel: string;
-  logoutLabel: string;
-  onLogout: () => void;
 }
 
 const MobileSidebar = ({
@@ -169,11 +116,6 @@ const MobileSidebar = ({
   sidebarLabel,
   branchLabel,
   navigation,
-  initials,
-  userLabel,
-  roleLabel,
-  logoutLabel,
-  onLogout,
 }: MobileSidebarProps) => (
   <Sheet open={open} onOpenChange={onOpenChange}>
     <SheetContent
@@ -197,31 +139,10 @@ const MobileSidebar = ({
         </nav>
 
         <div className="border-t border-sidebar-border p-3">
-          <div className="flex items-center justify-between gap-2 rounded-xl bg-sidebar-accent/80 p-2 shadow-[0_1px_2px_hsl(var(--foreground)/0.05)]">
-            <div className="flex min-w-0 items-center gap-2">
-              <Avatar className="h-9 w-9 shrink-0 rounded-[10px]">
-                <AvatarFallback className="rounded-[10px] bg-background text-xs font-semibold text-foreground">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-sidebar-foreground">
-                  {userLabel}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {roleLabel}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={onLogout}
-              aria-label={logoutLabel}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-background hover:text-destructive active:scale-[0.96]"
-            >
-              <SignOut className="h-4 w-4" />
-            </button>
-          </div>
+          <SidebarAccountCard
+            expanded
+            onBeforeLogout={() => onOpenChange(false)}
+          />
         </div>
       </div>
     </SheetContent>
@@ -237,7 +158,6 @@ export const Sidebar = ({
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const logoutMutation = useLogout();
   const pinStorageKey = user?.id
     ? `autodrive-sidebar-pins:${user.company_id ?? 'default'}:${user.id}`
     : null;
@@ -284,22 +204,8 @@ export const Sidebar = ({
     .map((path) => itemByPath.get(path))
     .filter((item): item is NavItem => Boolean(item));
 
-  const roleLabel =
-    user?.role === 'owner'
-      ? t('roles.owner')
-      : user?.branch_name || t(`roles.${user?.role ?? 'operator'}`);
-  const initials =
-    (user?.name || user?.email || '')
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]!.toUpperCase())
-      .join('') || '?';
   const sidebarLabel = t('actions.sidebar');
   const branchLabel = user?.branch_name || t('nav.branches_all');
-  const logoutLabel = t('actions.logout', 'Chiqish');
-  const userLabel = user?.name || user?.email;
 
   const togglePin = (path: string) => {
     const next = pinnedPaths.includes(path)
@@ -460,11 +366,6 @@ export const Sidebar = ({
         sidebarLabel={sidebarLabel}
         branchLabel={branchLabel}
         navigation={renderNavGroups('desktop')}
-        initials={initials}
-        userLabel={userLabel}
-        roleLabel={roleLabel}
-        logoutLabel={logoutLabel}
-        onLogout={() => logoutMutation.mutate()}
       />
       <MobileSidebar
         open={mobileOpen}
@@ -472,14 +373,6 @@ export const Sidebar = ({
         sidebarLabel={sidebarLabel}
         branchLabel={branchLabel}
         navigation={renderNavGroups('mobile', () => onMobileOpenChange(false))}
-        initials={initials}
-        userLabel={userLabel}
-        roleLabel={roleLabel}
-        logoutLabel={logoutLabel}
-        onLogout={() => {
-          onMobileOpenChange(false);
-          logoutMutation.mutate();
-        }}
       />
     </>
   );

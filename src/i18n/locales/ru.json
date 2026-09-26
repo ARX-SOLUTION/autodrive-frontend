@@ -139,7 +139,8 @@
     "update_reload": "Обновить",
     "offline_banner": "Нет подключения к интернету",
     "demo_banner": "Демо-центр. Данные сбрасываются каждую ночь в 03:00 по ташкентскому времени.",
-    "tab_info": "Информация"
+    "tab_info": "Информация",
+    "rows_per_page": "Строк на странице"
   },
   "datepicker": {
     "placeholder": "Выберите дату",
@@ -1450,7 +1451,17 @@
       "daily_report_label": "Ежедневный отчёт",
       "daily_report_enabled": "Ежедневный отчёт включён.",
       "daily_report_disabled": "Ежедневный отчёт отключён."
-    }
+    },
+    "menu_label": "Меню аккаунта",
+    "open_profile": "Настройки профиля",
+    "company": "Компания",
+    "company_slug": "Код компании",
+    "company_status": "Статус",
+    "preferences": "Настройки",
+    "branches_link": "Филиалы",
+    "status_active": "Активна",
+    "status_pending": "Ожидает",
+    "status_suspended": "Приостановлена"
   },
   "attendance": {
     "title": "Посещаемость",

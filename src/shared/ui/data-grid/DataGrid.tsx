@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { PageSizeSelect } from '@/components/ui/PageSizeSelect';
 import { cn } from '@/lib/utils';
 import {
   dataGridFeatures,
@@ -60,6 +61,8 @@ interface DataGridBaseProps<TData extends RowData> {
   onColumnFiltersChange: (filters: ColumnFiltersState) => void;
   /** `true` means `data` is already the requested server page. */
   manualPagination: boolean;
+  /** When set, the shared 10/25/50/100 control is shown beside the pager. */
+  onPageSizeChange?: (pageSize: number) => void;
   /** `true` means incoming rows are already sorted by the data source. */
   manualSorting: boolean;
   /** `true` means incoming rows are already filtered by the data source. */
@@ -120,6 +123,7 @@ export function DataGrid<TData extends RowData>({
   columnFilters,
   onColumnFiltersChange,
   manualPagination,
+  onPageSizeChange,
   manualSorting,
   manualFiltering,
   isInitialLoading,
@@ -177,7 +181,9 @@ export function DataGrid<TData extends RowData>({
 
   const rows = table.getRowModel().rows;
   const leafColumnCount = table.getAllLeafColumns().length;
-  const hasPagination = showPagination && pagination.pageCount > 1;
+  const showPager = showPagination && pagination.pageCount > 1;
+  const showPageSize = showPagination && onPageSizeChange !== undefined;
+  const hasPagination = showPager || showPageSize;
   const hasErrorState = errorState !== undefined && errorState !== null;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const virtualizationEnabled =
@@ -445,28 +451,42 @@ export function DataGrid<TData extends RowData>({
 
       {hasPagination ? (
         <nav
-          className="flex items-center justify-center gap-3 pt-4"
+          className={
+            showPageSize
+              ? 'flex flex-wrap items-center justify-between gap-3 pt-4'
+              : 'flex items-center justify-center gap-3 pt-4'
+          }
           aria-label={labels.table}
         >
-          <button
-            type="button"
-            aria-label={labels.previousPage}
-            disabled={!table.getCanPreviousPage()}
-            onClick={() => table.previousPage()}
-          >
-            ‹
-          </button>
-          <span aria-live="polite">
-            {pagination.pageIndex + 1} / {pagination.pageCount}
-          </span>
-          <button
-            type="button"
-            aria-label={labels.nextPage}
-            disabled={!table.getCanNextPage()}
-            onClick={() => table.nextPage()}
-          >
-            ›
-          </button>
+          {showPageSize ? (
+            <PageSizeSelect
+              value={pagination.pageSize}
+              onChange={onPageSizeChange}
+            />
+          ) : null}
+          {showPager ? (
+            <div className="flex items-center justify-center gap-3">
+              <button
+                type="button"
+                aria-label={labels.previousPage}
+                disabled={!table.getCanPreviousPage()}
+                onClick={() => table.previousPage()}
+              >
+                ‹
+              </button>
+              <span aria-live="polite">
+                {pagination.pageIndex + 1} / {pagination.pageCount}
+              </span>
+              <button
+                type="button"
+                aria-label={labels.nextPage}
+                disabled={!table.getCanNextPage()}
+                onClick={() => table.nextPage()}
+              >
+                ›
+              </button>
+            </div>
+          ) : null}
         </nav>
       ) : null}
     </div>

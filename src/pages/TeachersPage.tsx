@@ -35,8 +35,8 @@ import { User } from '@/types/user';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataGrid, createDataGridColumnHelper } from '@/shared/ui/data-grid';
+import { usePageSize } from '@/hooks/useListQueryState';
 
-const SERVER_PAGE_SIZE = 25;
 const teacherColumnHelper = createDataGridColumnHelper<User>();
 const NO_COLUMN_FILTERS: ColumnFiltersState = [];
 const ignoreColumnFiltersChange = () => undefined;
@@ -44,6 +44,7 @@ const ignoreColumnFiltersChange = () => undefined;
 const TeachersPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { pageSize, setPageSize } = usePageSize();
   // MagnifyingGlass/sort/page live in the URL so reload/back/share preserve them
   // (autodrive-b85.3 -- mirrors admin-panel's useSearchSortFilters).
   const {
@@ -66,7 +67,7 @@ const TeachersPage = () => {
     isFetching,
     isError,
     refetch,
-  } = useTeachersPage(currentPage, SERVER_PAGE_SIZE, debouncedSearch);
+  } = useTeachersPage(currentPage, pageSize, debouncedSearch);
   const teachers = useMemo(() => teachersPage?.data ?? [], [teachersPage]);
   const total = teachersPage?.meta.total ?? 0;
   const totalPages = Math.max(1, teachersPage?.meta.totalPages ?? 1);
@@ -168,7 +169,7 @@ const TeachersPage = () => {
     branchId ||
     t('common.na');
 
-  const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
+  const startIndex = (currentPage - 1) * pageSize;
   const teachersTitle = t('teachers.title');
   const columns = useMemo(
     () =>
@@ -317,11 +318,12 @@ const TeachersPage = () => {
           getRowId={(teacher) => teacher.id}
           pagination={{
             pageIndex: currentPage - 1,
-            pageSize: SERVER_PAGE_SIZE,
+            pageSize: pageSize,
             rowCount: total,
             pageCount: totalPages,
           }}
           onPaginationChange={({ pageIndex }) => setCurrentPage(pageIndex + 1)}
+          onPageSizeChange={setPageSize}
           sorting={sorting}
           onSortingChange={handleSortingChange}
           columnFilters={NO_COLUMN_FILTERS}

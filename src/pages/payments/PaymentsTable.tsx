@@ -29,6 +29,7 @@ interface PaymentsTableProps {
   totalPayments: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
   sortField: string;
   sortDir: 'asc' | 'desc';
   onSortChange: (field: string, dir: 'asc' | 'desc') => void;
@@ -49,6 +50,7 @@ export const PaymentsTable = ({
   totalPayments,
   totalPages,
   onPageChange,
+  onPageSizeChange,
   sortField,
   sortDir,
   onSortChange,
@@ -252,6 +254,7 @@ export const PaymentsTable = ({
           pageCount: totalPages,
         }}
         onPaginationChange={handlePaginationChange}
+        onPageSizeChange={onPageSizeChange}
         sorting={[{ id: sortField, desc: sortDir === 'desc' }]}
         onSortingChange={handleSortingChange}
         columnFilters={[]}

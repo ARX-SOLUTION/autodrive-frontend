@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
-import { useUrlParams } from '@/hooks/useUrlParams';
+import { useUrlTab } from '@/hooks/useUrlTab';
 import { useTranslation } from 'react-i18next';
 import { Warning, PencilSimple, ShieldCheck } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
@@ -25,12 +25,12 @@ const CourseDetailPage = () => {
   const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { searchParams } = useUrlParams();
+  const [activeTab, setActiveTab] = useUrlTab(
+    ['info', 'students'] as const,
+    'info',
+  );
   const isCrossTenant = useIsCrossTenant();
   const authUser = useAuthStore((s) => s.user);
-  const initialTab =
-    searchParams.get('tab') === 'students' ? 'students' : 'info';
-  const [activeTab, setActiveTab] = useState(initialTab);
 
   const { data: course, isLoading, isError } = useCourse(id);
   const { data: branches } = useBranches();

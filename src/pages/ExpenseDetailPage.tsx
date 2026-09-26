@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { useCan } from '@/hooks/useCan';
 import { useUrlParams } from '@/hooks/useUrlParams';
+import { useUrlTab } from '@/hooks/useUrlTab';
 import {
   useCancelExpense,
   useCreateExpensePayment,
@@ -68,6 +69,9 @@ const ExpenseDetailPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { searchParams, setSearchParams } = useUrlParams();
+  const [urlTab, setTab] = useUrlTab(['info', 'payments'] as const, 'info', {
+    persistDefault: true,
+  });
   const canViewExpenses = useCan('viewExpenses');
   const canViewOwnSettlements = useCan('viewOwnSettlements');
   const canManageFinance = useCan('manageCompanyFinance');
@@ -298,11 +302,13 @@ const ExpenseDetailPage = () => {
   }
 
   const canViewPaymentHistory = canManageFinance || isOwnSettlementView;
-  const initialTab =
-    (searchParams.get('tab') === 'payments' || hasPayRemainingIntent) &&
-    canViewPaymentHistory
-      ? 'payments'
-      : 'info';
+  const requestedTab = searchParams.get('tab');
+  const activeTab =
+    urlTab === 'payments' && !canViewPaymentHistory
+      ? 'info'
+      : !requestedTab && hasPayRemainingIntent && canViewPaymentHistory
+        ? 'payments'
+        : urlTab;
   const serverExpense = isOwnSettlementView
     ? (mySettlementQuery.data?.expense ?? expense)
     : canManageFinance
@@ -501,11 +507,7 @@ const ExpenseDetailPage = () => {
         </div>
       }
     >
-      <Tabs
-        key={`${id}-${initialTab}`}
-        defaultValue={initialTab}
-        className="space-y-4"
-      >
+      <Tabs value={activeTab} onValueChange={setTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
           {canViewPaymentHistory && (

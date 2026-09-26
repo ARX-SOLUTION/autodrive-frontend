@@ -156,7 +156,7 @@ describe('Staff DataGrid server ownership', () => {
       routePattern: '/users',
     });
 
-    expect(h.useUsersPage).toHaveBeenLastCalledWith('manager', 2, 25, {
+    expect(h.useUsersPage).toHaveBeenLastCalledWith('manager', 2, 10, {
       search: 'nigora',
       branchId: 'b1',
       isActive: true,
@@ -169,7 +169,7 @@ describe('Staff DataGrid server ownership', () => {
       expect(h.useUsersPage).toHaveBeenLastCalledWith(
         'manager',
         3,
-        25,
+        10,
         expect.objectContaining({ search: 'nigora' }),
       ),
     );
@@ -181,7 +181,7 @@ describe('Staff DataGrid server ownership', () => {
       routePattern: '/oqituvchilar',
     });
 
-    expect(h.useTeachersPage).toHaveBeenLastCalledWith(2, 25, 'ali');
+    expect(h.useTeachersPage).toHaveBeenLastCalledWith(2, 10, 'ali');
     const table = screen.getByRole('table', { name: 'teachers.title' });
     let rows = within(table).getAllByRole('row').slice(1);
     expect(rows[0]).toHaveTextContent('Ali');
@@ -196,7 +196,7 @@ describe('Staff DataGrid server ownership', () => {
     );
     rows = within(table).getAllByRole('row').slice(1);
     expect(rows[0]).toHaveTextContent('Zara');
-    expect(h.useTeachersPage).toHaveBeenLastCalledWith(2, 25, 'ali');
+    expect(h.useTeachersPage).toHaveBeenLastCalledWith(2, 10, 'ali');
   });
 
   it('uses server paging and search for operators without a sort argument', async () => {
@@ -205,11 +205,11 @@ describe('Staff DataGrid server ownership', () => {
       routePattern: '/operatorlar',
     });
 
-    expect(h.useOperatorsPage).toHaveBeenLastCalledWith(2, 25, 'malika');
+    expect(h.useOperatorsPage).toHaveBeenLastCalledWith(2, 10, 'malika');
     fireEvent.click(screen.getByRole('button', { name: 'common.next' }));
 
     await waitFor(() =>
-      expect(h.useOperatorsPage).toHaveBeenLastCalledWith(3, 25, 'malika'),
+      expect(h.useOperatorsPage).toHaveBeenLastCalledWith(3, 10, 'malika'),
     );
   });
 });

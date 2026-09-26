@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Car, Plus } from '@phosphor-icons/react';
 import { useBranches } from '@/services/branchService';
 import { useVehiclesPage } from '@/services/vehicleService';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useListQueryState } from '@/hooks/useListQueryState';
 import { useCan } from '@/hooks/useCan';
 import { useAuthStore } from '@/store/authStore';
 import {
@@ -31,19 +31,25 @@ const VehiclesPage = () => {
   const [branchId, setBranchId] = useState('');
   const [status, setStatus] = useState<VehicleStatus | ''>('');
   const [category, setCategory] = useState<VehicleCategory | ''>('');
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
-  const searchTerm = useDebounce(search.trim(), 300);
+  const {
+    page,
+    pageSize,
+    search,
+    debouncedSearch,
+    setPage,
+    setPageSize,
+    setSearch,
+  } = useListQueryState();
   const vehicles = useVehiclesPage({
     branchId: canViewAllBranches
       ? branchId || undefined
       : (user?.branch_id ?? undefined),
-    search: searchTerm || undefined,
+    search: debouncedSearch.trim() || undefined,
     status: status || undefined,
     category: category || undefined,
     page,
-    limit: 20,
+    limit: pageSize,
   });
   const branchNames = new Map(
     branches.map((branch) => [branch.id, branch.name]),
@@ -71,10 +77,7 @@ const VehiclesPage = () => {
           aria-label={t('common.search')}
           placeholder={t('vehicles.search_placeholder')}
           value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setPage(1);
-          }}
+          onChange={(event) => setSearch(event.target.value)}
         />
         {canViewAllBranches ? (
           <select
@@ -209,6 +212,8 @@ const VehiclesPage = () => {
             currentPage={page}
             totalPages={Math.max(1, vehicles.data.meta.totalPages)}
             onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
           />
         </>
       ) : (

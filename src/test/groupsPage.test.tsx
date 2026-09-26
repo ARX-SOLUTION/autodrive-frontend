@@ -220,8 +220,15 @@ describe('GroupsPage role gating', () => {
     expect(screen.getByRole('button', { name: 'groups.add' })).toBeTruthy();
     expect(screen.getAllByLabelText('common.edit').length).toBeGreaterThan(0);
     expect(screen.getAllByLabelText('common.delete').length).toBeGreaterThan(0);
-    // Course type is a pressed-button group; only branch select remains for cross-tenant roles.
-    expect(screen.getAllByRole('combobox').length).toBe(1);
+    // Course type is a pressed-button group; only the branch select remains
+    // besides the shared rows-per-page control.
+    expect(
+      screen
+        .getAllByRole('combobox')
+        .filter(
+          (el) => el.getAttribute('aria-label') !== 'common.rows_per_page',
+        ),
+    ).toHaveLength(1);
     expect(
       screen.getByRole('group', { name: 'students.course_type' }),
     ).toBeTruthy();
@@ -245,7 +252,13 @@ describe('GroupsPage role gating', () => {
     expect(screen.queryAllByLabelText('common.edit')).toHaveLength(0);
     expect(screen.queryAllByLabelText('common.delete')).toHaveLength(0);
     // Course type is a pressed-button group; no branch picker for teachers.
-    expect(screen.queryAllByRole('combobox').length).toBe(0);
+    expect(
+      screen
+        .queryAllByRole('combobox')
+        .filter(
+          (el) => el.getAttribute('aria-label') !== 'common.rows_per_page',
+        ),
+    ).toHaveLength(0);
     expect(
       screen.getByRole('group', { name: 'students.course_type' }),
     ).toBeTruthy();

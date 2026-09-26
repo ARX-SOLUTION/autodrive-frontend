@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Exam, Plus } from '@phosphor-icons/react';
@@ -6,8 +6,12 @@ import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
 import { useBranches } from '@/services/branchService';
 import { useQuestionsPage } from '@/services/questionService';
+import { useListQueryState } from '@/hooks/useListQueryState';
+import { matchesListQuery } from '@/lib/listQuery';
+import { ListSearchField } from '@/components/ui/ListSearchField';
 import {
   QUESTION_TOPICS,
+  type Question,
   type QuestionStatus,
   type QuestionTopic,
 } from '@/types/question';
@@ -31,8 +35,16 @@ const QuestionsPage = () => {
   const [branchId, setBranchId] = useState('');
   const [status, setStatus] = useState<QuestionStatus | ''>('');
   const [topic, setTopic] = useState<QuestionTopic | ''>('');
-  const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
+  const {
+    page,
+    pageSize,
+    search,
+    debouncedSearch,
+    setPage,
+    setPageSize,
+    setSearch,
+  } = useListQueryState();
 
   const effectiveBranch = canViewAll
     ? branchId || undefined
@@ -45,7 +57,15 @@ const QuestionsPage = () => {
     topic: topic || undefined,
     branchId: effectiveBranch,
     page,
+    limit: pageSize,
   });
+  const visibleQuestions = useMemo(
+    () =>
+      (questions.data?.data ?? []).filter((question) =>
+        matchesListQuery(debouncedSearch, ...questionSearchParts(question)),
+      ),
+    [questions.data, debouncedSearch],
+  );
 
   return (
     <div className="space-y-6">
@@ -67,6 +87,8 @@ const QuestionsPage = () => {
       <p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
         {t('questions.school_private_banner')}
       </p>
+
+      <ListSearchField value={search} onChange={setSearch} />
 
       <div className="glass-card grid gap-3 p-4 sm:grid-cols-3">
         {canViewAll ? (
@@ -141,9 +163,11 @@ const QuestionsPage = () => {
           title={t('questions.empty')}
           description={t('questions.empty_desc')}
         />
+      ) : visibleQuestions.length === 0 ? (
+        <EmptyState icon={Exam} title={t('common.no_data')} />
       ) : (
         <div className="grid gap-3">
-          {questions.data.data.map((question) => (
+          {visibleQuestions.map((question) => (
             <DataCard
               key={question.id}
               className="cursor-pointer"
@@ -173,6 +197,8 @@ const QuestionsPage = () => {
           currentPage={questions.data.meta.page}
           totalPages={questions.data.meta.totalPages}
           onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
         />
       ) : null}
 
@@ -187,6 +213,16 @@ const QuestionsPage = () => {
       ) : null}
     </div>
   );
+};
+
+const questionSearchParts = (question: Question) => {
+  const versions = [question.draft_version, question.published_version];
+  const text = versions.flatMap(
+    (version) =>
+      version?.locales.flatMap((locale) => [locale.stem, locale.explanation]) ??
+      [],
+  );
+  return [question.topic, question.category, question.status, ...text];
 };
 
 export default QuestionsPage;

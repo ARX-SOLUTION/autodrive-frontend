@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Car } from '@phosphor-icons/react';
 import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
+import { useListQueryState } from '@/hooks/useListQueryState';
+import { matchesListQuery } from '@/lib/listQuery';
+import { ListSearchField } from '@/components/ui/ListSearchField';
 import { useBranches } from '@/services/branchService';
 import { useDrivingSessionsPage } from '@/services/drivingSessionService';
 import { formatTashkentDateTime } from '@/lib/calendarDateTime';
@@ -25,7 +28,15 @@ const DrivingSessionsPage = () => {
   const { data: branches = [] } = useBranches(canViewAll);
   const [branchId, setBranchId] = useState('');
   const [status, setStatus] = useState<DrivingSessionStatus | ''>('');
-  const [page, setPage] = useState(1);
+  const {
+    page,
+    pageSize,
+    search,
+    debouncedSearch,
+    setPage,
+    setPageSize,
+    setSearch,
+  } = useListQueryState();
   const effectiveBranch = canViewAll
     ? branchId || undefined
     : (user?.branch_id ?? undefined);
@@ -33,7 +44,21 @@ const DrivingSessionsPage = () => {
     branchId: effectiveBranch,
     status: status || undefined,
     page,
+    limit: pageSize,
   });
+  const visibleSessions = useMemo(
+    () =>
+      (sessions.data?.data ?? []).filter((session) =>
+        matchesListQuery(
+          debouncedSearch,
+          session.student.first_name,
+          session.student.last_name,
+          session.vehicle.plate_number,
+          session.instructor.name,
+        ),
+      ),
+    [sessions.data, debouncedSearch],
+  );
   const formatDate = (value: string) =>
     formatTashkentDateTime(value, i18n.language);
 
@@ -45,6 +70,7 @@ const DrivingSessionsPage = () => {
         description={t('driving.subtitle')}
         icon={<Car className="h-3.5 w-3.5" />}
       />
+      <ListSearchField value={search} onChange={setSearch} />
       <div className="glass-card grid gap-3 p-4 sm:grid-cols-2">
         {canViewAll ? (
           <select
@@ -105,54 +131,60 @@ const DrivingSessionsPage = () => {
         />
       ) : sessions.data?.data.length ? (
         <>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {sessions.data.data.map((session) => (
-              <DataCard
-                key={session.id}
-                title={`${session.student.last_name} ${session.student.first_name}`}
-                subtitle={formatDate(session.starts_at)}
-                onClick={() =>
-                  navigate({
-                    to: '/driving-sessions/$id',
-                    params: { id: session.id },
-                  })
-                }
-                fields={[
-                  {
-                    label: t('driving.vehicle'),
-                    value: session.vehicle.plate_number,
-                  },
-                  {
-                    label: t('driving.instructor'),
-                    value: session.instructor.name,
-                  },
-                  {
-                    label: t('common.status'),
-                    value: t(`driving.status.${session.status}`),
-                  },
-                  {
-                    label: t('driving.planned'),
-                    value: `${session.planned_minutes} ${t('driving.minutes')}`,
-                  },
-                  {
-                    label: t('driving.entered'),
-                    value:
-                      session.actual_minutes === null
-                        ? t('common.na')
-                        : `${session.actual_minutes} ${t('driving.minutes')}`,
-                  },
-                  {
-                    label: t('driving.approved'),
-                    value: `${session.approved_minutes} ${t('driving.minutes')}`,
-                  },
-                ]}
-              />
-            ))}
-          </div>
+          {visibleSessions.length === 0 ? (
+            <EmptyState title={t('common.no_data')} />
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {visibleSessions.map((session) => (
+                <DataCard
+                  key={session.id}
+                  title={`${session.student.last_name} ${session.student.first_name}`}
+                  subtitle={formatDate(session.starts_at)}
+                  onClick={() =>
+                    navigate({
+                      to: '/driving-sessions/$id',
+                      params: { id: session.id },
+                    })
+                  }
+                  fields={[
+                    {
+                      label: t('driving.vehicle'),
+                      value: session.vehicle.plate_number,
+                    },
+                    {
+                      label: t('driving.instructor'),
+                      value: session.instructor.name,
+                    },
+                    {
+                      label: t('common.status'),
+                      value: t(`driving.status.${session.status}`),
+                    },
+                    {
+                      label: t('driving.planned'),
+                      value: `${session.planned_minutes} ${t('driving.minutes')}`,
+                    },
+                    {
+                      label: t('driving.entered'),
+                      value:
+                        session.actual_minutes === null
+                          ? t('common.na')
+                          : `${session.actual_minutes} ${t('driving.minutes')}`,
+                    },
+                    {
+                      label: t('driving.approved'),
+                      value: `${session.approved_minutes} ${t('driving.minutes')}`,
+                    },
+                  ]}
+                />
+              ))}
+            </div>
+          )}
           <PaginationControls
             currentPage={page}
             totalPages={Math.max(1, sessions.data.meta.totalPages)}
             onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
           />
         </>
       ) : (
