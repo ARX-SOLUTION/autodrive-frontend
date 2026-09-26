@@ -558,6 +558,141 @@ const PaymentStatusDonut = ({
   );
 };
 
+const DashboardChrome = ({
+  data,
+  user,
+  canViewAllBranches,
+  branches,
+  params,
+  updateParam,
+  refetch,
+  isFetching,
+}: {
+  data?: CompanyOverview;
+  user: ReturnType<typeof useAuthStore.getState>['user'];
+  canViewAllBranches: boolean;
+  branches: Array<{ id: string; name: string }>;
+  params: URLSearchParams;
+  updateParam: (key: string, value?: string) => void;
+  refetch: () => unknown;
+  isFetching: boolean;
+}) => {
+  const { t } = useTranslation();
+  return (
+    <>
+      <header className="flex flex-col gap-4 border-b border-hair pb-5 xl:flex-row xl:items-end xl:justify-between">
+        <div className="min-w-0">
+          {data ? (
+            <FreshnessCaption {...data.freshness} />
+          ) : (
+            <div className="h-4" aria-hidden="true" />
+          )}
+          <h1 className="mt-2 font-heading text-3xl font-extrabold leading-tight tracking-[-0.02em] text-balance sm:text-[34px]">
+            {t(greetingKey())}
+            {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+          </h1>
+          <p className="mt-1.5 max-w-2xl text-[15px] text-muted-foreground text-pretty">
+            {t(
+              'dashboard.hero_sub',
+              '{{count}} ta talaba joriy holatda qarzdor.',
+              { count: data?.kpis.debt.students_with_debt ?? 0 },
+            )}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2 xl:justify-end">
+          {(canViewAllBranches
+            ? ([
+                {
+                  to: '/payments',
+                  search: {},
+                  icon: Wallet,
+                  tileClass: 'bg-primary/[14%] text-primary',
+                  label: t('nav.payments', "To'lovlar"),
+                },
+                {
+                  to: '/branches',
+                  search: {},
+                  icon: Buildings,
+                  tileClass: 'bg-info/[14%] text-info',
+                  label: t('nav.branches', 'Filiallar'),
+                },
+                {
+                  to: '/audit',
+                  search: {},
+                  icon: ShieldCheck,
+                  tileClass: 'bg-success/[14%] text-success',
+                  label: t('nav.audit', 'Audit log'),
+                },
+              ] as const)
+            : ([
+                {
+                  to: '/payments',
+                  search: { action: 'create' },
+                  icon: Wallet,
+                  // Full static class strings: Tailwind does not generate
+                  // interpolated utilities such as `bg-${tone}`.
+                  tileClass: 'bg-primary/[14%] text-primary',
+                  label: t(
+                    'dashboard.v2.quick_action_payment',
+                    "To'lov qabul qilish",
+                  ),
+                },
+                {
+                  to: '/students',
+                  search: { action: 'create' },
+                  icon: UserPlus,
+                  tileClass: 'bg-info/[14%] text-info',
+                  label: t(
+                    'dashboard.v2.quick_action_student',
+                    "Talaba qo'shish",
+                  ),
+                },
+                {
+                  to: '/attendance',
+                  search: {},
+                  icon: UsersThree,
+                  tileClass: 'bg-success/[14%] text-success',
+                  label: t(
+                    'dashboard.v2.quick_action_attendance',
+                    'Davomat olish',
+                  ),
+                },
+              ] as const)
+          ).map((action) => (
+            <Link
+              key={action.to}
+              to={action.to}
+              search={action.search}
+              className="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-border bg-card px-3 text-[13px] font-semibold motion-safe:transition-[background-color,border-color,scale] hover:border-primary/40 hover:bg-muted active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span
+                className={cn(
+                  'grid h-6 w-6 shrink-0 place-items-center rounded-md',
+                  action.tileClass,
+                )}
+                aria-hidden="true"
+              >
+                <action.icon className="h-4 w-4" />
+              </span>
+              {action.label}
+            </Link>
+          ))}
+        </div>
+      </header>
+
+      <FilterBar
+        params={params}
+        canViewAllBranches={canViewAllBranches}
+        branches={branches}
+        onChange={updateParam}
+        onRefresh={() => void refetch()}
+        isFetching={isFetching}
+      />
+    </>
+  );
+};
+
 const CompanyRevenueDashboard = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -609,9 +744,27 @@ const CompanyRevenueDashboard = () => {
     setParams(next, { replace: true });
   };
 
-  if (isLoading) return <DashboardSkeleton />;
-  if (isError) return <ErrorState onRetry={() => void refetch()} />;
-  if (!data) return <DashboardSkeleton />;
+  if (isLoading || isError || !data) {
+    return (
+      <div className="space-y-5 pb-8">
+        <DashboardChrome
+          data={data}
+          user={user}
+          canViewAllBranches={canViewAllBranches}
+          branches={branches}
+          params={params}
+          updateParam={updateParam}
+          refetch={refetch}
+          isFetching={isFetching}
+        />
+        {isError ? (
+          <ErrorState onRetry={() => void refetch()} />
+        ) : (
+          <DashboardSkeleton />
+        )}
+      </div>
+    );
+  }
 
   const { kpis } = data;
   const statusTotal =
@@ -733,109 +886,14 @@ const CompanyRevenueDashboard = () => {
     detailViews.find((view) => view.key === detailView) ?? detailViews[0];
   return (
     <div className="space-y-5 pb-8">
-      <header className="flex flex-col gap-4 border-b border-hair pb-5 xl:flex-row xl:items-end xl:justify-between">
-        <div className="min-w-0">
-          <FreshnessCaption {...data.freshness} />
-          <h1 className="mt-2 font-heading text-3xl font-extrabold leading-tight tracking-[-0.02em] text-balance sm:text-[34px]">
-            {t(greetingKey())}
-            {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
-          </h1>
-          <p className="mt-1.5 max-w-2xl text-[15px] text-muted-foreground text-pretty">
-            {t(
-              'dashboard.hero_sub',
-              '{{count}} ta talaba joriy holatda qarzdor.',
-              { count: kpis.debt.students_with_debt },
-            )}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2 xl:justify-end">
-          {(canViewAllBranches
-            ? ([
-                {
-                  to: '/payments',
-                  search: {},
-                  icon: Wallet,
-                  tileClass: 'bg-primary/[14%] text-primary',
-                  label: t('nav.payments', "To'lovlar"),
-                },
-                {
-                  to: '/branches',
-                  search: {},
-                  icon: Buildings,
-                  tileClass: 'bg-info/[14%] text-info',
-                  label: t('nav.branches', 'Filiallar'),
-                },
-                {
-                  to: '/audit',
-                  search: {},
-                  icon: ShieldCheck,
-                  tileClass: 'bg-success/[14%] text-success',
-                  label: t('nav.audit', 'Audit log'),
-                },
-              ] as const)
-            : ([
-                {
-                  to: '/payments',
-                  search: { action: 'create' },
-                  icon: Wallet,
-                  // Full static class strings: Tailwind does not generate
-                  // interpolated utilities such as `bg-${tone}`.
-                  tileClass: 'bg-primary/[14%] text-primary',
-                  label: t(
-                    'dashboard.v2.quick_action_payment',
-                    "To'lov qabul qilish",
-                  ),
-                },
-                {
-                  to: '/students',
-                  search: { action: 'create' },
-                  icon: UserPlus,
-                  tileClass: 'bg-info/[14%] text-info',
-                  label: t(
-                    'dashboard.v2.quick_action_student',
-                    "Talaba qo'shish",
-                  ),
-                },
-                {
-                  to: '/attendance',
-                  search: {},
-                  icon: UsersThree,
-                  tileClass: 'bg-success/[14%] text-success',
-                  label: t(
-                    'dashboard.v2.quick_action_attendance',
-                    'Davomat olish',
-                  ),
-                },
-              ] as const)
-          ).map((action) => (
-            <Link
-              key={action.to}
-              to={action.to}
-              search={action.search}
-              className="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-border bg-card px-3 text-[13px] font-semibold motion-safe:transition-[background-color,border-color,scale] hover:border-primary/40 hover:bg-muted active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <span
-                className={cn(
-                  'grid h-6 w-6 shrink-0 place-items-center rounded-md',
-                  action.tileClass,
-                )}
-                aria-hidden="true"
-              >
-                <action.icon className="h-4 w-4" />
-              </span>
-              {action.label}
-            </Link>
-          ))}
-        </div>
-      </header>
-
-      <FilterBar
-        params={params}
+      <DashboardChrome
+        data={data}
+        user={user}
         canViewAllBranches={canViewAllBranches}
         branches={branches}
-        onChange={updateParam}
-        onRefresh={() => void refetch()}
+        params={params}
+        updateParam={updateParam}
+        refetch={refetch}
         isFetching={isFetching}
       />
 

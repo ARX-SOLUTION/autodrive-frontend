@@ -33,6 +33,7 @@ interface StudentsFilterBarProps {
   operatorId: string | undefined;
   setOperatorId: (v: string | undefined) => void;
   operators: User[];
+  operatorsLoading: boolean;
   userBranchId: string | null | undefined;
   hasGroup: boolean | undefined;
   setHasGroup: (v: boolean | undefined) => void;
@@ -58,6 +59,7 @@ export const StudentsFilterBar = ({
   operatorId,
   setOperatorId,
   operators,
+  operatorsLoading,
   userBranchId,
   hasGroup,
   setHasGroup,
@@ -95,9 +97,10 @@ export const StudentsFilterBar = ({
       )}
 
       {/* Operator filter — owner va manager uchun */}
-      {canManageStaff && operators.length > 0 && (
+      {canManageStaff && (operatorsLoading || operators.length > 0) && (
         <Select
           value={operatorId || 'all'}
+          disabled={operatorsLoading}
           onValueChange={(v) => setOperatorId(v === 'all' ? undefined : v)}
         >
           <SelectTrigger className="w-44 bg-secondary border-border">
