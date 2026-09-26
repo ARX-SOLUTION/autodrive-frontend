@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   queryOptions,
   useQuery,
   useMutation,
@@ -124,6 +125,7 @@ export const studentsPageQueryOptions = (
   return queryOptions({
     queryKey: studentKeys.page(queryParams),
     enabled,
+    placeholderData: keepPreviousData,
     queryFn: ({ signal }) => fetchStudentsPage(params, signal),
   });
 };

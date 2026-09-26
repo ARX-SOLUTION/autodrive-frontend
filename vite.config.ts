@@ -9,7 +9,7 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 // Icons imported by the authenticated shell (nav, sidebar, topbar, and the
 // UI primitives those layouts pull in). csr + defs stay in one chunk;
 // IconBase/context are the shared Phosphor runtime those modules import.
-const SIDEBAR_PHOSPHOR_ICONS = [
+const ROUTE_PHOSPHOR_ICONS = [
   'BookOpen',
   'Buildings',
   'Calendar',
@@ -49,8 +49,8 @@ const SIDEBAR_PHOSPHOR_ICONS = [
   'X',
 ].join('|');
 
-const sidebarPhosphorIconChunk = new RegExp(
-  `/@phosphor-icons/react/dist/(?:csr|defs)/(?:${SIDEBAR_PHOSPHOR_ICONS})\\.es\\.js$|/@phosphor-icons/react/dist/lib/(?:IconBase|context)\\.es\\.js$`,
+const routePhosphorIconChunk = new RegExp(
+  `/@phosphor-icons/react/dist/(?:csr|defs)/(?:${ROUTE_PHOSPHOR_ICONS})\\.es\\.js$|/@phosphor-icons/react/dist/lib/(?:IconBase|context)\\.es\\.js$`,
 );
 
 const assertProductionApiBaseUrl = (value: string | undefined) => {
@@ -180,10 +180,10 @@ export default defineConfig(({ mode }) => ({
             { name: 'export-xlsx', test: /\/xlsx\// },
             { name: 'charts-vendor', test: /\/recharts\/|\/d3-/ },
             {
-              // Authenticated shell icons are shared with route chunks, so
+              // Authenticated route icons are shared with route chunks, so
               // Rolldown otherwise emits one HTTP request per Phosphor file.
-              name: 'sidebar-icons',
-              test: sidebarPhosphorIconChunk,
+              name: 'route-icons',
+              test: routePhosphorIconChunk,
             },
           ],
         },

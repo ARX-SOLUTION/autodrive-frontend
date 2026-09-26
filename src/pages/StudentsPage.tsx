@@ -178,7 +178,7 @@ const StudentsPage = () => {
   const debouncedSearch = useDebounce(search, 300);
 
   const { data: branches } = useBranches();
-  const { data: operators } = useOperators();
+  const { data: operators, isLoading: isOperatorsLoading } = useOperators();
 
   const activeListOptions = useMemo(
     () => ({
@@ -427,6 +427,7 @@ const StudentsPage = () => {
         operatorId={operatorId}
         setOperatorId={setOperatorId}
         operators={operators || []}
+        operatorsLoading={isOperatorsLoading}
         userBranchId={user?.branch_id}
         hasGroup={hasGroup}
         setHasGroup={setHasGroup}
