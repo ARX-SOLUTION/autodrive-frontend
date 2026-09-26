@@ -1833,5 +1833,21 @@
       "closed": "Closed"
     },
     "analytics_pending": "Attempt scores, pass/fail, and weak topics will appear here when backend learning analytics (#216) is available. Until then, monitor assignment windows above."
+  },
+  "crm_tour": {
+    "sidebar_title": "Menu",
+    "sidebar_body": "Dashboard, students, and payments are in this menu.",
+    "dashboard_title": "Filters and totals",
+    "dashboard_body": "Use the filters here. The totals on this page follow that choice.",
+    "students_title": "Student list",
+    "students_body": "Search by name. The rows here are the matching students.",
+    "payment_title": "Take a payment",
+    "payment_body": "Add payment opens the form for the amount a student just paid.",
+    "skip": "Skip",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "progress": "{{current}} of {{total}}",
+    "save_error": "The tour closed, but we could not save that. It may show again the next time you sign in."
   }
 }

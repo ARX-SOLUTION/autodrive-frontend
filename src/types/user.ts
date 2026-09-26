@@ -27,6 +27,8 @@ export interface User {
   is_active?: boolean;
   created_at?: string;
   must_change_password?: boolean;
+  /** ISO timestamp once the owner CRM tour was skipped or finished. Null means not done. */
+  crm_tour_completed_at?: string | null;
   // Role-relevant relations from GET /users/:id — teacher only.
   groups?: UserRelationSummary[];
   // Role-relevant relations from GET /users/:id — operator only.

@@ -67,7 +67,11 @@ export const PaymentsPageHeader = ({
             </Tooltip>
           )}
           {canRecordPayment && (
-            <Button className="gap-2" onClick={onAddPayment}>
+            <Button
+              data-tour="crm-take-payment"
+              className="gap-2"
+              onClick={onAddPayment}
+            >
               <Plus className="h-4 w-4" /> {t('payments.add_payment')}
             </Button>
           )}
