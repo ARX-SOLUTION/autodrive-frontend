@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import axiosInstance from '@/api/axiosInstance';
-import { fetchVehicle, fetchVehiclesPage } from './vehicleService';
+import {
+  fetchVehicle,
+  fetchVehiclesPage,
+} from '@/features/vehicles/api/vehicleService';
 
 vi.mock('@/api/axiosInstance', () => ({
   default: { get: vi.fn(), post: vi.fn(), patch: vi.fn() },

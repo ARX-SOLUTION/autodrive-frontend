@@ -20,13 +20,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useCan } from '@/hooks/useCan';
 import { useBranches } from '@/services/branchService';
-import { useVehiclesPage } from '@/services/vehicleService';
+import { useVehiclesPage } from '@/features/vehicles/api/vehicleService';
 import { useAuthStore } from '@/store/authStore';
 import {
   VEHICLE_CATEGORIES,
   type VehicleCategory,
   type VehicleStatus,
-} from '@/types/vehicle';
+} from '@/features/vehicles/types';
 
 const publicDemoTiles = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const tileUrl =

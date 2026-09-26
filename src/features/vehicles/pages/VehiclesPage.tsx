@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Car, Plus } from '@phosphor-icons/react';
 import { useBranches } from '@/services/branchService';
-import { useVehiclesPage } from '@/services/vehicleService';
+import { useVehiclesPage } from '@/features/vehicles/api/vehicleService';
 import { useListQueryState } from '@/hooks/useListQueryState';
 import { useCan } from '@/hooks/useCan';
 import { useAuthStore } from '@/store/authStore';
@@ -11,7 +11,7 @@ import {
   VEHICLE_CATEGORIES,
   type VehicleCategory,
   type VehicleStatus,
-} from '@/types/vehicle';
+} from '@/features/vehicles/types';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataCard } from '@/components/ui/DataCard';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import PaginationControls from '@/components/ui/PaginationControls';
-import VehicleFormDialog from './vehicles/VehicleFormDialog';
+import VehicleFormDialog from '@/features/vehicles/components/VehicleFormDialog';
 
 const VehiclesPage = () => {
   const { t } = useTranslation();

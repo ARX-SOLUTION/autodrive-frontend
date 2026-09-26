@@ -9,14 +9,14 @@ import type {
   VehicleDetail,
   VehicleDocument,
   VehicleMaintenance,
-} from '@/types/vehicle';
+} from '@/features/vehicles/types';
 import {
   useAddVehicleDocument,
   useUpdateVehicleDocument,
   useAddVehicleMaintenance,
   useUpdateVehicleMaintenance,
   useTransferVehicle,
-} from '@/services/vehicleService';
+} from '@/features/vehicles/api/vehicleService';
 import { extractErrorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

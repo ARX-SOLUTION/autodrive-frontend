@@ -12,7 +12,6 @@
   "src/pages/DrivingSessionsPage.tsx",
   "src/pages/ExpenseDetailPage.tsx",
   "src/pages/ExpensesPage.tsx",
-  "src/pages/FleetMapPage.tsx",
   "src/pages/GroupDetailPage.tsx",
   "src/pages/GroupsPage.tsx",
   "src/pages/Index.tsx",
@@ -39,8 +38,6 @@
   "src/pages/UsersPage.editDelete.test.tsx",
   "src/pages/UsersPage.errorState.test.tsx",
   "src/pages/UsersPage.tsx",
-  "src/pages/VehicleDetailPage.tsx",
-  "src/pages/VehiclesPage.tsx",
   "src/pages/audit/AuditFilterBar.tsx",
   "src/pages/audit/AuditMobileList.tsx",
   "src/pages/audit/AuditTable.tsx",
@@ -96,8 +93,6 @@
   "src/pages/students/StudentsTable.tsx",
   "src/pages/students/studentsFormat.test.ts",
   "src/pages/students/studentsFormat.ts",
-  "src/pages/vehicles/VehicleFormDialog.tsx",
-  "src/pages/vehicles/VehicleOperations.tsx",
   "src/services/attendanceService.ts",
   "src/services/auditService.ts",
   "src/services/authApi.ts",
@@ -125,8 +120,6 @@
   "src/services/trainingService.test.ts",
   "src/services/trainingService.ts",
   "src/services/userService.ts",
-  "src/services/vehicleService.test.ts",
-  "src/services/vehicleService.ts",
   "src/types/attendance.ts",
   "src/types/audit.ts",
   "src/types/branch.ts",
@@ -142,6 +135,5 @@
   "src/types/schoolTest.ts",
   "src/types/student.ts",
   "src/types/training.ts",
-  "src/types/user.ts",
-  "src/types/vehicle.ts"
+  "src/types/user.ts"
 ]

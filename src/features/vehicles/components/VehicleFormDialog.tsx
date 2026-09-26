@@ -5,10 +5,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { useCan } from '@/hooks/useCan';
-import { useCreateVehicle, useUpdateVehicle } from '@/services/vehicleService';
+import {
+  useCreateVehicle,
+  useUpdateVehicle,
+} from '@/features/vehicles/api/vehicleService';
 import { extractErrorMessage } from '@/lib/errors';
 import type { Branch } from '@/types/branch';
-import { VEHICLE_CATEGORIES, type Vehicle } from '@/types/vehicle';
+import { VEHICLE_CATEGORIES, type Vehicle } from '@/features/vehicles/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';

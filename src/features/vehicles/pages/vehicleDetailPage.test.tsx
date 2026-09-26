@@ -1,9 +1,9 @@
 import { cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import VehicleDetailPage from '@/pages/VehicleDetailPage';
+import VehicleDetailPage from '@/features/vehicles/pages/VehicleDetailPage';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
-vi.mock('@/services/vehicleService', () => ({
+vi.mock('@/features/vehicles/api/vehicleService', () => ({
   useVehicle: () => ({
     data: {
       id: 'v1',

@@ -1,5 +1,5 @@
 import type { CourseType } from '@/types/student';
-import type { VehicleCategory } from '@/types/vehicle';
+import type { VehicleCategory } from '@/features/vehicles/types';
 
 export interface TrainingProgram {
   id: string;

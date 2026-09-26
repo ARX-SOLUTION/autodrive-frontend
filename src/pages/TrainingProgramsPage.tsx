@@ -13,7 +13,10 @@ import {
   useTrainingProgramsPage,
   useUpdateTrainingProgram,
 } from '@/services/trainingService';
-import { VEHICLE_CATEGORIES, type VehicleCategory } from '@/types/vehicle';
+import {
+  VEHICLE_CATEGORIES,
+  type VehicleCategory,
+} from '@/features/vehicles/types';
 import type { TrainingProgram } from '@/types/training';
 import type { CourseType } from '@/types/student';
 import { PageHeader } from '@/components/layout/PageHeader';

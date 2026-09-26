@@ -1,9 +1,9 @@
 import { cleanup, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import VehiclesPage from '@/pages/VehiclesPage';
+import VehiclesPage from '@/features/vehicles/pages/VehiclesPage';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
-vi.mock('@/services/vehicleService', () => ({
+vi.mock('@/features/vehicles/api/vehicleService', () => ({
   useCreateVehicle: () => ({ mutate: vi.fn(), isPending: false }),
   useUpdateVehicle: () => ({ mutate: vi.fn(), isPending: false }),
   useVehiclesPage: () => ({
