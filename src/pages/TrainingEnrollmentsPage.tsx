@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,9 @@ import { GraduationCap, Plus } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
+import { useListQueryState } from '@/hooks/useListQueryState';
+import { matchesListQuery } from '@/lib/listQuery';
+import { ListSearchField } from '@/components/ui/ListSearchField';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useBranches } from '@/services/branchService';
 import { searchStudents } from '@/services/studentService';
@@ -189,15 +192,37 @@ const TrainingEnrollmentsPage = () => {
   const { data: branches = [] } = useBranches(canViewAll);
   const [branchId, setBranchId] = useState('');
   const [status, setStatus] = useState<TrainingEnrollmentStatus | ''>('');
-  const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const {
+    page,
+    pageSize,
+    search,
+    debouncedSearch,
+    setPage,
+    setPageSize,
+    setSearch,
+  } = useListQueryState();
   const enrollments = useTrainingEnrollmentsPage({
     branchId: canViewAll
       ? branchId || undefined
       : (user?.branch_id ?? undefined),
     status: status || undefined,
     page,
+    limit: pageSize,
   });
+  const visibleEnrollments = useMemo(
+    () =>
+      (enrollments.data?.data ?? []).filter((enrollment) =>
+        matchesListQuery(
+          debouncedSearch,
+          enrollment.student.first_name,
+          enrollment.student.last_name,
+          enrollment.program_name,
+          enrollment.category,
+        ),
+      ),
+    [enrollments.data, debouncedSearch],
+  );
   const programName = (enrollment: TrainingEnrollment) =>
     enrollment.program_id
       ? (enrollment.program_name ?? t('training.program'))
@@ -222,6 +247,7 @@ const TrainingEnrollmentsPage = () => {
           )
         }
       />
+      <ListSearchField value={search} onChange={setSearch} />
       <div className="glass-card grid gap-3 p-4 sm:grid-cols-2">
         {canViewAll ? (
           <select
@@ -276,46 +302,52 @@ const TrainingEnrollmentsPage = () => {
         />
       ) : enrollments.data?.data.length ? (
         <>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {enrollments.data.data.map((enrollment) => (
-              <DataCard
-                key={enrollment.id}
-                title={`${enrollment.student.last_name} ${enrollment.student.first_name}`}
-                subtitle={`${enrollment.category ?? '—'} · ${programName(enrollment)}`}
-                onClick={() =>
-                  navigate({
-                    to: '/training-enrollments/$id',
-                    params: { id: enrollment.id },
-                  })
-                }
-                fields={[
-                  {
-                    label: t('common.branch'),
-                    value: branchName(enrollment.branch_id),
-                  },
-                  {
-                    label: t('common.status'),
-                    value: t(`training.status.${enrollment.status}`),
-                  },
-                  {
-                    label: t('driving.approved'),
-                    value: `${enrollment.approved_minutes} ${t('driving.minutes')}`,
-                  },
-                  {
-                    label: t('driving.remaining'),
-                    value:
-                      enrollment.remaining_minutes === null
-                        ? t('common.na')
-                        : `${enrollment.remaining_minutes} ${t('driving.minutes')}`,
-                  },
-                ]}
-              />
-            ))}
-          </div>
+          {visibleEnrollments.length === 0 ? (
+            <EmptyState title={t('common.no_data')} />
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {visibleEnrollments.map((enrollment) => (
+                <DataCard
+                  key={enrollment.id}
+                  title={`${enrollment.student.last_name} ${enrollment.student.first_name}`}
+                  subtitle={`${enrollment.category ?? '—'} · ${programName(enrollment)}`}
+                  onClick={() =>
+                    navigate({
+                      to: '/training-enrollments/$id',
+                      params: { id: enrollment.id },
+                    })
+                  }
+                  fields={[
+                    {
+                      label: t('common.branch'),
+                      value: branchName(enrollment.branch_id),
+                    },
+                    {
+                      label: t('common.status'),
+                      value: t(`training.status.${enrollment.status}`),
+                    },
+                    {
+                      label: t('driving.approved'),
+                      value: `${enrollment.approved_minutes} ${t('driving.minutes')}`,
+                    },
+                    {
+                      label: t('driving.remaining'),
+                      value:
+                        enrollment.remaining_minutes === null
+                          ? t('common.na')
+                          : `${enrollment.remaining_minutes} ${t('driving.minutes')}`,
+                    },
+                  ]}
+                />
+              ))}
+            </div>
+          )}
           <PaginationControls
             currentPage={page}
             totalPages={Math.max(1, enrollments.data.meta.totalPages)}
             onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
           />
         </>
       ) : (

@@ -26,7 +26,9 @@ interface GroupsTableProps {
   isFetching: boolean;
   currentPage: number;
   totalPages: number;
+  pageSize: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
   sortField: GroupSortField;
   sortDir: 'asc' | 'desc';
   onSortChange: (field: GroupSortField, dir: 'asc' | 'desc') => void;
@@ -45,7 +47,6 @@ interface GroupsTableProps {
   onRestore: (id: string) => void;
 }
 
-const GROUPS_PER_PAGE = 10;
 const columnHelper = createDataGridColumnHelper<Group>();
 const noColumnFilters: ColumnFiltersState = [];
 const ignoreColumnFilters = () => undefined;
@@ -56,7 +57,9 @@ const GroupsTable = ({
   isFetching,
   currentPage,
   totalPages,
+  pageSize,
   onPageChange,
+  onPageSizeChange,
   sortField,
   sortDir,
   onSortChange,
@@ -79,7 +82,7 @@ const GroupsTable = ({
         const pageRowIndex = table
           .getRowModel()
           .rows.findIndex((candidate) => candidate.id === row.id);
-        return (currentPage - 1) * GROUPS_PER_PAGE + pageRowIndex + 1;
+        return (currentPage - 1) * pageSize + pageRowIndex + 1;
       },
     }),
     columnHelper.accessor('name', {
@@ -214,11 +217,12 @@ const GroupsTable = ({
       getRowId={(group) => group.id}
       pagination={{
         pageIndex: currentPage - 1,
-        pageSize: GROUPS_PER_PAGE,
+        pageSize,
         rowCount: groups.length,
         pageCount: totalPages,
       }}
       onPaginationChange={handlePaginationChange}
+      onPageSizeChange={onPageSizeChange}
       sorting={sorting}
       onSortingChange={handleSortingChange}
       columnFilters={noColumnFilters}

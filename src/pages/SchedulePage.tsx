@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUrlTab } from '@/hooks/useUrlTab';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import {
@@ -164,6 +165,10 @@ type GenerateFormValues = z.infer<ReturnType<typeof makeGenerateFormSchema>>;
 const SchedulePage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [tab, setTab] = useUrlTab(
+    ['calendar', 'templates'] as const,
+    'calendar',
+  );
   const today = new Date();
 
   const lessonTypeLabel: Record<LessonType, string> = {
@@ -335,7 +340,7 @@ const SchedulePage = () => {
         }
       />
 
-      <Tabs defaultValue="calendar">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="calendar">
             {t('schedule.tab_calendar')}

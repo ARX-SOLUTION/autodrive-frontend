@@ -49,9 +49,16 @@ describe('expense detail route search', () => {
     });
   });
 
+  it('keeps info and payments tabs', () => {
+    expect(validateExpenseDetailSearch({ tab: 'info' }).tab).toBe('info');
+    expect(validateExpenseDetailSearch({ tab: 'payments' }).tab).toBe(
+      'payments',
+    );
+  });
+
   it('strips unknown tab and action values', () => {
     expect(
-      validateExpenseDetailSearch({ tab: 'info', action: 'pay_all' }),
+      validateExpenseDetailSearch({ tab: 'notes', action: 'pay_all' }),
     ).toEqual({
       tab: undefined,
       action: undefined,

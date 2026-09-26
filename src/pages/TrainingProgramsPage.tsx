@@ -1,10 +1,13 @@
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BookOpen, Plus } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { useBranches } from '@/services/branchService';
 import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
+import { useListQueryState } from '@/hooks/useListQueryState';
+import { matchesListQuery } from '@/lib/listQuery';
+import { ListSearchField } from '@/components/ui/ListSearchField';
 import {
   useCreateTrainingProgram,
   useTrainingProgramsPage,
@@ -221,9 +224,17 @@ const TrainingProgramsPage = () => {
   const [branchId, setBranchId] = useState('');
   const [category, setCategory] = useState<VehicleCategory | ''>('');
   const [showInactive, setShowInactive] = useState(false);
-  const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<TrainingProgram | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const {
+    page,
+    pageSize,
+    search,
+    debouncedSearch,
+    setPage,
+    setPageSize,
+    setSearch,
+  } = useListQueryState();
   const programs = useTrainingProgramsPage({
     branchId: canViewAll
       ? branchId || undefined
@@ -231,7 +242,20 @@ const TrainingProgramsPage = () => {
     category: category || undefined,
     active: showInactive ? undefined : true,
     page,
+    limit: pageSize,
   });
+  const visiblePrograms = useMemo(
+    () =>
+      (programs.data?.data ?? []).filter((program) =>
+        matchesListQuery(
+          debouncedSearch,
+          program.name,
+          program.category,
+          program.course_type,
+        ),
+      ),
+    [programs.data, debouncedSearch],
+  );
   const branchName = (id: string) =>
     branches.find((branch) => branch.id === id)?.name ??
     (id === user?.branch_id ? user?.branch_name : id);
@@ -257,6 +281,7 @@ const TrainingProgramsPage = () => {
           )
         }
       />
+      <ListSearchField value={search} onChange={setSearch} />
       <div className="glass-card grid gap-3 p-4 sm:grid-cols-3">
         {canViewAll ? (
           <select
@@ -320,49 +345,55 @@ const TrainingProgramsPage = () => {
         />
       ) : programs.data?.data.length ? (
         <>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {programs.data.data.map((program) => (
-              <DataCard
-                key={program.id}
-                title={program.name}
-                subtitle={`${program.category} · ${t(`training.course_type.${program.course_type}`)}`}
-                fields={[
-                  {
-                    label: t('common.branch'),
-                    value: branchName(program.branch_id),
-                  },
-                  {
-                    label: t('training.required_minutes'),
-                    value: `${program.required_minutes} ${t('driving.minutes')}`,
-                  },
-                  {
-                    label: t('common.status'),
-                    value: t(
-                      program.is_active ? 'common.active' : 'common.inactive',
-                    ),
-                  },
-                ]}
-                actions={
-                  canManage && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setEditing(program);
-                        setDialogOpen(true);
-                      }}
-                    >
-                      {t('common.edit')}
-                    </Button>
-                  )
-                }
-              />
-            ))}
-          </div>
+          {visiblePrograms.length === 0 ? (
+            <EmptyState title={t('common.no_data')} />
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {visiblePrograms.map((program) => (
+                <DataCard
+                  key={program.id}
+                  title={program.name}
+                  subtitle={`${program.category} · ${t(`training.course_type.${program.course_type}`)}`}
+                  fields={[
+                    {
+                      label: t('common.branch'),
+                      value: branchName(program.branch_id),
+                    },
+                    {
+                      label: t('training.required_minutes'),
+                      value: `${program.required_minutes} ${t('driving.minutes')}`,
+                    },
+                    {
+                      label: t('common.status'),
+                      value: t(
+                        program.is_active ? 'common.active' : 'common.inactive',
+                      ),
+                    },
+                  ]}
+                  actions={
+                    canManage && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditing(program);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        {t('common.edit')}
+                      </Button>
+                    )
+                  }
+                />
+              ))}
+            </div>
+          )}
           <PaginationControls
             currentPage={page}
             totalPages={Math.max(1, programs.data.meta.totalPages)}
             onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
           />
         </>
       ) : (

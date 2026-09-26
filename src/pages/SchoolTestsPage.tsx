@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { ClipboardText, Plus } from '@phosphor-icons/react';
@@ -6,6 +6,9 @@ import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
 import { useBranches } from '@/services/branchService';
 import { useTestTemplatesPage } from '@/services/schoolTestService';
+import { useListQueryState } from '@/hooks/useListQueryState';
+import { matchesListQuery } from '@/lib/listQuery';
+import { ListSearchField } from '@/components/ui/ListSearchField';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -20,9 +23,29 @@ const SchoolTestsPage = () => {
   const canManage = useCan('manageSchoolLearning');
   const canViewAll = useCan('viewAllBranches');
   const { data: branches = [] } = useBranches(canViewAll || canManage);
-  const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
-  const templates = useTestTemplatesPage({ page });
+  const {
+    page,
+    pageSize,
+    search,
+    debouncedSearch,
+    setPage,
+    setPageSize,
+    setSearch,
+  } = useListQueryState();
+  const templates = useTestTemplatesPage({ page, limit: pageSize });
+  const visibleTemplates = useMemo(
+    () =>
+      (templates.data?.data ?? []).filter((template) =>
+        matchesListQuery(
+          debouncedSearch,
+          template.title,
+          template.description,
+          template.category,
+        ),
+      ),
+    [templates.data, debouncedSearch],
+  );
 
   return (
     <div className="space-y-6">
@@ -41,6 +64,8 @@ const SchoolTestsPage = () => {
         }
       />
 
+      <ListSearchField value={search} onChange={setSearch} />
+
       <p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
         {t('school_tests.not_official_exam')}
       </p>
@@ -53,9 +78,11 @@ const SchoolTestsPage = () => {
           title={t('school_tests.empty')}
           description={t('school_tests.empty_desc')}
         />
+      ) : visibleTemplates.length === 0 ? (
+        <EmptyState icon={ClipboardText} title={t('common.no_data')} />
       ) : (
         <div className="grid gap-3">
-          {templates.data.data.map((template) => (
+          {visibleTemplates.map((template) => (
             <DataCard
               key={template.id}
               className="cursor-pointer"
@@ -89,6 +116,8 @@ const SchoolTestsPage = () => {
           currentPage={templates.data.meta.page}
           totalPages={templates.data.meta.totalPages}
           onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
         />
       ) : null}
 

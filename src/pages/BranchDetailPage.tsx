@@ -12,6 +12,7 @@ import { tashkentToday } from '@/lib/tashkentDate';
 import { formatMoney } from '@/lib/money';
 import { toLocalDateStr } from '@/services/studentService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUrlTab } from '@/hooks/useUrlTab';
 import { ExpensesTable } from './expenses/ExpensesTable';
 
 const BranchRevenueTrendChart = lazy(
@@ -22,6 +23,7 @@ const BranchDetailPage = () => {
   const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [tab, setTab] = useUrlTab(['info', 'expenses'] as const, 'info');
 
   const { data: branch, isLoading, isError } = useBranch(id);
   const [expensePage, setExpensePage] = useState(1);
@@ -74,7 +76,7 @@ const BranchDetailPage = () => {
         </div>
       }
     >
-      <Tabs defaultValue="info" className="space-y-4">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
           <TabsTrigger value="expenses">

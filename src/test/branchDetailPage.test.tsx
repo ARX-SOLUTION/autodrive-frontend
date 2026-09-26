@@ -181,7 +181,7 @@ describe('BranchDetailPage drill-down navigation (autodrive-6ef.20)', () => {
   it('falls back to a no-data state when monthly_revenue/top_debtors are absent', async () => {
     branch.current = { ...BRANCH, monthly_revenue: [], top_debtors: [] };
     await renderPage();
-    expect(screen.getAllByText('common.no_data').length).toBe(2);
+    expect(await screen.findAllByText('common.no_data')).toHaveLength(2);
   });
 });
 

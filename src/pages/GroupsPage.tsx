@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUrlParams } from '@/hooks/useUrlParams';
+import { usePageSize } from '@/hooks/useListQueryState';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAuthStore } from '@/store/authStore';
@@ -43,6 +44,7 @@ const GroupsPage = () => {
   // them (autodrive-6cq.5.8) — same setParam/setParams pattern as
   // StudentsPage (src/hooks/useUrlParams.ts).
   const { searchParams, setParam, setParams } = useUrlParams();
+  const { pageSize, setPageSize } = usePageSize();
 
   const search = searchParams.get('q') ?? '';
   const setSearch = (v: string) =>
@@ -120,11 +122,7 @@ const GroupsPage = () => {
   // Server already applied search/course_type/branch filters above.
   const filteredGroups = groups || [];
 
-  const GROUPS_PER_PAGE = 10;
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredGroups.length / GROUPS_PER_PAGE),
-  );
+  const totalPages = Math.max(1, Math.ceil(filteredGroups.length / pageSize));
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(1);
@@ -247,7 +245,9 @@ const GroupsPage = () => {
                 isFetching={isFetching}
                 currentPage={currentPage}
                 totalPages={totalPages}
+                pageSize={pageSize}
                 onPageChange={setCurrentPage}
+                onPageSizeChange={setPageSize}
                 sortField={sortField}
                 sortDir={sortDir}
                 onSortChange={setSort}

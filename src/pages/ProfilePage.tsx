@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuthStore } from '@/store/authStore';
+import { useCan } from '@/hooks/useCan';
+import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { useChangePassword } from '@/services/authService';
 import { useUpdateUser } from '@/services/userService';
 import {
@@ -81,6 +84,15 @@ const ProfilePage = () => {
   // than showing a Save button that silently fails.
   const canEditProfile =
     user?.role === 'owner' || user?.role === 'manager' || user?.role === 'dev';
+  const canManageBranches = useCan('manageBranches');
+  const companyStatusKey =
+    user?.company_status === 'pending'
+      ? 'profile.status_pending'
+      : user?.company_status === 'suspended'
+        ? 'profile.status_suspended'
+        : user?.company_status === 'active'
+          ? 'profile.status_active'
+          : null;
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(makeProfileFormSchema(t)),
@@ -303,6 +315,53 @@ const ProfilePage = () => {
         </Form>
       </div>
 
+      {(user?.company_slug || companyStatusKey) && (
+        <div className="glass-card space-y-3 p-6">
+          <h3 className="font-heading font-semibold text-balance">
+            {t('profile.company')}
+          </h3>
+          <dl className="grid gap-3 text-sm sm:grid-cols-2">
+            {user?.company_slug ? (
+              <div>
+                <dt className="text-muted-foreground">
+                  {t('profile.company_slug')}
+                </dt>
+                <dd className="font-medium">{user.company_slug}</dd>
+              </div>
+            ) : null}
+            {companyStatusKey ? (
+              <div>
+                <dt className="text-muted-foreground">
+                  {t('profile.company_status')}
+                </dt>
+                <dd className="font-medium">{t(companyStatusKey)}</dd>
+              </div>
+            ) : null}
+            {user?.branch_name ? (
+              <div>
+                <dt className="text-muted-foreground">{t('common.branch')}</dt>
+                <dd className="font-medium">{user.branch_name}</dd>
+              </div>
+            ) : null}
+          </dl>
+          {canManageBranches ? (
+            <Button variant="outline" asChild>
+              <Link to="/branches">{t('profile.branches_link')}</Link>
+            </Button>
+          ) : null}
+        </div>
+      )}
+
+      <div id="preferences" className="glass-card space-y-4 p-6">
+        <h3 className="font-heading font-semibold text-balance">
+          {t('profile.preferences')}
+        </h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <LanguageSwitcher />
+          <ThemeToggle />
+        </div>
+      </div>
+
       {/* Telegram */}
       <div className="glass-card p-6 space-y-4">
         <h3 className="font-heading font-semibold text-balance">
@@ -368,7 +427,7 @@ const ProfilePage = () => {
       {/* Change password */}
       <Form {...pwForm}>
         <form onSubmit={pwForm.handleSubmit(onPwValid)}>
-          <div className="glass-card p-6 space-y-4">
+          <div id="password" className="glass-card space-y-4 p-6">
             <h3 className="font-heading font-semibold text-balance">
               {t('profile.change_password')}
             </h3>

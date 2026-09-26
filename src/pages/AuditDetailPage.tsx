@@ -4,6 +4,7 @@ import { ShieldCheck, Warning } from '@phosphor-icons/react';
 import { useAuditLogById } from '@/services/auditService';
 import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUrlTab } from '@/hooks/useUrlTab';
 import { cn } from '@/lib/utils';
 import { AuditLog } from '@/types/audit';
 import {
@@ -176,6 +177,7 @@ const AuditDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const [tab, setTab] = useUrlTab(['info', 'changes'] as const, 'info');
 
   // Router state is an optimistic pre-fill (instant paint when navigated
   // from AuditLogPage's row click) — the real source of truth is the
@@ -235,7 +237,7 @@ const AuditDetailPage = () => {
         </div>
       }
     >
-      <Tabs defaultValue="info">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="info">{t('audit.detail_info')}</TabsTrigger>
           <TabsTrigger value="changes">{t('audit.changes')}</TabsTrigger>

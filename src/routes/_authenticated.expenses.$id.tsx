@@ -4,7 +4,7 @@ import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
 import ExpenseDetailPage from '@/pages/ExpenseDetailPage';
 
 export type ExpenseDetailSearch = {
-  tab?: 'payments';
+  tab?: 'info' | 'payments';
   action?: 'pay_remaining';
   return_attention?: 'overdue';
   return_branch_id?: string;
@@ -25,7 +25,10 @@ export const validateExpenseDetailSearch = (
       : undefined;
 
   return {
-    tab: search.tab === 'payments' ? 'payments' : undefined,
+    tab:
+      search.tab === 'payments' || search.tab === 'info'
+        ? search.tab
+        : undefined,
     action: search.action === 'pay_remaining' ? 'pay_remaining' : undefined,
     return_attention: returnAttention,
     return_branch_id: returnBranchId,

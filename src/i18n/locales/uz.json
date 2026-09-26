@@ -139,7 +139,8 @@
     "update_reload": "Yangilash",
     "offline_banner": "Internet aloqasi yo'q",
     "demo_banner": "Demo markaz. Ma'lumotlar har tun soat 03:00 da (Toshkent vaqti) tiklanadi.",
-    "tab_info": "Ma'lumot"
+    "tab_info": "Ma'lumot",
+    "rows_per_page": "Sahifadagi qatorlar"
   },
   "datepicker": {
     "placeholder": "Sana tanlang",
@@ -1450,7 +1451,17 @@
       "daily_report_label": "Kunlik hisobot",
       "daily_report_enabled": "Kunlik hisobot yoqildi.",
       "daily_report_disabled": "Kunlik hisobot o'chirildi."
-    }
+    },
+    "menu_label": "Hisob menyusi",
+    "open_profile": "Profil sozlamalari",
+    "company": "Kompaniya",
+    "company_slug": "Kompaniya kodi",
+    "company_status": "Holat",
+    "preferences": "Sozlamalar",
+    "branches_link": "Filiallar",
+    "status_active": "Faol",
+    "status_pending": "Kutilmoqda",
+    "status_suspended": "To'xtatilgan"
   },
   "attendance": {
     "title": "Davomat",

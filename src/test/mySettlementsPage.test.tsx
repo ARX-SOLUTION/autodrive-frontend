@@ -121,7 +121,7 @@ describe('MySettlementsPage', () => {
     expect(
       screen.getByText('my_settlements.summary.total'),
     ).toBeInTheDocument();
-    expect(useMySettlementsMock).toHaveBeenCalledWith(1, true);
+    expect(useMySettlementsMock).toHaveBeenCalledWith(1, true, 10);
   });
 
   it('moves to the selected server page', async () => {
@@ -132,6 +132,6 @@ describe('MySettlementsPage', () => {
     await renderPage();
     fireEvent.click(screen.getByRole('button', { name: 'common.next' }));
 
-    expect(useMySettlementsMock).toHaveBeenLastCalledWith(2, true);
+    expect(useMySettlementsMock).toHaveBeenLastCalledWith(2, true, 10);
   });
 });

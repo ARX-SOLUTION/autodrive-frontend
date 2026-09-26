@@ -95,7 +95,7 @@ describe('AuditLogPage', () => {
 
   it('drives the fetch from URL filter params (entity, action, dates, page, q->userId)', async () => {
     mockUseAuditLogs.mockReturnValue(
-      queryResult([makeLog({})], 120), // 120 total -> 3 pages of 50
+      queryResult([makeLog({})], 120), // 120 total -> 12 pages of 10
     );
     await renderPage(
       '/audit?entity=student&action=CREATE&q=Alice&date_from=2026-07-01&date_to=2026-07-10&page=2',
@@ -106,16 +106,15 @@ describe('AuditLogPage', () => {
       entity: 'student',
       action: 'CREATE',
       page: 2,
-      limit: 50,
+      limit: 10,
       userId: 'u-alice', // 'Alice' uniquely matches one user -> real id
     });
     expect(args.startDate).toEqual(parseCalendarDate('2026-07-01'));
     expect(args.endDate).toEqual(parseCalendarDate('2026-07-10'));
 
-    // Row numbering continues across pages: page 2 starts at 51.
-    expect(screen.getByText('51')).toBeInTheDocument();
-    // Pagination reflects total/limit.
-    expect(screen.getByText('2 / 3')).toBeInTheDocument();
+    // Row numbering continues across pages: page 2 starts at 11.
+    expect(screen.getByText('11')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '2' })).toBeInTheDocument();
   });
 
   it('forces an empty result via sentinel userId when the name search is ambiguous', async () => {

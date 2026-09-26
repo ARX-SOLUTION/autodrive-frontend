@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { DataCard } from '@/components/ui/DataCard';
 import { useUser } from '@/services/userService';
+import { useUrlTab } from '@/hooks/useUrlTab';
 
 // Which list page a given role's users are managed from — used for the back
 // link and the row-click origin, since one UserDetailPage serves all three.
@@ -22,6 +23,10 @@ const UserDetailPage = () => {
   const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [tab, setTab] = useUrlTab(
+    ['info', 'groups', 'students'] as const,
+    'info',
+  );
 
   const { data: user, isLoading, isError } = useUser(id);
 
@@ -44,6 +49,13 @@ const UserDetailPage = () => {
       />
     );
   }
+
+  const visibleTab =
+    tab === 'groups' && user.role !== 'teacher'
+      ? 'info'
+      : tab === 'students' && user.role !== 'operator'
+        ? 'info'
+        : tab;
 
   return (
     <EntityDetailShell
@@ -73,7 +85,7 @@ const UserDetailPage = () => {
         </div>
       }
     >
-      <Tabs defaultValue="info">
+      <Tabs value={visibleTab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
           {user.role === 'teacher' && (

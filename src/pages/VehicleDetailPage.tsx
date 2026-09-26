@@ -5,6 +5,7 @@ import { Car, Warning } from '@phosphor-icons/react';
 import { useVehicle } from '@/services/vehicleService';
 import { useBranches } from '@/services/branchService';
 import { useCan } from '@/hooks/useCan';
+import { useUrlTab } from '@/hooks/useUrlTab';
 import { useAuthStore } from '@/store/authStore';
 import { formatTashkentDate } from '@/lib/calendarDateTime';
 import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
@@ -18,6 +19,10 @@ const VehicleDetailPage = () => {
   const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const [tab, setTab] = useUrlTab(
+    ['info', 'documents', 'maintenance', 'transfers'] as const,
+    'info',
+  );
   const canManage = useCan('manageVehicles');
   const canViewAllBranches = useCan('viewAllBranches');
   const user = useAuthStore((state) => state.user);
@@ -94,7 +99,7 @@ const VehicleDetailPage = () => {
         </div>
       }
     >
-      <Tabs defaultValue="info" className="space-y-4">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList className="h-auto min-h-10 max-w-full flex-wrap">
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
           <TabsTrigger value="documents">{t('vehicles.documents')}</TabsTrigger>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { useUrlParams } from '@/hooks/useUrlParams';
+import { useUrlTab } from '@/hooks/useUrlTab';
 import { useTranslation } from 'react-i18next';
 import {
   Warning,
@@ -51,7 +51,10 @@ const StudentDetailPage = () => {
   const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { searchParams } = useUrlParams();
+  const [urlTab, setTab] = useUrlTab(
+    ['info', 'payments', 'exams', 'attendance', 'group-history'] as const,
+    'info',
+  );
 
   const { data: student, isLoading, isError } = useStudent(id);
   const canRecordPayment = useCan('recordPayment');
@@ -63,6 +66,11 @@ const StudentDetailPage = () => {
   const role = useAuthStore((s) => s.user?.role);
   const canViewGroupHistory =
     role === 'owner' || role === 'manager' || role === 'dev';
+  const activeTab =
+    (urlTab === 'payments' && !canRecordPayment) ||
+    (urlTab === 'group-history' && !canViewGroupHistory)
+      ? 'info'
+      : urlTab;
   const canManageLearnerLogin =
     role === 'owner' ||
     role === 'manager' ||
@@ -159,10 +167,6 @@ const StudentDetailPage = () => {
   }
 
   const fullName = `${student.last_name} ${student.first_name}`.trim();
-  const initialTab =
-    searchParams.get('tab') === 'payments' && canRecordPayment
-      ? 'payments'
-      : 'info';
 
   return (
     <EntityDetailShell
@@ -228,7 +232,7 @@ const StudentDetailPage = () => {
         </div>
       }
     >
-      <Tabs defaultValue={initialTab}>
+      <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
           {canRecordPayment && (

@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { useCourses, useDeleteCourse } from '@/services/courseService';
+import { useListQueryState } from '@/hooks/useListQueryState';
+import { pageCountFor, slicePage } from '@/lib/listQuery';
+import { ListSearchField } from '@/components/ui/ListSearchField';
+import PaginationControls from '@/components/ui/PaginationControls';
 import { useBranches } from '@/services/branchService';
 import { Course } from '@/types/course';
 import { Button } from '@/components/ui/button';
@@ -17,7 +21,24 @@ import { PageHeader } from '@/components/layout/PageHeader';
 const CoursesPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: courses, isLoading, isFetching } = useCourses();
+  const {
+    page,
+    pageSize,
+    search,
+    debouncedSearch,
+    setPage,
+    setPageSize,
+    setSearch,
+  } = useListQueryState();
+  const {
+    data: courses,
+    isLoading,
+    isFetching,
+  } = useCourses({
+    search: debouncedSearch.trim() || undefined,
+  });
+  const courseRows = useMemo(() => courses ?? [], [courses]);
+  const visibleCourses = slicePage(courseRows, page, pageSize);
   const { data: branches } = useBranches();
   const deleteMut = useDeleteCourse();
 
@@ -62,6 +83,12 @@ const CoursesPage = () => {
         }
       />
 
+      <ListSearchField
+        value={search}
+        onChange={setSearch}
+        placeholder={t('courses.name')}
+      />
+
       <div className="relative">
         {isFetching && !isLoading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
@@ -75,7 +102,7 @@ const CoursesPage = () => {
           )}
         >
           <CoursesGrid
-            courses={courses || []}
+            courses={visibleCourses}
             isLoading={isLoading}
             isFetching={isFetching}
             onNavigate={(course) =>
@@ -87,6 +114,14 @@ const CoursesPage = () => {
           />
         </div>
       </div>
+
+      <PaginationControls
+        currentPage={page}
+        totalPages={pageCountFor(courseRows.length, pageSize)}
+        onPageChange={setPage}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+      />
 
       <CourseFormDialog
         open={modalOpen}

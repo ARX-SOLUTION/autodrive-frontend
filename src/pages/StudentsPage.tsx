@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUrlParams } from '@/hooks/useUrlParams';
+import { usePageSize } from '@/hooks/useListQueryState';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
@@ -57,6 +58,7 @@ const StudentsPage = () => {
   // keeps the browser-history short — every keystroke in the search box
   // would otherwise push a history entry.
   const { searchParams, setSearchParams } = useUrlParams();
+  const { pageSize, setPageSize } = usePageSize();
   const goToStudent = useViewTransitionNavigate();
   const setParam = (key: string, value: string | undefined) => {
     setSearchParams(
@@ -178,7 +180,6 @@ const StudentsPage = () => {
   const { data: branches } = useBranches();
   const { data: operators } = useOperators();
 
-  const SERVER_PAGE_SIZE = 50;
   const activeListOptions = useMemo(
     () => ({
       search: debouncedSearch,
@@ -222,7 +223,7 @@ const StudentsPage = () => {
     courseTypeFilter,
     branchId,
     currentPage,
-    SERVER_PAGE_SIZE,
+    pageSize,
     operatorId,
     activeListOptions,
   );
@@ -402,7 +403,7 @@ const StudentsPage = () => {
       `student-${s.id}`,
     );
 
-  const startIndex = (currentPage - 1) * SERVER_PAGE_SIZE;
+  const startIndex = (currentPage - 1) * pageSize;
 
   return (
     <div className="space-y-6">
@@ -461,7 +462,7 @@ const StudentsPage = () => {
             totalStudents={totalStudents}
             startIndex={startIndex}
             currentPage={currentPage}
-            pageSize={SERVER_PAGE_SIZE}
+            pageSize={pageSize}
             pageCount={serverTotalPages}
             onPageChange={setCurrentPage}
             courseType={courseType}
@@ -501,6 +502,8 @@ const StudentsPage = () => {
         currentPage={currentPage}
         totalPages={serverTotalPages}
         onPageChange={setCurrentPage}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
       />
 
       <StudentsDialogs

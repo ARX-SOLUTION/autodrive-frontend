@@ -17,6 +17,7 @@ import { useGroup } from '@/services/groupService';
 import { useUpdateStudent } from '@/services/studentService';
 import { useOperators } from '@/services/operatorService';
 import { useCan } from '@/hooks/useCan';
+import { useUrlTab } from '@/hooks/useUrlTab';
 import { extractErrorMessage } from '@/lib/errors';
 import { groupKeys } from '@/lib/queryKeys';
 import { DAY_LABELS } from '@/types/schedule';
@@ -35,6 +36,10 @@ const GroupDetailPage = () => {
   const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [tab, setTab] = useUrlTab(
+    ['info', 'students', 'schedule'] as const,
+    'info',
+  );
   const qc = useQueryClient();
 
   const { data: group, isLoading, isError } = useGroup(id);
@@ -113,7 +118,7 @@ const GroupDetailPage = () => {
         </div>
       }
     >
-      <Tabs defaultValue="info">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
           <TabsTrigger value="students">{t('students.title')}</TabsTrigger>
