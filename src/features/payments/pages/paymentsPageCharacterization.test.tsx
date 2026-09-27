@@ -112,6 +112,17 @@ beforeEach(() => {
 });
 
 describe('PaymentsPage characterization', () => {
+  it('keeps pagination outside the payments table card', async () => {
+    usePaymentsPageMock.mockReturnValue(pageOf([payment()], 2));
+    await renderPage();
+    const tableCard = screen
+      .getByRole('table', { name: 'payments.payment_list' })
+      .closest('.glass-card');
+    expect(tableCard).not.toContainElement(
+      screen.getByRole('navigation', { name: 'payments.payment_list' }),
+    );
+  });
+
   it('renders a row/card per payment from the fetched page', async () => {
     await renderPage();
 

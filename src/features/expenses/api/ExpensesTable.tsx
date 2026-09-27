@@ -10,6 +10,7 @@ import { useCan } from '@/hooks/useCan';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import { formatMoney } from '@/lib/money';
 import type { Expense, ExpenseStatus } from '@/features/expenses/types';
+import { cn } from '@/lib/utils';
 import { Wallet, Warning } from '@phosphor-icons/react';
 
 interface ExpensesTableProps {
@@ -297,7 +298,10 @@ export const ExpensesTable = ({
       onRowActivate={(expense, element) => openExpense(expense, element)}
       getRowAriaLabel={(expense) => expense.title}
       rowClassName={() => 'table-row-interactive'}
-      className="p-3 md:p-0"
+      className={cn(
+        'glass-card overflow-hidden p-3 transition-opacity duration-200 md:p-0',
+        isFetching && !isLoading && 'opacity-50',
+      )}
     />
   );
 };

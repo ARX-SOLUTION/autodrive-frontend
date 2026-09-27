@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   PencilSimple,
@@ -24,6 +25,8 @@ interface GroupsTableProps {
   groups: Group[];
   isLoading: boolean;
   isFetching: boolean;
+  emptyState: ReactNode;
+  errorState?: ReactNode;
   currentPage: number;
   totalPages: number;
   pageSize: number;
@@ -56,6 +59,8 @@ const GroupsTable = ({
   isLoading,
   isFetching,
   currentPage,
+  emptyState,
+  errorState,
   totalPages,
   pageSize,
   onPageChange,
@@ -240,7 +245,8 @@ const GroupsTable = ({
         nextPage: t('common.next'),
       }}
       loadingState={<Skeleton className="h-5 w-full" />}
-      emptyState={null}
+      emptyState={emptyState}
+      errorState={errorState}
       renderMobileRow={({ row }) => (
         <GroupMobileCard
           group={row}
@@ -264,6 +270,10 @@ const GroupsTable = ({
       rowClassName={(group) =>
         cn('table-row-interactive', group.deleted_at && 'opacity-60')
       }
+      className={cn(
+        'glass-card overflow-hidden transition-opacity duration-200',
+        isFetching && !isLoading && 'opacity-50',
+      )}
     />
   );
 };

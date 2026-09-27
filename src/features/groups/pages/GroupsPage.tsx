@@ -233,47 +233,43 @@ const GroupsPage = () => {
                 <CircleNotch className="h-6 w-6 animate-spin text-primary" />
               </div>
             )}
-            <div
-              className={cn(
-                'glass-card overflow-hidden transition-opacity duration-200',
-                isFetching && !isLoading && 'opacity-50',
-              )}
-            >
-              <GroupsTable
-                groups={filteredGroups}
-                isLoading={isLoading}
-                isFetching={isFetching}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                pageSize={pageSize}
-                onPageChange={setCurrentPage}
-                onPageSizeChange={setPageSize}
-                sortField={sortField}
-                sortDir={sortDir}
-                onSortChange={setSort}
-                getBranchName={getBranchName}
-                onNavigate={goToGroup}
-                onEdit={openEdit}
-                onDelete={setDeleteId}
-                canManageGroups={canManageGroups}
-                canViewDeleted={canViewDeleted}
-                onRestore={setRestoreId}
-              />
-              {isGroupsError ? (
-                <EmptyState
-                  title={t('common.error')}
-                  action={{
-                    label: t('common.retry'),
-                    onClick: () => refetchGroups(),
-                  }}
-                />
-              ) : (
-                filteredGroups.length === 0 &&
-                !isLoading && (
+
+            <GroupsTable
+              groups={filteredGroups}
+              isLoading={isLoading}
+              isFetching={isFetching}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              sortField={sortField}
+              sortDir={sortDir}
+              onSortChange={setSort}
+              getBranchName={getBranchName}
+              onNavigate={goToGroup}
+              onEdit={openEdit}
+              onDelete={setDeleteId}
+              canManageGroups={canManageGroups}
+              canViewDeleted={canViewDeleted}
+              onRestore={setRestoreId}
+              errorState={
+                isGroupsError ? (
+                  <EmptyState
+                    title={t('common.error')}
+                    action={{
+                      label: t('common.retry'),
+                      onClick: () => refetchGroups(),
+                    }}
+                  />
+                ) : undefined
+              }
+              emptyState={
+                filteredGroups.length === 0 && !isLoading ? (
                   <EmptyState icon={Stack} title={t('groups.not_found')} />
-                )
-              )}
-            </div>
+                ) : null
+              }
+            />
           </div>
         </div>
       </div>

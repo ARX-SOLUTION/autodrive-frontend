@@ -32,7 +32,6 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { toLocalDateStr } from '@/features/students/api/studentService';
 import { parseCalendarDate } from '@/lib/calendarDate';
 import { tashkentTodayCalendarDate } from '@/lib/tashkentDate';
-import { cn } from '@/lib/utils';
 import { ExpensesFilterBar } from '@/features/expenses/components/ExpensesFilterBar';
 import { ExpenseOverdueSweep } from '@/features/expenses/components/ExpenseOverdueSweep';
 import { ExpensesTable } from '@/features/expenses/api/ExpensesTable';
@@ -619,13 +618,9 @@ const ExpensesPage = () => {
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         )}
-        <div
-          className={cn(
-            'glass-card overflow-hidden transition-opacity duration-200',
-            !attentionFilter && isFetching && !isLoading && 'opacity-50',
-          )}
-        >
-          {attentionFilter ? (
+
+        {attentionFilter ? (
+          <div className="glass-card overflow-hidden">
             <ExpenseOverdueSweep
               expenses={visibleOverdueExpenses}
               isLoading={isSweepLoading}
@@ -640,22 +635,22 @@ const ExpensesPage = () => {
                   : expenseFilters.scope,
               }}
             />
-          ) : (
-            <ExpensesTable
-              expenses={visibleExpenses}
-              isLoading={isPageLoading}
-              isFetching={isPageFetching}
-              isError={isPageError}
-              onRetry={() => void refetchPage()}
-              currentPage={currentPage}
-              pageSize={pageSize}
-              onPageSizeChange={setPageSize}
-              totalExpenses={totalExpenses}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          )}
-        </div>
+          </div>
+        ) : (
+          <ExpensesTable
+            expenses={visibleExpenses}
+            isLoading={isPageLoading}
+            isFetching={isPageFetching}
+            isError={isPageError}
+            onRetry={() => void refetchPage()}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+            totalExpenses={totalExpenses}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        )}
       </div>
 
       <ExpenseFormDialog

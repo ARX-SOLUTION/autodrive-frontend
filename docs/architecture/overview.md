@@ -70,7 +70,7 @@ The `local/feature-boundaries` rule in `eslint.config.js` enforces rules 1 and 2
 ### List controls
 
 - Put server-list `page` and `limit` in the URL via `useListQueryState` / `usePageSize`; include both in the query key. While the next page is loading, do not treat absent response metadata as a one-page result or reset the selected page.
-- Use `PaginationControls` (directly or through `DataGrid`) for the result range, page size, and adjacent navigation. The compact mobile view shows the current/total page; disable grid controls while fetching.
+- Use `PaginationControls` (directly or through `DataGrid`) for the result range, page size, and adjacent navigation. Keep the pager after the table/card as a separate sibling, not inside its `glass-card` wrapper. The compact mobile view shows the current/total page; disable grid controls while fetching.
 - Keep short fixed filters (category, status, page size) as Radix `Select`. For longer dynamic choices, use a searchable `Popover` + `Command` combobox with an accessible label, keyboard selection, and a visible selected value; the expenses branch filter is the example.
 
 ### Auth
