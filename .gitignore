@@ -90,3 +90,36 @@ storybook-static/
 
 # graphify local knowledge graph output
 graphify-out/
+
+# Local agent tooling and reports; keep project/product Markdown tracked
+AGENTS.md
+CLAUDE.md
+/.agents/
+/.claude/
+/.codex/
+/.pi/
+/.omp/
+/skills/
+/skills-lock.json
+/docs/agents/
+/.reviews/
+/.review-scratch/
+/.plans/
+/anti-slop/
+/deploy-evidence/
+/graphify-out/
+# Reproducible test and compiler output
+/test-results/
+/playwright-report/
+*.tsbuildinfo
+
+# Local review snapshots
+/IMPLEMENTATION_PROGRESS.md
+/docs/ENGLISH-REFACTOR-INVENTORY.md
+/docs/redesign-audit.md
+/docs/redesign-report.md
+/docs/ECC-FULL-AUDIT-FRONTEND-SUMMARY.md
+/docs/GRAPHIFY_FRONTEND_ANALYSIS.md
+/docs/PERF_ROOT_CAUSE.md
+/docs/PILOT_DEV_TASK_PLAN.md
+/docs/PILOT_TASK_PLAN.md
