@@ -17,6 +17,8 @@ export type VehicleDocumentType =
   'registration' | 'insurance' | 'technical_inspection' | 'other';
 
 export interface Vehicle {
+  fuel_types?: string[];
+  current_custodian_id?: string | null;
   id: string;
   company_id: string;
   branch_id: string;

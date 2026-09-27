@@ -185,6 +185,7 @@ export const Sidebar = ({
     recordPayment: useCan('recordPayment'),
     viewExpenses: useCan('viewExpenses'),
     viewOwnSettlements: useCan('viewOwnSettlements'),
+    viewFuel: useCan('viewFuel'),
     viewVehicles: useCan('viewVehicles'),
     viewFleetMap: useCan('viewFleetMap'),
     viewTrainingPrograms: useCan('viewTrainingPrograms'),

@@ -38,6 +38,7 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
     recordPayment: useCan('recordPayment'),
     viewExpenses: useCan('viewExpenses'),
     viewOwnSettlements: useCan('viewOwnSettlements'),
+    viewFuel: useCan('viewFuel'),
     viewVehicles: useCan('viewVehicles'),
     viewTrainingPrograms: useCan('viewTrainingPrograms'),
     viewTrainingEnrollments: useCan('viewTrainingEnrollments'),

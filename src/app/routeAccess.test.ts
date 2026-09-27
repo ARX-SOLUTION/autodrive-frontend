@@ -27,6 +27,8 @@ describe('protected route capability matrix', () => {
     ['/attendance', ['dev', 'owner', 'manager', 'operator', 'teacher']],
     ['/groups', ['dev', 'owner', 'manager', 'operator', 'teacher']],
     ['/groups/$id', ['dev', 'owner', 'manager', 'operator', 'teacher']],
+    ['/vehicle-inspections', ['owner', 'manager', 'teacher']],
+    ['/vehicle-inspections/$id', ['owner', 'manager', 'teacher']],
     ['/vehicles', ['dev', 'owner', 'manager', 'operator', 'teacher']],
     ['/vehicles/$id', ['dev', 'owner', 'manager', 'operator', 'teacher']],
     ['/fleet-map', ['dev', 'owner', 'manager']],
