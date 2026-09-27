@@ -66,7 +66,7 @@ vi.mock('@/services/drivingSessionService', () => ({
     data: [{ id: 't1', name: 'Practice Instructor' }],
   }),
 }));
-vi.mock('@/services/vehicleService', () => ({
+vi.mock('@/features/vehicles/api/vehicleService', () => ({
   useVehiclesPage: (filters: { page?: number }) => {
     actions.vehicles(filters);
     return {

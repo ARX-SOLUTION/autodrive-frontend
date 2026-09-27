@@ -15,7 +15,7 @@ import {
   useDrivingSummary,
   usePracticeInstructors,
 } from '@/services/drivingSessionService';
-import { useVehiclesPage } from '@/services/vehicleService';
+import { useVehiclesPage } from '@/features/vehicles/api/vehicleService';
 import type { TrainingEnrollment } from '@/types/training';
 import { extractErrorMessage } from '@/lib/errors';
 import { formatTashkentDateTime } from '@/lib/calendarDateTime';

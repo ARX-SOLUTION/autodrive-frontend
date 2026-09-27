@@ -17,7 +17,7 @@ import type {
   Vehicle,
   VehicleDetail,
   VehicleListFilters,
-} from '@/types/vehicle';
+} from '@/features/vehicles/types';
 
 export const fetchVehiclesPage = async (
   filters: VehicleListFilters = {},

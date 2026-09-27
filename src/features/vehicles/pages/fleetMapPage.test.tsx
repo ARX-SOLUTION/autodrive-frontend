@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import FleetMapPage from '@/pages/FleetMapPage';
+import FleetMapPage from '@/features/vehicles/pages/FleetMapPage';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 const state = vi.hoisted(() => ({
@@ -46,7 +46,7 @@ vi.mock('@/services/branchService', () => ({
   }),
 }));
 
-vi.mock('@/services/vehicleService', () => ({
+vi.mock('@/features/vehicles/api/vehicleService', () => ({
   useVehiclesPage: (filters: Record<string, unknown>) => {
     state.filters.push(filters);
     return {

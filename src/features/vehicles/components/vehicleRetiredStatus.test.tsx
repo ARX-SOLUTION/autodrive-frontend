@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import VehicleFormDialog from '@/pages/vehicles/VehicleFormDialog';
-import type { Vehicle } from '@/types/vehicle';
+import VehicleFormDialog from '@/features/vehicles/components/VehicleFormDialog';
+import type { Vehicle } from '@/features/vehicles/types';
 
 vi.mock('@/hooks/useCan', () => ({ useCan: () => true }));
-vi.mock('@/services/vehicleService', () => ({
+vi.mock('@/features/vehicles/api/vehicleService', () => ({
   useCreateVehicle: () => ({ mutate: vi.fn(), isPending: false }),
   useUpdateVehicle: () => ({ mutate: vi.fn(), isPending: false }),
 }));

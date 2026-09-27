@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Car, Warning } from '@phosphor-icons/react';
-import { useVehicle } from '@/services/vehicleService';
+import { useVehicle } from '@/features/vehicles/api/vehicleService';
 import { useBranches } from '@/services/branchService';
 import { useCan } from '@/hooks/useCan';
 import { useUrlTab } from '@/hooks/useUrlTab';
@@ -12,8 +12,8 @@ import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import VehicleFormDialog from './vehicles/VehicleFormDialog';
-import VehicleOperations from './vehicles/VehicleOperations';
+import VehicleFormDialog from '@/features/vehicles/components/VehicleFormDialog';
+import VehicleOperations from '@/features/vehicles/components/VehicleOperations';
 
 const VehicleDetailPage = () => {
   const { id } = useParams({ strict: false });
