@@ -108,9 +108,9 @@ jobs:
           set -e
           SHA="${{ github.sha }}"
           HOST="${{ vars.SSH_AUTOMAKTAB_HOST }}"
-          SSHOPT='ssh -o StrictHostKeyChecking=yes'
+          SSHOPT='-o StrictHostKeyChecking=yes'
           ssh $SSHOPT "deploy@${HOST}" "mkdir -p /root/projects/autodrive-frontend/releases/${SHA}"
-          rsync -az --delete -e "$SSHOPT" \
+          rsync -az --delete -e "ssh $SSHOPT" \
             ./dist/ "deploy@${HOST}:/root/projects/autodrive-frontend/releases/${SHA}/"
           ssh $SSHOPT "deploy@${HOST}" \
             "bash /srv/autodrive-infra/deploy/deploy.sh activate-static autodrive-frontend ${SHA}"
