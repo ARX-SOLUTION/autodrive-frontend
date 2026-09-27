@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { PageSizeSelect } from '@/components/ui/PageSizeSelect';
-import { CaretLeft, CaretRight } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, DotsThree } from '@phosphor-icons/react';
 
 interface Props {
   currentPage: number;
@@ -9,6 +9,8 @@ interface Props {
   onPageChange: (page: number) => void;
   pageSize?: number;
   onPageSizeChange?: (size: number) => void;
+  /** Enables the "11–20 of 137" position read-out next to the pager. */
+  totalItems?: number;
 }
 
 const PaginationControls = ({
@@ -17,11 +19,22 @@ const PaginationControls = ({
   onPageChange,
   pageSize,
   onPageSizeChange,
+  totalItems,
 }: Props) => {
   const { t } = useTranslation();
   const showPager = totalPages > 1;
   const showPageSize = pageSize !== undefined && onPageSizeChange !== undefined;
-  if (!showPager && !showPageSize) return null;
+  const showRange =
+    totalItems !== undefined &&
+    totalItems > 0 &&
+    pageSize !== undefined &&
+    pageSize > 0;
+  if (!showPager && !showPageSize && !showRange) return null;
+
+  const firstItem = showRange
+    ? Math.min((currentPage - 1) * pageSize + 1, totalItems)
+    : 0;
+  const lastItem = showRange ? Math.min(currentPage * pageSize, totalItems) : 0;
 
   const getPageNumbers = () => {
     const pages: (number | '...')[] = [];
@@ -43,43 +56,51 @@ const PaginationControls = ({
     return pages;
   };
 
+  const goTo = (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    onPageChange(page);
+  };
+
   return (
-    <div
-      className={
-        showPageSize
-          ? 'flex flex-wrap items-center justify-between gap-3 pt-4'
-          : 'flex items-center justify-center gap-1 pt-4'
-      }
+    <nav
+      aria-label={t('common.pagination')}
+      className="flex flex-col items-center gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between"
     >
       {showPageSize ? (
         <PageSizeSelect value={pageSize} onChange={onPageSizeChange} />
       ) : null}
       {showPager ? (
-        <div className="flex items-center justify-center gap-1">
+        <div className="flex flex-wrap items-center justify-center gap-1">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onPageChange(currentPage - 1)}
+            onClick={() => goTo(currentPage - 1)}
             disabled={currentPage <= 1}
+            aria-label={t('common.previous')}
             className="gap-1 bg-secondary border-border"
           >
             <CaretLeft className="h-4 w-4" />
-            {t('common.previous')}
+            <span className="hidden sm:inline">{t('common.previous')}</span>
           </Button>
           {getPageNumbers().map((page, i) =>
             page === '...' ? (
-              <span key={`e${i}`} className="px-2 text-muted-foreground">
-                ...
+              <span
+                key={`e${i}`}
+                className="flex h-9 w-9 items-center justify-center text-muted-foreground"
+              >
+                <DotsThree aria-hidden className="h-4 w-4" />
+                <span className="sr-only">{t('common.more_pages')}</span>
               </span>
             ) : (
               <Button
                 key={page}
                 variant={page === currentPage ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => onPageChange(page)}
-                className={
+                onClick={() => goTo(page)}
+                aria-current={page === currentPage ? 'page' : undefined}
+                className={`min-w-9 tabular-nums ${
                   page === currentPage ? '' : 'bg-secondary border-border'
-                }
+                }`}
               >
                 {page}
               </Button>
@@ -88,16 +109,26 @@ const PaginationControls = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onPageChange(currentPage + 1)}
+            onClick={() => goTo(currentPage + 1)}
             disabled={currentPage >= totalPages}
+            aria-label={t('common.next')}
             className="gap-1 bg-secondary border-border"
           >
-            {t('common.next')}
+            <span className="hidden sm:inline">{t('common.next')}</span>
             <CaretRight className="h-4 w-4" />
           </Button>
         </div>
       ) : null}
-    </div>
+      {showRange ? (
+        <span className="text-sm tabular-nums text-muted-foreground">
+          {t('common.showing_range', {
+            from: firstItem,
+            to: lastItem,
+            total: totalItems,
+          })}
+        </span>
+      ) : null}
+    </nav>
   );
 };
 

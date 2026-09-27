@@ -589,6 +589,8 @@ const PaymentsTab = ({
             <PaginationControls
               currentPage={currentPage}
               totalPages={totalPages}
+              pageSize={20}
+              totalItems={data?.meta?.total}
               onPageChange={(page) => setPagination({ studentId, page })}
             />
           </div>

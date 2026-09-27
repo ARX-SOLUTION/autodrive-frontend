@@ -211,6 +211,7 @@ const VehiclesPage = () => {
           <PaginationControls
             currentPage={page}
             totalPages={Math.max(1, vehicles.data.meta.totalPages)}
+            totalItems={vehicles.data.meta.total}
             onPageChange={setPage}
             pageSize={pageSize}
             onPageSizeChange={setPageSize}

@@ -118,6 +118,7 @@ const CoursesPage = () => {
       <PaginationControls
         currentPage={page}
         totalPages={pageCountFor(courseRows.length, pageSize)}
+        totalItems={courseRows.length}
         onPageChange={setPage}
         pageSize={pageSize}
         onPageSizeChange={setPageSize}

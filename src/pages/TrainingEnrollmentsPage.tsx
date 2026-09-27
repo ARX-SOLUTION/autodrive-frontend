@@ -345,6 +345,7 @@ const TrainingEnrollmentsPage = () => {
           <PaginationControls
             currentPage={page}
             totalPages={Math.max(1, enrollments.data.meta.totalPages)}
+            totalItems={enrollments.data.meta.total}
             onPageChange={setPage}
             pageSize={pageSize}
             onPageSizeChange={setPageSize}

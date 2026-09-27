@@ -517,6 +517,7 @@ const BranchesPage = () => {
         <PaginationControls
           currentPage={page}
           totalPages={pageCountFor(filteredBranches.length, pageSize)}
+          totalItems={filteredBranches.length}
           onPageChange={setPage}
           pageSize={pageSize}
           onPageSizeChange={setPageSize}

@@ -115,6 +115,7 @@ const SchoolTestsPage = () => {
         <PaginationControls
           currentPage={templates.data.meta.page}
           totalPages={templates.data.meta.totalPages}
+          totalItems={templates.data.meta.total}
           onPageChange={setPage}
           pageSize={pageSize}
           onPageSizeChange={setPageSize}

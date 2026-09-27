@@ -180,6 +180,7 @@ const AuditLogPage = () => {
         <PaginationControls
           currentPage={page}
           totalPages={totalPages}
+          totalItems={total}
           onPageChange={setPage}
           pageSize={pageSize}
           onPageSizeChange={setPageSize}

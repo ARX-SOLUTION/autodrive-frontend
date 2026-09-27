@@ -178,6 +178,7 @@ const MySettlementsPage = () => {
       <PaginationControls
         currentPage={currentPage}
         totalPages={totalPages}
+        totalItems={total}
         onPageChange={setCurrentPage}
         pageSize={pageSize}
         onPageSizeChange={setPageSize}

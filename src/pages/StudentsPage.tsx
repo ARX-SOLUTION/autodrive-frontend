@@ -502,6 +502,7 @@ const StudentsPage = () => {
       <PaginationControls
         currentPage={currentPage}
         totalPages={serverTotalPages}
+        totalItems={totalStudents}
         onPageChange={setCurrentPage}
         pageSize={pageSize}
         onPageSizeChange={setPageSize}

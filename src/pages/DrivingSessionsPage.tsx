@@ -182,6 +182,7 @@ const DrivingSessionsPage = () => {
           <PaginationControls
             currentPage={page}
             totalPages={Math.max(1, sessions.data.meta.totalPages)}
+            totalItems={sessions.data.meta.total}
             onPageChange={setPage}
             pageSize={pageSize}
             onPageSizeChange={setPageSize}

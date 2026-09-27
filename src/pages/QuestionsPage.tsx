@@ -196,6 +196,7 @@ const QuestionsPage = () => {
         <PaginationControls
           currentPage={questions.data.meta.page}
           totalPages={questions.data.meta.totalPages}
+          totalItems={questions.data.meta.total}
           onPageChange={setPage}
           pageSize={pageSize}
           onPageSizeChange={setPageSize}

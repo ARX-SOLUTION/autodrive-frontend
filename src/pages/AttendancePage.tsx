@@ -461,6 +461,7 @@ const AttendancePage = () => {
           <PaginationControls
             currentPage={currentPage}
             totalPages={totalPages}
+            totalItems={lessonsData?.total}
             onPageChange={setCurrentPage}
             pageSize={pageSize}
             onPageSizeChange={setPageSize}
