@@ -191,9 +191,9 @@ const UsersPage = () => {
   // Deleting the last row of the last page leaves currentPage pointing past
   // the new totalPages -- clamp back, same fix as GroupsPage (autodrive-52v.3).
   useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(1);
+    if (usersPage && currentPage > totalPages) setCurrentPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalPages]);
+  }, [currentPage, usersPage !== undefined, totalPages]);
 
   const { data: branches } = useBranches();
   const createMut = useCreateCompanyUser();

@@ -460,6 +460,7 @@ export function DataGrid<TData extends RowData>({
           previousLabel={labels.previousPage}
           nextLabel={labels.nextPage}
           ariaLabel={labels.table}
+          disabled={isInitialLoading || isFetching}
         />
       ) : null}
     </div>

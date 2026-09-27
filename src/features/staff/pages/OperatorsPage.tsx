@@ -95,9 +95,9 @@ const OperatorsPage = () => {
 
   // Out-of-range page (e.g. search narrowed results) -> reset.
   useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(1);
+    if (operatorsPage && currentPage > totalPages) setCurrentPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, totalPages]);
+  }, [currentPage, operatorsPage !== undefined, totalPages]);
 
   const openCreate = () => {
     setEditItem(null);

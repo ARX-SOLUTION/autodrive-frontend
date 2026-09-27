@@ -38,7 +38,7 @@ export function PageSizeSelect({
       >
         <SelectTrigger
           aria-label={label}
-          className="h-9 w-[4.75rem] shrink-0 border-border bg-secondary px-2.5 text-sm text-foreground"
+          className="h-10 w-[5rem] shrink-0 border-border bg-secondary px-2.5 text-sm font-medium tabular-nums text-foreground"
         >
           <SelectValue />
         </SelectTrigger>

@@ -1,4 +1,4 @@
-import type { Ref } from 'react';
+import { useId, useState, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,10 +8,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { cn } from '@/lib/utils';
 import { formatCalendarDate, parseCalendarDate } from '@/lib/calendarDate';
 import type { ExpenseBranchOption } from '@/features/expenses/types';
-import { X } from '@phosphor-icons/react';
+import { CaretUpDown, Check, X } from '@phosphor-icons/react';
 
 interface ExpensesFilterBarProps {
   branches: ExpenseBranchOption[];
@@ -51,6 +65,15 @@ export const ExpensesFilterBar = ({
   headingRef,
 }: ExpensesFilterBarProps) => {
   const { t } = useTranslation();
+  const [branchOpen, setBranchOpen] = useState(false);
+  const branchListId = useId();
+  const selectedBranchLabel =
+    branchFilter === 'all'
+      ? t('common.all')
+      : branchFilter === 'company'
+        ? t('expenses.form.company_wide')
+        : (branches.find((branch) => branch.id === branchFilter)?.name ??
+          t('common.branch'));
 
   return (
     <section className="space-y-3">
@@ -83,29 +106,73 @@ export const ExpensesFilterBar = ({
 
       <div className="flex flex-wrap items-center gap-3">
         {showBranchFilter ? (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="shrink-0 text-xs font-medium text-muted-foreground">
               {t('common.branch')}
             </span>
-            <Select value={branchFilter} onValueChange={onBranchFilterChange}>
-              <SelectTrigger
-                aria-label={t('common.branch')}
-                className="w-56 bg-secondary border-border"
+            <Popover open={branchOpen} onOpenChange={setBranchOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  aria-label={t('common.branch')}
+                  aria-expanded={branchOpen}
+                  aria-controls={branchListId}
+                  className="h-10 w-56 max-w-full justify-between gap-2 border-border bg-secondary font-normal"
+                >
+                  <span className="truncate">{selectedBranchLabel}</span>
+                  <CaretUpDown
+                    aria-hidden
+                    className="h-4 w-4 shrink-0 text-muted-foreground"
+                  />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                className="w-[var(--radix-popover-trigger-width)] p-0"
               >
-                <SelectValue placeholder={t('common.branch')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('common.all')}</SelectItem>
-                <SelectItem value="company">
-                  {t('expenses.form.company_wide')}
-                </SelectItem>
-                {branches.map((branch) => (
-                  <SelectItem key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <Command>
+                  <CommandInput
+                    aria-label={t('common.branch')}
+                    placeholder={t('common.search')}
+                  />
+                  <CommandList id={branchListId}>
+                    <CommandEmpty>{t('common.no_data')}</CommandEmpty>
+                    <CommandGroup>
+                      {[
+                        { id: 'all', name: t('common.all') },
+                        {
+                          id: 'company',
+                          name: t('expenses.form.company_wide'),
+                        },
+                        ...branches,
+                      ].map((branch) => (
+                        <CommandItem
+                          key={branch.id}
+                          value={branch.name + ' ' + branch.id}
+                          onSelect={() => {
+                            onBranchFilterChange(branch.id);
+                            setBranchOpen(false);
+                          }}
+                        >
+                          <Check
+                            aria-hidden
+                            className={cn(
+                              'mr-2 h-4 w-4',
+                              branchFilter === branch.id
+                                ? 'opacity-100'
+                                : 'opacity-0',
+                            )}
+                          />
+                          <span className="truncate">{branch.name}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
         ) : (
           <span className="rounded-md border border-border bg-secondary px-3 py-2 text-sm text-muted-foreground">

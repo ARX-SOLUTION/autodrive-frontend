@@ -175,6 +175,7 @@ const ReferralFields = ({
                   variant="outline"
                   role="combobox"
                   aria-expanded={studentPickerOpen}
+                  aria-label={t('students.referral.referrer_student')}
                   className="w-full justify-between font-normal"
                 >
                   {selectedStudent
@@ -187,6 +188,7 @@ const ReferralFields = ({
                 <Command shouldFilter={false}>
                   <CommandInput
                     placeholder={t('students.referral.referrer_search')}
+                    aria-label={t('students.referral.referrer_search')}
                     value={studentSearch}
                     onValueChange={setStudentSearch}
                   />

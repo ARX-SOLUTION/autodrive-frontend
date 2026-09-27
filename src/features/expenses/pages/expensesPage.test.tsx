@@ -268,6 +268,68 @@ describe('ExpensesPage', () => {
     expect(refetchBranches).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the next page selected while its expenses are loading', async () => {
+    useExpensesPageMock.mockImplementation(
+      (filters: { page: number; limit: number }) =>
+        filters.page === 2
+          ? {
+              data: undefined,
+              isLoading: true,
+              isFetching: true,
+              isError: false,
+              refetch: vi.fn(),
+            }
+          : {
+              data: { data: EXPENSES, meta: { total: 50, totalPages: 2 } },
+              isLoading: false,
+              isFetching: false,
+              isError: false,
+              refetch: vi.fn(),
+            },
+    );
+
+    const { router } = await renderPage('/expenses?limit=25');
+    fireEvent.click(screen.getByRole('button', { name: 'common.next' }));
+
+    await waitFor(() => {
+      expect(
+        new URLSearchParams(router.state.location.searchStr).get('page'),
+      ).toBe('2');
+      expect(useExpensesPageMock).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 2, limit: 25 }),
+        true,
+      );
+    });
+  });
+  it('searches branches and applies the selected branch to the expense list', async () => {
+    useExpenseBranchOptionsMock.mockReturnValue({
+      data: [
+        { id: 'b1', name: 'Chilonzor' },
+        { id: 'b2', name: 'Sergeli' },
+      ],
+      isLoading: false,
+    });
+    const { router } = await renderPage('/expenses?limit=25');
+    fireEvent.click(screen.getByRole('combobox', { name: 'common.branch' }));
+    fireEvent.change(screen.getByPlaceholderText('common.search'), {
+      target: { value: 'Sergeli' },
+    });
+    expect(
+      screen.queryByRole('option', { name: 'Chilonzor' }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('option', { name: 'Sergeli' }));
+
+    await waitFor(() => {
+      expect(
+        new URLSearchParams(router.state.location.searchStr).get('branch_id'),
+      ).toBe('b2');
+      expect(useExpensesPageMock).toHaveBeenCalledWith(
+        expect.objectContaining({ branchId: 'b2', limit: 25 }),
+        true,
+      );
+    });
+  });
+
   it('feeds URL filters into the query and opens the detail page from a row click', async () => {
     useExpensesPageMock.mockReturnValue({
       data: { data: EXPENSES, meta: { total: 1, totalPages: 2 } },

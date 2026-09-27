@@ -331,6 +331,8 @@ const PaymentModal = ({
                               type="button"
                               variant="outline"
                               role="combobox"
+                              aria-label={t('payments.student_name')}
+                              aria-expanded={studentPopoverOpen}
                               className="w-full justify-between bg-secondary border-border font-normal"
                             >
                               {selectedStudent
@@ -353,6 +355,7 @@ const PaymentModal = ({
                           <Command shouldFilter={false}>
                             <CommandInput
                               placeholder={t('payments.search_placeholder')}
+                              aria-label={t('payments.search_placeholder')}
                               value={studentSearch}
                               onValueChange={setStudentSearch}
                             />
