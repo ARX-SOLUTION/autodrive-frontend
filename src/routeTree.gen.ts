@@ -30,6 +30,7 @@ import { Route as AuthenticatedDrivingSessionsIdRouteImport } from './routes/_au
 import { Route as AuthenticatedExpensesIndexRouteImport } from './routes/_authenticated.expenses.index'
 import { Route as AuthenticatedExpensesIdRouteImport } from './routes/_authenticated.expenses.$id'
 import { Route as AuthenticatedFleetMapIndexRouteImport } from './routes/_authenticated.fleet-map.index'
+import { Route as AuthenticatedFuelStationsIndexRouteImport } from './routes/_authenticated.fuel-stations.index'
 import { Route as AuthenticatedGroupsIndexRouteImport } from './routes/_authenticated.groups.index'
 import { Route as AuthenticatedGroupsIdRouteImport } from './routes/_authenticated.groups.$id'
 import { Route as AuthenticatedMySettlementsIndexRouteImport } from './routes/_authenticated.my-settlements.index'
@@ -45,6 +46,10 @@ import { Route as AuthenticatedTrainingEnrollmentsIdRouteImport } from './routes
 import { Route as AuthenticatedTrainingProgramsIndexRouteImport } from './routes/_authenticated.training-programs.index'
 import { Route as AuthenticatedUsersIndexRouteImport } from './routes/_authenticated.users.index'
 import { Route as AuthenticatedUsersIdRouteImport } from './routes/_authenticated.users.$id'
+import { Route as AuthenticatedVehicleFuelIndexRouteImport } from './routes/_authenticated.vehicle-fuel.index'
+import { Route as AuthenticatedVehicleFuelIdRouteImport } from './routes/_authenticated.vehicle-fuel.$id'
+import { Route as AuthenticatedVehicleInspectionsIndexRouteImport } from './routes/_authenticated.vehicle-inspections.index'
+import { Route as AuthenticatedVehicleInspectionsIdRouteImport } from './routes/_authenticated.vehicle-inspections.$id'
 import { Route as AuthenticatedVehiclesIndexRouteImport } from './routes/_authenticated.vehicles.index'
 import { Route as AuthenticatedVehiclesIdRouteImport } from './routes/_authenticated.vehicles.$id'
 
@@ -158,6 +163,12 @@ const AuthenticatedFleetMapIndexRoute =
     path: '/fleet-map/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFuelStationsIndexRoute =
+  AuthenticatedFuelStationsIndexRouteImport.update({
+    id: '/fuel-stations/',
+    path: '/fuel-stations/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedGroupsIndexRoute =
   AuthenticatedGroupsIndexRouteImport.update({
     id: '/groups/',
@@ -244,6 +255,30 @@ const AuthenticatedUsersIdRoute = AuthenticatedUsersIdRouteImport.update({
   path: '/users/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedVehicleFuelIndexRoute =
+  AuthenticatedVehicleFuelIndexRouteImport.update({
+    id: '/vehicle-fuel/',
+    path: '/vehicle-fuel/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedVehicleFuelIdRoute =
+  AuthenticatedVehicleFuelIdRouteImport.update({
+    id: '/vehicle-fuel/$id',
+    path: '/vehicle-fuel/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedVehicleInspectionsIndexRoute =
+  AuthenticatedVehicleInspectionsIndexRouteImport.update({
+    id: '/vehicle-inspections/',
+    path: '/vehicle-inspections/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedVehicleInspectionsIdRoute =
+  AuthenticatedVehicleInspectionsIdRouteImport.update({
+    id: '/vehicle-inspections/$id',
+    path: '/vehicle-inspections/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedVehiclesIndexRoute =
   AuthenticatedVehiclesIndexRouteImport.update({
     id: '/vehicles/',
@@ -278,6 +313,8 @@ export interface FileRoutesByFullPath {
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/training-enrollments/$id': typeof AuthenticatedTrainingEnrollmentsIdRoute
   '/users/$id': typeof AuthenticatedUsersIdRoute
+  '/vehicle-fuel/$id': typeof AuthenticatedVehicleFuelIdRoute
+  '/vehicle-inspections/$id': typeof AuthenticatedVehicleInspectionsIdRoute
   '/vehicles/$id': typeof AuthenticatedVehiclesIdRoute
   '/audit/': typeof AuthenticatedAuditIndexRoute
   '/branches/': typeof AuthenticatedBranchesIndexRoute
@@ -285,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/driving-sessions/': typeof AuthenticatedDrivingSessionsIndexRoute
   '/expenses/': typeof AuthenticatedExpensesIndexRoute
   '/fleet-map/': typeof AuthenticatedFleetMapIndexRoute
+  '/fuel-stations/': typeof AuthenticatedFuelStationsIndexRoute
   '/groups/': typeof AuthenticatedGroupsIndexRoute
   '/my-settlements/': typeof AuthenticatedMySettlementsIndexRoute
   '/questions/': typeof AuthenticatedQuestionsIndexRoute
@@ -293,6 +331,8 @@ export interface FileRoutesByFullPath {
   '/training-enrollments/': typeof AuthenticatedTrainingEnrollmentsIndexRoute
   '/training-programs/': typeof AuthenticatedTrainingProgramsIndexRoute
   '/users/': typeof AuthenticatedUsersIndexRoute
+  '/vehicle-fuel/': typeof AuthenticatedVehicleFuelIndexRoute
+  '/vehicle-inspections/': typeof AuthenticatedVehicleInspectionsIndexRoute
   '/vehicles/': typeof AuthenticatedVehiclesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -317,6 +357,8 @@ export interface FileRoutesByTo {
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/training-enrollments/$id': typeof AuthenticatedTrainingEnrollmentsIdRoute
   '/users/$id': typeof AuthenticatedUsersIdRoute
+  '/vehicle-fuel/$id': typeof AuthenticatedVehicleFuelIdRoute
+  '/vehicle-inspections/$id': typeof AuthenticatedVehicleInspectionsIdRoute
   '/vehicles/$id': typeof AuthenticatedVehiclesIdRoute
   '/audit': typeof AuthenticatedAuditIndexRoute
   '/branches': typeof AuthenticatedBranchesIndexRoute
@@ -324,6 +366,7 @@ export interface FileRoutesByTo {
   '/driving-sessions': typeof AuthenticatedDrivingSessionsIndexRoute
   '/expenses': typeof AuthenticatedExpensesIndexRoute
   '/fleet-map': typeof AuthenticatedFleetMapIndexRoute
+  '/fuel-stations': typeof AuthenticatedFuelStationsIndexRoute
   '/groups': typeof AuthenticatedGroupsIndexRoute
   '/my-settlements': typeof AuthenticatedMySettlementsIndexRoute
   '/questions': typeof AuthenticatedQuestionsIndexRoute
@@ -332,6 +375,8 @@ export interface FileRoutesByTo {
   '/training-enrollments': typeof AuthenticatedTrainingEnrollmentsIndexRoute
   '/training-programs': typeof AuthenticatedTrainingProgramsIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/vehicle-fuel': typeof AuthenticatedVehicleFuelIndexRoute
+  '/vehicle-inspections': typeof AuthenticatedVehicleInspectionsIndexRoute
   '/vehicles': typeof AuthenticatedVehiclesIndexRoute
 }
 export interface FileRoutesById {
@@ -358,6 +403,8 @@ export interface FileRoutesById {
   '/_authenticated/students/$id': typeof AuthenticatedStudentsIdRoute
   '/_authenticated/training-enrollments/$id': typeof AuthenticatedTrainingEnrollmentsIdRoute
   '/_authenticated/users/$id': typeof AuthenticatedUsersIdRoute
+  '/_authenticated/vehicle-fuel/$id': typeof AuthenticatedVehicleFuelIdRoute
+  '/_authenticated/vehicle-inspections/$id': typeof AuthenticatedVehicleInspectionsIdRoute
   '/_authenticated/vehicles/$id': typeof AuthenticatedVehiclesIdRoute
   '/_authenticated/audit/': typeof AuthenticatedAuditIndexRoute
   '/_authenticated/branches/': typeof AuthenticatedBranchesIndexRoute
@@ -365,6 +412,7 @@ export interface FileRoutesById {
   '/_authenticated/driving-sessions/': typeof AuthenticatedDrivingSessionsIndexRoute
   '/_authenticated/expenses/': typeof AuthenticatedExpensesIndexRoute
   '/_authenticated/fleet-map/': typeof AuthenticatedFleetMapIndexRoute
+  '/_authenticated/fuel-stations/': typeof AuthenticatedFuelStationsIndexRoute
   '/_authenticated/groups/': typeof AuthenticatedGroupsIndexRoute
   '/_authenticated/my-settlements/': typeof AuthenticatedMySettlementsIndexRoute
   '/_authenticated/questions/': typeof AuthenticatedQuestionsIndexRoute
@@ -373,6 +421,8 @@ export interface FileRoutesById {
   '/_authenticated/training-enrollments/': typeof AuthenticatedTrainingEnrollmentsIndexRoute
   '/_authenticated/training-programs/': typeof AuthenticatedTrainingProgramsIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
+  '/_authenticated/vehicle-fuel/': typeof AuthenticatedVehicleFuelIndexRoute
+  '/_authenticated/vehicle-inspections/': typeof AuthenticatedVehicleInspectionsIndexRoute
   '/_authenticated/vehicles/': typeof AuthenticatedVehiclesIndexRoute
 }
 export interface FileRouteTypes {
@@ -399,6 +449,8 @@ export interface FileRouteTypes {
     | '/students/$id'
     | '/training-enrollments/$id'
     | '/users/$id'
+    | '/vehicle-fuel/$id'
+    | '/vehicle-inspections/$id'
     | '/vehicles/$id'
     | '/audit/'
     | '/branches/'
@@ -406,6 +458,7 @@ export interface FileRouteTypes {
     | '/driving-sessions/'
     | '/expenses/'
     | '/fleet-map/'
+    | '/fuel-stations/'
     | '/groups/'
     | '/my-settlements/'
     | '/questions/'
@@ -414,6 +467,8 @@ export interface FileRouteTypes {
     | '/training-enrollments/'
     | '/training-programs/'
     | '/users/'
+    | '/vehicle-fuel/'
+    | '/vehicle-inspections/'
     | '/vehicles/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -438,6 +493,8 @@ export interface FileRouteTypes {
     | '/students/$id'
     | '/training-enrollments/$id'
     | '/users/$id'
+    | '/vehicle-fuel/$id'
+    | '/vehicle-inspections/$id'
     | '/vehicles/$id'
     | '/audit'
     | '/branches'
@@ -445,6 +502,7 @@ export interface FileRouteTypes {
     | '/driving-sessions'
     | '/expenses'
     | '/fleet-map'
+    | '/fuel-stations'
     | '/groups'
     | '/my-settlements'
     | '/questions'
@@ -453,6 +511,8 @@ export interface FileRouteTypes {
     | '/training-enrollments'
     | '/training-programs'
     | '/users'
+    | '/vehicle-fuel'
+    | '/vehicle-inspections'
     | '/vehicles'
   id:
     | '__root__'
@@ -478,6 +538,8 @@ export interface FileRouteTypes {
     | '/_authenticated/students/$id'
     | '/_authenticated/training-enrollments/$id'
     | '/_authenticated/users/$id'
+    | '/_authenticated/vehicle-fuel/$id'
+    | '/_authenticated/vehicle-inspections/$id'
     | '/_authenticated/vehicles/$id'
     | '/_authenticated/audit/'
     | '/_authenticated/branches/'
@@ -485,6 +547,7 @@ export interface FileRouteTypes {
     | '/_authenticated/driving-sessions/'
     | '/_authenticated/expenses/'
     | '/_authenticated/fleet-map/'
+    | '/_authenticated/fuel-stations/'
     | '/_authenticated/groups/'
     | '/_authenticated/my-settlements/'
     | '/_authenticated/questions/'
@@ -493,6 +556,8 @@ export interface FileRouteTypes {
     | '/_authenticated/training-enrollments/'
     | '/_authenticated/training-programs/'
     | '/_authenticated/users/'
+    | '/_authenticated/vehicle-fuel/'
+    | '/_authenticated/vehicle-inspections/'
     | '/_authenticated/vehicles/'
   fileRoutesById: FileRoutesById
 }
@@ -651,6 +716,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFleetMapIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/fuel-stations/': {
+      id: '/_authenticated/fuel-stations/'
+      path: '/fuel-stations'
+      fullPath: '/fuel-stations/'
+      preLoaderRoute: typeof AuthenticatedFuelStationsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/groups/': {
       id: '/_authenticated/groups/'
       path: '/groups'
@@ -756,6 +828,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsersIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/vehicle-fuel/': {
+      id: '/_authenticated/vehicle-fuel/'
+      path: '/vehicle-fuel'
+      fullPath: '/vehicle-fuel/'
+      preLoaderRoute: typeof AuthenticatedVehicleFuelIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/vehicle-fuel/$id': {
+      id: '/_authenticated/vehicle-fuel/$id'
+      path: '/vehicle-fuel/$id'
+      fullPath: '/vehicle-fuel/$id'
+      preLoaderRoute: typeof AuthenticatedVehicleFuelIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/vehicle-inspections/': {
+      id: '/_authenticated/vehicle-inspections/'
+      path: '/vehicle-inspections'
+      fullPath: '/vehicle-inspections/'
+      preLoaderRoute: typeof AuthenticatedVehicleInspectionsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/vehicle-inspections/$id': {
+      id: '/_authenticated/vehicle-inspections/$id'
+      path: '/vehicle-inspections/$id'
+      fullPath: '/vehicle-inspections/$id'
+      preLoaderRoute: typeof AuthenticatedVehicleInspectionsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/vehicles/': {
       id: '/_authenticated/vehicles/'
       path: '/vehicles'
@@ -793,6 +893,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedStudentsIdRoute: typeof AuthenticatedStudentsIdRoute
   AuthenticatedTrainingEnrollmentsIdRoute: typeof AuthenticatedTrainingEnrollmentsIdRoute
   AuthenticatedUsersIdRoute: typeof AuthenticatedUsersIdRoute
+  AuthenticatedVehicleFuelIdRoute: typeof AuthenticatedVehicleFuelIdRoute
+  AuthenticatedVehicleInspectionsIdRoute: typeof AuthenticatedVehicleInspectionsIdRoute
   AuthenticatedVehiclesIdRoute: typeof AuthenticatedVehiclesIdRoute
   AuthenticatedAuditIndexRoute: typeof AuthenticatedAuditIndexRoute
   AuthenticatedBranchesIndexRoute: typeof AuthenticatedBranchesIndexRoute
@@ -800,6 +902,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDrivingSessionsIndexRoute: typeof AuthenticatedDrivingSessionsIndexRoute
   AuthenticatedExpensesIndexRoute: typeof AuthenticatedExpensesIndexRoute
   AuthenticatedFleetMapIndexRoute: typeof AuthenticatedFleetMapIndexRoute
+  AuthenticatedFuelStationsIndexRoute: typeof AuthenticatedFuelStationsIndexRoute
   AuthenticatedGroupsIndexRoute: typeof AuthenticatedGroupsIndexRoute
   AuthenticatedMySettlementsIndexRoute: typeof AuthenticatedMySettlementsIndexRoute
   AuthenticatedQuestionsIndexRoute: typeof AuthenticatedQuestionsIndexRoute
@@ -808,6 +911,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTrainingEnrollmentsIndexRoute: typeof AuthenticatedTrainingEnrollmentsIndexRoute
   AuthenticatedTrainingProgramsIndexRoute: typeof AuthenticatedTrainingProgramsIndexRoute
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
+  AuthenticatedVehicleFuelIndexRoute: typeof AuthenticatedVehicleFuelIndexRoute
+  AuthenticatedVehicleInspectionsIndexRoute: typeof AuthenticatedVehicleInspectionsIndexRoute
   AuthenticatedVehiclesIndexRoute: typeof AuthenticatedVehiclesIndexRoute
 }
 
@@ -832,6 +937,9 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedTrainingEnrollmentsIdRoute:
     AuthenticatedTrainingEnrollmentsIdRoute,
   AuthenticatedUsersIdRoute: AuthenticatedUsersIdRoute,
+  AuthenticatedVehicleFuelIdRoute: AuthenticatedVehicleFuelIdRoute,
+  AuthenticatedVehicleInspectionsIdRoute:
+    AuthenticatedVehicleInspectionsIdRoute,
   AuthenticatedVehiclesIdRoute: AuthenticatedVehiclesIdRoute,
   AuthenticatedAuditIndexRoute: AuthenticatedAuditIndexRoute,
   AuthenticatedBranchesIndexRoute: AuthenticatedBranchesIndexRoute,
@@ -840,6 +948,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedDrivingSessionsIndexRoute,
   AuthenticatedExpensesIndexRoute: AuthenticatedExpensesIndexRoute,
   AuthenticatedFleetMapIndexRoute: AuthenticatedFleetMapIndexRoute,
+  AuthenticatedFuelStationsIndexRoute: AuthenticatedFuelStationsIndexRoute,
   AuthenticatedGroupsIndexRoute: AuthenticatedGroupsIndexRoute,
   AuthenticatedMySettlementsIndexRoute: AuthenticatedMySettlementsIndexRoute,
   AuthenticatedQuestionsIndexRoute: AuthenticatedQuestionsIndexRoute,
@@ -850,6 +959,9 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedTrainingProgramsIndexRoute:
     AuthenticatedTrainingProgramsIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
+  AuthenticatedVehicleFuelIndexRoute: AuthenticatedVehicleFuelIndexRoute,
+  AuthenticatedVehicleInspectionsIndexRoute:
+    AuthenticatedVehicleInspectionsIndexRoute,
   AuthenticatedVehiclesIndexRoute: AuthenticatedVehiclesIndexRoute,
 }
 

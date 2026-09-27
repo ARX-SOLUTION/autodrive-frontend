@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import FuelTypes from '../fuel/FuelTypes';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Car, Warning } from '@phosphor-icons/react';
@@ -99,6 +100,13 @@ const VehicleDetailPage = () => {
         </div>
       }
     >
+      {['owner', 'manager'].includes(user?.role ?? '') && (
+        <FuelTypes
+          key={vehicle.id}
+          id={vehicle.id}
+          types={vehicle.fuel_types ?? []}
+        />
+      )}
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList className="h-auto min-h-10 max-w-full flex-wrap">
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>

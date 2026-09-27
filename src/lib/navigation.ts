@@ -28,6 +28,9 @@ export type AppRoutePath =
   | '/schedule'
   | '/attendance'
   | '/groups'
+  | '/vehicle-fuel'
+  | '/vehicle-inspections'
+  | '/fuel-stations'
   | '/vehicles'
   | '/fleet-map'
   | '/training-programs'
@@ -94,6 +97,13 @@ const allNavItems: NavItem[] = [
     icon: Stack,
     section: 'learning',
     cap: 'accessOperations',
+  },
+  {
+    path: '/vehicle-fuel',
+    labelKey: 'fuel.title',
+    icon: Car,
+    section: 'workspace',
+    cap: 'viewFuel',
   },
   {
     path: '/vehicles',

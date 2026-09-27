@@ -9,6 +9,9 @@ const SEGMENT_KEYS: Record<string, string> = {
   branches: 'nav.branches',
   groups: 'nav.groups',
   vehicles: 'nav.vehicles',
+  'vehicle-inspections': 'inspections.title',
+  'vehicle-fuel': 'fuel.title',
+  'fuel-stations': 'fuel.stations',
   'fleet-map': 'nav.fleet_map',
   'training-programs': 'nav.training_programs',
   'training-enrollments': 'nav.training_enrollments',
@@ -31,6 +34,9 @@ const ROOT_PATHS: Record<string, AppRoutePath> = {
   branches: '/branches',
   groups: '/groups',
   vehicles: '/vehicles',
+  'vehicle-inspections': '/vehicle-inspections',
+  'vehicle-fuel': '/vehicle-fuel',
+  'fuel-stations': '/fuel-stations',
   'fleet-map': '/fleet-map',
   'training-programs': '/training-programs',
   'training-enrollments': '/training-enrollments',
@@ -59,7 +65,10 @@ export const Breadcrumbs = () => {
 
   const crumbs = segments.map((segment, idx) => {
     const href = idx === 0 ? ROOT_PATHS[segment] : undefined;
-    const key = SEGMENT_KEYS[segment];
+    const key =
+      idx > 0 && ['vehicle-inspections', 'vehicle-fuel'].includes(segments[0])
+        ? 'common.view'
+        : SEGMENT_KEYS[segment];
     return { segment, href, label: key ? t(key) : titleCase(segment) };
   });
 

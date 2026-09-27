@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Car, Plus } from '@phosphor-icons/react';
 import { useBranches } from '@/features/branches/api/branchService';
@@ -25,6 +25,7 @@ const VehiclesPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const canInspect = useCan('viewInspections');
   const canManage = useCan('manageVehicles');
   const canViewAllBranches = useCan('viewAllBranches');
   const { data: branches = [] } = useBranches(canViewAllBranches);
@@ -72,6 +73,11 @@ const VehiclesPage = () => {
         }
       />
 
+      {canInspect && (
+        <Button asChild variant="outline">
+          <Link to="/vehicle-inspections">{t('inspections.title')}</Link>
+        </Button>
+      )}
       <div className="glass-card grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-4">
         <Input
           aria-label={t('common.search')}

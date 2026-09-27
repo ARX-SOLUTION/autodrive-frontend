@@ -25,7 +25,9 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
         cap === 'viewExpenses' ||
         cap === 'manageCompanyFinance' ||
         cap === 'navigateExpenseOverdueSweep' ||
-        cap === 'cancelDrivingSessions'
+        cap === 'cancelDrivingSessions' ||
+        cap === 'viewInspections' ||
+        cap === 'viewFuel'
       ) {
         expect(roleCan('dev', cap)).toBe(false);
       } else {
