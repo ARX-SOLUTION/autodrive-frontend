@@ -11,7 +11,7 @@ import { renderWithRouter } from '@/test/utils/renderWithRouter';
 let canGate = true;
 
 vi.mock('@/hooks/useCan', () => ({ useCan: () => canGate }));
-vi.mock('@/services/authService', () => ({
+vi.mock('@/features/auth/api/authService', () => ({
   useLogout: () => ({ mutate: vi.fn() }),
 }));
 vi.mock('@/store/authStore', () => ({

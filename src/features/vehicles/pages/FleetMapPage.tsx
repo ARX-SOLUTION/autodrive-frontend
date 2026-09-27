@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useCan } from '@/hooks/useCan';
-import { useBranches } from '@/services/branchService';
+import { useBranches } from '@/features/branches/api/branchService';
 import { useVehiclesPage } from '@/features/vehicles/api/vehicleService';
 import { useAuthStore } from '@/store/authStore';
 import {

@@ -1,4 +1,4 @@
-import type { UserRole } from '@/types/user';
+import type { UserRole } from '@/features/staff/types';
 import { roleCan } from '@/lib/permissions';
 
 export type DefaultAuthenticatedRoute = '/dashboard' | '/expenses' | '/profile';

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import StudentDetailPage from '@/pages/StudentDetailPage';
+import StudentDetailPage from '@/features/students/pages/StudentDetailPage';
 import { requireCapability } from '@/app/routeGuards';
 import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
 
@@ -23,7 +23,7 @@ export const Route = createFileRoute('/_authenticated/students/$id')({
   }),
   loader: async ({ context, params }) => {
     const { studentDetailQueryOptions } =
-      await import('@/services/studentService');
+      await import('@/features/students/api/studentService');
     return context.queryClient.ensureQueryData(
       studentDetailQueryOptions(params.id),
     );

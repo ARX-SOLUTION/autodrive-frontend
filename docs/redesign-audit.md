@@ -27,11 +27,11 @@ Beads epic: `autodrive-ott`.
 
 ### 1. Fonts
 
-| #   | file:line                                               | Problem                                                                                          | Fix                                                                  | Risk |
-| --- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- | ---- |
-| F1  | `src/index.css:2`, `index.html`                         | Google Fonts `@import` inside CSS = late discovery, FOUT; no preconnect to fonts.gstatic         | Move to `<link rel="preconnect">` + stylesheet link in `index.html`  | low  |
-| F2  | `tailwind.config.ts:26-29` + `src/index.css:86-93`      | Unbounded forced on ALL h1–h6 (wide techno display at card-title sizes); Inter body = AI default | Direction font pair; display font scoped to true display sizes       | low  |
-| F3  | `src/pages/StudentsPage.tsx` (debt col), `PaymentsPage` | Money not `tabular-nums`/`nowrap` — "500 000 so'm" wraps 3 lines (screenshot)                    | `tabular-nums whitespace-nowrap text-right` + direction numeral font | low  |
+| #   | file:line                                                                 | Problem                                                                                          | Fix                                                                  | Risk |
+| --- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- | ---- |
+| F1  | `src/index.css:2`, `index.html`                                           | Google Fonts `@import` inside CSS = late discovery, FOUT; no preconnect to fonts.gstatic         | Move to `<link rel="preconnect">` + stylesheet link in `index.html`  | low  |
+| F2  | `tailwind.config.ts:26-29` + `src/index.css:86-93`                        | Unbounded forced on ALL h1–h6 (wide techno display at card-title sizes); Inter body = AI default | Direction font pair; display font scoped to true display sizes       | low  |
+| F3  | `src/features/students/pages/StudentsPage.tsx` (debt col), `PaymentsPage` | Money not `tabular-nums`/`nowrap` — "500 000 so'm" wraps 3 lines (screenshot)                    | `tabular-nums whitespace-nowrap text-right` + direction numeral font | low  |
 
 ### 2. Color / surfaces
 
@@ -41,14 +41,14 @@ Beads epic: `autodrive-ott`.
 | C2  | `src/index.css:21-26`                                                       | Light-mode glass = white-on-white → KPI cards invisible (screenshot)                                            | Real light surfaces (solid card + border); glass dies in overhaul                                                | low              |
 | C3  | `src/index.css:65-84,96-136`                                                | Fixed mesh gradients (`background-attachment: fixed` repaint cost) + glass tiers + `.neon-glow` = dated AI look | Replace with direction surfaces; drop fixed attachment                                                           | low              |
 | C4  | `src/pages/LandingPage.tsx:57-64`, `components/landing/DemoForm.tsx:94,103` | Hardcoded `#22D3EE` off-token                                                                                   | Tokenize when landing pass happens (out of scope now)                                                            | low              |
-| C5  | `src/pages/DashboardPage.tsx:90-96`                                         | `branchHues` hardcoded 5-hue chart soup (incl. violet)                                                          | Chart scale derived from single accent + neutrals                                                                | low              |
+| C5  | `src/features/dashboard/pages/DashboardPage.tsx:90-96`                      | `branchHues` hardcoded 5-hue chart soup (incl. violet)                                                          | Chart scale derived from single accent + neutrals                                                                | low              |
 | C6  | `src/index.css:12-18` → `Sidebar.tsx:225`, `Topbar.tsx:47`                  | HSL vars carry alpha (`/ 0.5`) → breaks Tailwind `<alpha-value>` → forced inline `style={{}}`                   | Split alpha; pure utility classes                                                                                | low              |
 
 ### 3. Interactivity / states
 
 | #   | file:line                                                | Problem                                                                    | Fix                                                | Risk |
 | --- | -------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------- | ---- |
-| S1  | `src/pages/LoginPage.tsx:36-46`                          | Login errors toast-only, no inline field errors (rest of app uses RHF+zod) | Inline errors under fields; toast only for network | low  |
+| S1  | `src/features/auth/pages/LoginPage.tsx:36-46`            | Login errors toast-only, no inline field errors (rest of app uses RHF+zod) | Inline errors under fields; toast only for network | low  |
 | S2  | `components/layout/PageLoader.tsx`                       | Generic `Loader2` spinner                                                  | App-shell-shaped skeleton                          | low  |
 | S3  | list-page row actions (e.g. `StudentsPage` pencil/trash) | Tiny icon targets, no hover surface/tooltip                                | Hover surface + tooltip + larger hit area          | low  |
 
@@ -75,9 +75,9 @@ Already good: Button focus ring + `active:scale` (`ui/button.tsx:10`), global fo
 
 ### 6. Loading / empty / error
 
-| #   | file:line                      | Problem                                                                                          | Fix                                              | Risk |
-| --- | ------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------ | ---- |
-| E1  | `src/pages/NotFound.tsx:19-24` | Hardcoded English "Oops! Page not found" (**i18n violation**), `console.error` left in, unstyled | Branded 404, `t()` keys ×3 locales, drop console | low  |
+| #   | file:line                          | Problem                                                                                          | Fix                                              | Risk |
+| --- | ---------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------ | ---- |
+| E1  | `src/app/pages/NotFound.tsx:19-24` | Hardcoded English "Oops! Page not found" (**i18n violation**), `console.error` left in, unstyled | Branded 404, `t()` keys ×3 locales, drop console | low  |
 
 ### 7. Type polish
 

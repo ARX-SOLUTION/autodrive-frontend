@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import SchedulePage from '@/pages/SchedulePage';
+import SchedulePage from '@/features/schedule/pages/SchedulePage';
 import { requireCapability } from '@/app/routeGuards';
 import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
 

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import axiosInstance from './axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { queryClient } from '@/lib/queryClient';
-import { User } from '@/types/user';
+import { User } from '@/features/staff/types';
 
 // Regression test for the auth-expiry coordinator (autodrive-6cq.8, AC "D"):
 // a 401 on a protected endpoint must trigger logout()+queryClient.clear(),

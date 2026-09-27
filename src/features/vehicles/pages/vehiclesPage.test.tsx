@@ -32,7 +32,7 @@ vi.mock('@/features/vehicles/api/vehicleService', () => ({
   }),
 }));
 
-vi.mock('@/services/branchService', () => ({
+vi.mock('@/features/branches/api/branchService', () => ({
   useBranches: () => ({ data: [{ id: 'b1', name: 'Yunusobod' }] }),
 }));
 

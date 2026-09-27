@@ -9,7 +9,7 @@ import {
   Translate,
   User,
 } from '@phosphor-icons/react';
-import { useLogout } from '@/services/authService';
+import { useLogout } from '@/features/auth/api/authService';
 import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
 import { useTheme } from '@/hooks/useTheme';

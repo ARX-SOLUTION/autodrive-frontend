@@ -272,7 +272,7 @@ describe('icon-only Button/button accessible-name guard (autodrive-6cq.5.5)', ()
       throw new Error(
         `${violations.length} icon-only Button/button element(s) have no ` +
           `aria-label/aria-labelledby (and no other accessible text). Add ` +
-          `an aria-label sourced from i18n (see src/pages/students/StudentsTable.tsx ` +
+          `an aria-label sourced from i18n (see src/features/students/components/StudentsTable.tsx ` +
           `for the established pattern):\n${list}`,
       );
     }

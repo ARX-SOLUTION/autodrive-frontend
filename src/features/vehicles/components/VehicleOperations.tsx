@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import type { Branch } from '@/types/branch';
+import type { Branch } from '@/features/branches/types';
 import type {
   VehicleDetail,
   VehicleDocument,

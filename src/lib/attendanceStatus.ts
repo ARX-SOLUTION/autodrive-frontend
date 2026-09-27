@@ -1,4 +1,4 @@
-import type { AttendanceStatus } from '@/types/attendance';
+import type { AttendanceStatus } from '@/features/attendance/types';
 
 // Shared status -> Tailwind color classes. Used by StudentDetailPage's
 // attendance-history badge.

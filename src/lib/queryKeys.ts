@@ -1,5 +1,5 @@
 /**
- * Central query-key factory for every domain used across src/services/*.ts.
+ * Central query-key factory for every domain used across feature API modules.
  *
  * Convention chosen: one named export per domain (`studentKeys`,
  * `paymentKeys`, ...), each an object of key-builder functions -- not a
@@ -17,7 +17,7 @@
  * `filters` is always ONE object (never a flat scalar tuple), so adding or
  * reordering filter fields never shifts argument position and cache
  * entries keep matching. This also fixes existing inconsistencies found in
- * src/services/*.ts: singular/plural drift (e.g. 'student' vs 'students'
+ * feature API modules: singular/plural drift (e.g. 'student' vs 'students'
  * for the detail key) and inconsistent 'detail' segment placement.
  *
  * Domains whose queries don't fit list/page/detail (aggregates, sub-

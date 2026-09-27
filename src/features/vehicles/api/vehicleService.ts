@@ -7,7 +7,7 @@ import {
 import axiosInstance from '@/api/axiosInstance';
 import { parseItemEnvelope, parseListEnvelope } from '@/lib/apiEnvelope';
 import { vehicleKeys } from '@/lib/queryKeys';
-import type { ListResponse } from '@/types/list';
+import type { ListResponse } from '@/shared/types/list';
 import type {
   CreateVehicleRequest,
   TransferVehicleRequest,

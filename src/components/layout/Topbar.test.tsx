@@ -31,7 +31,7 @@ vi.mock('@/hooks/useCan', () => ({
   },
 }));
 
-vi.mock('@/services/branchService', () => ({
+vi.mock('@/features/branches/api/branchService', () => ({
   useBranches: (enabled: boolean) => ({
     data: enabled
       ? [

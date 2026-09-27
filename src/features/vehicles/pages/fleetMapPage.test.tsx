@@ -37,7 +37,7 @@ vi.mock('@/hooks/useCan', () => ({
     capability === 'viewAllBranches' && state.role === 'owner',
 }));
 
-vi.mock('@/services/branchService', () => ({
+vi.mock('@/features/branches/api/branchService', () => ({
   useBranches: () => ({
     data: [
       { id: 'b1', name: 'Yunusobod' },

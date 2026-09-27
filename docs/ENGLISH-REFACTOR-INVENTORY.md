@@ -120,7 +120,7 @@ Checked Zod/React Hook Form usage:
      - `src/i18n/locales/ru.json` — add 7 keys (translate from Uzbek)
      - `src/i18n/locales/en.json` — add 7 keys (translate from Uzbek)
      - `src/components/ui/ImportStudentsModal.tsx` — replace 6 hardcoded strings with `t()`
-     - `src/pages/StudentsPage.tsx` — replace 1 hardcoded string with `t()`
+     - `src/features/students/pages/StudentsPage.tsx` — replace 1 hardcoded string with `t()`
 
 ### Priority 2: Nice-to-have (Code Cleanliness)
 

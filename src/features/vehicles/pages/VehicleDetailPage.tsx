@@ -3,7 +3,7 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Car, Warning } from '@phosphor-icons/react';
 import { useVehicle } from '@/features/vehicles/api/vehicleService';
-import { useBranches } from '@/services/branchService';
+import { useBranches } from '@/features/branches/api/branchService';
 import { useCan } from '@/hooks/useCan';
 import { useUrlTab } from '@/hooks/useUrlTab';
 import { useAuthStore } from '@/store/authStore';

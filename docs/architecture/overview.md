@@ -21,71 +21,43 @@ Domain code is feature-first: adding or changing a domain touches one folder.
 ```text
 src/
   routes/               TanStack Router file routes; they compose feature pages
-  features/<feature>/   one folder per domain, kebab-case plural (vehicles, driving-sessions, …)
-    api/                TanStack Query hooks + fetchers (was src/services/<x>Service.ts)   public
-    types.ts            domain types (was src/types/<x>.ts)                                 public
-    pages/              route-level components (was src/pages/*Page.tsx)                    routes only
+  features/<feature>/   one folder per domain (vehicles, driving-sessions, auth, …)
+    api/                public domain API: hooks, fetchers, and intentionally shared UI
+    types.ts            public domain types
+    pages/              route-level components                                  routes only
     components/         feature-private UI
     lib/                feature-private helpers
     *.test.ts(x)        colocated next to the file under test
   components/ui/        shadcn primitives + generic widgets
   lib/ hooks/ store/ api/ app/ i18n/ shared/ components/layout/   shared code
-  types/                shared types only (frozen, see Legacy freeze)
-  test/                 setup, utils, and tests not yet migrated
+  shared/types/         cross-domain types
+  test/                 setup, utils, and app-wide integration tests
 ```
 
 ### Import rules
 
 1. Outside `src/features/<x>/`, code imports a feature only through `@/features/<x>/api/…` and `@/features/<x>/types`. `src/routes/**` may additionally import `@/features/<x>/pages/…`.
 2. Inside `src/features/<x>/`, any path of the same feature is allowed; other features follow rule 1.
-3. Module specifiers use the `@/` alias, which keeps moves mechanical. Older files still contain relative specifiers (`./…`, `../…`); the codemod rewrites one to `@/…` when its file or its target moves.
+3. Module specifiers use the `@/` alias. For future moves, `scripts/move-module.mjs` rewrites imports, mocks, and moved relative specifiers.
 
 The `local/feature-boundaries` rule in `eslint.config.js` enforces rules 1 and 2 on `import`, `export … from`, and dynamic `import()` sources, so `pnpm run lint` fails on a deep import into another feature.
 
-### Legacy freeze
-
-`src/pages/`, `src/services/` and `src/types/` are frozen. `scripts/legacy-structure.test.ts` compares the files in them with `scripts/legacy-files.json`:
-
-- a new file in those directories fails the test; put domain code in `src/features/<feature>/` instead;
-- a file moved out must be removed from the list in the same change.
-
-The list doubles as the remaining-migration checklist. When it is empty, the test, the list and the directories go away.
-
 ### Adding a feature
 
-1. Create `src/features/<name>/` with `api/`, `types.ts`, `pages/` and `components/`.
-2. Add the route file in `src/routes/`; it imports the page from `@/features/<name>/pages/…`.
+1. Create `src/features/<name>/` with the `api/`, `types.ts`, `pages/`, `components/`, and `lib/` entries it needs.
+2. Add a route file in `src/routes/` when the feature exposes a page; it imports from `@/features/<name>/pages/…`.
 3. Colocate tests next to the file they cover.
 4. Run the gate: `pnpm run typecheck && pnpm run lint --max-warnings=0 && pnpm test -- --run && pnpm run build`.
-
-### Migrating a legacy domain
-
-1. Move the domain with the codemod. Preview the plan with `--dry-run`, then run the same command without it:
-
-   ```sh
-   node scripts/move-module.mjs --dry-run \
-     src/services/<domain>Service.ts src/features/<feature>/api/<domain>Service.ts \
-     src/types/<domain>.ts src/features/<feature>/types.ts \
-     src/pages/<Domain>Page.tsx src/features/<feature>/pages/<Domain>Page.tsx \
-     src/pages/<domain> src/features/<feature>/components
-   ```
-
-   It moves each pair with `git mv` and rewrites every `@/…` string literal that names a moved module: imports, `export … from`, `vi.mock` and friends, and `typeof import()`. A relative specifier becomes `@/…` when its file or its target moved. It exits 1 if an old specifier survives or a relative one no longer resolves.
-
-2. Remove the moved paths from `scripts/legacy-files.json`.
-3. Fix the plain-path references the codemod reports (`src/…` paths in comments and docs, markdown links); it lists them but does not rewrite them.
-4. Move the domain's tests next to their code, for example out of `src/test/`, with the same codemod.
-5. Run the gate.
 
 ---
 
 ## State Management
 
-| Concern                 | Tool                      | Location                                                           |
-| ----------------------- | ------------------------- | ------------------------------------------------------------------ |
-| Server state (API data) | TanStack Query 5          | `src/features/<feature>/api/` (legacy: `src/services/*Service.ts`) |
-| Auth / session          | Zustand 5                 | `src/store/authStore.ts`                                           |
-| Local component state   | `useState` / `useReducer` | In component files                                                 |
+| Concern                 | Tool                      | Location                      |
+| ----------------------- | ------------------------- | ----------------------------- |
+| Server state (API data) | TanStack Query 5          | `src/features/<feature>/api/` |
+| Auth / session          | Zustand 5                 | `src/store/authStore.ts`      |
+| Local component state   | `useState` / `useReducer` | In component files            |
 
 ### Query patterns
 

@@ -6,10 +6,19 @@ import axiosInstance from '@/api/axiosInstance';
 import {
   studentDetailQueryOptions,
   useStudent,
-} from '@/services/studentService';
-import { groupDetailQueryOptions, useGroup } from '@/services/groupService';
-import { courseDetailQueryOptions, useCourse } from '@/services/courseService';
-import { branchDetailQueryOptions, useBranch } from '@/services/branchService';
+} from '@/features/students/api/studentService';
+import {
+  groupDetailQueryOptions,
+  useGroup,
+} from '@/features/groups/api/groupService';
+import {
+  courseDetailQueryOptions,
+  useCourse,
+} from '@/features/courses/api/courseService';
+import {
+  branchDetailQueryOptions,
+  useBranch,
+} from '@/features/branches/api/branchService';
 
 vi.mock('@/api/axiosInstance', () => ({
   default: { get: vi.fn() },

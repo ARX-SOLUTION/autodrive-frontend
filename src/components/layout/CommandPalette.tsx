@@ -17,7 +17,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import {
   useGlobalSearch,
   type SearchResultItem,
-} from '@/services/searchService';
+} from '@/features/search/api/searchService';
 import { NAV_ITEMS } from '@/lib/navigation';
 
 interface CommandPaletteProps {

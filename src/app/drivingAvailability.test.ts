@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { NAV_ITEMS } from '@/lib/navigation';
 import { useAuthStore } from '@/store/authStore';
-import type { User } from '@/types/user';
+import type { User } from '@/features/staff/types';
 import { requireCapability } from './routeGuards';
 
 const originalAuth = useAuthStore.getState();

@@ -1,0 +1,450 @@
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import ExpensesPage from '@/features/expenses/pages/ExpensesPage';
+import ExpenseDetailPage from '@/features/expenses/pages/ExpenseDetailPage';
+import type { Expense, ExpenseHistory } from '@/features/expenses/types';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
+
+const state = vi.hoisted(() => ({
+  user: {
+    id: 'manager-1',
+    role: 'manager' as const,
+    company_id: 'company-1',
+    branch_id: 'branch-1',
+    branch_name: 'Chilonzor',
+  },
+  canViewExpenses: true,
+  canManageFinance: false,
+}));
+
+const mocks = vi.hoisted(() => ({
+  createExpense: vi.fn(),
+  updateExpense: vi.fn(),
+  useExpensesPage: vi.fn(),
+  useOverdueExpenseSweep: vi.fn(),
+  useExpenseTriageCounts: vi.fn(),
+  useExpenseBranchOptions: vi.fn(),
+  useExpenseVehicleOptions: vi.fn(),
+  useExpense: vi.fn(),
+  useExpenseHistory: vi.fn(),
+  useMySettlementDetail: vi.fn(),
+  useCreateExpensePayment: vi.fn(),
+  useCancelExpense: vi.fn(),
+  useDeleteExpense: vi.fn(),
+}));
+
+vi.mock('@/store/authStore', () => ({
+  useAuthStore: (selector: (value: { user: typeof state.user }) => unknown) =>
+    selector({ user: state.user }),
+}));
+
+vi.mock('@/hooks/useCan', () => ({
+  useCan: (capability: string) => {
+    if (capability === 'viewExpenses') return state.canViewExpenses;
+    if (capability === 'manageCompanyFinance') return state.canManageFinance;
+    return false;
+  },
+}));
+
+vi.mock('@/features/expenses/api/expenseService', () => ({
+  expenseCategoryValues: [
+    'rent',
+    'utilities',
+    'vehicle',
+    'marketing',
+    'supplies',
+    'administrative',
+    'other',
+  ],
+  expenseStatusValues: ['planned', 'partially_paid', 'paid', 'cancelled'],
+  useExpensesPage: mocks.useExpensesPage,
+  useOverdueExpenseSweep: mocks.useOverdueExpenseSweep,
+  useExpenseTriageCounts: mocks.useExpenseTriageCounts,
+  useExpenseBranchOptions: mocks.useExpenseBranchOptions,
+  useExpenseVehicleOptions: mocks.useExpenseVehicleOptions,
+  useExpenseTeacherOptions: () => ({ data: [] }),
+  useCreateTeacherSettlement: () => ({ mutate: vi.fn(), isPending: false }),
+  useCreateExpense: () => ({
+    mutate: mocks.createExpense,
+    isPending: false,
+  }),
+  useUpdateExpense: () => ({
+    mutate: mocks.updateExpense,
+    isPending: false,
+  }),
+  useExpense: mocks.useExpense,
+  useExpenseHistory: mocks.useExpenseHistory,
+  useMySettlementDetail: mocks.useMySettlementDetail,
+  useCancelExpense: mocks.useCancelExpense,
+  useDeleteExpense: mocks.useDeleteExpense,
+  useCreateExpensePayment: () => ({
+    mutate: mocks.useCreateExpensePayment,
+    isPending: false,
+  }),
+  useVoidExpensePayment: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+}));
+
+const expense: Expense = {
+  id: 'expense-1',
+  branch_id: 'branch-1',
+  branch_name: 'Chilonzor',
+  vehicle_id: null,
+  vehicle_plate_number: null,
+  created_by_id: 'manager-1',
+  category: 'supplies',
+  title: 'Office supplies',
+  amount: '100.00',
+  expense_date: '2026-08-31',
+  due_date: null,
+  payee: null,
+  note: null,
+  paid_amount: '0.00',
+  remaining_amount: '100.00',
+  status: 'planned',
+  reviewed_at: null,
+  reviewed_by_id: null,
+  version: 3,
+  created_at: '2026-08-31T00:00:00.000Z',
+  updated_at: '2026-08-31T00:00:00.000Z',
+  has_payment_history: false,
+};
+
+const history: ExpenseHistory = {
+  expense,
+  payments: [
+    {
+      id: 'payment-1',
+      expense_id: expense.id,
+      company_id: 'company-1',
+      branch_id: 'branch-1',
+      amount: '10.00',
+      payment_method: 'naqd',
+      date: '2026-08-31',
+      note: null,
+      recorded_by_id: 'owner-1',
+      idempotency_key: 'payment-1',
+      voided_at: null,
+      created_at: '2026-08-31T00:00:00.000Z',
+    },
+  ],
+  events: [],
+};
+
+const listState = {
+  data: { data: [expense], meta: { total: 1, totalPages: 1 } },
+  isLoading: false,
+  isFetching: false,
+  isError: false,
+  refetch: vi.fn(),
+};
+
+const detailState = {
+  data: expense,
+  isLoading: false,
+  isError: false,
+  error: null,
+  refetch: vi.fn(),
+};
+
+const historyState = {
+  data: history,
+  isLoading: false,
+  isError: false,
+  refetch: vi.fn(),
+};
+
+beforeEach(() => {
+  state.canViewExpenses = true;
+  state.canManageFinance = false;
+  mocks.createExpense.mockReset();
+  mocks.updateExpense.mockReset();
+  mocks.useExpensesPage.mockReset().mockReturnValue(listState);
+  mocks.useOverdueExpenseSweep.mockReset().mockReturnValue({
+    data: [],
+    isLoading: false,
+    isFetching: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
+  mocks.useExpenseTriageCounts.mockReset().mockReturnValue({
+    data: undefined,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
+  mocks.useExpenseBranchOptions.mockReset().mockReturnValue({ data: [] });
+  mocks.useExpenseVehicleOptions.mockReset().mockReturnValue({
+    data: [
+      {
+        id: 'v1',
+        plate_number: '01 A 123 BC',
+        branch_id: 'branch-1',
+        make: 'Chevrolet',
+        model: 'Cobalt',
+      },
+    ],
+  });
+  mocks.useExpense.mockReset().mockReturnValue(detailState);
+  mocks.useExpenseHistory.mockReset().mockReturnValue(historyState);
+  mocks.useMySettlementDetail.mockReset().mockReturnValue({
+    data: undefined,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
+  mocks.useCreateExpensePayment.mockReset();
+  mocks.useCancelExpense.mockReset().mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  });
+  mocks.useDeleteExpense.mockReset().mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  });
+});
+
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
+
+describe('manager expense scope', () => {
+  it('uses the discard dialog copy when closing a dirty expense form', async () => {
+    await renderWithRouter(<ExpensesPage />, {
+      initialEntry: '/expenses',
+      routePattern: '/expenses',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'expenses.add' }));
+    fireEvent.change(await screen.findByLabelText(/expenses\.table\.title/), {
+      target: { value: 'Draft expense' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+
+    expect(
+      screen.getByText('common.discard_changes_title'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('common.discard_changes_desc')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'common.discard' }),
+    ).toBeInTheDocument();
+  });
+
+  it('pins list scope to the JWT branch and omits branch_id from create payload', async () => {
+    await renderWithRouter(<ExpensesPage />, {
+      initialEntry: '/expenses?branch_id=other-branch&scope=company',
+      routePattern: '/expenses',
+    });
+
+    const query = mocks.useExpensesPage.mock.calls.at(-1)?.[0];
+    expect(query).toMatchObject({ branchId: 'branch-1' });
+    expect(query.scope).toBeUndefined();
+
+    fireEvent.click(screen.getByRole('button', { name: 'expenses.add' }));
+    expect(screen.queryByText('expenses.form.branch')).toBeNull();
+    fireEvent.change(await screen.findByLabelText(/expenses\.table\.title/), {
+      target: { value: 'New supplies' },
+    });
+    fireEvent.change(screen.getByLabelText(/expenses\.form\.amount/), {
+      target: { value: '25' },
+    });
+    fireEvent.change(screen.getByLabelText(/expenses\.form\.expense_date/), {
+      target: { value: '2026-08-31' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.form.submit' }),
+    );
+
+    await waitFor(() => expect(mocks.createExpense).toHaveBeenCalledOnce());
+    const payload = mocks.createExpense.mock.calls[0][0] as Record<
+      string,
+      unknown
+    >;
+    expect(payload).toMatchObject({
+      title: 'New supplies',
+      amount: '25.00',
+      expense_date: '2026-08-31',
+    });
+    expect(payload).not.toHaveProperty('branch_id');
+  });
+
+  it('can link a manager expense to a vehicle in the JWT branch', async () => {
+    await renderWithRouter(<ExpensesPage />, {
+      initialEntry: '/expenses',
+      routePattern: '/expenses',
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'expenses.add' }));
+    expect(mocks.useExpenseVehicleOptions.mock.calls.at(-1)?.[0]).toBe(
+      'branch-1',
+    );
+    fireEvent.click(screen.getByLabelText('expenses.form.vehicle'));
+    fireEvent.click(screen.getByRole('option', { name: /01 A 123 BC/ }));
+    fireEvent.change(screen.getByLabelText(/expenses\.table\.title/), {
+      target: { value: 'Oil change' },
+    });
+    fireEvent.change(screen.getByLabelText(/expenses\.form\.amount/), {
+      target: { value: '100' },
+    });
+    fireEvent.change(screen.getByLabelText(/expenses\.form\.expense_date/), {
+      target: { value: '2026-09-20' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.form.submit' }),
+    );
+    await waitFor(() => expect(mocks.createExpense).toHaveBeenCalledOnce());
+    expect(mocks.createExpense.mock.calls[0][0]).toMatchObject({
+      vehicle_id: 'v1',
+    });
+    expect(mocks.createExpense.mock.calls[0][0]).not.toHaveProperty(
+      'branch_id',
+    );
+  });
+
+  it('shows only own unpaid edit and never exposes payment history/actions', async () => {
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1',
+      routePattern: '/expenses/$id',
+      params: { id: expense.id },
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'common.edit' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('expenses.payments.title')).toBeNull();
+    expect(screen.queryByLabelText('expenses.payments.amount')).toBeNull();
+    expect(screen.queryByText('expenses.payments.active')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }));
+    fireEvent.change(await screen.findByLabelText(/expenses\.table\.title/), {
+      target: { value: 'Updated supplies' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.form.update_submit' }),
+    );
+
+    await waitFor(() => expect(mocks.updateExpense).toHaveBeenCalledOnce());
+    const [request] = mocks.updateExpense.mock.calls[0] as [
+      Record<string, unknown>,
+    ];
+    expect(request).toMatchObject({
+      id: expense.id,
+      expected_version: expense.version,
+      title: 'Updated supplies',
+    });
+    expect(request).not.toHaveProperty('branch_id');
+  });
+
+  it('keeps a transferred vehicle link on an unrelated edit and shows its historical plate', async () => {
+    mocks.useExpense.mockReturnValue({
+      ...detailState,
+      data: {
+        ...expense,
+        vehicle_id: 'v-old',
+        vehicle_plate_number: 'OLD 001',
+      },
+    });
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1',
+      routePattern: '/expenses/$id',
+      params: { id: expense.id },
+    });
+    expect(screen.getByText('OLD 001')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }));
+    fireEvent.change(await screen.findByLabelText(/expenses\.table\.title/), {
+      target: { value: 'Updated supplies' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.form.update_submit' }),
+    );
+    await waitFor(() => expect(mocks.updateExpense).toHaveBeenCalledOnce());
+    expect(mocks.updateExpense.mock.calls[0][0]).not.toHaveProperty(
+      'vehicle_id',
+    );
+  });
+
+  it('explicitly clears a historical vehicle link with null', async () => {
+    mocks.useExpense.mockReturnValue({
+      ...detailState,
+      data: {
+        ...expense,
+        vehicle_id: 'v-old',
+        vehicle_plate_number: 'OLD 001',
+      },
+    });
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1',
+      routePattern: '/expenses/$id',
+      params: { id: expense.id },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }));
+    fireEvent.click(screen.getByLabelText('expenses.form.vehicle'));
+    fireEvent.click(
+      screen.getByRole('option', { name: 'expenses.form.vehicle_none' }),
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.form.update_submit' }),
+    );
+    await waitFor(() => expect(mocks.updateExpense).toHaveBeenCalledOnce());
+    expect(mocks.updateExpense.mock.calls[0][0]).toMatchObject({
+      vehicle_id: null,
+    });
+  });
+
+  it('keeps the manager draft visible when a concurrent payment wins', async () => {
+    const rendered = await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1',
+      routePattern: '/expenses/$id',
+      params: { id: expense.id },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }));
+    const titleInput = await screen.findByLabelText(/expenses\.table\.title/);
+    fireEvent.change(titleInput, { target: { value: 'Draft kept safely' } });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'expenses.form.update_submit' }),
+    );
+    await waitFor(() => expect(mocks.updateExpense).toHaveBeenCalledOnce());
+
+    const [, options] = mocks.updateExpense.mock.calls[0] as [
+      Record<string, unknown>,
+      { onError: (error: unknown) => void },
+    ];
+    options.onError({ response: { status: 409 } });
+    mocks.useExpense.mockReturnValue({
+      ...detailState,
+      data: {
+        ...expense,
+        title: 'Server payment winner',
+        paid_amount: '10.00',
+        remaining_amount: '90.00',
+        status: 'partially_paid',
+        has_payment_history: true,
+      },
+    });
+    rendered.rerender(<ExpenseDetailPage />);
+
+    expect(screen.getByDisplayValue('Draft kept safely')).toBeInTheDocument();
+    expect(
+      screen.getByText('expenses.form.update_conflict'),
+    ).toBeInTheDocument();
+  });
+
+  it('does not expose edit for another creator even when the expense is unpaid', async () => {
+    mocks.useExpense.mockReturnValue({
+      ...detailState,
+      data: { ...expense, created_by_id: 'manager-2' },
+    });
+
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1',
+      routePattern: '/expenses/$id',
+      params: { id: expense.id },
+    });
+
+    expect(screen.queryByRole('button', { name: 'common.edit' })).toBeNull();
+    expect(screen.queryByText('expenses.payments.title')).toBeNull();
+  });
+});

@@ -10,7 +10,7 @@ import {
   useUpdateVehicle,
 } from '@/features/vehicles/api/vehicleService';
 import { extractErrorMessage } from '@/lib/errors';
-import type { Branch } from '@/types/branch';
+import type { Branch } from '@/features/branches/types';
 import { VEHICLE_CATEGORIES, type Vehicle } from '@/features/vehicles/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

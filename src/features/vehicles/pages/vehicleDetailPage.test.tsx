@@ -43,7 +43,7 @@ vi.mock('@/features/vehicles/api/vehicleService', () => ({
   useTransferVehicle: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
-vi.mock('@/services/branchService', () => ({
+vi.mock('@/features/branches/api/branchService', () => ({
   useBranches: () => ({ data: [{ id: 'b1', name: 'Yunusobod' }] }),
 }));
 

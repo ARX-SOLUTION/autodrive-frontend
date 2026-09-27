@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { requireCapability } from '@/app/routeGuards';
 import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
-import PaymentsPage from '@/pages/PaymentsPage';
+import PaymentsPage from '@/features/payments/pages/PaymentsPage';
 import {
   parseRouteLimit,
   parseRoutePage,
