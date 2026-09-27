@@ -141,7 +141,7 @@
     "update_available": "A new version is available",
     "update_reload": "Reload",
     "offline_banner": "No internet connection",
-    "demo_banner": "Demo center. Data resets every night at 03:00 Tashkent time.",
+    "demo_banner": "Demo center. Explore the sample data.",
     "tab_info": "Info",
     "rows_per_page": "Rows per page"
   },
