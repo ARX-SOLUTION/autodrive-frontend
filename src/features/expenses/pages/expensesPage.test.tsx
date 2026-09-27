@@ -141,6 +141,16 @@ afterEach(() => {
 });
 
 describe('ExpensesPage', () => {
+  it('keeps pagination outside the expenses table card', async () => {
+    await renderPage();
+    const tableCard = screen
+      .getByRole('table', { name: 'expenses.title' })
+      .closest('.glass-card');
+    expect(tableCard).not.toContainElement(
+      screen.getByRole('navigation', { name: 'expenses.title' }),
+    );
+  });
+
   it.each(['owner', 'accountant'] as const)(
     'shows finance-only deleted history to %s users',
     async (role) => {

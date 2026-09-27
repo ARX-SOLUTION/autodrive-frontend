@@ -18,6 +18,7 @@ import {
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { formatMoney } from '@/lib/money';
 import type { Payment } from '@/features/payments/types';
+import { cn } from '@/lib/utils';
 import { PaymentMobileCard } from '@/features/payments/components/PaymentsMobileList';
 import {
   courseTypeLabelKey,
@@ -302,7 +303,10 @@ export const PaymentsTable = ({
         onRowActivate={(payment, element) => openStudent(payment, element)}
         getRowAriaLabel={(payment) => payment.student_name}
         rowClassName={() => 'table-row-interactive'}
-        className="p-3 md:p-0"
+        className={cn(
+          'glass-card overflow-hidden p-3 transition-opacity duration-200 md:p-0',
+          isFetching && !isLoading && 'opacity-50',
+        )}
       />
 
       <ConfirmDialog

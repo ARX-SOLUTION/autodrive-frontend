@@ -505,101 +505,107 @@ const PaymentsTab = ({
   }
 
   return (
-    <div className="glass-card overflow-hidden">
-      <div className="flex items-center justify-end p-3">
-        <Button size="sm" className="gap-2" onClick={onAdd}>
-          <Plus className="h-4 w-4" /> {addLabel}
-        </Button>
-      </div>
-      {isLoading ? (
-        <div className="space-y-2 p-4">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
+    <>
+      <div className="glass-card overflow-hidden">
+        <div className="flex items-center justify-end p-3">
+          <Button size="sm" className="gap-2" onClick={onAdd}>
+            <Plus className="h-4 w-4" /> {addLabel}
+          </Button>
         </div>
-      ) : isError ? (
-        <div className="p-6">
-          <EmptyState
-            icon={Warning}
-            title={t('common.error')}
-            action={{
-              label: t('common.retry'),
-              onClick: () => void refetch(),
-            }}
-          />
-        </div>
-      ) : rows.length === 0 ? (
-        <div className="p-6">
-          <EmptyState title={emptyLabel} />
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[480px] text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-2 font-medium">{cols.date}</th>
-                <th className="px-4 py-2 text-right font-medium">
-                  {cols.amount}
-                </th>
-                <th className="px-4 py-2 font-medium">{cols.method}</th>
-                <th className="px-4 py-2 font-medium">{cols.operator}</th>
-                {canManage && (
-                  <th className="px-4 py-2 text-center font-medium">
-                    {cols.actions}
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((p) => (
-                <tr key={p.id} className="border-b border-border last:border-0">
-                  <td className="px-4 py-2">{p.date?.slice(0, 10)}</td>
-                  <td className="px-4 py-2 text-right font-mono tabular-nums">
-                    {formatMoney(p.amount_paid)}
-                  </td>
-                  <td className="px-4 py-2">
-                    {methodLabels[p.payment_method]}
-                  </td>
-                  <td className="px-4 py-2 text-muted-foreground">
-                    {p.recorded_by ?? '—'}
-                  </td>
-                  {canManage && (
-                    <td className="px-4 py-2">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => onEdit(p)}
-                          aria-label={t('common.edit')}
-                          title={t('common.edit')}
-                          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                        >
-                          <PencilSimple className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => onDelete(p)}
-                          aria-label={t('common.delete')}
-                          title={t('common.delete')}
-                          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                        >
-                          <Trash className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="px-4 pb-4">
-            <PaginationControls
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={(page) => setPagination({ studentId, page })}
-              pageSize={20}
-              totalItems={data?.meta?.total}
+        {isLoading ? (
+          <div className="space-y-2 p-4">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+          </div>
+        ) : isError ? (
+          <div className="p-6">
+            <EmptyState
+              icon={Warning}
+              title={t('common.error')}
+              action={{
+                label: t('common.retry'),
+                onClick: () => void refetch(),
+              }}
             />
           </div>
-        </div>
-      )}
-    </div>
+        ) : rows.length === 0 ? (
+          <div className="p-6">
+            <EmptyState title={emptyLabel} />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-2 font-medium">{cols.date}</th>
+                  <th className="px-4 py-2 text-right font-medium">
+                    {cols.amount}
+                  </th>
+                  <th className="px-4 py-2 font-medium">{cols.method}</th>
+                  <th className="px-4 py-2 font-medium">{cols.operator}</th>
+                  {canManage && (
+                    <th className="px-4 py-2 text-center font-medium">
+                      {cols.actions}
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((p) => (
+                  <tr
+                    key={p.id}
+                    className="border-b border-border last:border-0"
+                  >
+                    <td className="px-4 py-2">{p.date?.slice(0, 10)}</td>
+                    <td className="px-4 py-2 text-right font-mono tabular-nums">
+                      {formatMoney(p.amount_paid)}
+                    </td>
+                    <td className="px-4 py-2">
+                      {methodLabels[p.payment_method]}
+                    </td>
+                    <td className="px-4 py-2 text-muted-foreground">
+                      {p.recorded_by ?? '—'}
+                    </td>
+                    {canManage && (
+                      <td className="px-4 py-2">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => onEdit(p)}
+                            aria-label={t('common.edit')}
+                            title={t('common.edit')}
+                            className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                          >
+                            <PencilSimple className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => onDelete(p)}
+                            aria-label={t('common.delete')}
+                            title={t('common.delete')}
+                            className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                          >
+                            <Trash className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      {!isLoading && !isError && rows.length > 0 ? (
+        <PaginationControls
+          className="mt-3"
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setPagination({ studentId, page })}
+          pageSize={20}
+          totalItems={data?.meta?.total}
+        />
+      ) : null}
+    </>
   );
 };
 

@@ -6,7 +6,6 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { usePageSize } from '@/hooks/useListQueryState';
-import { cn } from '@/lib/utils';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { useBranches } from '@/features/branches/api/branchService';
 import {
@@ -325,29 +324,23 @@ const PaymentsPage = () => {
               <CircleNotch className="h-6 w-6 animate-spin text-primary" />
             </div>
           )}
-          <div
-            className={cn(
-              'glass-card overflow-hidden transition-opacity duration-200',
-              isFetching && !isLoading && 'opacity-50',
-            )}
-          >
-            <PaymentsTable
-              payments={visiblePayments}
-              isLoading={isLoading}
-              isFetching={isFetching}
-              isError={isPaymentsError}
-              onRetry={() => void refetchPayments()}
-              currentPage={currentPage}
-              pageSize={pageSize}
-              totalPayments={totalPayments}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              onPageSizeChange={setPageSize}
-              sortField={sortField}
-              sortDir={sortDir}
-              onSortChange={setSort}
-            />
-          </div>
+
+          <PaymentsTable
+            payments={visiblePayments}
+            isLoading={isLoading}
+            isFetching={isFetching}
+            isError={isPaymentsError}
+            onRetry={() => void refetchPayments()}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalPayments={totalPayments}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            sortField={sortField}
+            sortDir={sortDir}
+            onSortChange={setSort}
+          />
         </div>
       </section>
 
