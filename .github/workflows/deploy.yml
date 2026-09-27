@@ -1,0 +1,117 @@
+# SINGLE source of truth for autodrive-frontend CI + deploy.
+#
+# HOW TO ADOPT (Faza 6):
+#   cp autodrive-infra/ci-templates/autodrive-frontend/deploy.yml \
+#      autodrive-frontend/.github/workflows/deploy.yml
+#   git rm autodrive-frontend/.github/workflows/ci.yml
+# Two workflows both defining `quality` makes the required-check name ambiguous.
+#
+# Kept identical to the old ci.yml quality job (incl. `pnpm run check:bundle`
+# and the VITE_API_BASE_URL build env) — it is the required PR check.
+# Facts: build = `vite build`, output `dist`; VITE_* are baked in at build time,
+# so they come from GitHub vars, never from the server.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Workflow-level: dedupe/cancel STALE runs for the same ref (PR churn only).
+concurrency:
+  group: frontend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint --max-warnings=0
+      - run: pnpm run typecheck
+      - run: pnpm test
+      - run: pnpm run build
+        env:
+          VITE_API_BASE_URL: https://api.automaktab.uz
+      - run: pnpm run check:bundle
+
+  build:
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://api.automaktab.uz' }}
+          VITE_STUDENT_PORTAL_URL: ${{ vars.VITE_STUDENT_PORTAL_URL || 'https://student.automaktab.uz' }}
+          VITE_FLEET_MAP_TILE_URL: ${{ vars.VITE_FLEET_MAP_TILE_URL }}
+          VITE_FLEET_MAP_TILE_ATTRIBUTION: ${{ vars.VITE_FLEET_MAP_TILE_ATTRIBUTION }}
+          VITE_UMAMI_SRC: ${{ vars.VITE_UMAMI_SRC }}
+          VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-${{ github.sha }}
+          path: dist
+          retention-days: 7
+
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    # Job-level concurrency: serialize deploys PER APP and never cancel one.
+    # Workflow-level concurrency above cancels stale PR runs only; a push to
+    # main during a deploy must NOT abort it mid-migration.
+    concurrency:
+      group: deploy-autodrive-frontend
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-${{ github.sha }}
+          path: ./dist
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_AUTOMAKTAB_PRIVATE_KEY }}
+      - name: Pin host key
+        run: |
+          set -e
+          mkdir -p ~/.ssh
+          touch ~/.ssh/known_hosts
+          ssh-keyscan -T 5 -t ed25519 -H "${{ vars.SSH_AUTOMAKTAB_HOST }}" > ~/.ssh/known_hosts
+          test "$(ssh-keygen -lf ~/.ssh/known_hosts -E sha256 | awk '{print $2}')" = "SHA256:6l2q14jbQbu7PPehNJqAncgZ/Y8MdfVxStOXnOasJEg"
+      - name: rsync dist + activate symlink
+        run: |
+          set -e
+          SHA="${{ github.sha }}"
+          HOST="${{ vars.SSH_AUTOMAKTAB_HOST }}"
+          SSHOPT='ssh -o StrictHostKeyChecking=yes'
+          ssh $SSHOPT "deploy@${HOST}" "mkdir -p /root/projects/autodrive-frontend/releases/${SHA}"
+          rsync -az --delete -e "$SSHOPT" \
+            ./dist/ "deploy@${HOST}:/root/projects/autodrive-frontend/releases/${SHA}/"
+          ssh $SSHOPT "deploy@${HOST}" \
+            "bash /srv/autodrive-infra/deploy/deploy.sh activate-static autodrive-frontend ${SHA}"
