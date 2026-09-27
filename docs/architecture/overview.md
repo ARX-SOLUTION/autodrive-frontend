@@ -117,11 +117,11 @@ export dependencies are deferred to the routes that use them.
 
 ## Key Architectural Patterns
 
-1. **Code splitting:** TanStack Router route chunks plus deferred heavy dependencies (Recharts, date libraries, XLSX).
+1. **Code splitting:** TanStack Router route chunks plus deferred heavy dependencies (Recharts, date libraries, XLSX). Keep shared Phosphor icons in the `sidebar-icons` chunk; the bundle budget validates that build contract.
 2. **Tenant isolation:** Query keys include `branchId`. Cache cleared on logout and branch switch.
 3. **Optimistic updates:** Only reversible attendance/status interactions use optimistic updates; financial mutations stay server-authoritative.
 4. **Error boundaries:** Route-level error boundaries catch render crashes. API errors handled by TanStack Query error states and sonner toasts.
-5. **Empty/loading states:** shadcn `<Skeleton>` for loading. Explicit empty states (not blank tables) for zero-data views.
+5. **Empty/loading states:** shadcn `<Skeleton>` for loading. Explicit empty states (not blank tables) for zero-data views. Pagination ranges require a known positive page size and remain visible for a single nonempty fixed-size page.
 6. **Confirm before destroy:** `ConfirmDialog` component for all destructive actions. No silent deletes.
 7. **Forms:** react-hook-form + zod schema validation. Errors via shadcn `<FormMessage />`. Submit handlers are async and await the mutation.
 
