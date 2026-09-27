@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { requireCapability } from '@/app/routeGuards';
 import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
-import QuestionDetailPage from '@/pages/QuestionDetailPage';
+import QuestionDetailPage from '@/features/questions/pages/QuestionDetailPage';
 
 export const Route = createFileRoute('/_authenticated/questions/$id')({
   beforeLoad: ({ location }) =>

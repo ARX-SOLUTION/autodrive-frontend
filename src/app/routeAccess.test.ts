@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { roleCan } from '@/lib/permissions';
 import { ROUTE_CAPABILITIES } from './routeAccess';
-import type { UserRole } from '@/types/user';
+import type { UserRole } from '@/features/staff/types';
 
 const ROLES: UserRole[] = [
   'dev',

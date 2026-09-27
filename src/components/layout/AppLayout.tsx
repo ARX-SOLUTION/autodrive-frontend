@@ -1,4 +1,11 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Outlet, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { List } from '@phosphor-icons/react';
@@ -10,6 +17,14 @@ import { useCommandPalette } from './useCommandPalette';
 import { PageLoader } from './PageLoader';
 import { cn } from '@/lib/utils';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { useAuthStore } from '@/store/authStore';
+import {
+  CRM_TOUR_DESKTOP_QUERY,
+  shouldStartTour,
+  type OwnerCrmTourStepId,
+} from '@/lib/ownerCrmTour';
+
+const OwnerCrmTour = lazy(() => import('@/components/tour/OwnerCrmTour'));
 
 const CommandPalette = lazy(() => import('./CommandPalette'));
 
@@ -27,6 +42,11 @@ const readDesktopSidebarExpanded = () => {
 
 export const AppLayout = () => {
   const { t } = useTranslation();
+  const user = useAuthStore((state) => state.user);
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const sessionValidated = useAuthStore((state) => state.sessionValidated);
+  const [tourDismissed, setTourDismissed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mapSidebarExpanded, setMapSidebarExpanded] = useState(false);
   const [desktopSidebarExpanded, setDesktopSidebarExpanded] = useState(
@@ -41,6 +61,49 @@ export const AppLayout = () => {
   const prevPathnameRef = useRef(pathname);
   const mainRef = useRef<HTMLElement>(null);
   const palette = useCommandPalette();
+  const desktopExpandedRef = useRef(desktopSidebarExpanded);
+  const sidebarBeforeTourRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    desktopExpandedRef.current = desktopSidebarExpanded;
+  }, [desktopSidebarExpanded]);
+
+  const prepareTourChrome = useCallback((stepId: OwnerCrmTourStepId) => {
+    const desktop = window.matchMedia(CRM_TOUR_DESKTOP_QUERY).matches;
+    if (stepId === 'sidebar') {
+      if (desktop) {
+        if (sidebarBeforeTourRef.current === null) {
+          sidebarBeforeTourRef.current = desktopExpandedRef.current;
+        }
+        setDesktopSidebarExpanded(true);
+      } else {
+        setMobileSidebarOpen(true);
+      }
+      return;
+    }
+    setMobileSidebarOpen(false);
+  }, []);
+
+  const releaseTourChrome = useCallback(() => {
+    if (sidebarBeforeTourRef.current === false) {
+      setDesktopSidebarExpanded(false);
+    }
+    sidebarBeforeTourRef.current = null;
+    setMobileSidebarOpen(false);
+  }, []);
+
+  const showOwnerTour =
+    hasHydrated &&
+    isAuthenticated &&
+    sessionValidated &&
+    !tourDismissed &&
+    shouldStartTour({
+      role: user?.role,
+      email: user?.email,
+      companySlug: user?.company_slug,
+      crmTourCompletedAt: user?.crm_tour_completed_at,
+      blockingModal: Boolean(user?.must_change_password),
+    });
 
   // Match the previous router: any committed navigation (including a same-page
   // query update) closes the mobile drawer without waiting for an effect.
@@ -143,6 +206,15 @@ export const AppLayout = () => {
             <CommandPalette
               open={palette.open}
               onOpenChange={palette.setOpen}
+            />
+          </Suspense>
+        ) : null}
+        {showOwnerTour ? (
+          <Suspense fallback={null}>
+            <OwnerCrmTour
+              onFinished={() => setTourDismissed(true)}
+              prepareChrome={prepareTourChrome}
+              releaseChrome={releaseTourChrome}
             />
           </Suspense>
         ) : null}

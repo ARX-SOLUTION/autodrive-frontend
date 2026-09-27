@@ -2,7 +2,7 @@ import { cleanup, screen } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import { CommandPalette } from '@/components/layout/CommandPalette';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
-import type { UserRole } from '@/types/user';
+import type { UserRole } from '@/features/staff/types';
 
 // autodrive-vh0.2: CommandPalette (Cmd+K) keeps its own NAV_ENTRIES list,
 // separate from Sidebar's navItems, gated the same way (cap + useCan filter)
@@ -12,7 +12,7 @@ import type { UserRole } from '@/types/user';
 
 let role: UserRole = 'owner';
 
-vi.mock('@/services/searchService', () => ({
+vi.mock('@/features/search/api/searchService', () => ({
   useGlobalSearch: () => ({ data: undefined, isFetching: false }),
 }));
 vi.mock('@/store/authStore', () => ({

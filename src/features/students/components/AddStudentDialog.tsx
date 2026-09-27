@@ -1,0 +1,1384 @@
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  useForm,
+  useWatch,
+  type Control,
+  type FieldPath,
+} from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { addDays } from 'date-fns';
+import {
+  isValidUzPhone,
+  uzPhoneE164,
+  formatUzPhoneInput,
+} from '@/lib/phoneFormater';
+import { groupDigits } from '@/lib/money';
+import { DatePicker } from '@/components/ui/date-picker';
+import {
+  formatCalendarDate,
+  parseCalendarDate,
+  todayCalendarDate,
+} from '@/lib/calendarDate';
+import type { LeadSource } from '@/features/students/types';
+import type { Branch } from '@/features/branches/types';
+import type { Course } from '@/features/courses/types';
+import type { Group } from '@/features/groups/types';
+import ReferralFields from '@/features/students/components/ReferralFields';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirmedClose } from '@/hooks/useConfirmedClose';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Separator } from '@/components/ui/separator';
+import { CaretLeft, CaretRight, Check, UserPlus } from '@phosphor-icons/react';
+import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/store/authStore';
+import { useCan } from '@/hooks/useCan';
+import { useBranches } from '@/features/branches/api/branchService';
+import { useGroups } from '@/features/groups/api/groupService';
+import { useCourses } from '@/features/courses/api/courseService';
+
+export interface AddStudentPayload {
+  // Step 1: Personal info
+  first_name: string;
+  last_name: string;
+  middle_name?: string;
+  phone: string;
+  email?: string;
+  passport_series: string;
+  passport_number: string;
+  birth_date: string;
+  gender: 'male' | 'female';
+  address: string;
+
+  // Step 2: Course & Branch
+  branch_id: string;
+  course_id: string;
+  course_type: 'tezkor' | 'avto_maktab';
+  course_price: number;
+  group_id?: string;
+  start_date: string;
+  completion_date?: string;
+
+  // Step 3: Payment & Confirmation
+  amount: number;
+  payment_method: 'naqd' | 'karta' | 'perechisleniya';
+  first_payment_date: string;
+  contract_signed: boolean;
+  learner_password: string;
+
+  // Referral / acquisition — all optional.
+  lead_source?: LeadSource;
+  lead_source_other?: string;
+  referred_by_student_id?: string;
+  referred_by_user_id?: string;
+}
+
+const LEAD_SOURCE_VALUES = [
+  'referral',
+  'instagram',
+  'directory_map',
+  'telegram',
+  'walk_in',
+  'olx',
+  'other',
+] as const;
+
+// Built via a factory so the phone error can be localized with t(). A static
+// instance (keys → identity) drives the inferred types and STEP_FIELDS —
+// zod messages don't affect either.
+const buildSchemas = (t: (key: string) => string) => {
+  const step1 = z.object({
+    first_name: z.string().min(1, t('students.wizard.first_name_required')),
+    last_name: z.string().min(1, t('students.wizard.last_name_required')),
+    middle_name: z.string().optional(),
+    phone: z.string().refine(isValidUzPhone, t('students.phone_invalid')),
+    email: z
+      .string()
+      .email(t('students.wizard.email_invalid'))
+      .optional()
+      .or(z.literal('')),
+    passport_series: z
+      .string()
+      .min(1, t('students.wizard.passport_series_required'))
+      .regex(/^[A-Z]{2}$/, t('students.wizard.passport_series_format')),
+    passport_number: z
+      .string()
+      .min(1, t('students.wizard.passport_number_required'))
+      .regex(/^\d{7}$/, t('students.wizard.passport_number_format')),
+    birth_date: z
+      .string()
+      .min(1, t('students.wizard.birth_date_required'))
+      .refine(
+        (v) => !v || !!parseCalendarDate(v),
+        t('students.wizard.birth_date_required'),
+      ),
+    gender: z.enum(['male', 'female']),
+    address: z.string().min(5, t('students.wizard.address_too_short')),
+  });
+
+  const step2 = z.object({
+    branch_id: z.guid(t('students.wizard.branch_required')),
+    course_id: z.guid(t('students.wizard.course_required')),
+    group_id: z.guid().optional().or(z.literal('')),
+    start_date: z
+      .string()
+      .min(1, t('students.wizard.start_date_required'))
+      .refine(
+        (v) => !v || !!parseCalendarDate(v),
+        t('students.wizard.start_date_required'),
+      ),
+    completion_date: z.string().optional(),
+    lead_source: z.enum(LEAD_SOURCE_VALUES).optional(),
+    lead_source_other: z.string().optional(),
+    referred_by_student_id: z.guid().optional().or(z.literal('')),
+    referred_by_user_id: z.guid().optional().or(z.literal('')),
+  });
+
+  const step3 = z.object({
+    amount: z.number().min(1, t('students.wizard.amount_invalid')),
+    payment_method: z.enum(['naqd', 'karta', 'perechisleniya']),
+    first_payment_date: z
+      .string()
+      .min(1, t('students.wizard.first_payment_date_required'))
+      .refine(
+        (v) => !v || !!parseCalendarDate(v),
+        t('students.wizard.first_payment_date_required'),
+      ),
+    contract_signed: z
+      .boolean()
+      .refine((value) => value, t('students.wizard.contract_required')),
+    learner_password: z
+      .string()
+      .min(8, t('students.learner_password_requirements'))
+      .regex(/[0-9]/, t('students.learner_password_requirements')),
+  });
+
+  return { step1, step2, step3, all: step1.merge(step2).merge(step3) };
+};
+
+const typeSchemas = buildSchemas((key) => key);
+
+export type Step1FormData = z.infer<typeof typeSchemas.step1>;
+export type Step2FormData = z.infer<typeof typeSchemas.step2>;
+export type Step3FormData = z.infer<typeof typeSchemas.step3>;
+
+export type AddStudentFormData = z.infer<typeof typeSchemas.all>;
+
+const STEP_FIELDS: Record<number, FieldPath<AddStudentFormData>[]> = {
+  1: Object.keys(typeSchemas.step1.shape) as FieldPath<AddStudentFormData>[],
+  2: Object.keys(typeSchemas.step2.shape) as FieldPath<AddStudentFormData>[],
+  3: Object.keys(typeSchemas.step3.shape) as FieldPath<AddStudentFormData>[],
+};
+
+interface AddStudentDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (data: AddStudentPayload) => void;
+  loading?: boolean;
+  defaultBranchId?: string;
+  defaultCourseId?: string;
+  // Rendered at the top of the dialog — the quick/detailed mode toggle.
+  detailedToggle?: ReactNode;
+  // Lets a parent (e.g. the quick/detailed toggle) know when it's unsafe to
+  // switch modes without losing typed data.
+  onDirtyChange?: (dirty: boolean) => void;
+}
+
+const STEPS = [
+  {
+    id: 1,
+    titleKey: 'students.wizard.step1_title',
+    descKey: 'students.wizard.step1_desc',
+  },
+  {
+    id: 2,
+    titleKey: 'students.wizard.step2_title',
+    descKey: 'students.wizard.step2_desc',
+  },
+  {
+    id: 3,
+    titleKey: 'students.wizard.step3_title',
+    descKey: 'students.wizard.step3_desc',
+  },
+] as const;
+
+interface Step2ReferralSectionProps {
+  control: Control<AddStudentFormData>;
+  branchId: string;
+  onLeadSourceChange: (v: LeadSource | undefined) => void;
+  onLeadSourceOtherChange: (v: string) => void;
+  onReferrerChange: (next: { studentId?: string; userId?: string }) => void;
+}
+
+// react-hooks/incompatible-library: form.watch() during render isn't
+// compiler-safe; useWatch({ control }) is RHF's own drop-in replacement.
+// Kept as its own component (not lifted into AddStudentDialog's top level)
+// because it only ever mounts while step 2 is active -- watching here keeps
+// the exact original subscription lifetime: these 4 fields stop being
+// watched, and stop triggering any re-render, the instant the user leaves
+// step 2, same as the old inline form.watch() calls did.
+const Step2ReferralSection = ({
+  control,
+  branchId,
+  onLeadSourceChange,
+  onLeadSourceOtherChange,
+  onReferrerChange,
+}: Step2ReferralSectionProps) => {
+  const leadSource = useWatch({ control, name: 'lead_source' });
+  const leadSourceOther = useWatch({ control, name: 'lead_source_other' });
+  const referredByStudentId = useWatch({
+    control,
+    name: 'referred_by_student_id',
+  });
+  const referredByUserId = useWatch({ control, name: 'referred_by_user_id' });
+
+  return (
+    <ReferralFields
+      branchId={branchId}
+      leadSource={leadSource}
+      onLeadSourceChange={onLeadSourceChange}
+      leadSourceOther={leadSourceOther}
+      onLeadSourceOtherChange={onLeadSourceOtherChange}
+      referredByStudentId={referredByStudentId}
+      referredByUserId={referredByUserId}
+      onReferrerChange={onReferrerChange}
+    />
+  );
+};
+
+interface WizardSummaryProps {
+  control: Control<AddStudentFormData>;
+  courseId: string;
+  branchId: string;
+  courseList: Course[];
+  branchList: Branch[];
+  filteredGroups: Group[];
+  t: (key: string) => string;
+}
+
+// Same react-hooks/incompatible-library fix as Step2ReferralSection above,
+// for the step-3 summary card, and the same reason it's a separate
+// component: only mounts while step 3 is active, so last_name/first_name/
+// phone/group_id/amount are watched HERE to keep their
+// original only-subscribed-on-step-3 lifetime. course_id/branch_id are
+// passed in as props instead of watched again -- AddStudentDialog already
+// watches both unconditionally below (filteredCourses/filteredGroups need
+// them on every step), so re-watching here would just be a redundant
+// second subscription to the same already-live value.
+const WizardSummary = ({
+  control,
+  courseId,
+  branchId,
+  courseList,
+  branchList,
+  filteredGroups,
+  t,
+}: WizardSummaryProps) => {
+  const lastName = useWatch({ control, name: 'last_name' });
+  const firstName = useWatch({ control, name: 'first_name' });
+  const phone = useWatch({ control, name: 'phone' });
+  const groupId = useWatch({ control, name: 'group_id' });
+  const amount = useWatch({ control, name: 'amount' });
+
+  return (
+    <div className="bg-muted/50 rounded-lg p-4 border">
+      <h4 className="font-medium mb-3">{t('students.wizard.summary_title')}</h4>
+      <dl className="grid gap-2 sm:grid-cols-2 text-sm">
+        <dt className="text-muted-foreground">
+          {t('students.wizard.summary_full_name')}:
+        </dt>
+        <dd className="font-medium">
+          {lastName} {firstName}
+        </dd>
+        <dt className="text-muted-foreground">{t('students.phone')}:</dt>
+        <dd className="font-medium">{phone}</dd>
+        <dt className="text-muted-foreground">
+          {t('students.wizard.course')}:
+        </dt>
+        <dd className="font-medium">
+          {courseList.find((c) => c.id === courseId)?.name || '—'}
+        </dd>
+        <dt className="text-muted-foreground">
+          {t('students.wizard.branch')}:
+        </dt>
+        <dd className="font-medium">
+          {branchList.find((b) => b.id === branchId)?.name || '—'}
+        </dd>
+        <dt className="text-muted-foreground">{t('students.group')}:</dt>
+        <dd className="font-medium">
+          {filteredGroups.find((g) => g.id === groupId)?.name ||
+            t('students.wizard.group_later')}
+        </dd>
+        <dt className="text-muted-foreground">
+          {t('students.wizard.amount')}:
+        </dt>
+        <dd className="font-medium">{amount.toLocaleString('uz-UZ')} so'm</dd>
+      </dl>
+    </div>
+  );
+};
+
+const AddStudentDialog = ({
+  open,
+  onClose,
+  onSubmit,
+  loading,
+  defaultBranchId,
+  defaultCourseId,
+  detailedToggle,
+  onDirtyChange,
+}: AddStudentDialogProps) => {
+  const { t } = useTranslation();
+  const canAssignBranch = useCan('assignBranch');
+  const user = useAuthStore((s) => s.user);
+  const { data: branches } = useBranches();
+  const { data: groups } = useGroups();
+  const { data: courses } = useCourses();
+
+  const allFormSchema = useMemo(() => buildSchemas(t).all, [t]);
+
+  const branchList = branches || [];
+  const courseList = courses || [];
+
+  const [activeStep, setActiveStep] = useState(1);
+  const [stepValidated, setStepValidated] = useState<Record<number, boolean>>(
+    {},
+  );
+  const [showConfirm, setShowConfirm] = useState(false);
+  const submitModeRef = useRef<'close' | 'add'>('close');
+
+  const form = useForm<AddStudentFormData>({
+    resolver: zodResolver(allFormSchema),
+    defaultValues: {
+      first_name: '',
+      last_name: '',
+      middle_name: '',
+      phone: '+998',
+      email: '',
+      passport_series: '',
+      passport_number: '',
+      birth_date: '',
+      gender: 'male',
+      address: '',
+      branch_id: canAssignBranch
+        ? defaultBranchId || ''
+        : user?.branch_id || '',
+      course_id: defaultCourseId || '',
+      group_id: '',
+      start_date: todayCalendarDate(),
+      completion_date: '',
+      amount: 0,
+      payment_method: 'naqd',
+      first_payment_date: todayCalendarDate(),
+      contract_signed: false,
+      learner_password: '',
+      lead_source: undefined,
+      lead_source_other: '',
+      referred_by_student_id: '',
+      referred_by_user_id: '',
+    },
+    mode: 'onBlur',
+  });
+
+  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
+    useConfirmedClose(form.formState.isDirty || !!loading, onClose);
+
+  useEffect(() => {
+    onDirtyChange?.(form.formState.isDirty);
+  }, [form.formState.isDirty, onDirtyChange]);
+
+  const resetForNext = () => {
+    const current = form.getValues();
+    form.reset({
+      ...current,
+      first_name: '',
+      last_name: '',
+      middle_name: '',
+      phone: '+998',
+      email: '',
+      passport_series: '',
+      passport_number: '',
+      birth_date: '',
+      address: '',
+      group_id: '',
+      start_date: todayCalendarDate(),
+      completion_date: '',
+      amount: 0,
+      first_payment_date: todayCalendarDate(),
+      contract_signed: false,
+      learner_password: '',
+      lead_source: undefined,
+      lead_source_other: '',
+      referred_by_student_id: '',
+      referred_by_user_id: '',
+    });
+    form.setFocus('last_name');
+  };
+
+  // react-hooks/incompatible-library: form.watch() during render isn't
+  // compiler-safe; useWatch({ control }) is RHF's own drop-in replacement.
+  // Both are already watched unconditionally here (filteredCourses/
+  // filteredGroups below need them regardless of which step is active), so
+  // switching to useWatch doesn't change re-render timing at all.
+  const watchedBranchId = useWatch({
+    control: form.control,
+    name: 'branch_id',
+  });
+  const watchedCourseId = useWatch({
+    control: form.control,
+    name: 'course_id',
+  });
+  const watchedCourse = courseList.find(
+    (course) => course.id === watchedCourseId,
+  );
+
+  const filteredGroups = (groups || []).filter(
+    (g) =>
+      g.course_type === watchedCourse?.course_type &&
+      (!watchedBranchId || g.branch_id === watchedBranchId) &&
+      g.is_active,
+  );
+
+  const filteredCourses = courseList.filter(
+    (course) => !watchedBranchId || course.branch_id === watchedBranchId,
+  );
+
+  const watchedStartDate = useWatch({
+    control: form.control,
+    name: 'start_date',
+  });
+
+  // Auto-fill completion_date from the selected course's duration, staying in
+  // sync with start_date/course changes until the user manually edits the
+  // field themselves (dirtyFields flips once they type into it directly).
+  useEffect(() => {
+    if (form.formState.dirtyFields.completion_date) return;
+    if (!watchedCourse || !watchedStartDate) return;
+    const start = parseCalendarDate(watchedStartDate);
+    if (!start) return;
+    const computed = formatCalendarDate(
+      addDays(start, watchedCourse.duration_days),
+    );
+    form.setValue('completion_date', computed);
+  }, [watchedCourse, watchedStartDate, form]);
+
+  const goToStep = (step: number) => {
+    if (step > activeStep) {
+      // Only ever called for the immediate next step (Next button, or a
+      // stepper click gated to step.id <= activeStep + 0 below) — jumping
+      // further would skip validating the steps in between.
+      form.trigger(STEP_FIELDS[activeStep]).then((isValid) => {
+        if (isValid) {
+          // Mark the step just completed (activeStep), not the
+          // destination — the destination hasn't been touched yet.
+          setStepValidated((prev) => ({ ...prev, [activeStep]: true }));
+          setActiveStep(step);
+        }
+      });
+    } else {
+      setActiveStep(step);
+    }
+  };
+
+  const handleNext = () => {
+    if (activeStep < 3) goToStep(activeStep + 1);
+  };
+
+  const handleBack = () => {
+    if (activeStep > 1) setActiveStep(activeStep - 1);
+  };
+
+  const handleSubmit = (values: AddStudentFormData) => {
+    const course = courseList.find((item) => item.id === values.course_id);
+    if (!course) {
+      form.setError('course_id', { message: 'Kurs tanlanmagan' });
+      return;
+    }
+    submitModeRef.current = 'close';
+    const payload: AddStudentPayload = {
+      ...values,
+      phone: uzPhoneE164(values.phone),
+      course_type: course.course_type,
+      course_price: course.price,
+      amount: Number(values.amount),
+      lead_source: values.lead_source || undefined,
+      lead_source_other:
+        values.lead_source === 'other'
+          ? values.lead_source_other || undefined
+          : undefined,
+      referred_by_student_id: values.referred_by_student_id || undefined,
+      referred_by_user_id: values.referred_by_user_id || undefined,
+    };
+    onSubmit(payload);
+  };
+
+  const onFormValid = () => {
+    if (activeStep === 3) {
+      setShowConfirm(true);
+    } else {
+      handleNext();
+    }
+  };
+
+  const confirmSubmit = () => {
+    setShowConfirm(false);
+    const values = form.getValues();
+    handleSubmit(values);
+    if (submitModeRef.current === 'add') {
+      resetForNext();
+    }
+  };
+
+  // react-hooks/set-state-in-effect (surfaced once the incompatible-library
+  // fix above let the compiler analyze further into this component):
+  // setActiveStep/setStepValidated used to reset inside the effect below.
+  // Split to a render-phase "reset state when a value changes" guard (same
+  // pattern used across this upgrade batch) with its own snapshot of the
+  // exact same deps, so it fires under the exact same conditions -- the
+  // effect below keeps the form.setValue() calls, which aren't flagged and
+  // legitimately belong in an effect.
+  const [wizardResetKey, setWizardResetKey] = useState({
+    open,
+    defaultBranchId,
+    defaultCourseId,
+    canAssignBranch,
+    userBranchId: user?.branch_id,
+  });
+  if (
+    open &&
+    (wizardResetKey.open !== open ||
+      wizardResetKey.defaultBranchId !== defaultBranchId ||
+      wizardResetKey.defaultCourseId !== defaultCourseId ||
+      wizardResetKey.canAssignBranch !== canAssignBranch ||
+      wizardResetKey.userBranchId !== user?.branch_id)
+  ) {
+    setWizardResetKey({
+      open,
+      defaultBranchId,
+      defaultCourseId,
+      canAssignBranch,
+      userBranchId: user?.branch_id,
+    });
+    setActiveStep(1);
+    setStepValidated({});
+  }
+
+  useEffect(() => {
+    if (open) {
+      if (!defaultBranchId && !canAssignBranch && user?.branch_id) {
+        form.setValue('branch_id', user.branch_id);
+      }
+      if (defaultCourseId) {
+        form.setValue('course_id', defaultCourseId);
+      }
+    }
+  }, [
+    open,
+    defaultBranchId,
+    defaultCourseId,
+    canAssignBranch,
+    user?.branch_id,
+    form,
+  ]);
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={(o) => !o && attemptClose()}>
+        <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col overflow-hidden">
+          <DialogHeader className="shrink-0 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <UserPlus className="h-5 w-5 text-primary" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <DialogTitle className="font-heading text-lg">
+                  {t('students.add')}
+                </DialogTitle>
+                <DialogDescription>
+                  {t('students.wizard.subtitle', { count: STEPS.length })}
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {detailedToggle && (
+            <div className="flex shrink-0 items-center pb-2">
+              {detailedToggle}
+            </div>
+          )}
+
+          {/* Stepper Indicator */}
+          <nav
+            aria-label={t('students.wizard.progress_label')}
+            className="mb-1 shrink-0 px-1"
+          >
+            <ol className="flex items-center">
+              {STEPS.map((step, index) => {
+                const isDone = stepValidated[step.id];
+                const isActive = activeStep === step.id;
+                const isReachable = step.id <= activeStep;
+                return (
+                  <li
+                    key={step.id}
+                    className={cn(
+                      'flex items-center',
+                      index < STEPS.length - 1 && 'flex-1',
+                    )}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => isReachable && goToStep(step.id)}
+                      disabled={!isReachable}
+                      aria-current={isActive ? 'step' : undefined}
+                      // The text label below is `hidden` under `sm` (icon-only
+                      // on mobile) -- an explicit aria-label keeps the step
+                      // name in the accessible name at every viewport instead
+                      // of relying on a label that can disappear.
+                      aria-label={t(step.titleKey)}
+                      className={cn(
+                        'group flex min-h-11 items-center gap-2 rounded-md py-1 pr-2 transition-colors',
+                        isReachable
+                          ? 'cursor-pointer'
+                          : 'cursor-default opacity-60',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium transition-colors',
+                          isDone
+                            ? 'bg-green-600 text-white dark:bg-green-500'
+                            : isActive
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted text-muted-foreground',
+                        )}
+                      >
+                        {isDone ? (
+                          <Check className="h-4 w-4" aria-hidden="true" />
+                        ) : (
+                          step.id
+                        )}
+                      </span>
+                      <span
+                        className={cn(
+                          'hidden text-left text-xs font-medium sm:block',
+                          isActive
+                            ? 'text-foreground'
+                            : 'text-muted-foreground',
+                        )}
+                      >
+                        {t(step.titleKey)}
+                      </span>
+                    </button>
+                    {index < STEPS.length - 1 && (
+                      <div
+                        className={cn(
+                          'mx-1 h-0.5 flex-1 rounded-full transition-colors',
+                          activeStep > step.id ? 'bg-primary' : 'bg-muted',
+                        )}
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+            <p className="mt-2 text-center text-xs text-muted-foreground sm:hidden">
+              {t('students.wizard.step_label', {
+                current: activeStep,
+                total: STEPS.length,
+              })}{' '}
+              · {t(STEPS[activeStep - 1].titleKey)}
+            </p>
+          </nav>
+
+          <Separator className="mb-4 shrink-0" />
+
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onFormValid)}
+              className="flex min-h-0 flex-1 flex-col"
+            >
+              <div className="flex-1 overflow-y-auto pr-2">
+                {/* Step 1: Personal Info */}
+                {activeStep === 1 && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      {t(STEPS[0].titleKey)}
+                    </h3>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="last_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('students.last_name')} *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Ivanov" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="first_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('students.first_name')} *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Ivan" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="middle_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {t('students.wizard.middle_name')}
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ivanovich" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('students.phone')} *</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                type="tel"
+                                inputMode="tel"
+                                autoComplete="tel"
+                                placeholder="+998 90 123 45 67"
+                                value={formatUzPhoneInput(field.value)}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    formatUzPhoneInput(e.target.value),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('common.email')}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="email"
+                                placeholder="student@example.com"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="passport_series"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.wizard.passport_series')} *
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="AA"
+                                maxLength={2}
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(e.target.value.toUpperCase())
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="passport_number"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.wizard.passport_number')} *
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="1234567"
+                                maxLength={7}
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value.replace(/\D/g, ''),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <FormField
+                        control={form.control}
+                        name="birth_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.wizard.birth_date')} *
+                            </FormLabel>
+                            <FormControl>
+                              <DatePicker
+                                value={field.value}
+                                onChange={(v) => field.onChange(v ?? '')}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                max={todayCalendarDate()}
+                                clearable
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.wizard.gender')} *
+                            </FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue
+                                    placeholder={t(
+                                      'students.wizard.select_placeholder',
+                                    )}
+                                  />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="male">
+                                    {t('students.wizard.gender_male')}
+                                  </SelectItem>
+                                  <SelectItem value="female">
+                                    {t('students.wizard.gender_female')}
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem className="sm:col-span-2">
+                            <FormLabel>
+                              {t('students.wizard.address')} *
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder={t(
+                                  'students.wizard.address_placeholder',
+                                )}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 2: Course & Branch */}
+                {activeStep === 2 && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      {t(STEPS[1].titleKey)}
+                    </h3>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="branch_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.wizard.branch')} *
+                            </FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue
+                                    placeholder={t(
+                                      'students.wizard.branch_placeholder',
+                                    )}
+                                  />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {branchList.map((branch) => (
+                                    <SelectItem
+                                      key={branch.id}
+                                      value={branch.id}
+                                    >
+                                      {branch.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="course_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.wizard.course')} *
+                            </FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue
+                                    placeholder={t(
+                                      'students.wizard.course_placeholder',
+                                    )}
+                                  />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {filteredCourses.map((course) => (
+                                    <SelectItem
+                                      key={course.id}
+                                      value={course.id}
+                                    >
+                                      {course.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <FormField
+                        control={form.control}
+                        name="group_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.wizard.group_optional_label')}
+                            </FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={(value) =>
+                                  field.onChange(value === 'none' ? '' : value)
+                                }
+                                value={field.value || 'none'}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue
+                                    placeholder={t(
+                                      'students.wizard.group_placeholder',
+                                    )}
+                                  />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {/* Radix SelectItem forbids an empty-string value, so "no group" uses a sentinel mapped back to '' above. */}
+                                  <SelectItem value="none">
+                                    {t('students.wizard.group_none')}
+                                  </SelectItem>
+                                  {filteredGroups.map((group) => (
+                                    <SelectItem key={group.id} value={group.id}>
+                                      {group.name} ({group.branch_name})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="start_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.wizard.start_date')} *
+                            </FormLabel>
+                            <FormControl>
+                              <DatePicker
+                                value={field.value}
+                                onChange={(v) => field.onChange(v ?? '')}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="completion_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.wizard.completion_date_label')}
+                            </FormLabel>
+                            <FormControl>
+                              <DatePicker
+                                value={field.value}
+                                onChange={(v) => field.onChange(v ?? '')}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                clearable
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              {t('students.wizard.completion_date_desc')}
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <Step2ReferralSection
+                      control={form.control}
+                      branchId={watchedBranchId}
+                      onLeadSourceChange={(v) =>
+                        form.setValue('lead_source', v)
+                      }
+                      onLeadSourceOtherChange={(v) =>
+                        form.setValue('lead_source_other', v)
+                      }
+                      onReferrerChange={({ studentId, userId }) => {
+                        form.setValue(
+                          'referred_by_student_id',
+                          studentId ?? '',
+                        );
+                        form.setValue('referred_by_user_id', userId ?? '');
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Step 3: Payment & Confirmation */}
+                {activeStep === 3 && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      {t(STEPS[2].titleKey)}
+                    </h3>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="payment_method"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.payment_method')} *
+                            </FormLabel>
+                            <FormControl>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue
+                                    placeholder={t(
+                                      'students.wizard.select_placeholder',
+                                    )}
+                                  />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="naqd">
+                                    {t('students.payment_cash')}
+                                  </SelectItem>
+                                  <SelectItem value="karta">
+                                    {t('students.payment_card')}
+                                  </SelectItem>
+                                  <SelectItem value="perechisleniya">
+                                    {t('payments.method.perechisleniya')}
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <FormField
+                        control={form.control}
+                        name="amount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.wizard.amount')} *
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                inputMode="numeric"
+                                placeholder={t(
+                                  'students.wizard.amount_placeholder',
+                                )}
+                                value={
+                                  field.value
+                                    ? groupDigits(String(field.value))
+                                    : ''
+                                }
+                                onChange={(e) =>
+                                  field.onChange(
+                                    Number(e.target.value.replace(/\D/g, '')) ||
+                                      0,
+                                  )
+                                }
+                                onBlur={field.onBlur}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="first_payment_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.wizard.first_payment_date')} *
+                            </FormLabel>
+                            <FormControl>
+                              <DatePicker
+                                value={field.value}
+                                onChange={(v) => field.onChange(v ?? '')}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="contract_signed"
+                        render={({ field }) => (
+                          <FormItem className="flex items-end">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="ml-2 cursor-pointer">
+                              {t('students.wizard.contract_agree')} *
+                            </FormLabel>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="learner_password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel required>
+                            {t('students.learner_password')}
+                          </FormLabel>
+                          <FormControl>
+                            <PasswordInput
+                              {...field}
+                              autoComplete="new-password"
+                              aria-required="true"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Summary Card */}
+                    <WizardSummary
+                      control={form.control}
+                      courseId={watchedCourseId}
+                      branchId={watchedBranchId}
+                      courseList={courseList}
+                      branchList={branchList}
+                      filteredGroups={filteredGroups}
+                      t={t}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Actions */}
+              <div className="mt-auto flex shrink-0 items-center justify-between border-t pt-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {activeStep > 1 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBack}
+                      disabled={loading}
+                    >
+                      <CaretLeft className="w-4 h-4 mr-1" />
+                      Oldingi
+                    </Button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {activeStep < 3 ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleNext}
+                      disabled={loading}
+                    >
+                      Keyingi
+                      <CaretRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          submitModeRef.current = 'add';
+                          setShowConfirm(true);
+                        }}
+                        disabled={loading}
+                        className="hidden sm:inline-flex"
+                      >
+                        Saqlab, yana qo'shish
+                      </Button>
+                      <Button type="submit" size="sm" disabled={loading}>
+                        {loading ? 'Saqlanmoqda...' : 'Saqlash va tasdiqlash'}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      <ConfirmDialog
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={confirmSubmit}
+        loading={loading}
+        title={t('students.wizard.confirm_title')}
+        description={t('students.wizard.confirm_desc')}
+        confirmLabel={
+          loading
+            ? t('students.wizard.saving')
+            : t('students.wizard.confirm_yes')
+        }
+      />
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={cancelDiscard}
+        onConfirm={confirmDiscard}
+        title={t('common.discard_changes_title')}
+        description={t('common.discard_changes_desc')}
+        confirmLabel={t('common.discard')}
+      />
+    </>
+  );
+};
+
+export default AddStudentDialog;

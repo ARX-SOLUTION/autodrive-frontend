@@ -1,4 +1,4 @@
-import type { UserRole } from '@/types/user';
+import type { UserRole } from '@/features/staff/types';
 
 /**
  * Capability → allowed roles: the single source of truth for what each role

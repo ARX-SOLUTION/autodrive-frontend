@@ -1,4 +1,4 @@
-import type { ListMeta, ListResponse } from '@/types/list';
+import type { ListMeta, ListResponse } from '@/shared/types/list';
 
 /**
  * Thrown when an API response doesn't match any shape a parser recognizes.

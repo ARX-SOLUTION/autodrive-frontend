@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { requireCapability } from '@/app/routeGuards';
 import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
-import ExpensesPage from '@/pages/ExpensesPage';
-import type { ExpenseCategory, ExpenseStatus } from '@/types/expense';
+import ExpensesPage from '@/features/expenses/pages/ExpensesPage';
+import type { ExpenseCategory, ExpenseStatus } from '@/features/expenses/types';
 import {
   parseRouteLimit,
   parseRoutePage,

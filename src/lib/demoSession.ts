@@ -1,4 +1,4 @@
-import type { User } from '@/types/user';
+import type { User } from '@/features/staff/types';
 
 export const DEMO_LOGIN_EMAIL = 'demo@automaktab.uz';
 export const DEMO_COMPANY_SLUG = 'automaktab-demo-2026';

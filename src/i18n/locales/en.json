@@ -82,6 +82,7 @@
     "all": "All",
     "search": "Search",
     "clear": "Clear",
+    "clear_all": "Clear all",
     "loading": "Loading...",
     "saving": "Saving...",
     "creating": "Creating...",
@@ -131,6 +132,8 @@
     "actions": "Actions",
     "previous": "Previous",
     "next": "Next",
+    "pagination": "Pages",
+    "page_of": "{{page}} / {{total}}",
     "all_operators": "All operators",
     "count_unit": "",
     "show_password": "Show password",
@@ -140,10 +143,7 @@
     "offline_banner": "No internet connection",
     "demo_banner": "Demo center. Data resets every night at 03:00 Tashkent time.",
     "tab_info": "Info",
-    "rows_per_page": "Rows per page",
-    "pagination": "Pagination",
-    "showing_range": "{{from}}–{{to}} of {{total}}",
-    "more_pages": "More pages"
+    "rows_per_page": "Rows per page"
   },
   "datepicker": {
     "placeholder": "Pick a date",
@@ -1836,5 +1836,21 @@
       "closed": "Closed"
     },
     "analytics_pending": "Attempt scores, pass/fail, and weak topics will appear here when backend learning analytics (#216) is available. Until then, monitor assignment windows above."
+  },
+  "crm_tour": {
+    "sidebar_title": "Menu",
+    "sidebar_body": "Dashboard, students, and payments are in this menu.",
+    "dashboard_title": "Filters and totals",
+    "dashboard_body": "Use the filters here. The totals on this page follow that choice.",
+    "students_title": "Student list",
+    "students_body": "Search by name. The rows here are the matching students.",
+    "payment_title": "Take a payment",
+    "payment_body": "Add payment opens the form for the amount a student just paid.",
+    "skip": "Skip",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "progress": "{{current}} of {{total}}",
+    "save_error": "The tour closed, but we could not save that. It may show again the next time you sign in."
   }
 }

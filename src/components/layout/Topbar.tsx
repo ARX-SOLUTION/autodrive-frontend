@@ -13,7 +13,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
-import { useBranches } from '@/services/branchService';
+import { useBranches } from '@/features/branches/api/branchService';
 import { changeAppLanguage, SUPPORTED_LANGS } from '@/i18n';
 import {
   DropdownMenu,

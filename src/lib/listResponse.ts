@@ -1,4 +1,4 @@
-import type { ListMeta, ListResponse } from '@/types/list';
+import type { ListMeta, ListResponse } from '@/shared/types/list';
 
 const fallbackMeta = (
   dataLength: number,
@@ -31,8 +31,7 @@ export const parseListResponse = <T>(
     meta?: Partial<ListMeta>;
   };
   const nested = root?.data as
-    | { data?: unknown; meta?: Partial<ListMeta> }
-    | undefined;
+    { data?: unknown; meta?: Partial<ListMeta> } | undefined;
   const payload =
     nested && 'data' in nested && 'meta' in nested ? nested : root;
 

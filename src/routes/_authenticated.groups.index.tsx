@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import GroupsPage from '@/pages/GroupsPage';
+import GroupsPage from '@/features/groups/pages/GroupsPage';
 import { requireCapability } from '@/app/routeGuards';
 import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
 

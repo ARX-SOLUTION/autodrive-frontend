@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { requireCapability } from '@/app/routeGuards';
 import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
-import ExpenseDetailPage from '@/pages/ExpenseDetailPage';
+import ExpenseDetailPage from '@/features/expenses/pages/ExpenseDetailPage';
 
 export type ExpenseDetailSearch = {
   tab?: 'info' | 'payments';

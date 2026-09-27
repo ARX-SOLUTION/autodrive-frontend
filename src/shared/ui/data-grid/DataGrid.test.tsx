@@ -75,6 +75,28 @@ describe('DataGrid', () => {
     expect(within(table).getByText('Ali')).toBeInTheDocument();
     expect(within(table).getAllByRole('row')).toHaveLength(3);
   });
+  it('places list navigation after the table card, not inside it', () => {
+    render(
+      <DataGrid
+        {...baseProps}
+        data={people}
+        className="glass-card"
+        pagination={{ pageIndex: 0, pageSize: 25, rowCount: 100, pageCount: 4 }}
+        onPageSizeChange={vi.fn()}
+      />,
+    );
+
+    const card = screen
+      .getByRole('table', { name: 'People' })
+      .closest('.glass-card');
+    const navigation = screen.getByRole('navigation');
+    if (!card) throw new Error('Table card missing');
+    expect(card).not.toContainElement(navigation);
+    expect(
+      card.compareDocumentPosition(navigation) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
 
   it('emits resolved controlled sorting and pagination states', () => {
     const onSortingChange = vi.fn();

@@ -5,7 +5,7 @@ import { ThemeProvider } from 'next-themes';
 import { queryClient } from '@/lib/queryClient';
 import { initUmami } from '@/lib/umami';
 import { ChunkErrorBoundary } from '@/components/layout/ChunkErrorBoundary';
-import { useRestoreSession } from '@/services/authService';
+import { useRestoreSession } from '@/features/auth/api/authService';
 import { useAuthStore } from '@/store/authStore';
 import { DeferredFeedback } from './DeferredFeedback';
 

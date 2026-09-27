@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { requireCapability } from '@/app/routeGuards';
 import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
-import TrainingProgramsPage from '@/pages/TrainingProgramsPage';
+import TrainingProgramsPage from '@/features/training/pages/TrainingProgramsPage';
 
 export const Route = createFileRoute('/_authenticated/training-programs/')({
   beforeLoad: ({ location }) =>

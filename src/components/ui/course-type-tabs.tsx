@@ -6,7 +6,7 @@
  */
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import type { CourseType } from '@/types/student';
+import type { CourseType } from '@/features/students/types';
 
 export type CourseTypeTab = 'all' | CourseType;
 

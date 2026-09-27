@@ -3,7 +3,7 @@ import { vi, describe, it, expect, afterEach } from 'vitest';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
-import type { UserRole } from '@/types/user';
+import type { UserRole } from '@/features/staff/types';
 
 // autodrive-vh0.2: teacher self-service nav trim. Unlike sidebarRail.test.tsx
 // (which mocks useCan as one global boolean shared by every capability, fine
@@ -14,7 +14,7 @@ import type { UserRole } from '@/types/user';
 
 let role: UserRole = 'owner';
 
-vi.mock('@/services/authService', () => ({
+vi.mock('@/features/auth/api/authService', () => ({
   useLogout: () => ({ mutate: vi.fn() }),
 }));
 vi.mock('@/store/authStore', () => ({

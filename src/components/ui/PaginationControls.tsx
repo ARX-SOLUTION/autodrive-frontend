@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { PageSizeSelect } from '@/components/ui/PageSizeSelect';
-import { CaretLeft, CaretRight, DotsThree } from '@phosphor-icons/react';
+import { formatListPageRange } from '@/lib/listQuery';
+import { cn } from '@/lib/utils';
+import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 
 interface Props {
   currentPage: number;
@@ -9,9 +11,19 @@ interface Props {
   onPageChange: (page: number) => void;
   pageSize?: number;
   onPageSizeChange?: (size: number) => void;
-  /** Enables the "11–20 of 137" position read-out next to the pager. */
+  /** Total rows across every page. Enables the `1–10 / 500` range. */
   totalItems?: number;
+  previousLabel?: string;
+  nextLabel?: string;
+  ariaLabel?: string;
+  /** Disables pager buttons while a page request is in flight. */
+  disabled?: boolean;
+  className?: string;
 }
+
+const pageButtonClass = 'h-10 min-w-10 shrink-0 px-2 tabular-nums';
+const stepButtonClass =
+  'h-10 min-w-10 shrink-0 gap-1 border-border bg-secondary px-2 sm:px-3';
 
 const PaginationControls = ({
   currentPage,
@@ -20,21 +32,24 @@ const PaginationControls = ({
   pageSize,
   onPageSizeChange,
   totalItems,
+  previousLabel,
+  nextLabel,
+  ariaLabel,
+  disabled = false,
+  className,
 }: Props) => {
   const { t } = useTranslation();
   const showPager = totalPages > 1;
   const showPageSize = pageSize !== undefined && onPageSizeChange !== undefined;
-  const showRange =
-    totalItems !== undefined &&
-    totalItems > 0 &&
-    pageSize !== undefined &&
-    pageSize > 0;
-  if (!showPager && !showPageSize && !showRange) return null;
+  const range =
+    totalItems !== undefined && pageSize !== undefined
+      ? formatListPageRange(currentPage, pageSize, totalItems)
+      : null;
+  const showMeta = range !== null || showPageSize;
+  if (!showPager && !showMeta) return null;
 
-  const firstItem = showRange
-    ? Math.min((currentPage - 1) * pageSize + 1, totalItems)
-    : 0;
-  const lastItem = showRange ? Math.min(currentPage * pageSize, totalItems) : 0;
+  const previousText = previousLabel ?? t('common.previous');
+  const nextText = nextLabel ?? t('common.next');
 
   const getPageNumbers = () => {
     const pages: (number | '...')[] = [];
@@ -56,77 +71,96 @@ const PaginationControls = ({
     return pages;
   };
 
-  const goTo = (page: number) => {
-    if (page < 1 || page > totalPages || page === currentPage) return;
-    onPageChange(page);
-  };
-
   return (
     <nav
-      aria-label={t('common.pagination')}
-      className="flex flex-col items-center gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between"
+      aria-label={ariaLabel ?? t('common.pagination')}
+      className={cn(
+        'flex min-w-0 gap-3 border-t border-border/70 pt-3',
+        showMeta
+          ? 'flex-col sm:flex-row sm:items-center sm:justify-between'
+          : 'items-center justify-end',
+        className,
+      )}
     >
-      {showPageSize ? (
-        <PageSizeSelect value={pageSize} onChange={onPageSizeChange} />
-      ) : null}
-      {showPager ? (
-        <div className="flex flex-wrap items-center justify-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => goTo(currentPage - 1)}
-            disabled={currentPage <= 1}
-            aria-label={t('common.previous')}
-            className="gap-1 bg-secondary border-border"
-          >
-            <CaretLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('common.previous')}</span>
-          </Button>
-          {getPageNumbers().map((page, i) =>
-            page === '...' ? (
-              <span
-                key={`e${i}`}
-                className="flex h-9 w-9 items-center justify-center text-muted-foreground"
-              >
-                <DotsThree aria-hidden className="h-4 w-4" />
-                <span className="sr-only">{t('common.more_pages')}</span>
-              </span>
-            ) : (
-              <Button
-                key={page}
-                variant={page === currentPage ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => goTo(page)}
-                aria-current={page === currentPage ? 'page' : undefined}
-                className={`min-w-9 tabular-nums ${
-                  page === currentPage ? '' : 'bg-secondary border-border'
-                }`}
-              >
-                {page}
-              </Button>
-            ),
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => goTo(currentPage + 1)}
-            disabled={currentPage >= totalPages}
-            aria-label={t('common.next')}
-            className="gap-1 bg-secondary border-border"
-          >
-            <span className="hidden sm:inline">{t('common.next')}</span>
-            <CaretRight className="h-4 w-4" />
-          </Button>
+      {showMeta ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          {range ? (
+            <p className="text-sm tabular-nums text-muted-foreground">
+              {range}
+            </p>
+          ) : null}
+          {showPageSize ? (
+            <PageSizeSelect
+              value={pageSize}
+              onChange={onPageSizeChange}
+              disabled={disabled}
+            />
+          ) : null}
         </div>
       ) : null}
-      {showRange ? (
-        <span className="text-sm tabular-nums text-muted-foreground">
-          {t('common.showing_range', {
-            from: firstItem,
-            to: lastItem,
-            total: totalItems,
-          })}
-        </span>
+      {showPager ? (
+        <div className="flex w-full items-center justify-between gap-1 sm:w-auto sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            aria-label={previousText}
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={disabled || currentPage <= 1}
+            className={stepButtonClass}
+          >
+            <CaretLeft aria-hidden />
+            <span className="hidden sm:inline">{previousText}</span>
+          </Button>
+          <span
+            className="px-3 text-sm font-medium tabular-nums text-foreground sm:hidden"
+            aria-live="polite"
+          >
+            {t('common.page_of', { page: currentPage, total: totalPages })}
+          </span>
+          <div className="hidden items-center gap-1 sm:flex">
+            {getPageNumbers().map((page, i) =>
+              page === '...' ? (
+                <span
+                  key={`ellipsis-${i}`}
+                  aria-hidden
+                  className="px-1 text-sm text-muted-foreground"
+                >
+                  …
+                </span>
+              ) : (
+                <Button
+                  type="button"
+                  key={page}
+                  variant={page === currentPage ? 'default' : 'outline'}
+                  size="sm"
+                  aria-current={page === currentPage ? 'page' : undefined}
+                  onClick={() => onPageChange(page)}
+                  disabled={disabled || page === currentPage}
+                  className={
+                    page === currentPage
+                      ? pageButtonClass
+                      : cn(pageButtonClass, 'border-border bg-secondary')
+                  }
+                >
+                  {page}
+                </Button>
+              ),
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            aria-label={nextText}
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={disabled || currentPage >= totalPages}
+            className={stepButtonClass}
+          >
+            <span className="hidden sm:inline">{nextText}</span>
+            <CaretRight aria-hidden />
+          </Button>
+        </div>
       ) : null}
     </nav>
   );

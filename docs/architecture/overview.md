@@ -14,13 +14,50 @@ UI architecture, state management, routes, tech stack, generated API types, cros
 
 ---
 
+## File structure
+
+Domain code is feature-first: adding or changing a domain touches one folder.
+
+```text
+src/
+  routes/               TanStack Router file routes; they compose feature pages
+  features/<feature>/   one folder per domain (vehicles, driving-sessions, auth, …)
+    api/                public domain API: hooks, fetchers, and intentionally shared UI
+    types.ts            public domain types
+    pages/              route-level components                                  routes only
+    components/         feature-private UI
+    lib/                feature-private helpers
+    *.test.ts(x)        colocated next to the file under test
+  components/ui/        shadcn primitives + generic widgets
+  lib/ hooks/ store/ api/ app/ i18n/ shared/ components/layout/   shared code
+  shared/types/         cross-domain types
+  test/                 setup, utils, and app-wide integration tests
+```
+
+### Import rules
+
+1. Outside `src/features/<x>/`, code imports a feature only through `@/features/<x>/api/…` and `@/features/<x>/types`. `src/routes/**` may additionally import `@/features/<x>/pages/…`.
+2. Inside `src/features/<x>/`, any path of the same feature is allowed; other features follow rule 1.
+3. Module specifiers use the `@/` alias. For future moves, `scripts/move-module.mjs` rewrites imports, mocks, and moved relative specifiers.
+
+The `local/feature-boundaries` rule in `eslint.config.js` enforces rules 1 and 2 on `import`, `export … from`, and dynamic `import()` sources, so `pnpm run lint` fails on a deep import into another feature.
+
+### Adding a feature
+
+1. Create `src/features/<name>/` with the `api/`, `types.ts`, `pages/`, `components/`, and `lib/` entries it needs.
+2. Add a route file in `src/routes/` when the feature exposes a page; it imports from `@/features/<name>/pages/…`.
+3. Colocate tests next to the file they cover.
+4. Run the gate: `pnpm run typecheck && pnpm run lint --max-warnings=0 && pnpm test -- --run && pnpm run build`.
+
+---
+
 ## State Management
 
-| Concern                 | Tool                      | Location                   |
-| ----------------------- | ------------------------- | -------------------------- |
-| Server state (API data) | TanStack Query 5          | `src/services/*Service.ts` |
-| Auth / session          | Zustand 5                 | `src/store/authStore.ts`   |
-| Local component state   | `useState` / `useReducer` | In component files         |
+| Concern                 | Tool                      | Location                      |
+| ----------------------- | ------------------------- | ----------------------------- |
+| Server state (API data) | TanStack Query 5          | `src/features/<feature>/api/` |
+| Auth / session          | Zustand 5                 | `src/store/authStore.ts`      |
+| Local component state   | `useState` / `useReducer` | In component files            |
 
 ### Query patterns
 
@@ -29,6 +66,12 @@ UI architecture, state management, routes, tech stack, generated API types, cros
 - Mutations: `mutationFn` via `axiosInstance` → `onSuccess` invalidates related keys → `toast.success()` → `disabled={mutation.isPending}` on submit button.
 - Branch switch → `queryClient.invalidateQueries()` clears stale tenant cache.
 - Logout → `queryClient.clear()` prevents data leakage to next session.
+
+### List controls
+
+- Put server-list `page` and `limit` in the URL via `useListQueryState` / `usePageSize`; include both in the query key. While the next page is loading, do not treat absent response metadata as a one-page result or reset the selected page.
+- Use `PaginationControls` (directly or through `DataGrid`) for the result range, page size, and adjacent navigation. Keep the pager after the table/card as a separate sibling, not inside its `glass-card` wrapper. The compact mobile view shows the current/total page; disable grid controls while fetching.
+- Keep short fixed filters (category, status, page size) as Radix `Select`. For longer dynamic choices, use a searchable `Popover` + `Command` combobox with an accessible label, keyboard selection, and a visible selected value; the expenses branch filter is the example.
 
 ### Auth
 
