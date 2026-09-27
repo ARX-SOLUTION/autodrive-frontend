@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Car, Plus } from '@phosphor-icons/react';
-import { useBranches } from '@/services/branchService';
+import { useBranches } from '@/features/branches/api/branchService';
 import { useVehiclesPage } from '@/features/vehicles/api/vehicleService';
 import { useListQueryState } from '@/hooks/useListQueryState';
 import { useCan } from '@/hooks/useCan';

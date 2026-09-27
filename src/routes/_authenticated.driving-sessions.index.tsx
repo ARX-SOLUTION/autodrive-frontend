@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { requireCapability } from '@/app/routeGuards';
 import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
-import DrivingSessionsPage from '@/pages/DrivingSessionsPage';
+import DrivingSessionsPage from '@/features/driving-sessions/pages/DrivingSessionsPage';
 
 export const Route = createFileRoute('/_authenticated/driving-sessions/')({
   beforeLoad: ({ location }) =>

@@ -2,7 +2,7 @@ import { toast } from 'sonner';
 import i18n from '@/i18n';
 import { queryClient } from '@/lib/queryClient';
 import { authKeys } from '@/lib/queryKeys';
-import { completeCrmTourRequest } from '@/services/authApi';
+import { completeCrmTourRequest } from '@/features/auth/api/authApi';
 import { useAuthStore } from '@/store/authStore';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

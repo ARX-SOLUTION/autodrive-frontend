@@ -1,0 +1,556 @@
+/* eslint-disable react-refresh/only-export-components */
+
+import { useState, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useUrlParams } from '@/hooks/useUrlParams';
+import { usePageSize } from '@/hooks/useListQueryState';
+import { format } from 'date-fns';
+import { useAuthStore } from '@/store/authStore';
+import { useCan, useIsCrossTenant } from '@/hooks/useCan';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
+import { parseCalendarDate } from '@/lib/calendarDate';
+import {
+  fetchAllStudents,
+  useStudentsPage,
+  useCreateStudent,
+  useCreateStudentWithPayment,
+  useUpdateStudent,
+  useDeleteStudent,
+  useRestoreStudent,
+  toLocalDateStr,
+} from '@/features/students/api/studentService';
+import { useBranches } from '@/features/branches/api/branchService';
+import { useOperators } from '@/features/staff/api/operatorService';
+import { CourseType, Student, StudentStatus } from '@/features/students/types';
+import type { CourseTypeTab } from '@/components/ui/course-type-tabs';
+import { type CreateStudentPayload } from '@/features/students/api/StudentModal';
+import { type AddStudentPayload } from '@/features/students/components/AddStudentDialog';
+import { CircleNotch } from '@phosphor-icons/react';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import PaginationControls from '@/components/ui/PaginationControls';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { extractErrorMessage } from '@/lib/errors';
+import { formatPhone } from '@/lib/phoneFormater';
+import { StudentsPageHeader } from '@/features/students/components/StudentsPageHeader';
+import { StudentsFilterBar } from '@/features/students/components/StudentsFilterBar';
+import { StudentsTable } from '@/features/students/components/StudentsTable';
+import { StudentsMobileList } from '@/features/students/components/StudentsMobileList';
+import { StudentsDialogs } from '@/features/students/components/StudentsDialogs';
+
+export { formatDate, formatDateTime } from '@/shared/lib/studentsFormat';
+
+const StudentsPage = () => {
+  const { t } = useTranslation();
+  const isCrossTenant = useIsCrossTenant();
+  const canManageStaff = useCan('manageStaff');
+  const canManageStudents = useCan('manageStudents');
+  const canViewDeleted = useCan('viewDeleted');
+  // Teacher must never see payment amounts anywhere (nav ticket vh0.2) —
+  // gates the debt/price columns, mobile field, and Excel export button.
+  const canViewPayments = useCan('recordPayment');
+  const user = useAuthStore((s) => s.user);
+
+  // Filter state lives in the URL so reload / share / bookmark preserves
+  // it (ROADMAP §2.2). `searchParams` is the source of truth; each
+  // setter rewrites the URL and the router re-renders. `replace: true`
+  // keeps the browser-history short — every keystroke in the search box
+  // would otherwise push a history entry.
+  const { searchParams, setSearchParams } = useUrlParams();
+  const { pageSize, setPageSize } = usePageSize();
+  const goToStudent = useViewTransitionNavigate();
+  const setParam = (key: string, value: string | undefined) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (!value) next.delete(key);
+        else next.set(key, value);
+        // A filter change and its page reset must be one URL transaction.
+        // Keeping `page` only for page controls prevents a page-2 filter
+        // request from racing a later reset-to-page-1 navigation.
+        if (key !== 'page') next.delete('page');
+        return next;
+      },
+      { replace: true },
+    );
+  };
+
+  const courseType = (searchParams.get('course_type') ??
+    'all') as CourseTypeTab;
+  const setCourseType = (v: CourseTypeTab) =>
+    setParam('course_type', v === 'all' ? undefined : v);
+  const courseTypeFilter =
+    courseType === 'all' ? undefined : (courseType as CourseType);
+  const createCourseType: CourseType =
+    courseType === 'avto_maktab' ? 'avto_maktab' : 'tezkor';
+
+  const defaultBranchId = isCrossTenant
+    ? undefined
+    : user?.branch_id || undefined;
+  const branchId = searchParams.get('branch_id') ?? defaultBranchId;
+  const setBranchId = (v: string | undefined) => setParam('branch_id', v);
+
+  const search = searchParams.get('q') ?? '';
+  const setSearch = (v: string) => setParam('q', v || undefined);
+
+  // Callers: StudentsFilterBar + useStudentsPage. Wire: date_from/date_to
+  // YYYY-MM-DD. Must use parseCalendarDate — never new Date('YYYY-MM-DD').
+  // User: "davom et" (autodrive-qsgc.4).
+  const rawDateFrom = searchParams.get('date_from');
+  const dateFrom = useMemo(
+    () => (rawDateFrom ? parseCalendarDate(rawDateFrom) : undefined),
+    [rawDateFrom],
+  );
+
+  const rawDateTo = searchParams.get('date_to');
+  const dateTo = useMemo(
+    () => (rawDateTo ? parseCalendarDate(rawDateTo) : undefined),
+    [rawDateTo],
+  );
+
+  // date_from/date_to must land in the same setSearchParams call — two
+  // sequential calls each snapshot `prev` independently and the second
+  // overwrites the first's write (autodrive-6cq.5.70).
+  const setDateRange = (from: Date | undefined, to: Date | undefined) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (!from) next.delete('date_from');
+        else next.set('date_from', toLocalDateStr(from));
+        if (!to) next.delete('date_to');
+        else next.set('date_to', toLocalDateStr(to));
+        next.delete('page');
+        return next;
+      },
+      { replace: true },
+    );
+
+  const operatorId = searchParams.get('operator_id') ?? undefined;
+  const setOperatorId = (v: string | undefined) => setParam('operator_id', v);
+
+  const hasGroup = searchParams.get('has_group')
+    ? searchParams.get('has_group') === 'true'
+    : undefined;
+  const setHasGroup = (v: boolean | undefined) =>
+    setParam('has_group', v === undefined ? undefined : String(v));
+
+  // Dashboard drill-through filters (autodrive-ls5) — no UI control, just
+  // consumed from the URL when navigated to with a status/debt context.
+  const status = (searchParams.get('status') as StudentStatus) || undefined;
+  const hasDebt = searchParams.get('has_debt')
+    ? searchParams.get('has_debt') === 'true'
+    : undefined;
+  const referredByUserId = searchParams.get('referred_by_user_id') ?? undefined;
+  const referredByStudentId =
+    searchParams.get('referred_by_student_id') ?? undefined;
+
+  // Local-only state (modal + sort UX — not worth persisting).
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  // autodrive-cg9: owner-only "show deleted" toggle -- local state (not
+  // URL, unlike the filters above) since it's not something worth
+  // bookmarking/sharing, and defaults off so a share/reload never leaks a
+  // stale include_deleted=true onto a session that re-renders before the
+  // owner check settles.
+  const [includeDeleted, setIncludeDeleted] = useState(false);
+  const [restoreId, setRestoreId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editStudent, setEditStudent] = useState<Student | null>(null);
+  // One add flow, two modes: quick (StudentModal) vs detailed (AddStudentDialog).
+  const [detailed, setDetailed] = useState(false);
+  // Switching modes mid-entry unmounts the current form -- block it once
+  // the user has actually typed something, instead of silently discarding.
+  const [createFormDirty, setCreateFormDirty] = useState(false);
+  const [sortField, setSortField] = useState('created_at');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Page in the URL too (like every other filter here) so refresh/share
+  // preserves it instead of silently resetting to page 1.
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const setCurrentPage = (p: number) =>
+    setParam('page', p > 1 ? String(p) : undefined);
+  const changeIncludeDeleted = (value: boolean) => {
+    setIncludeDeleted(value);
+    setCurrentPage(1);
+  };
+
+  const debouncedSearch = useDebounce(search, 300);
+
+  const { data: branches } = useBranches();
+  const { data: operators, isLoading: isOperatorsLoading } = useOperators();
+
+  const activeListOptions = useMemo(
+    () => ({
+      search: debouncedSearch,
+      dateFrom,
+      dateTo,
+      sortBy: sortField,
+      sortOrder: sortDir,
+      status,
+      hasDebt,
+      hasGroup,
+      referredByUserId,
+      referredByStudentId,
+      // Defensive even though the toggle only renders for an owner: never
+      // let a stray true reach the request for anyone else (403 on the
+      // wire, per the contract).
+      includeDeleted: canViewDeleted && includeDeleted,
+    }),
+    [
+      debouncedSearch,
+      dateFrom,
+      dateTo,
+      sortField,
+      sortDir,
+      status,
+      hasDebt,
+      hasGroup,
+      referredByUserId,
+      referredByStudentId,
+      canViewDeleted,
+      includeDeleted,
+    ],
+  );
+
+  const {
+    data: studentsPage,
+    isLoading: isStudentsLoading,
+    isFetching,
+    isError: isStudentsError,
+    refetch: refetchStudents,
+  } = useStudentsPage(
+    courseTypeFilter,
+    branchId,
+    currentPage,
+    pageSize,
+    operatorId,
+    activeListOptions,
+  );
+
+  const isLoading = isStudentsLoading;
+  const sorted = studentsPage?.data ?? [];
+  const totalStudents = studentsPage?.meta.total ?? sorted.length;
+  const serverTotalPages = Math.max(1, studentsPage?.meta.totalPages ?? 1);
+  const hasLoadedStudentsPage = studentsPage !== undefined;
+
+  // Deleting the last row of the last page leaves currentPage pointing past
+  // the new totalPages -- clamp back, same fix as GroupsPage (autodrive-52v.3).
+  useEffect(() => {
+    // Do not clamp against the fallback `1` before a deep-linked page has a
+    // response. Otherwise /students?page=2 requests page 1 during hydration.
+    if (hasLoadedStudentsPage && currentPage > serverTotalPages) {
+      setCurrentPage(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, hasLoadedStudentsPage, serverTotalPages]);
+
+  const createMutation = useCreateStudent();
+  const createWithPaymentMutation = useCreateStudentWithPayment();
+  const updateMutation = useUpdateStudent();
+  const deleteMutation = useDeleteStudent();
+  const restoreMutation = useRestoreStudent();
+
+  const toggleSort = (field: string) => {
+    setCurrentPage(1);
+    if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
+  const exportToExcel = async () => {
+    setIsExporting(true);
+    try {
+      const XLSX = await import('xlsx');
+      const exportRows = await fetchAllStudents({
+        courseType: courseTypeFilter,
+        branchId,
+        operatorId,
+        ...activeListOptions,
+      });
+      const rows = exportRows.map((s, idx) => ({
+        '#': idx + 1,
+        [t('students.first_name')]: s.first_name,
+        [t('students.last_name')]: s.last_name,
+        [t('students.phone')]: formatPhone(s.phone),
+        [t('students.course_fast')]:
+          s.course_type === 'tezkor'
+            ? t('students.course_fast')
+            : t('students.course_school'),
+        [t('common.branch')]: s.branch_name ?? t('common.na'),
+        [t('students.group')]: s.group_name ?? t('common.na'),
+        // Export button is already canViewPayments-gated (StudentsPageHeader)
+        // so a teacher never reaches this, but keep the row builder honest
+        // too rather than lean on the button being hidden as the only guard.
+        ...(canViewPayments
+          ? {
+              [t('students.total_price')]: s.total_price,
+              [t('students.debt')]: s.debt,
+            }
+          : {}),
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, t('students.title'));
+      XLSX.writeFile(wb, `talabalar_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
+    } catch (err) {
+      toast.error(extractErrorMessage(err, t('common.error')));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDelete = () => {
+    if (!deleteId) return;
+    deleteMutation.mutate(deleteId, {
+      onSuccess: () => {
+        toast.success(t('students.deleted'));
+        setDeleteId(null);
+      },
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
+    });
+  };
+
+  const handleRestore = () => {
+    if (!restoreId) return;
+    restoreMutation.mutate(restoreId, {
+      onSuccess: () => {
+        toast.success(t('students.restored'));
+        setRestoreId(null);
+      },
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
+    });
+  };
+
+  const handleModalSubmit = (data: CreateStudentPayload) => {
+    if (editStudent) {
+      updateMutation.mutate(
+        { ...data, id: editStudent.id },
+        {
+          onSuccess: () => {
+            toast.success(t('students.updated'));
+            closeModal();
+          },
+          onError: (err) =>
+            toast.error(extractErrorMessage(err, t('common.error'))),
+        },
+      );
+    } else {
+      createMutation.mutate(data, {
+        onSuccess: () => {
+          toast.success(t('students.added'));
+          closeModal();
+        },
+        onError: (err) =>
+          toast.error(extractErrorMessage(err, t('common.error'))),
+      });
+    }
+  };
+
+  // ponytail: separate handler — no closeModal, so the modal stays open for next entry
+  const handleSaveAndAdd = (data: CreateStudentPayload) => {
+    createMutation.mutate(data, {
+      onSuccess: () => toast.success(t('students.added')),
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
+    });
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditStudent(null);
+    setCreateFormDirty(false);
+  };
+
+  const closeAddFlow = () => {
+    setModalOpen(false);
+    setDetailed(false);
+    setCreateFormDirty(false);
+  };
+
+  const handleAddStudentDialogSubmit = (data: AddStudentPayload) => {
+    createWithPaymentMutation.mutate(data, {
+      onSuccess: () => {
+        toast.success(t('students.added'));
+        closeAddFlow();
+      },
+      onError: (err) =>
+        toast.error(extractErrorMessage(err, t('common.error'))),
+    });
+  };
+
+  const openEdit = (s: Student) => {
+    setEditStudent(s);
+    setDetailed(false);
+    setCreateFormDirty(false);
+    setModalOpen(true);
+  };
+  const openCreate = () => {
+    setEditStudent(null);
+    setDetailed(false);
+    setCreateFormDirty(false);
+    setModalOpen(true);
+  };
+
+  const openStudent = (s: Student, el: HTMLElement) =>
+    goToStudent(
+      { to: '/students/$id', params: { id: s.id } },
+      el,
+      `student-${s.id}`,
+    );
+
+  const startIndex = (currentPage - 1) * pageSize;
+
+  return (
+    <div className="space-y-6">
+      <StudentsPageHeader
+        totalStudents={totalStudents}
+        isExporting={isExporting}
+        onExport={exportToExcel}
+        canManageStudents={canManageStudents}
+        canViewPayments={canViewPayments}
+        onCreate={openCreate}
+      />
+
+      <div data-tour="crm-students" className="space-y-6">
+        <StudentsFilterBar
+          courseType={courseType}
+          setCourseType={setCourseType}
+          isCrossTenant={isCrossTenant}
+          canManageStaff={canManageStaff}
+          branchId={branchId}
+          setBranchId={setBranchId}
+          branches={branches || []}
+          operatorId={operatorId}
+          setOperatorId={setOperatorId}
+          operators={operators || []}
+          operatorsLoading={isOperatorsLoading}
+          userBranchId={user?.branch_id}
+          hasGroup={hasGroup}
+          setHasGroup={setHasGroup}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          setDateRange={setDateRange}
+          search={search}
+          setSearch={setSearch}
+          canViewDeleted={canViewDeleted}
+          includeDeleted={includeDeleted}
+          setIncludeDeleted={changeIncludeDeleted}
+        />
+
+        {/* Table */}
+        <div className="relative">
+          {isFetching && !isLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
+              <CircleNotch className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          )}
+          <div
+            className={cn(
+              'glass-card overflow-hidden transition-opacity duration-200',
+              isFetching && !isLoading && 'opacity-50',
+            )}
+          >
+            <StudentsTable
+              students={sorted}
+              isLoading={isLoading}
+              isFetching={isFetching}
+              isError={isStudentsError}
+              onRetry={() => refetchStudents()}
+              totalStudents={totalStudents}
+              startIndex={startIndex}
+              currentPage={currentPage}
+              pageSize={pageSize}
+              pageCount={serverTotalPages}
+              onPageChange={setCurrentPage}
+              courseType={courseType}
+              sortField={sortField}
+              sortDir={sortDir}
+              toggleSort={toggleSort}
+              canManageStudents={canManageStudents}
+              isCrossTenant={isCrossTenant}
+              canViewPayments={canViewPayments}
+              onOpenStudent={openStudent}
+              onEdit={openEdit}
+              onDelete={setDeleteId}
+              onCreate={openCreate}
+              canViewDeleted={canViewDeleted}
+              onRestore={setRestoreId}
+            />
+
+            <StudentsMobileList
+              students={sorted}
+              isLoading={isLoading}
+              isError={isStudentsError}
+              onRetry={() => refetchStudents()}
+              canManageStudents={canManageStudents}
+              isCrossTenant={isCrossTenant}
+              canViewPayments={canViewPayments}
+              onOpenStudent={openStudent}
+              onEdit={openEdit}
+              onDelete={setDeleteId}
+              onCreate={openCreate}
+              canViewDeleted={canViewDeleted}
+              onRestore={setRestoreId}
+            />
+          </div>
+        </div>
+      </div>
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={serverTotalPages}
+        onPageChange={setCurrentPage}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        totalItems={totalStudents}
+      />
+
+      <StudentsDialogs
+        students={sorted}
+        courseType={createCourseType}
+        branchId={branchId}
+        operators={operators || []}
+        modalOpen={modalOpen}
+        detailed={detailed}
+        setDetailed={setDetailed}
+        editStudent={editStudent}
+        createFormDirty={createFormDirty}
+        setCreateFormDirty={setCreateFormDirty}
+        onModalClose={closeModal}
+        onModalSubmit={handleModalSubmit}
+        onSaveAndAdd={handleSaveAndAdd}
+        modalLoading={createMutation.isPending || updateMutation.isPending}
+        onAddFlowClose={closeAddFlow}
+        onAddStudentSubmit={handleAddStudentDialogSubmit}
+        addFlowLoading={createWithPaymentMutation.isPending}
+        deleteId={deleteId}
+        onDeleteCancel={() => setDeleteId(null)}
+        onDeleteConfirm={handleDelete}
+        deleteLoading={deleteMutation.isPending}
+      />
+
+      {/* autodrive-cg9: restore only un-deletes this row -- honesty
+          requirement, see common.confirm_restore_desc. */}
+      <ConfirmDialog
+        open={!!restoreId}
+        onClose={() => setRestoreId(null)}
+        onConfirm={handleRestore}
+        loading={restoreMutation.isPending}
+        title={t('common.confirm_restore_title')}
+        description={t('common.confirm_restore_desc')}
+        confirmLabel={
+          restoreMutation.isPending
+            ? t('common.restoring')
+            : t('common.restore')
+        }
+      />
+    </div>
+  );
+};
+
+export default StudentsPage;

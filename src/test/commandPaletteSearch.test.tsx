@@ -32,7 +32,7 @@ const mockQueryState: { isFetching: boolean; hasData: boolean } = {
   hasData: true,
 };
 
-vi.mock('@/services/searchService', () => ({
+vi.mock('@/features/search/api/searchService', () => ({
   useGlobalSearch: (q: string) => {
     searchSpy(q);
     const computed = q.trim().length >= 2 ? RESULTS : EMPTY_RESULTS;

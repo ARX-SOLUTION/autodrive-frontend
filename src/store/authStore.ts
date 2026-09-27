@@ -1,4 +1,4 @@
-import { User } from '@/types/user';
+import { User } from '@/features/staff/types';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { isCrossTenantRole } from '@/lib/permissions';

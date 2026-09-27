@@ -1,0 +1,103 @@
+import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { vi, describe, it, expect } from 'vitest';
+import StudentsPage from '@/features/students/pages/StudentsPage';
+import { renderWithRouter } from '@/test/utils/renderWithRouter';
+
+// autodrive-6ef.18: whole row navigates to student detail; action buttons
+// (edit/delete) stopPropagation so they don't also trigger navigation.
+
+const STUDENT = {
+  id: 's1',
+  last_name: 'Karimov',
+  first_name: 'Aziz',
+  phone: '+998901234567',
+  total_price: 3000000,
+  course_type: 'tezkor',
+  branch_id: 'b1',
+  payment_method: 'naqd',
+  debt: 0,
+  has_document: true,
+  registered_by: 'Nigora',
+  result: 'oqimoqda',
+  created_at: '2026-07-01T00:00:00.000Z',
+  amount_paid: 3000000,
+};
+
+vi.mock('@/store/authStore', () => ({
+  useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
+    selector({
+      user: { role: 'owner', branch_id: null },
+      isOwner: () => true,
+    }),
+}));
+
+vi.mock('@/features/students/api/studentService', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('@/features/students/api/studentService')
+    >();
+  return {
+    ...actual,
+    fetchAllStudents: vi.fn(),
+    useStudentsPage: () => ({
+      data: { data: [STUDENT], meta: { total: 1, totalPages: 1 } },
+      isLoading: false,
+    }),
+    useCreateStudent: () => ({ mutate: vi.fn(), isPending: false }),
+    useCreateStudentWithPayment: () => ({
+      mutate: vi.fn(),
+      isPending: false,
+    }),
+    useUpdateStudent: () => ({ mutate: vi.fn(), isPending: false }),
+    useDeleteStudent: () => ({ mutate: vi.fn(), isPending: false }),
+    useRestoreStudent: () => ({ mutate: vi.fn(), isPending: false }),
+  };
+});
+
+vi.mock('@/features/branches/api/branchService', () => ({
+  useBranches: () => ({ data: [], isLoading: false }),
+}));
+
+vi.mock('@/features/staff/api/operatorService', () => ({
+  useOperators: () => ({ data: [], isLoading: false }),
+}));
+
+vi.mock('@/features/students/api/StudentModal', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/features/students/components/AddStudentDialog', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/features/courses/api/courseService', () => ({
+  useCourses: () => ({ data: [], isLoading: false }),
+}));
+
+vi.mock('@/features/groups/api/groupService', () => ({
+  useGroups: () => ({ data: [], isLoading: false, refetch: vi.fn() }),
+}));
+
+const renderPage = () =>
+  renderWithRouter(<StudentsPage />, {
+    initialEntry: '/students',
+    routePattern: '/$',
+  });
+
+describe('StudentsPage row navigation', () => {
+  it('navigates to the detail page when a row is clicked', async () => {
+    const { router } = await renderPage();
+    fireEvent.click(screen.getByText('Karimov'));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/students/s1'),
+    );
+  });
+
+  it('does not navigate when the edit button is clicked', async () => {
+    const { router } = await renderPage();
+    // desktop table + mobile DataCard both render in jsdom (no real media
+    // query), so there are two edit buttons — either is a valid check.
+    fireEvent.click(screen.getAllByLabelText('common.edit')[0]);
+    expect(router.state.location.pathname).toBe('/students');
+  });
+});

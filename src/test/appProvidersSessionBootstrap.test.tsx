@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 
 const restore = vi.hoisted(() => ({ isLoading: true, calls: 0 }));
 
-vi.mock('@/services/authService', () => ({
+vi.mock('@/features/auth/api/authService', () => ({
   useRestoreSession: () => {
     restore.calls += 1;
     return { isLoading: restore.isLoading };

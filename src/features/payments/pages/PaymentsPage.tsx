@@ -1,0 +1,370 @@
+import { useTranslation } from 'react-i18next';
+import PaymentModal, {
+  CreatePaymentPayload,
+} from '@/features/payments/api/PaymentModal';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useCan, useIsCrossTenant } from '@/hooks/useCan';
+import { useUrlParams } from '@/hooks/useUrlParams';
+import { usePageSize } from '@/hooks/useListQueryState';
+import { cn } from '@/lib/utils';
+import { mutationErrorToast } from '@/lib/mutationErrorToast';
+import { useBranches } from '@/features/branches/api/branchService';
+import {
+  useCreatePayment,
+  usePaymentsPage,
+  usePaymentSnapshot,
+  usePaymentSummary,
+} from '@/features/payments/api/paymentService';
+import { toLocalDateStr } from '@/features/students/api/studentService';
+import { parseCalendarDate } from '@/lib/calendarDate';
+import { useAuthStore } from '@/store/authStore';
+import { CircleNotch } from '@phosphor-icons/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import {
+  presetRange,
+  type DatePreset,
+} from '@/features/payments/lib/dateRangePresets';
+import { exportPaymentsToExcel } from '@/features/payments/lib/exportPayments';
+import { PaymentPeriodSummary } from '@/features/payments/components/PaymentPeriodSummary';
+import { PaymentSnapshotCards } from '@/features/payments/components/PaymentSnapshotCards';
+import { PaymentsFilterBar } from '@/features/payments/components/PaymentsFilterBar';
+import { PaymentsPageHeader } from '@/features/payments/components/PaymentsPageHeader';
+import { PaymentsTable } from '@/features/payments/components/PaymentsTable';
+
+const PaymentsPage = () => {
+  const { t } = useTranslation();
+  const isCrossTenant = useIsCrossTenant();
+  const canRecordPayment = useCan('recordPayment');
+  const user = useAuthStore((s) => s.user);
+
+  // Filters/sort/page live in the URL so reload / back / share preserves
+  // them (autodrive-6cq.5.8) — same setParam/setParams pattern as
+  // StudentsPage (src/hooks/useUrlParams.ts).
+  const { searchParams, setParam, setParams } = useUrlParams();
+  const { pageSize, setPageSize } = usePageSize();
+
+  const defaultBranchId = isCrossTenant
+    ? undefined
+    : user?.branch_id || undefined;
+  const branchId = searchParams.get('branch_id') ?? defaultBranchId;
+  const setBranchId = (v: string | undefined) => setParam('branch_id', v);
+
+  const search = searchParams.get('q') ?? '';
+  const setSearch = (v: string) => setParam('q', v || undefined);
+
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const paymentStatus = searchParams.get('status') ?? 'all';
+  const setPaymentStatus = (v: string) =>
+    setParam('status', v === 'all' ? undefined : v);
+
+  const paymentMethodFilter = searchParams.get('method') ?? 'all';
+  const setPaymentMethodFilter = (v: string) =>
+    setParam('method', v === 'all' ? undefined : v);
+
+  const courseTypeFilter = searchParams.get('course_type') ?? 'all';
+  const setCourseTypeFilter = (v: string) =>
+    setParam('course_type', v === 'all' ? undefined : v);
+
+  // Wire date_from/date_to YYYY-MM-DD → local calendar Date (qsgc.4).
+  // User: "davom et". Callers: PaymentsFilterBar + usePaymentsPage.
+  const rawDateFrom = searchParams.get('date_from');
+  const dateFrom = useMemo(
+    () => (rawDateFrom ? parseCalendarDate(rawDateFrom) : undefined),
+    [rawDateFrom],
+  );
+  const rawDateTo = searchParams.get('date_to');
+  const dateTo = useMemo(
+    () => (rawDateTo ? parseCalendarDate(rawDateTo) : undefined),
+    [rawDateTo],
+  );
+  // Both keys must land in the same setSearchParams call (autodrive-6cq.5.70).
+  const setDateRange = (from: Date | undefined, to: Date | undefined) =>
+    setParams({
+      date_from: from ? toLocalDateStr(from) : undefined,
+      date_to: to ? toLocalDateStr(to) : undefined,
+    });
+
+  const sortField = searchParams.get('sort_by') ?? 'date';
+  const sortDir = (searchParams.get('sort_dir') as 'asc' | 'desc') ?? 'desc';
+  const setSort = (field: string, dir: 'asc' | 'desc') =>
+    setParams({
+      sort_by: field === 'date' ? undefined : field,
+      sort_dir: dir === 'desc' ? undefined : dir,
+    });
+
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const setCurrentPage = useCallback(
+    (p: number) => setParam('page', p > 1 ? String(p) : undefined),
+    [setParam],
+  );
+
+  const [isExporting, setIsExporting] = useState(false);
+
+  const debouncedSearch = useDebounce(search, 300);
+  const activeCourseType =
+    courseTypeFilter !== 'all' ? courseTypeFilter : undefined;
+  const activePaymentStatus: 'paid' | 'unpaid' | undefined =
+    paymentStatus === 'paid' || paymentStatus === 'unpaid'
+      ? paymentStatus
+      : undefined;
+  const activePaymentMethod =
+    paymentMethodFilter !== 'all' ? paymentMethodFilter : undefined;
+  const dateFromTime = dateFrom?.getTime();
+  const dateToTime = dateTo?.getTime();
+
+  // Reset to page 1 when a filter/sort actually changes — skip the first
+  // render so a deep link with ?page=N isn't stomped on load (StudentsPage's
+  // analogous effect doesn't need this guard because its page number isn't
+  // URL-persisted; this one is).
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setCurrentPage(1);
+  }, [
+    setCurrentPage,
+    branchId,
+    activeCourseType,
+    dateFromTime,
+    dateToTime,
+    debouncedSearch,
+    activePaymentStatus,
+    activePaymentMethod,
+    sortField,
+    sortDir,
+  ]);
+
+  const effectivePage = currentPage;
+
+  const {
+    data: paymentsPage,
+    isLoading,
+    isFetching,
+    isError: isPaymentsError,
+    refetch: refetchPayments,
+  } = usePaymentsPage(
+    branchId,
+    activeCourseType,
+    dateFrom,
+    dateTo,
+    effectivePage,
+    pageSize,
+    {
+      search: debouncedSearch,
+      paymentStatus: activePaymentStatus,
+      paymentMethod: activePaymentMethod,
+      sortBy: sortField,
+      sortOrder: sortDir,
+    },
+  );
+  const hasDateFilter = !!dateFrom || !!dateTo;
+  const {
+    data: snapshot,
+    isLoading: isSnapshotLoading,
+    isError: isSnapshotError,
+    refetch: refetchSnapshot,
+  } = usePaymentSnapshot(branchId);
+  const { data: branches } = useBranches();
+  const createPayment = useCreatePayment();
+
+  const paymentQueryFilters = useMemo(
+    () => ({
+      branchId,
+      courseType: activeCourseType,
+      startDate: dateFrom,
+      endDate: dateTo,
+      search: debouncedSearch,
+      paymentStatus: activePaymentStatus,
+      paymentMethod: activePaymentMethod,
+      sortBy: sortField,
+      sortOrder: sortDir,
+    }),
+    [
+      branchId,
+      activeCourseType,
+      dateFrom,
+      dateTo,
+      debouncedSearch,
+      activePaymentStatus,
+      activePaymentMethod,
+      sortField,
+      sortDir,
+    ],
+  );
+
+  const canQueryPayments = !!branchId || isCrossTenant;
+
+  const hasAnyFilter =
+    hasDateFilter ||
+    paymentStatus !== 'all' ||
+    paymentMethodFilter !== 'all' ||
+    courseTypeFilter !== 'all' ||
+    !!debouncedSearch;
+
+  const {
+    data: summary,
+    isLoading: isSummaryLoading,
+    isError: isSummaryError,
+    refetch: refetchSummary,
+  } = usePaymentSummary(paymentQueryFilters, canQueryPayments && hasAnyFilter);
+
+  const visiblePayments = paymentsPage?.data ?? [];
+  const totalPayments = paymentsPage?.meta.total ?? 0;
+  const totalPages = Math.max(1, paymentsPage?.meta.totalPages ?? 1);
+
+  // Deleting the last row of the last page leaves currentPage pointing past
+  // the new totalPages -- clamp back, same fix as GroupsPage (autodrive-52v.3).
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalPages]);
+
+  const handlePaymentSubmit = (data: CreatePaymentPayload) => {
+    createPayment.mutate(data, {
+      onSuccess: () => {
+        toast.success(t('payments.added'));
+        setModalOpen(false);
+      },
+      onError: (err) =>
+        mutationErrorToast(err, t, () => createPayment.mutate(data)),
+    });
+  };
+
+  const exportToExcel = async () => {
+    setIsExporting(true);
+    try {
+      await exportPaymentsToExcel(paymentQueryFilters, t);
+    } catch (err) {
+      mutationErrorToast(err, t, () => exportToExcel());
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const setPreset = (preset: DatePreset) => {
+    const { from, to } = presetRange(preset);
+    setDateRange(from, to);
+  };
+
+  const clearAllFilters = () => {
+    setParams({
+      date_from: undefined,
+      date_to: undefined,
+      status: undefined,
+      method: undefined,
+      course_type: undefined,
+      q: undefined,
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <PaymentsPageHeader
+        isCrossTenant={isCrossTenant}
+        canRecordPayment={canRecordPayment}
+        isExporting={isExporting}
+        exportDisabled={totalPayments === 0 || isExporting}
+        onExport={exportToExcel}
+        onAddPayment={() => setModalOpen(true)}
+      />
+
+      <PaymentSnapshotCards
+        snapshot={snapshot}
+        isLoading={isSnapshotLoading}
+        isError={isSnapshotError}
+        onRetry={() => void refetchSnapshot()}
+      />
+
+      <PaymentsFilterBar
+        isCrossTenant={isCrossTenant}
+        branches={branches}
+        branchId={branchId}
+        onBranchChange={setBranchId}
+        paymentStatus={paymentStatus}
+        onStatusChange={setPaymentStatus}
+        paymentMethod={paymentMethodFilter}
+        onMethodChange={setPaymentMethodFilter}
+        courseType={courseTypeFilter}
+        onCourseTypeChange={setCourseTypeFilter}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onDateRangeChange={setDateRange}
+        search={search}
+        onSearchChange={setSearch}
+        hasAnyFilter={hasAnyFilter}
+        onClearAll={clearAllFilters}
+        onPreset={setPreset}
+      />
+
+      {hasAnyFilter && (
+        <PaymentPeriodSummary
+          summary={summary}
+          isLoading={isSummaryLoading}
+          isError={isSummaryError}
+          onRetry={() => void refetchSummary()}
+        />
+      )}
+
+      {/* SECTION 4: Table */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground text-balance">
+            {t('payments.payment_list')}
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            {t('payments.count_result', { count: totalPayments })}
+          </span>
+        </div>
+        <div className="relative">
+          {isFetching && !isLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
+              <CircleNotch className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          )}
+          <div
+            className={cn(
+              'glass-card overflow-hidden transition-opacity duration-200',
+              isFetching && !isLoading && 'opacity-50',
+            )}
+          >
+            <PaymentsTable
+              payments={visiblePayments}
+              isLoading={isLoading}
+              isFetching={isFetching}
+              isError={isPaymentsError}
+              onRetry={() => void refetchPayments()}
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalPayments={totalPayments}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              sortField={sortField}
+              sortDir={sortDir}
+              onSortChange={setSort}
+            />
+          </div>
+        </div>
+      </section>
+
+      <PaymentModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handlePaymentSubmit}
+        loading={createPayment.isPending}
+        branchId={branchId}
+        courseType={
+          courseTypeFilter === 'tezkor' || courseTypeFilter === 'avto_maktab'
+            ? courseTypeFilter
+            : undefined
+        }
+      />
+    </div>
+  );
+};
+
+export default PaymentsPage;

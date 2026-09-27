@@ -1,0 +1,1209 @@
+import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from '@tanstack/react-router';
+import { useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Warning, X } from '@phosphor-icons/react';
+import { formatUzPhoneInput, uzLocalDigits } from '@/lib/phoneFormater';
+import { groupDigits } from '@/lib/money';
+import { DatePicker } from '@/components/ui/date-picker';
+import {
+  Student,
+  CourseType,
+  PaymentMethod,
+  ResultStatus,
+  StudentStatus,
+} from '@/features/students/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StudentExamsTab } from '@/features/students/components/StudentExamsTab';
+import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useAuthStore } from '@/store/authStore';
+import { useCan } from '@/hooks/useCan';
+import { useConfirmedClose } from '@/hooks/useConfirmedClose';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useBranches } from '@/features/branches/api/branchService';
+import { useCourses } from '@/features/courses/api/courseService';
+import { useGroups } from '@/features/groups/api/groupService';
+import { useStudentsPage } from '@/features/students/api/studentService';
+import { User } from '@/features/staff/types';
+import {
+  getCreateStudentFormValues,
+  getEditStudentFormValues,
+  makeStudentFormSchema,
+  toCreateStudentPayload,
+  type CreateStudentPayload,
+  type StudentFormInput,
+  type StudentFormValues,
+} from '@/features/students/components/StudentModalForm';
+
+export type { CreateStudentPayload } from '@/features/students/components/StudentModalForm';
+
+interface StudentModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (data: CreateStudentPayload) => void;
+  onSaveAndAdd?: (data: CreateStudentPayload) => void;
+  loading?: boolean;
+  student?: Student | null;
+  courseType: CourseType;
+  operators?: User[];
+  disabledFields?: string[];
+  defaultBranchId?: string;
+  // Rendered at the top of the dialog — the quick/detailed mode toggle.
+  detailedToggle?: ReactNode;
+  // Lets a parent (e.g. the quick/detailed toggle) know when it's unsafe to
+  // switch modes without losing typed data.
+  onDirtyChange?: (dirty: boolean) => void;
+}
+
+const StudentModal = ({
+  open,
+  onClose,
+  onSubmit,
+  onSaveAndAdd,
+  loading,
+  student,
+  courseType,
+  operators = [],
+  disabledFields = [],
+  defaultBranchId,
+  detailedToggle,
+  onDirtyChange,
+}: StudentModalProps) => {
+  const { t } = useTranslation();
+  const canAssignBranch = useCan('assignBranch');
+  const user = useAuthStore((s) => s.user);
+  const { data: branches } = useBranches();
+  const { data: groups } = useGroups();
+
+  const studentFormSchema = useMemo(
+    () => makeStudentFormSchema(t, { requireLearnerPassword: !student }),
+    [t, student],
+  );
+
+  const branchList = branches || [];
+
+  const defaultFormValues = () =>
+    getCreateStudentFormValues({
+      courseType,
+      canAssignBranch,
+      defaultBranchId,
+      userBranchId: user?.branch_id,
+    });
+
+  const form = useForm<StudentFormInput, unknown, StudentFormValues>({
+    resolver: zodResolver(studentFormSchema),
+    defaultValues: defaultFormValues(),
+  });
+
+  useEffect(() => {
+    onDirtyChange?.(form.formState.isDirty);
+  }, [form.formState.isDirty, onDirtyChange]);
+
+  // ponytail: ref tracks which submit button was clicked; defaults to 'close' so Enter → Save
+  const submitModeRef = useRef<'close' | 'add'>('close');
+
+  const resetForNext = () => {
+    const current = form.getValues();
+    form.reset({
+      ...current,
+      first_name: '',
+      last_name: '',
+      phone: '+998',
+      amount_paid: 0,
+      initial_payment: 0,
+      notes: '',
+      completion_date: '',
+      contract_number: '',
+      registered_by: '',
+      learner_password: '',
+    });
+    form.setFocus('last_name');
+  };
+
+  // react-hooks/incompatible-library: form.watch() during render isn't
+  // compiler-safe; useWatch({ control }) is RHF's own drop-in replacement
+  // (same live value, same re-render-on-change semantics).
+  const { control } = form;
+  const watchedTotalPrice = useWatch({ control, name: 'total_price' });
+  const watchedAmountPaid = useWatch({ control, name: 'amount_paid' });
+  const watchedInitialPayment = useWatch({
+    control,
+    name: 'initial_payment',
+  });
+  const watchedBranchId = useWatch({ control, name: 'branch_id' });
+  const watchedGroupId = useWatch({ control, name: 'group_id' });
+  const watchedCourseId = useWatch({ control, name: 'course_id' });
+  const watchedRegisteredBy = useWatch({ control, name: 'registered_by' });
+  const watchedLastName = useWatch({ control, name: 'last_name' });
+  const watchedPhone = useWatch({ control, name: 'phone' });
+
+  // autodrive-553: create-time duplicate check -- phone primarily (once
+  // enough digits are typed), last name secondarily. Debounced like
+  // PaymentModal/ReferralFields' search comboboxes, but rendered as a
+  // dismissible list rather than a picker (no selection, just links out),
+  // so it's a direct, consistent copy of the debounce+query shape rather
+  // than a forced shared abstraction with those two.
+  const dupPhoneDigits = uzLocalDigits(watchedPhone);
+  const dupSearchQuery =
+    dupPhoneDigits.length >= 4
+      ? dupPhoneDigits
+      : watchedLastName.trim().length >= 2
+        ? watchedLastName.trim()
+        : '';
+  const debouncedDupQuery = useDebounce(dupSearchQuery, 300);
+  const [dupWarningDismissed, setDupWarningDismissed] = useState(false);
+
+  // react-hooks/set-state-in-effect (surfaced once the incompatible-library
+  // fix above let the compiler analyze further into this component): same
+  // render-phase "reset state when a value changes" pattern used throughout
+  // this upgrade batch (e.g. AttendanceDrawer/GroupFormDialog) instead of a
+  // post-commit effect -- same reset, same trigger (debouncedDupQuery
+  // changing), one render sooner.
+  const [dupQueryForDismissal, setDupQueryForDismissal] =
+    useState(debouncedDupQuery);
+  if (debouncedDupQuery !== dupQueryForDismissal) {
+    setDupQueryForDismissal(debouncedDupQuery);
+    setDupWarningDismissed(false);
+  }
+  const activeBranchId = watchedBranchId || user?.branch_id || undefined;
+
+  const { data: dupMatchesPage } = useStudentsPage(
+    undefined,
+    activeBranchId,
+    1,
+    5,
+    undefined,
+    {
+      search: debouncedDupQuery,
+      enabled: open && !student && debouncedDupQuery.length >= 2,
+    },
+  );
+  const dupMatches = !student ? (dupMatchesPage?.data ?? []) : [];
+
+  // autodrive-0d6: total_price used to be a hardcoded constant per
+  // courseType. Real prices now live on Course rows, scoped by branch +
+  // course_type — fetch them and let the picker below drive the pre-fill.
+  const { data: courses } = useCourses({
+    branchId: activeBranchId,
+    courseType,
+  });
+  const activeCourseList = (courses || []).filter((c) => c.is_active);
+
+  useEffect(() => {
+    if (student) return; // course picker/pre-fill is create-flow only
+    if (activeCourseList.length === 1) {
+      const only = activeCourseList[0];
+      if (watchedCourseId !== only.id) {
+        form.setValue('course_id', only.id);
+        form.setValue('total_price', only.price);
+      }
+    } else if (
+      watchedCourseId &&
+      !activeCourseList.some((c) => c.id === watchedCourseId)
+    ) {
+      form.setValue('course_id', '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCourseList, student, watchedCourseId]);
+
+  const groupList = (groups || []).filter(
+    (g) =>
+      (g.course_type === courseType || !g.course_type) &&
+      (!watchedBranchId || g.branch_id === watchedBranchId),
+  );
+  const operatorList = operators.filter(
+    (op) => !watchedBranchId || op.branch_id === watchedBranchId,
+  );
+
+  const localizedPaymentMethods: Record<PaymentMethod, string> = {
+    naqd: t('students.payment_cash'),
+    karta: t('students.payment_card'),
+    perechisleniya: t('students.payment_transfer'),
+  };
+
+  const localizedResultLabels: Record<ResultStatus, string> = {
+    oqimoqda: t('students.status_studying'),
+    topshirdi: t('students.status_passed'),
+    yiqildi: t('students.status_failed'),
+  };
+
+  // autodrive-rz3.1: Student.status (enrollment lifecycle) is separate from
+  // `result` (exam outcome) above -- distinct field, distinct label set.
+  const localizedStudentStatusLabels: Record<StudentStatus, string> = {
+    active: t('students.status_active'),
+    completed: t('students.status_completed'),
+    dropped: t('students.status_dropped'),
+    suspended: t('students.status_suspended'),
+  };
+
+  useEffect(() => {
+    if (open) {
+      if (student) {
+        form.reset(getEditStudentFormValues(student));
+      } else {
+        form.reset(defaultFormValues());
+        // Focus first field after dialog animation settles
+        const focusTimer = window.setTimeout(
+          () => form.setFocus('last_name'),
+          50,
+        );
+        return () => window.clearTimeout(focusTimer);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [student, courseType, open]);
+
+  // react-hooks/set-state-in-effect (surfaced once the incompatible-library
+  // fix above let the compiler analyze further into this component): `debt`
+  // was redundant state synced from these same watched fields via an
+  // effect -- a pure function of already-available inputs needs no
+  // useState/useEffect pair at all, per React's "you don't need an effect"
+  // docs. Deriving it directly during render is strictly more correct than
+  // before: the old effect-computed value lagged one render behind an
+  // amount/price keystroke (a visible stale-then-corrected flash); this
+  // shows the right number in the same render as the keystroke.
+  const debt = student
+    ? // Both course types: amount_paid in edit mode = additional new payment
+      // (backend adds it). Advance payments (autodrive-6cq.11.6) are
+      // allowed, so this can go negative (credit) — do not clamp to 0.
+      (student.debt || 0) - (Number(watchedAmountPaid) || 0)
+    : (Number(watchedTotalPrice) || 0) -
+      (courseType === 'tezkor'
+        ? Number(watchedAmountPaid) || 0
+        : Number(watchedInitialPayment) || 0);
+
+  useEffect(() => {
+    if (watchedGroupId && !groupList.some((g) => g.id === watchedGroupId)) {
+      form.setValue('group_id', '');
+    }
+    if (
+      watchedRegisteredBy &&
+      !operatorList.some((op) => op.id === watchedRegisteredBy)
+    ) {
+      form.setValue('registered_by', '');
+    }
+  }, [form, groupList, operatorList, watchedGroupId, watchedRegisteredBy]);
+
+  const onFormValid = async (values: StudentFormValues) => {
+    const payload = toCreateStudentPayload(values, courseType, !!student);
+
+    const mode = submitModeRef.current;
+    submitModeRef.current = 'close'; // reset for next submission
+
+    if (mode === 'add' && onSaveAndAdd) {
+      onSaveAndAdd(payload);
+      resetForNext();
+    } else {
+      await onSubmit(payload);
+    }
+  };
+
+  // react-hooks/refs (surfaced once the incompatible-library fix above let
+  // the compiler analyze further into this component): form.handleSubmit()
+  // was called directly in the render body, and onFormValid reads
+  // submitModeRef.current -- the compiler can't prove form.handleSubmit's
+  // argument isn't invoked synchronously during render, so it flags the
+  // ref read as reachable from render. Deferring the form.handleSubmit(...)
+  // call itself into a plain event-handler function (only ever actually
+  // invoked by the real submit event, never during render) resolves that
+  // without changing anything about when validation or submission happens.
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    form.handleSubmit(onFormValid)(event);
+  };
+
+  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
+    useConfirmedClose(form.formState.isDirty || !!loading, onClose);
+
+  const formatMoney = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
+  // ponytail: plain digit-stripping parse, no masking lib — caret can jump
+  // to end when editing mid-number, acceptable for a whole-soum amount field.
+  const parseMoneyInput = (v: string) => Number(v.replace(/\D/g, '')) || 0;
+  const currentBranchName =
+    branchList.find((b) => b.id === watchedBranchId)?.name ||
+    watchedBranchId ||
+    '';
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={(o) => !o && attemptClose()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-lg font-semibold">
+              {student ? t('students.edit') : t('students.add')}
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                (
+                {courseType === 'tezkor'
+                  ? t('students.course_fast')
+                  : t('students.course_school')}
+                )
+              </span>
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              {t('students.form_desc')}
+            </DialogDescription>
+          </DialogHeader>
+
+          {detailedToggle && (
+            <div className="mt-2 flex items-center">{detailedToggle}</div>
+          )}
+
+          <Tabs defaultValue="info" className="w-full mt-2">
+            {student && (
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
+                <TabsTrigger value="exams">
+                  {t('students.tab_exams')}
+                </TabsTrigger>
+              </TabsList>
+            )}
+            <TabsContent value="info" className="m-0">
+              <Form {...form}>
+                <form onSubmit={handleFormSubmit} className="space-y-4">
+                  {/* Identity: who the student is + which branch they belong to. */}
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-muted-foreground">
+                        {t('students.sections.identity')}
+                      </h3>
+                      <Separator className="mt-2" />
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                      <FormField
+                        control={form.control}
+                        name="last_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel required>
+                              {t('students.last_name')}
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                autoComplete="family-name"
+                                aria-required="true"
+                                className="bg-secondary border-border"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="first_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel required>
+                              {t('students.first_name')}
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                autoComplete="given-name"
+                                aria-required="true"
+                                className="bg-secondary border-border"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel required>
+                              {t('students.phone')}
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                type="tel"
+                                inputMode="tel"
+                                autoComplete="tel"
+                                placeholder="+998 90 123 45 67"
+                                aria-required="true"
+                                className="bg-secondary border-border"
+                                value={formatUzPhoneInput(field.value)}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    formatUzPhoneInput(e.target.value),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {!student && (
+                        <FormField
+                          control={form.control}
+                          name="learner_password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel required>
+                                {t('students.learner_password')}
+                              </FormLabel>
+                              <FormControl>
+                                <PasswordInput
+                                  {...field}
+                                  autoComplete="new-password"
+                                  aria-required="true"
+                                  className="bg-secondary border-border"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                      <FormField
+                        control={form.control}
+                        name="branch_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('students.detail.branch')}</FormLabel>
+                            {canAssignBranch ? (
+                              <Select
+                                value={field.value || ''}
+                                onValueChange={field.onChange}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="bg-secondary border-border">
+                                    <SelectValue
+                                      placeholder={t(
+                                        'common.select_placeholder',
+                                      )}
+                                    />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {branchList.map((b) => (
+                                    <SelectItem key={b.id} value={b.id}>
+                                      {b.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <FormControl>
+                                <Input
+                                  value={currentBranchName}
+                                  disabled
+                                  className="bg-muted border-border"
+                                />
+                              </FormControl>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Course: which course/group, completion, and exam/enrollment outcome. */}
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-muted-foreground">
+                        {t('students.sections.course')}
+                      </h3>
+                      <Separator className="mt-2" />
+                    </div>
+                    {!student && (
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                        <FormField
+                          control={form.control}
+                          name="course_id"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('students.course')}</FormLabel>
+                              <Select
+                                value={field.value || ''}
+                                onValueChange={(v) => {
+                                  field.onChange(v);
+                                  const selected = activeCourseList.find(
+                                    (c) => c.id === v,
+                                  );
+                                  if (selected)
+                                    form.setValue(
+                                      'total_price',
+                                      selected.price,
+                                    );
+                                }}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="bg-secondary border-border">
+                                    <SelectValue
+                                      placeholder={t(
+                                        'common.select_placeholder',
+                                      )}
+                                    />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {activeCourseList.map((c) => (
+                                    <SelectItem key={c.id} value={c.id}>
+                                      {c.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+                    {courseType === 'tezkor' ? (
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                        <FormField
+                          control={form.control}
+                          name="group_id"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('students.group')}</FormLabel>
+                              <Select
+                                value={field.value || ''}
+                                onValueChange={field.onChange}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="bg-secondary border-border">
+                                    <SelectValue
+                                      placeholder={t(
+                                        'common.select_placeholder',
+                                      )}
+                                    />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {groupList.map((g) => (
+                                    <SelectItem key={g.id} value={g.id}>
+                                      {g.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                        <FormField
+                          control={form.control}
+                          name="group_id"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('students.group')}</FormLabel>
+                              <Select
+                                value={field.value || ''}
+                                onValueChange={field.onChange}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="bg-secondary border-border">
+                                    <SelectValue
+                                      placeholder={t(
+                                        'common.select_placeholder',
+                                      )}
+                                    />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {groupList.map((g) => (
+                                    <SelectItem key={g.id} value={g.id}>
+                                      {g.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="completion_date"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('students.completion_date')}
+                              </FormLabel>
+                              <FormControl>
+                                <DatePicker
+                                  value={field.value || undefined}
+                                  onChange={(v) => field.onChange(v ?? '')}
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  clearable
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                      <FormField
+                        control={form.control}
+                        name="result"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('students.result')}</FormLabel>
+                            <Select
+                              value={field.value || 'oqimoqda'}
+                              onValueChange={(v) =>
+                                field.onChange(v as ResultStatus)
+                              }
+                            >
+                              <FormControl>
+                                <SelectTrigger className="bg-secondary border-border">
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {Object.entries(localizedResultLabels).map(
+                                  ([k, v]) => (
+                                    <SelectItem key={k} value={k}>
+                                      {v}
+                                    </SelectItem>
+                                  ),
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {/* autodrive-rz3.1: edit-only -- a brand-new student is
+                          always 'active' (defaultFormValues), so create mode
+                          has nothing useful to pick here. */}
+                      {student && (
+                        <FormField
+                          control={form.control}
+                          name="status"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('students.status')}</FormLabel>
+                              <Select
+                                value={field.value || 'active'}
+                                onValueChange={(v) =>
+                                  field.onChange(v as StudentStatus)
+                                }
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="bg-secondary border-border">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {Object.entries(
+                                    localizedStudentStatusLabels,
+                                  ).map(([k, v]) => (
+                                    <SelectItem key={k} value={k}>
+                                      {v}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Payment: price, method, amounts paid, and the live debt readout. */}
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-muted-foreground">
+                        {t('students.sections.payment')}
+                      </h3>
+                      <Separator className="mt-2" />
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                      <FormField
+                        control={form.control}
+                        name="total_price"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel required>
+                              {t('students.total_price')}
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                inputMode="decimal"
+                                {...field}
+                                value={
+                                  field.value
+                                    ? groupDigits(String(field.value))
+                                    : ''
+                                }
+                                onChange={(e) =>
+                                  field.onChange(
+                                    parseMoneyInput(e.target.value),
+                                  )
+                                }
+                                disabled={disabledFields.includes(
+                                  'total_price',
+                                )}
+                                aria-required="true"
+                                className={`${disabledFields.includes('total_price') ? 'bg-muted' : 'bg-secondary'} border-border`}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="payment_method"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.payment_method')}
+                            </FormLabel>
+                            <Select
+                              value={field.value || 'naqd'}
+                              onValueChange={(v) =>
+                                field.onChange(v as PaymentMethod)
+                              }
+                              disabled={disabledFields.includes(
+                                'payment_method',
+                              )}
+                            >
+                              <FormControl>
+                                <SelectTrigger
+                                  className={`${disabledFields.includes('payment_method') ? 'bg-muted' : 'bg-secondary'} border-border`}
+                                >
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {Object.entries(localizedPaymentMethods).map(
+                                  ([k, v]) => (
+                                    <SelectItem key={k} value={k}>
+                                      {v}
+                                    </SelectItem>
+                                  ),
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {courseType === 'tezkor' ? (
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                        <FormField
+                          control={form.control}
+                          name="amount_paid"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {student
+                                  ? t('students.extra_payment')
+                                  : t('students.payment_amount')}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="text"
+                                  inputMode="decimal"
+                                  {...field}
+                                  value={
+                                    field.value
+                                      ? groupDigits(String(field.value))
+                                      : ''
+                                  }
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseMoneyInput(e.target.value),
+                                    )
+                                  }
+                                  placeholder={
+                                    student
+                                      ? t('students.extra_payment_placeholder')
+                                      : '0'
+                                  }
+                                  className="bg-secondary border-border"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="space-y-2">
+                          <Label htmlFor="student-debt">
+                            {student
+                              ? t('students.current_debt')
+                              : t('students.debt')}
+                          </Label>
+                          <Input
+                            id="student-debt"
+                            value={
+                              debt < 0
+                                ? `${t('students.credit_label')}: ${formatMoney(Math.abs(debt))}`
+                                : formatMoney(debt)
+                            }
+                            disabled
+                            className={`bg-muted border-border font-medium ${debt < 0 ? 'text-success' : 'text-destructive'}`}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                          <FormField
+                            control={form.control}
+                            name="initial_payment"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  {t('students.initial_payment')}
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    {...field}
+                                    value={
+                                      field.value
+                                        ? groupDigits(String(field.value))
+                                        : ''
+                                    }
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        parseMoneyInput(e.target.value),
+                                      )
+                                    }
+                                    disabled={
+                                      !!student ||
+                                      disabledFields.includes('initial_payment')
+                                    }
+                                    className={`${!!student || disabledFields.includes('initial_payment') ? 'bg-muted' : 'bg-secondary'} border-border`}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="space-y-2">
+                            <Label htmlFor="student-debt">
+                              {student
+                                ? t('students.current_debt')
+                                : t('students.debt')}
+                            </Label>
+                            <Input
+                              id="student-debt"
+                              value={
+                                debt < 0
+                                  ? `${t('students.credit_label')}: ${formatMoney(Math.abs(debt))}`
+                                  : formatMoney(debt)
+                              }
+                              disabled
+                              className={`bg-muted border-border font-medium ${debt < 0 ? 'text-success' : 'text-destructive'}`}
+                            />
+                          </div>
+                        </div>
+                        {student && (
+                          <FormField
+                            control={form.control}
+                            name="amount_paid"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  {t('students.extra_payment')}
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    {...field}
+                                    value={
+                                      field.value
+                                        ? groupDigits(String(field.value))
+                                        : ''
+                                    }
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        parseMoneyInput(e.target.value),
+                                      )
+                                    }
+                                    placeholder={t(
+                                      'students.extra_payment_placeholder',
+                                    )}
+                                    className="bg-secondary border-border"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Meta/Other: paperwork, who registered them, and free-text notes. */}
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-muted-foreground">
+                        {t('students.sections.other')}
+                      </h3>
+                      <Separator className="mt-2" />
+                    </div>
+                    {courseType !== 'tezkor' && (
+                      <FormField
+                        control={form.control}
+                        name="contract_number"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('students.contract_number')}
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                value={field.value || ''}
+                                placeholder="C-201"
+                                className="bg-secondary border-border"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    {courseType !== 'tezkor' && (
+                      <FormField
+                        control={form.control}
+                        name="o83"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center gap-2 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value || false}
+                                onCheckedChange={(v) => field.onChange(!!v)}
+                                id="o83"
+                              />
+                            </FormControl>
+                            <FormLabel htmlFor="o83" className="!mt-0">
+                              O83
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    {operators.length > 0 && (
+                      <FormField
+                        control={form.control}
+                        name="registered_by"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('students.operator')}</FormLabel>
+                            <Select
+                              value={field.value || ''}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="bg-secondary border-border">
+                                  <SelectValue
+                                    placeholder={t(
+                                      'students.operator_optional',
+                                    )}
+                                  />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {operatorList.map((op) => (
+                                  <SelectItem key={op.id} value={op.id}>
+                                    {op.name || op.email}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    <FormField
+                      control={form.control}
+                      name="has_document"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value || false}
+                              onCheckedChange={(v) => field.onChange(!!v)}
+                              id="doc"
+                            />
+                          </FormControl>
+                          <FormLabel htmlFor="doc" className="!mt-0">
+                            {t('students.has_document')}
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('students.notes')}</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              value={field.value || ''}
+                              placeholder={t('students.notes_placeholder')}
+                              rows={3}
+                              className="bg-secondary border-border"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {!student &&
+                    dupMatches.length > 0 &&
+                    !dupWarningDismissed && (
+                      <div className="flex items-start justify-between gap-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-sm">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 font-medium text-warning">
+                            <Warning className="h-4 w-4 shrink-0" />
+                            {t('students.duplicate_warning.title')}
+                          </div>
+                          <p className="text-muted-foreground">
+                            {t('students.duplicate_warning.desc')}
+                          </p>
+                          <ul className="space-y-1">
+                            {dupMatches.map((m) => (
+                              <li key={m.id}>
+                                <Link
+                                  to="/students/$id"
+                                  params={{ id: m.id }}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline"
+                                >
+                                  {m.last_name} {m.first_name} · {m.phone}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setDupWarningDismissed(true)}
+                          aria-label={t('common.close')}
+                          // ponytail: visible icon stays 16px (fits the
+                          // compact warning banner) -- after:-inset-3.5 grows
+                          // the invisible hit area to 44x44 (a11y minimum)
+                          // without changing what's drawn. Same after:-inset-N
+                          // technique as CompanyRevenueDashboard's recovery-queue
+                          // row arrow / components/ui/sidebar.tsx.
+                          className="relative text-muted-foreground hover:text-foreground after:absolute after:-inset-3.5"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+
+                  <div className="flex justify-end gap-3 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={attemptClose}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                    {!student && onSaveAndAdd && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={loading || form.formState.isSubmitting}
+                        onClick={() => {
+                          submitModeRef.current = 'add';
+                          form.handleSubmit(onFormValid)();
+                        }}
+                      >
+                        {t('students.save_and_add')}
+                      </Button>
+                    )}
+                    <Button
+                      type="submit"
+                      disabled={loading || form.formState.isSubmitting}
+                      onClick={() => {
+                        submitModeRef.current = 'close';
+                      }}
+                    >
+                      {loading || form.formState.isSubmitting
+                        ? t('common.saving')
+                        : student
+                          ? t('common.save')
+                          : t('common.add')}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </TabsContent>
+            {student && (
+              <TabsContent value="exams" className="m-0">
+                <StudentExamsTab student={student} />
+              </TabsContent>
+            )}
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={cancelDiscard}
+        onConfirm={confirmDiscard}
+        title={t('common.discard_changes_title')}
+        description={t('common.discard_changes_desc')}
+        confirmLabel={t('common.discard')}
+      />
+    </>
+  );
+};
+
+export default StudentModal;

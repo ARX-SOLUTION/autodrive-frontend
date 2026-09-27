@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import StudentsPage from '@/pages/StudentsPage';
+import StudentsPage from '@/features/students/pages/StudentsPage';
 import { requireCapability } from '@/app/routeGuards';
 import { ROUTE_CAPABILITIES } from '@/app/routeAccess';
 import {

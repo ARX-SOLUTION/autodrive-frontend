@@ -6,7 +6,7 @@ import type { AppRouterContext } from '@/app/router';
 import { ChunkErrorBoundary } from '@/components/layout/ChunkErrorBoundary';
 import { PageLoader } from '@/components/layout/PageLoader';
 
-const NotFoundPage = lazy(() => import('@/pages/NotFound'));
+const NotFoundPage = lazy(() => import('@/app/pages/NotFound'));
 
 export const Route = createRootRouteWithContext<AppRouterContext>()({
   component: RootComponent,
