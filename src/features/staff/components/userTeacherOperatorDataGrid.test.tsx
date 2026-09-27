@@ -154,6 +154,40 @@ afterEach(() => {
 });
 
 describe('Staff DataGrid server ownership', () => {
+  it.each([
+    { name: 'users', Page: UsersPage, hook: h.useUsersPage, route: '/users' },
+    {
+      name: 'teachers',
+      Page: TeachersPage,
+      hook: h.useTeachersPage,
+      route: '/oqituvchilar',
+    },
+    {
+      name: 'operators',
+      Page: OperatorsPage,
+      hook: h.useOperatorsPage,
+      route: '/operatorlar',
+    },
+  ])(
+    'keeps $name page 2 selected while its request is pending',
+    async ({ Page, hook, route }) => {
+      hook.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isFetching: true,
+        isError: false,
+        refetch: vi.fn(),
+      });
+      const { router } = await renderWithRouter(<Page />, {
+        initialEntry: route + '?limit=25&page=2',
+        routePattern: route,
+      });
+      await waitFor(() => {
+        expect(router.state.location.searchStr).toContain('page=2');
+      });
+    },
+  );
+
   it('keeps the UsersPage deep-linked page and forwards server filters', async () => {
     await renderWithRouter(<UsersPage />, {
       initialEntry: '/users?page=2&q=nigora&branch_id=b1&is_active=true',

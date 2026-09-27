@@ -21,9 +21,9 @@ interface Props {
   className?: string;
 }
 
-const pageButtonClass = 'h-9 min-w-9 shrink-0 px-2';
+const pageButtonClass = 'h-10 min-w-10 shrink-0 px-2 tabular-nums';
 const stepButtonClass =
-  'h-9 shrink-0 gap-1 border-border bg-secondary px-2 sm:px-3';
+  'h-10 min-w-10 shrink-0 gap-1 border-border bg-secondary px-2 sm:px-3';
 
 const PaginationControls = ({
   currentPage,
@@ -73,9 +73,9 @@ const PaginationControls = ({
 
   return (
     <nav
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? t('common.pagination')}
       className={cn(
-        'flex min-w-0 gap-3 pt-4',
+        'flex min-w-0 gap-3 border-t border-border/70 pt-3',
         showMeta
           ? 'flex-col sm:flex-row sm:items-center sm:justify-between'
           : 'items-center justify-end',
@@ -99,8 +99,9 @@ const PaginationControls = ({
         </div>
       ) : null}
       {showPager ? (
-        <div className="flex max-w-full items-center justify-end gap-1 overflow-x-auto">
+        <div className="flex w-full items-center justify-between gap-1 sm:w-auto sm:justify-end">
           <Button
+            type="button"
             variant="outline"
             size="sm"
             aria-label={previousText}
@@ -111,34 +112,44 @@ const PaginationControls = ({
             <CaretLeft aria-hidden />
             <span className="hidden sm:inline">{previousText}</span>
           </Button>
-          {getPageNumbers().map((page, i) =>
-            page === '...' ? (
-              <span
-                key={`ellipsis-${i}`}
-                aria-hidden
-                className="px-1 text-sm text-muted-foreground"
-              >
-                …
-              </span>
-            ) : (
-              <Button
-                key={page}
-                variant={page === currentPage ? 'default' : 'outline'}
-                size="sm"
-                aria-current={page === currentPage ? 'page' : undefined}
-                onClick={() => onPageChange(page)}
-                disabled={disabled}
-                className={
-                  page === currentPage
-                    ? pageButtonClass
-                    : cn(pageButtonClass, 'border-border bg-secondary')
-                }
-              >
-                {page}
-              </Button>
-            ),
-          )}
+          <span
+            className="px-3 text-sm font-medium tabular-nums text-foreground sm:hidden"
+            aria-live="polite"
+          >
+            {t('common.page_of', { page: currentPage, total: totalPages })}
+          </span>
+          <div className="hidden items-center gap-1 sm:flex">
+            {getPageNumbers().map((page, i) =>
+              page === '...' ? (
+                <span
+                  key={`ellipsis-${i}`}
+                  aria-hidden
+                  className="px-1 text-sm text-muted-foreground"
+                >
+                  …
+                </span>
+              ) : (
+                <Button
+                  type="button"
+                  key={page}
+                  variant={page === currentPage ? 'default' : 'outline'}
+                  size="sm"
+                  aria-current={page === currentPage ? 'page' : undefined}
+                  onClick={() => onPageChange(page)}
+                  disabled={disabled || page === currentPage}
+                  className={
+                    page === currentPage
+                      ? pageButtonClass
+                      : cn(pageButtonClass, 'border-border bg-secondary')
+                  }
+                >
+                  {page}
+                </Button>
+              ),
+            )}
+          </div>
           <Button
+            type="button"
             variant="outline"
             size="sm"
             aria-label={nextText}

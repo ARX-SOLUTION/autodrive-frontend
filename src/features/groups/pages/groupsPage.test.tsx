@@ -13,7 +13,7 @@ import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 const h = vi.hoisted(() => ({
   auth: { role: 'owner', branch_id: null as string | null },
-  groupsData: [] as unknown[],
+  groupsData: [] as unknown[] | undefined,
   overviewData: [] as unknown[],
   useGroupsSpy: vi.fn(),
 }));
@@ -28,8 +28,8 @@ vi.mock('@/features/groups/api/groupService', () => ({
     h.useGroupsSpy(params);
     return {
       data: h.groupsData,
-      isLoading: false,
-      isFetching: false,
+      isLoading: h.groupsData === undefined,
+      isFetching: h.groupsData === undefined,
       isError: false,
       refetch: vi.fn(),
     };
@@ -112,6 +112,18 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('GroupsPage rendering', () => {
+  it('keeps a deep-linked page while loading, then clamps when results arrive', async () => {
+    h.groupsData = undefined;
+    const { router, rerender } = await renderPage('/groups?limit=25&page=2');
+    expect(router.state.location.searchStr).toContain('page=2');
+
+    h.groupsData = GROUPS;
+    rerender(<GroupsPage />);
+    await waitFor(() => {
+      expect(router.state.location.searchStr).not.toContain('page=2');
+    });
+  });
+
   it('renders a table row and a mobile card per group', async () => {
     await renderPage();
     // DataGrid mounts only the active responsive representation.

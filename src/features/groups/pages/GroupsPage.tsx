@@ -125,9 +125,9 @@ const GroupsPage = () => {
   const totalPages = Math.max(1, Math.ceil(filteredGroups.length / pageSize));
 
   useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(1);
+    if (groups !== undefined && currentPage > totalPages) setCurrentPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalPages]);
+  }, [currentPage, groups !== undefined, totalPages]);
 
   const openCreate = () => {
     setEditGroup(null);

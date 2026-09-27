@@ -1,5 +1,5 @@
 import { parseCalendarDate } from '@/lib/calendarDate';
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import PaymentsPage from '@/features/payments/pages/PaymentsPage';
@@ -197,10 +197,21 @@ describe('PaymentsPage characterization', () => {
     expect(screen.queryByText('payments.add_payment')).not.toBeInTheDocument();
   });
 
-  // autodrive-52v.3: deleting the last row of the last page left currentPage
-  // pointing past the new (shrunk) totalPages -- the page silently kept
-  // requesting a page that no longer exists. Same clamp GroupsPage already
-  // had; StudentsPage, PaymentsPage and UsersPage didn't.
+  it('retains a deep-linked next page while its payments are loading', async () => {
+    usePaymentsPageMock.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isFetching: true,
+      isError: false,
+    });
+
+    const { router } = await renderPage('/payments?limit=25&page=2');
+    await waitFor(() => {
+      expect(router.state.location.searchStr).toContain('page=2');
+      expect(usePaymentsPageMock.mock.calls.at(-1)?.[4]).toBe(2);
+    });
+  });
+
   it('clamps currentPage back to 1 once totalPages shrinks below the URL page', async () => {
     usePaymentsPageMock.mockReturnValue({
       data: { data: [], meta: { total: 0, totalPages: 1 } },

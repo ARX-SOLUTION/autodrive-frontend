@@ -522,8 +522,10 @@ const ExpensesPage = () => {
   const totalPages = Math.max(1, expensesPage?.meta.totalPages ?? 1);
 
   useEffect(() => {
-    if (!attentionFilter && currentPage > totalPages) setCurrentPage(1);
-  }, [attentionFilter, currentPage, totalPages, setCurrentPage]);
+    if (!attentionFilter && expensesPage && currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [attentionFilter, currentPage, expensesPage, totalPages, setCurrentPage]);
 
   const isLoading = attentionFilter ? isSweepLoading : isPageLoading;
   const isFetching = attentionFilter ? isSweepFetching : isPageFetching;
