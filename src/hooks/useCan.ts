@@ -1,5 +1,10 @@
 import { useAuthStore } from '@/store/authStore';
-import { roleCan, isCrossTenantRole, type Capability } from '@/lib/permissions';
+import {
+  roleCan,
+  isCompanyWideRole,
+  isCrossTenantRole,
+  type Capability,
+} from '@/lib/permissions';
 
 /**
  * Subscribe to a single derived permission boolean — NOT the whole user — so a
@@ -13,4 +18,9 @@ export function useCan(cap: Capability): boolean {
 /** owner or dev — the cross-branch roles that see every branch. */
 export function useIsCrossTenant(): boolean {
   return useAuthStore((s) => isCrossTenantRole(s.user?.role));
+}
+
+/** May query company-wide data without a branch filter. */
+export function useIsCompanyWide(): boolean {
+  return useAuthStore((s) => isCompanyWideRole(s.user?.role));
 }

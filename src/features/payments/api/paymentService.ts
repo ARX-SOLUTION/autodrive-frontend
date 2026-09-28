@@ -5,7 +5,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import axiosInstance from '@/api/axiosInstance';
-import { useIsCrossTenant } from '@/hooks/useCan';
+import { useIsCompanyWide } from '@/hooks/useCan';
 import {
   Payment,
   PaymentSnapshot,
@@ -15,6 +15,7 @@ import { track } from '@/lib/umami';
 import type { ListResponse } from '@/shared/types/list';
 import { parseListResponse } from '@/lib/listResponse';
 import { parseItemEnvelope } from '@/lib/apiEnvelope';
+import { isConcurrentUpdateError } from '@/lib/errors';
 import { paymentKeys, studentKeys, dashboardKeys } from '@/lib/queryKeys';
 import type {
   CreatePaymentRequest,
@@ -137,11 +138,11 @@ export const usePaymentsPage = (
     'branchId' | 'courseType' | 'startDate' | 'endDate' | 'page' | 'limit'
   >,
 ) => {
-  const isCrossTenant = useIsCrossTenant();
+  const isCompanyWide = useIsCompanyWide();
   return useQuery(
     paymentsPageQueryOptions(
       { branchId, courseType, startDate, endDate, page, limit, ...options },
-      !!branchId || isCrossTenant,
+      !!branchId || isCompanyWide,
     ),
   );
 };
@@ -152,7 +153,7 @@ export const usePayments = (
   startDate?: Date,
   endDate?: Date,
 ) => {
-  const isCrossTenant = useIsCrossTenant();
+  const isCompanyWide = useIsCompanyWide();
   const filters: PaymentListFilters = {
     branchId,
     courseType,
@@ -161,7 +162,7 @@ export const usePayments = (
   };
   return useQuery<ListResponse<Payment>, Error, Payment[]>({
     queryKey: paymentKeys.list(toPaymentQueryParams(filters)),
-    enabled: !!branchId || isCrossTenant,
+    enabled: !!branchId || isCompanyWide,
     queryFn: ({ signal }) => fetchPaymentsPage(filters, signal),
     select: (result) => result.data,
   });
@@ -183,10 +184,10 @@ export const useStudentPayments = (studentId?: string, page = 1, limit = 20) =>
   });
 
 export const usePaymentSnapshot = (branchId?: string) => {
-  const isCrossTenant = useIsCrossTenant();
+  const isCompanyWide = useIsCompanyWide();
   return useQuery<PaymentSnapshot>({
     queryKey: paymentKeys.snapshot(branchId),
-    enabled: !!branchId || isCrossTenant,
+    enabled: !!branchId || isCompanyWide,
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get<unknown>(
         '/payments/snapshot',
@@ -207,10 +208,10 @@ export const usePaymentSummary = (
   filters: PaymentListFilters,
   enabled = true,
 ) => {
-  const isCrossTenant = useIsCrossTenant();
+  const isCompanyWide = useIsCompanyWide();
   return useQuery<PaymentSummary>({
     queryKey: paymentKeys.summary(toPaymentQueryParams(filters)),
-    enabled: enabled && (!!filters.branchId || isCrossTenant),
+    enabled: enabled && (!!filters.branchId || isCompanyWide),
     queryFn: async ({ signal }) => {
       const { data: res } = await axiosInstance.get<unknown>(
         '/payments/summary',
@@ -266,6 +267,12 @@ export const useUpdatePayment = () => {
       qc.invalidateQueries({ queryKey: studentKeys.all });
       qc.invalidateQueries({ queryKey: dashboardKeys.all });
       track('payment_update');
+    },
+    onError: (err) => {
+      if (isConcurrentUpdateError(err)) {
+        qc.invalidateQueries({ queryKey: paymentKeys.all });
+        qc.invalidateQueries({ queryKey: studentKeys.all });
+      }
     },
   });
 };

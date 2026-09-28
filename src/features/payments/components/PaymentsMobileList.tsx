@@ -18,7 +18,7 @@ interface PaymentsMobileListProps {
 
 interface PaymentMobileCardProps {
   payment: Payment;
-  onActivate: (element: HTMLElement) => void;
+  onActivate?: (element: HTMLElement) => void;
 }
 
 export const PaymentMobileCard = ({
@@ -31,7 +31,9 @@ export const PaymentMobileCard = ({
     <DataCard
       title={payment.student_name}
       subtitle={payment.branch_name}
-      onClick={(event) => onActivate(event.currentTarget)}
+      onClick={
+        onActivate ? (event) => onActivate(event.currentTarget) : undefined
+      }
       fields={[
         { label: t('common.date'), value: formatDate(payment.date) },
         {

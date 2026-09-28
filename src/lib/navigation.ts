@@ -173,7 +173,7 @@ const allNavItems: NavItem[] = [
     labelKey: 'nav.payments',
     icon: CreditCard,
     section: 'learning',
-    cap: 'recordPayment',
+    cap: 'viewPayments',
   },
   {
     path: '/expenses',
