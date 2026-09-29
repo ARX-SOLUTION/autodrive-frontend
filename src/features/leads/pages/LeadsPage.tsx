@@ -8,8 +8,10 @@ import {
   SquaresFour,
   Table as TableIcon,
   ChartBar,
+  Gear,
 } from '@phosphor-icons/react';
 import { useUrlParams } from '@/hooks/useUrlParams';
+import { useAuthStore } from '@/store/authStore';
 import {
   useLeadBoardQuery,
   useLeadStagesQuery,
@@ -20,6 +22,7 @@ import { LeadsTable } from '../components/LeadsTable';
 import { LeadsFilterBar } from '../components/LeadsFilterBar';
 import { LeadMetricsView } from '../components/LeadMetricsView';
 import { CreateLeadDialog } from '../components/CreateLeadDialog';
+import { LeadStagesSettingsDialog } from '../components/LeadStagesSettingsDialog';
 import type {
   ListLeadsQuery,
   LeadSource,
@@ -46,6 +49,12 @@ export const LeadsPage = () => {
   const [createDefaultStageId, setCreateDefaultStageId] = useState<
     string | undefined
   >(undefined);
+
+  // Stage settings dialog state
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const canManageStages =
+    user?.role === 'owner' || user?.role === 'manager' || user?.role === 'dev';
 
   const handleOpenCreate = (stageId?: string) => {
     setCreateDefaultStageId(stageId);
@@ -170,6 +179,21 @@ export const LeadsPage = () => {
               </Button>
             </div>
 
+            {canManageStages && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5"
+                aria-label={t('leads.manage_stages', 'Configure Stages')}
+                onClick={() => setIsSettingsOpen(true)}
+              >
+                <Gear className="h-4 w-4" />
+                <span className="hidden md:inline">
+                  {t('leads.manage_stages', 'Configure Stages')}
+                </span>
+              </Button>
+            )}
+
             <Button
               className="h-9 gap-1.5"
               aria-label={t('leads.create_lead', 'New Lead')}
@@ -250,6 +274,12 @@ export const LeadsPage = () => {
         open={isCreateOpen}
         onOpenChange={handleCloseCreate}
         defaultStageId={createDefaultStageId}
+      />
+
+      {/* Configure Stages Dialog */}
+      <LeadStagesSettingsDialog
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
       />
     </div>
   );

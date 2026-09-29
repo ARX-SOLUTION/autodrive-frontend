@@ -35,6 +35,7 @@ const mockLeads: Lead[] = [
       position: 0,
       color: '#3b82f6',
       isSystem: true,
+      isActive: true,
       createdAt: '2026-01-01',
       updatedAt: '2026-01-01',
     },

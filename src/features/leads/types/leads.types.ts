@@ -35,6 +35,7 @@ export interface LeadStage {
   position: number;
   color: string;
   isSystem: boolean;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -251,6 +252,7 @@ export interface UpdateLeadStagesPayload {
     name: string;
     color: string;
     position: number;
+    isActive?: boolean;
   }>;
   moveToStageId?: string;
 }
