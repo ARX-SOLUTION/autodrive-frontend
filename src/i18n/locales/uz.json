@@ -932,6 +932,7 @@
       "tab_exams": "Imtihonlar",
       "tab_attendance": "Davomat",
       "referrals_count": "Referal qilganlar soni",
+      "referral_discount_badge": "{{count}} ta referal: chegirmaga tavsiya etiladi",
       "tab_group_history": "Guruh tarixi",
       "group_history_change": "Guruh o'zgarishi",
       "group_history_empty": "Guruh tarixi mavjud emas",
@@ -2221,10 +2222,13 @@
     "sources": {
       "telegram": "Telegram",
       "instagram": "Instagram",
+      "referral": "Tavsiya",
+      "directory_map": "Xarita (2GIS / Yandex)",
+      "olx": "OLX",
+      "walk_in": "O'zi kelgan",
       "website": "Veb-sayt",
       "recommendation": "Tavsiya",
       "banner": "Tashqi reklama / Banner",
-      "walk_in": "O'zi kelgan",
       "other": "Boshqa"
     },
     "lost_reasons": {
@@ -2242,6 +2246,24 @@
       "TASK": "Vazifa",
       "STAGE_CHANGE": "Bosqich o'zgarishi",
       "SYSTEM": "Tizim hodisasi"
-    }
+    },
+    "tab_stages": "Bosqichlar",
+    "tab_sources": "Manbalar",
+    "referrer_type": "Tavsiya qilgan",
+    "referrer_none": "Tavsiya yo'q",
+    "referrer_student": "O'quvchi",
+    "referrer_staff": "Xodim",
+    "select_student": "O'quvchini tanlang",
+    "select_staff": "Xodimni tanlang",
+    "custom_source_label": "Kompaniya manbalari",
+    "select_custom_source": "Kompaniya manbasini tanlang",
+    "system_sources": "Standart manbalar",
+    "custom_sources_label": "Kompaniya manbalari",
+    "no_custom_sources": "Hali qo'shilgan manbalar yo'q",
+    "source_standard": "Standart",
+    "source_created": "Yangi manba qo'shildi",
+    "source_deleted": "Manba o'chirildi",
+    "new_source_placeholder": "Manba nomi...",
+    "referrer_staff_badge": "Tavsiya qilgan xodim: {{name}}"
   }
 }

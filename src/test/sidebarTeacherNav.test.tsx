@@ -103,5 +103,21 @@ describe('Sidebar teacher nav trim (autodrive-vh0.2)', () => {
     expect(screen.getByLabelText('nav.expenses')).toBeTruthy();
     expect(screen.getByLabelText('nav.dashboard')).toBeTruthy();
     expect(screen.queryByLabelText('nav.students')).toBeNull();
+    expect(screen.queryByLabelText('nav.leads')).toBeNull();
+  });
+
+  it('hides Leads for teacher', async () => {
+    role = 'teacher';
+    await renderSidebar();
+    expect(screen.queryByLabelText('nav.leads')).toBeNull();
+  });
+
+  it('shows Leads for dev, owner, manager, and operator', async () => {
+    for (const testRole of ['dev', 'owner', 'manager', 'operator'] as const) {
+      role = testRole;
+      cleanup();
+      await renderSidebar();
+      expect(screen.getByLabelText('nav.leads')).toBeTruthy();
+    }
   });
 });

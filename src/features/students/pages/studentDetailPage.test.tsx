@@ -260,6 +260,17 @@ describe('StudentDetailPage referrals_count Field', () => {
       '/students?referred_by_student_id=s1',
     );
   });
+
+  it('renders prominent referral discount badge linking to referred students', async () => {
+    auth.role = 'manager';
+    await renderPage();
+    const badge = screen.getByText('students.detail.referral_discount_badge');
+    expect(badge).toBeInTheDocument();
+    const link = badge.closest('a');
+    expect(link?.getAttribute('href')).toBe(
+      '/students?referred_by_student_id=s1',
+    );
+  });
 });
 
 // Regression test for autodrive-f9u.12: Student.payment_method is nullable

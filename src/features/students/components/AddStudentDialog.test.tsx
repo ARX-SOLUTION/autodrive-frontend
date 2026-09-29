@@ -67,6 +67,9 @@ vi.mock('@/features/staff/api/teacherService', () => ({
 vi.mock('@/features/staff/api/operatorService', () => ({
   useOperators: () => ({ data: [] }),
 }));
+vi.mock('@/features/leads/queries/leadsQueries', () => ({
+  useLeadSourcesQuery: () => ({ data: [] }),
+}));
 
 afterEach(cleanup);
 

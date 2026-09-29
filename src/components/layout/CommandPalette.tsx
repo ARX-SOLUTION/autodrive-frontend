@@ -46,6 +46,8 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
     viewTrainingPrograms: useCan('viewTrainingPrograms'),
     viewTrainingEnrollments: useCan('viewTrainingEnrollments'),
     viewDrivingSessions: useCan('viewDrivingSessions'),
+    viewSchoolLearning: useCan('viewSchoolLearning'),
+    accessLeads: useCan('accessLeads'),
   };
 
   const visibleNav = NAV_ITEMS.filter((n) => !n.cap || gate[n.cap]);

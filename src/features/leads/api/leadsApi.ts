@@ -1,11 +1,13 @@
 import axiosInstance from '@/api/axiosInstance';
 import type {
   Lead,
+  LeadCard,
   LeadBoardColumn,
   LeadStage,
   LeadActivity,
   LeadMetrics,
   DuplicateCheckResult,
+  LeadSource,
   ListLeadsQuery,
   CreateLeadPayload,
   UpdateLeadPayload,
@@ -15,6 +17,7 @@ import type {
   CreateLeadActivityPayload,
   UpdateLeadActivityPayload,
   UpdateLeadStagesPayload,
+  CompanyLeadSource,
 } from '../types/leads.types';
 
 export interface PaginatedLeadsResponse {
@@ -29,6 +32,91 @@ export function unwrapData<T>(raw: unknown): T {
     return (raw as { data: T }).data;
   }
   return raw as T;
+}
+
+interface RawLeadAssignee {
+  id: string;
+  name: string;
+  role?: string;
+}
+
+interface RawLeadCardItem {
+  id: string;
+  name?: string;
+  firstName?: string;
+  lastName?: string | null;
+  phone: string;
+  branchId?: string;
+  branchName?: string;
+  source: LeadCard['source'];
+  category?: LeadCard['category'];
+  assignee?: RawLeadAssignee | null;
+  assigneeUserId?: string | null;
+  assigneeName?: string | null;
+  stageId?: string;
+  nextStepAt?: string | Date | null;
+  lastTouchAt?: string | Date | null;
+  version?: number;
+  createdAt?: string | Date;
+  isOverdue?: boolean;
+}
+
+interface RawBoardColumn {
+  stageId?: string;
+  stageName?: string;
+  stageColor?: string;
+  position?: number;
+  kind?: LeadStage['kind'];
+  isSystem?: boolean;
+  isActive?: boolean;
+  companyId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  total?: number;
+  items?: RawLeadCardItem[];
+  stage?: LeadStage;
+  leads?: LeadCard[];
+  count?: number;
+}
+
+interface RawStageCountItem {
+  stageId?: string;
+  stageName?: string;
+  count?: number;
+}
+
+interface RawLostReasonCountItem {
+  reason?: string;
+  count?: number;
+}
+
+interface RawLeadMetricsResponse {
+  openPerStage?: RawStageCountItem[];
+  funnelStages?: RawStageCountItem[];
+  leadToStudent?: number;
+  overdueCount?: number;
+  untouchedCount?: number;
+  lostByReason?: RawLostReasonCountItem[];
+  totalCreated?: number;
+  totalConverted?: number;
+  totalLeads?: number;
+  wonLeads?: number;
+  lostLeads?: number;
+  conversionRate?: number;
+  avgTimeToWonDays?: number | null;
+  bySource?: Record<
+    string,
+    { count: number; won: number; conversionRate: number }
+  >;
+  byLostReason?: Record<string, number>;
+  byStage?: Record<string, number>;
+}
+
+function normalizeLeadSource(source?: LeadSource): LeadSource | undefined {
+  if (!source) return undefined;
+  if (source === 'website' || source === 'banner') return 'other';
+  if (source === 'recommendation') return 'referral';
+  return source;
 }
 
 export const leadsApi = {
@@ -62,7 +150,73 @@ export const leadsApi = {
       signal,
     });
     const unwrapped = unwrapData<unknown>(data);
-    return Array.isArray(unwrapped) ? (unwrapped as LeadBoardColumn[]) : [];
+    if (!Array.isArray(unwrapped)) return [];
+
+    return (unwrapped as RawBoardColumn[]).map((col): LeadBoardColumn => {
+      // Backwards-compatibility for mock/frontend shaped data
+      if (col.stage && Array.isArray(col.leads)) {
+        return col as unknown as LeadBoardColumn;
+      }
+
+      const stage: LeadStage = {
+        id: col.stageId ?? col.stage?.id ?? '',
+        companyId: col.companyId ?? col.stage?.companyId ?? '',
+        name: col.stageName ?? col.stage?.name ?? '',
+        color: col.stageColor ?? col.stage?.color ?? '#3B82F6',
+        position: col.position ?? col.stage?.position ?? 0,
+        kind: col.kind ?? col.stage?.kind ?? 'WORK',
+        isSystem: col.isSystem ?? col.stage?.isSystem ?? false,
+        isActive: col.isActive ?? col.stage?.isActive ?? true,
+        createdAt: col.createdAt ?? col.stage?.createdAt ?? '',
+        updatedAt: col.updatedAt ?? col.stage?.updatedAt ?? '',
+      };
+
+      const rawItems: RawLeadCardItem[] = Array.isArray(col.items)
+        ? col.items
+        : Array.isArray(col.leads)
+          ? (col.leads as unknown as RawLeadCardItem[])
+          : [];
+
+      const leads: LeadCard[] = rawItems.map((item): LeadCard => {
+        const fullName = (item.name || '').trim();
+        const firstSpaceIndex = fullName.indexOf(' ');
+        const firstName =
+          item.firstName ??
+          (firstSpaceIndex > 0 ? fullName.slice(0, firstSpaceIndex) : fullName);
+        const lastName =
+          item.lastName ??
+          (firstSpaceIndex > 0 ? fullName.slice(firstSpaceIndex + 1) : null);
+
+        return {
+          id: item.id,
+          firstName,
+          lastName,
+          phone: item.phone,
+          branchId: item.branchId ?? '',
+          branchName: item.branchName,
+          source: item.source,
+          category: item.category ?? null,
+          assigneeUserId: item.assigneeUserId ?? item.assignee?.id ?? null,
+          assigneeName: item.assigneeName ?? item.assignee?.name ?? null,
+          stageId: item.stageId ?? stage.id,
+          nextStepAt: item.nextStepAt ? String(item.nextStepAt) : null,
+          lastTouchAt: item.lastTouchAt
+            ? String(item.lastTouchAt)
+            : item.createdAt
+              ? String(item.createdAt)
+              : '',
+          version: item.version ?? 1,
+          createdAt: item.createdAt ? String(item.createdAt) : '',
+          isOverdue: Boolean(item.isOverdue),
+        };
+      });
+
+      return {
+        stage,
+        leads,
+        count: typeof col.total === 'number' ? col.total : leads.length,
+      };
+    });
   },
 
   getLead: async (id: string, signal?: AbortSignal): Promise<Lead> => {
@@ -73,15 +227,22 @@ export const leadsApi = {
   },
 
   createLead: async (payload: CreateLeadPayload): Promise<Lead> => {
-    const { data } = await axiosInstance.post<unknown>('/leads', payload);
+    const body = {
+      ...payload,
+      source: normalizeLeadSource(payload.source) ?? 'other',
+    };
+    const { data } = await axiosInstance.post<unknown>('/leads', body);
     return unwrapData<Lead>(data);
   },
 
   updateLead: async (id: string, payload: UpdateLeadPayload): Promise<Lead> => {
-    const { data } = await axiosInstance.patch<unknown>(
-      `/leads/${id}`,
-      payload,
-    );
+    const body = {
+      ...payload,
+      ...(payload.source
+        ? { source: normalizeLeadSource(payload.source) }
+        : {}),
+    };
+    const { data } = await axiosInstance.patch<unknown>(`/leads/${id}`, body);
     return unwrapData<Lead>(data);
   },
 
@@ -134,7 +295,49 @@ export const leadsApi = {
         signal,
       },
     );
-    return unwrapData<DuplicateCheckResult>(data);
+    const raw = unwrapData<Record<string, unknown>>(data);
+    const rawLeads = Array.isArray(raw?.openLeads)
+      ? (raw.openLeads as Array<Record<string, unknown>>)
+      : [];
+    const rawStudents = Array.isArray(raw?.students)
+      ? (raw.students as Array<Record<string, unknown>>)
+      : [];
+    const firstLead = rawLeads[0];
+    const firstStudent = rawStudents[0];
+
+    return {
+      hasDuplicate: Boolean(
+        rawLeads.length > 0 || rawStudents.length > 0 || raw?.hasDuplicate,
+      ),
+      duplicateLead: firstLead
+        ? {
+            id: String(firstLead.id ?? ''),
+            firstName: String(firstLead.firstName ?? ''),
+            lastName: firstLead.lastName ? String(firstLead.lastName) : null,
+            stageName: String(firstLead.stageName ?? ''),
+            branchName: firstLead.branchName
+              ? String(firstLead.branchName)
+              : undefined,
+          }
+        : ((raw?.duplicateLead as DuplicateCheckResult['duplicateLead']) ??
+          null),
+      duplicateStudent: firstStudent
+        ? {
+            id: String(firstStudent.id ?? ''),
+            firstName: String(
+              firstStudent.firstName ?? firstStudent.first_name ?? '',
+            ),
+            lastName: String(
+              firstStudent.lastName ?? firstStudent.last_name ?? '',
+            ),
+            status: String(firstStudent.status ?? firstStudent.result ?? ''),
+            branchName: firstStudent.branchName
+              ? String(firstStudent.branchName)
+              : undefined,
+          }
+        : ((raw?.duplicateStudent as DuplicateCheckResult['duplicateStudent']) ??
+          null),
+    };
   },
 
   getMetrics: async (
@@ -145,7 +348,85 @@ export const leadsApi = {
       params,
       signal,
     });
-    return unwrapData<LeadMetrics>(data);
+    const raw = unwrapData<RawLeadMetricsResponse>(data);
+    if (!raw || typeof raw !== 'object') {
+      return {
+        totalLeads: 0,
+        wonLeads: 0,
+        lostLeads: 0,
+        conversionRate: 0,
+        avgTimeToWonDays: null,
+        bySource: {},
+        byLostReason: {},
+        byStage: {},
+        overdueCount: 0,
+        untouchedCount: 0,
+        openPerStage: [],
+        funnelStages: [],
+      };
+    }
+
+    // Normalize from backend LeadMetricsResponse
+    const byStage: Record<string, number> = {};
+    if (raw.byStage && typeof raw.byStage === 'object') {
+      Object.assign(byStage, raw.byStage);
+    } else if (Array.isArray(raw.openPerStage)) {
+      for (const item of raw.openPerStage) {
+        if (item?.stageName) {
+          byStage[item.stageName] =
+            typeof item.count === 'number' ? item.count : 0;
+        }
+      }
+    }
+
+    const byLostReason: Record<string, number> = {};
+    let lostSum = 0;
+    if (raw.byLostReason && typeof raw.byLostReason === 'object') {
+      Object.assign(byLostReason, raw.byLostReason);
+      lostSum = Object.values(byLostReason).reduce((a, b) => a + b, 0);
+    } else if (Array.isArray(raw.lostByReason)) {
+      for (const item of raw.lostByReason) {
+        if (item?.reason) {
+          const cnt = typeof item.count === 'number' ? item.count : 0;
+          byLostReason[item.reason] = cnt;
+          lostSum += cnt;
+        }
+      }
+    }
+
+    const bySource =
+      raw.bySource && typeof raw.bySource === 'object' ? raw.bySource : {};
+
+    const openPerStage = Array.isArray(raw.openPerStage)
+      ? raw.openPerStage.map((s) => ({
+          stageId: s.stageId ?? '',
+          stageName: s.stageName ?? '',
+          count: s.count ?? 0,
+        }))
+      : [];
+
+    const funnelStages = Array.isArray(raw.funnelStages)
+      ? raw.funnelStages.map((s) => ({
+          stageId: s.stageId ?? '',
+          stageName: s.stageName ?? '',
+          count: s.count ?? 0,
+        }))
+      : [];
+
+    return {
+      totalLeads: raw.totalCreated ?? raw.totalLeads ?? 0,
+      wonLeads: raw.totalConverted ?? raw.wonLeads ?? 0,
+      lostLeads: raw.lostLeads ?? lostSum,
+      conversionRate: raw.leadToStudent ?? raw.conversionRate ?? 0,
+      avgTimeToWonDays: raw.avgTimeToWonDays ?? null,
+      bySource,
+      byLostReason,
+      byStage,
+      overdueCount: raw.overdueCount ?? 0,
+      untouchedCount: raw.untouchedCount ?? 0,
+      openPerStage,
+      funnelStages,
+    };
   },
 
   getStages: async (signal?: AbortSignal): Promise<LeadStage[]> => {
@@ -201,6 +482,28 @@ export const leadsApi = {
 
   deleteActivity: async (leadId: string, activityId: string): Promise<void> => {
     await axiosInstance.delete(`/leads/${leadId}/activities/${activityId}`);
+  },
+
+  getLeadSources: async (
+    signal?: AbortSignal,
+  ): Promise<CompanyLeadSource[]> => {
+    const { data } = await axiosInstance.get<unknown>('/lead-sources', {
+      signal,
+    });
+    const unwrapped = unwrapData<unknown>(data);
+    return Array.isArray(unwrapped) ? (unwrapped as CompanyLeadSource[]) : [];
+  },
+
+  createLeadSource: async (name: string): Promise<CompanyLeadSource> => {
+    const { data } = await axiosInstance.post<unknown>('/lead-sources', {
+      name,
+    });
+    return unwrapData<CompanyLeadSource>(data);
+  },
+
+  deleteLeadSource: async (id: string): Promise<{ success: boolean }> => {
+    const { data } = await axiosInstance.delete<unknown>(`/lead-sources/${id}`);
+    return unwrapData<{ success: boolean }>(data);
   },
 
   exportLeads: async (query: ListLeadsQuery = {}): Promise<void> => {

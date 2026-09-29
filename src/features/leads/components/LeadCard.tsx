@@ -67,6 +67,18 @@ export const LeadCard = memo(({ lead, className }: LeadCardProps) => {
     }
   }
 
+  const displayName =
+    `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || '-';
+  const leadAriaLabel = [
+    displayName,
+    lead.phone,
+    lead.branchName,
+    lead.category ? `${lead.category} toifasi` : null,
+    taskStatus === 'overdue' ? t('leads.overdue', 'Kechikkan') : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
   return (
     <div
       draggable
@@ -74,6 +86,7 @@ export const LeadCard = memo(({ lead, className }: LeadCardProps) => {
       onClick={handleClick}
       role="button"
       tabIndex={0}
+      aria-label={leadAriaLabel}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -82,7 +95,7 @@ export const LeadCard = memo(({ lead, className }: LeadCardProps) => {
       }}
       className={cn(
         'group relative flex flex-col gap-2 rounded-xl border border-border bg-card p-3.5 shadow-xs transition-all duration-150',
-        'cursor-grab active:cursor-grabbing hover:border-primary/50 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'cursor-grab active:cursor-grabbing hover:border-primary/50 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
         className,
       )}
       data-testid={`lead-card-${lead.id}`}
@@ -90,7 +103,7 @@ export const LeadCard = memo(({ lead, className }: LeadCardProps) => {
       {/* Name and Category */}
       <div className="flex items-start justify-between gap-2">
         <h4 className="font-semibold text-sm leading-tight text-foreground group-hover:text-primary transition-colors">
-          {lead.firstName} {lead.lastName || ''}
+          {displayName}
         </h4>
         {lead.category && (
           <span className="shrink-0 rounded-md bg-secondary px-1.5 py-0.5 font-bold text-[10px] text-secondary-foreground uppercase">
@@ -108,11 +121,18 @@ export const LeadCard = memo(({ lead, className }: LeadCardProps) => {
       {/* Badges: Branch & Source */}
       <div className="flex flex-wrap items-center gap-1.5 pt-1">
         {lead.branchName && (
-          <span className="rounded-md bg-muted/80 px-2 py-0.5 text-[11px] text-muted-foreground font-medium truncate max-w-[140px]">
+          <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] text-muted-foreground font-medium truncate max-w-[140px]">
             {lead.branchName}
           </span>
         )}
-        <span className="rounded-md bg-muted/60 px-2 py-0.5 text-[11px] text-muted-foreground capitalize">
+        <span
+          className={cn(
+            'rounded-md px-2 py-0.5 text-[11px] capitalize',
+            lead.source === 'referral'
+              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-medium border border-emerald-500/30'
+              : 'bg-muted/80 text-muted-foreground',
+          )}
+        >
           {t(`leads.sources.${lead.source}`, lead.source)}
         </span>
       </div>
@@ -143,7 +163,7 @@ export const LeadCard = memo(({ lead, className }: LeadCardProps) => {
           </span>
         )}
         {taskStatus === 'none' && (
-          <span className="text-[11px] text-muted-foreground/70">
+          <span className="text-[11px] text-muted-foreground">
             {t('leads.no_tasks', 'Vazifasiz')}
           </span>
         )}
@@ -154,7 +174,7 @@ export const LeadCard = memo(({ lead, className }: LeadCardProps) => {
             <span className="truncate">{lead.assigneeName}</span>
           </span>
         ) : (
-          <span className="text-[11px] text-muted-foreground/60 italic">
+          <span className="text-[11px] text-muted-foreground italic">
             {t('leads.unassigned', 'Biriktirilmagan')}
           </span>
         )}

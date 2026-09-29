@@ -153,11 +153,14 @@ export const LeadBoard = ({
         data-testid="leads-kanban-board"
       >
         {columns.map((column) => {
+          if (!column?.stage) return null;
           const isDropActive = activeDropStageId === column.stage.id;
 
           return (
             <div
               key={column.stage.id}
+              role="region"
+              aria-label={`${column.stage.name}, ${column.count} ta lid`}
               onDragOver={handleDragOver}
               onDragEnter={() => handleDragEnter(column.stage.id)}
               onDragLeave={(e) => handleDragLeave(e, column.stage.id)}
@@ -171,13 +174,14 @@ export const LeadBoard = ({
             >
               {/* Column Header */}
               <div className="mb-3 flex items-center justify-between px-1">
-                <div className="flex items-center gap-2 font-semibold text-sm">
+                <h3 className="flex items-center gap-2 font-semibold text-sm text-foreground">
                   <span
                     className="h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: column.stage.color }}
+                    aria-hidden="true"
                   />
                   <span>{column.stage.name}</span>
-                </div>
+                </h3>
                 <div className="flex items-center gap-1.5">
                   <span className="rounded-full bg-secondary px-2 py-0.5 font-bold text-xs text-secondary-foreground">
                     {column.count}
@@ -186,7 +190,7 @@ export const LeadBoard = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                      className="size-8 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={() => onAddLeadClick(column.stage.id)}
                       aria-label={t('leads.create_lead', 'Yangi lid qo‘shish')}
                     >

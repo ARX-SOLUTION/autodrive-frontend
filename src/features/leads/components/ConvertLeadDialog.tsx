@@ -169,8 +169,12 @@ export const ConvertLeadDialog = ({
                 <Warning className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
                 <p className="font-medium">{duplicateWarning}</p>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer pt-1 font-semibold select-none">
+              <label
+                htmlFor="force-convert-checkbox"
+                className="flex items-center gap-2 cursor-pointer pt-1 font-semibold select-none"
+              >
                 <input
+                  id="force-convert-checkbox"
                   type="checkbox"
                   checked={force}
                   onChange={(e) => setForce(e.target.checked)}

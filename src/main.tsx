@@ -12,63 +12,75 @@ const SERVICE_WORKER_UPDATE_INTERVAL_MS = 60 * 60 * 1000;
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 60 * 1000;
 
 if ('serviceWorker' in navigator) {
-  let hasController = Boolean(navigator.serviceWorker.controller);
-  let isReloading = false;
+  if (import.meta.env.PROD) {
+    let hasController = Boolean(navigator.serviceWorker.controller);
+    let isReloading = false;
 
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!hasController) {
-      hasController = true;
-      return;
-    }
-    if (isReloading) return;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hasController) {
+        hasController = true;
+        return;
+      }
+      if (isReloading) return;
 
-    isReloading = true;
-    window.location.reload();
-  });
+      isReloading = true;
+      window.location.reload();
+    });
 
-  window.addEventListener(
-    'load',
-    () => {
-      void navigator.serviceWorker
-        .register('/sw.js', { type: 'module' })
-        .then((registration) => {
-          let isUpdateCheckInFlight = false;
-          let lastUpdateCheckAt = Date.now();
+    window.addEventListener(
+      'load',
+      () => {
+        void navigator.serviceWorker
+          .register('/sw.js', { type: 'module' })
+          .then((registration) => {
+            let isUpdateCheckInFlight = false;
+            let lastUpdateCheckAt = Date.now();
 
-          const checkForUpdate = () => {
-            const now = Date.now();
-            if (
-              !navigator.onLine ||
-              isUpdateCheckInFlight ||
-              now - lastUpdateCheckAt < SERVICE_WORKER_UPDATE_THROTTLE_MS
-            ) {
-              return;
-            }
+            const checkForUpdate = () => {
+              const now = Date.now();
+              if (
+                !navigator.onLine ||
+                isUpdateCheckInFlight ||
+                now - lastUpdateCheckAt < SERVICE_WORKER_UPDATE_THROTTLE_MS
+              ) {
+                return;
+              }
 
-            isUpdateCheckInFlight = true;
-            lastUpdateCheckAt = now;
-            void registration
-              .update()
-              .catch((error: unknown) => {
-                console.error('[service-worker] Update check failed.', error);
-              })
-              .finally(() => {
-                isUpdateCheckInFlight = false;
-              });
-          };
+              isUpdateCheckInFlight = true;
+              lastUpdateCheckAt = now;
+              void registration
+                .update()
+                .catch((error: unknown) => {
+                  console.error('[service-worker] Update check failed.', error);
+                })
+                .finally(() => {
+                  isUpdateCheckInFlight = false;
+                });
+            };
 
-          window.setInterval(checkForUpdate, SERVICE_WORKER_UPDATE_INTERVAL_MS);
-          window.addEventListener('focus', checkForUpdate);
-          document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') checkForUpdate();
+            window.setInterval(
+              checkForUpdate,
+              SERVICE_WORKER_UPDATE_INTERVAL_MS,
+            );
+            window.addEventListener('focus', checkForUpdate);
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') checkForUpdate();
+            });
+          })
+          .catch((error: unknown) => {
+            console.error('[service-worker] Registration failed.', error);
           });
-        })
-        .catch((error: unknown) => {
-          console.error('[service-worker] Registration failed.', error);
-        });
-    },
-    { once: true },
-  );
+      },
+      { once: true },
+    );
+  } else {
+    // In dev mode, unregister any lingering service workers to avoid stale caching or MIME type errors
+    void navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        void registration.unregister();
+      }
+    });
+  }
 }
 
 const bootstrap = async () => {

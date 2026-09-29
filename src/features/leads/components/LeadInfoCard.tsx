@@ -17,6 +17,7 @@ import {
   CircleNotch,
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -234,25 +235,56 @@ export const LeadInfoCard = ({ lead, className }: LeadInfoCardProps) => {
             </span>
           </div>
 
-          {lead.referrerStudentName && (
+          {(lead.referrerStudentName || lead.referrerStudentId) && (
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">
-                {t('leads.referrer_student', 'Tavsiya qilgan o‘quvchi')}
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <User className="h-4 w-4 shrink-0" />
+                <span>
+                  {t('leads.referrer_student', 'Tavsiya qilgan o‘quvchi')}
+                </span>
               </span>
-              <span className="font-medium text-foreground">
-                {lead.referrerStudentName}
-              </span>
+              {lead.referrerStudentId ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    void navigate({
+                      to: '/students/$id',
+                      params: { id: lead.referrerStudentId! },
+                    })
+                  }
+                  className="inline-flex items-center gap-1 font-medium text-primary hover:underline transition-colors cursor-pointer"
+                >
+                  <span>
+                    {lead.referrerStudentName ||
+                      t('students.open_profile', 'Profilni ochish')}
+                  </span>
+                  <ArrowSquareOut className="h-3.5 w-3.5" />
+                </button>
+              ) : (
+                <span className="font-medium text-foreground">
+                  {lead.referrerStudentName}
+                </span>
+              )}
             </div>
           )}
 
-          {lead.referrerStaffName && (
+          {(lead.referrerStaffName || lead.referrerStaffId) && (
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">
-                {t('leads.referrer_staff', 'Tavsiya qilgan xodim')}
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <User className="h-4 w-4 shrink-0" />
+                <span>{t('leads.referrer_staff', 'Tavsiya qilgan xodim')}</span>
               </span>
-              <span className="font-medium text-foreground">
-                {lead.referrerStaffName}
-              </span>
+              <Badge variant="secondary" className="gap-1 font-medium">
+                {t(
+                  'leads.referrer_staff_badge',
+                  'Tavsiya qilgan xodim: {{name}}',
+                  {
+                    name:
+                      lead.referrerStaffName ||
+                      t('leads.referrer_staff', 'Xodim'),
+                  },
+                )}
+              </Badge>
             </div>
           )}
         </div>

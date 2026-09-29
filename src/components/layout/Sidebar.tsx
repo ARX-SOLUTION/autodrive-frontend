@@ -299,6 +299,8 @@ export const Sidebar = ({
     viewTrainingPrograms: useCan('viewTrainingPrograms'),
     viewTrainingEnrollments: useCan('viewTrainingEnrollments'),
     viewDrivingSessions: useCan('viewDrivingSessions'),
+    viewSchoolLearning: useCan('viewSchoolLearning'),
+    accessLeads: useCan('accessLeads'),
   };
   const canSee = (item: NavItem) => !item.cap || gate[item.cap] === true;
   const visibleItems = NAV_ITEMS.filter(canSee);

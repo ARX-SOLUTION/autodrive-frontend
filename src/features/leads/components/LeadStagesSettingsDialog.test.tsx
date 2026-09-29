@@ -83,6 +83,18 @@ vi.mock('../queries/leadsQueries', () => ({
     mutateAsync: mockMutateAsync,
     isPending: false,
   }),
+  useLeadSourcesQuery: () => ({
+    data: [],
+    isLoading: false,
+  }),
+  useCreateLeadSourceMutation: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+  useDeleteLeadSourceMutation: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
 }));
 
 vi.mock('sonner', () => ({

@@ -299,3 +299,34 @@ export const useUpdateLeadStagesMutation = () => {
     },
   });
 };
+
+export const leadSourcesQueryOptions = (enabled = true) =>
+  queryOptions({
+    queryKey: leadKeys.sources(),
+    queryFn: ({ signal }) => leadsApi.getLeadSources(signal),
+    enabled,
+    staleTime: 5 * 60_000,
+  });
+
+export const useLeadSourcesQuery = (options?: { enabled?: boolean }) =>
+  useQuery(leadSourcesQueryOptions(options?.enabled ?? true));
+
+export const useCreateLeadSourceMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => leadsApi.createLeadSource(name),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: leadKeys.sources() });
+    },
+  });
+};
+
+export const useDeleteLeadSourceMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => leadsApi.deleteLeadSource(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: leadKeys.sources() });
+    },
+  });
+};

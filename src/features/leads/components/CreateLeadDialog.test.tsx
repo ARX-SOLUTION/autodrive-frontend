@@ -21,12 +21,27 @@ vi.mock('../queries/leadsQueries', () => ({
       { id: 'stage-2', name: 'Aloqa', kind: 'WORK', color: '#eab308' },
     ],
   }),
+  useLeadSourcesQuery: () => ({
+    data: [],
+  }),
 }));
 
 vi.mock('@/features/branches/api/branchService', () => ({
   useBranches: () => ({
     data: [{ id: 'branch-1', name: 'Chilonzor' }],
   }),
+}));
+
+vi.mock('@/features/staff/api/teacherService', () => ({
+  useTeachers: () => ({ data: [] }),
+}));
+
+vi.mock('@/features/staff/api/operatorService', () => ({
+  useOperators: () => ({ data: [] }),
+}));
+
+vi.mock('@/features/students/api/studentService', () => ({
+  useStudents: () => ({ data: [] }),
 }));
 
 vi.mock('@/store/authStore', () => ({

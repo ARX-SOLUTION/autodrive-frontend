@@ -6,6 +6,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useStudents } from '@/features/students/api/studentService';
 import { useTeachers } from '@/features/staff/api/teacherService';
 import { useOperators } from '@/features/staff/api/operatorService';
+import { useLeadSourcesQuery } from '@/features/leads/queries/leadsQueries';
 import type { LeadSource } from '@/features/students/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -64,6 +65,8 @@ const ReferralFields = ({
   onReferrerChange,
 }: ReferralFieldsProps) => {
   const { t } = useTranslation();
+  const { data: allSources = [] } = useLeadSourcesQuery();
+  const customSources = allSources.filter((s) => !s.isSystem);
 
   const [referrerType, setReferrerType] = useState<ReferrerType>(
     referredByStudentId ? 'student' : referredByUserId ? 'staff' : 'none',
@@ -88,11 +91,40 @@ const ReferralFields = ({
     (s) => s.id === referredByStudentId,
   );
 
+  const matchedCustom = customSources.find((cs) => cs.name === leadSourceOther);
+  const selectValue =
+    leadSource === 'other' && matchedCustom
+      ? `custom:${matchedCustom.id}`
+      : leadSource || undefined;
+
+  const handleSourceChange = (v: string) => {
+    if (v.startsWith('custom:')) {
+      const customId = v.replace('custom:', '');
+      const found = customSources.find((cs) => cs.id === customId);
+      if (found) {
+        onLeadSourceChange('other');
+        onLeadSourceOtherChange(found.name);
+      }
+    } else if (v === 'other') {
+      onLeadSourceChange('other');
+      if (customSources.some((cs) => cs.name === leadSourceOther)) {
+        onLeadSourceOtherChange('');
+      }
+    } else {
+      onLeadSourceChange(v as LeadSource);
+      onLeadSourceOtherChange('');
+    }
+  };
+
   const handleReferrerTypeChange = (v: ReferrerType) => {
     setReferrerType(v);
     // Only one referrer id is ever kept — clear both on any type change.
     onReferrerChange({ studentId: undefined, userId: undefined });
   };
+
+  const isFreeformOther =
+    leadSource === 'other' &&
+    (!matchedCustom || leadSourceOther !== matchedCustom.name);
 
   return (
     <div className="space-y-4">
@@ -101,10 +133,7 @@ const ReferralFields = ({
           <label className="text-sm font-medium">
             {t('students.referral.lead_source_label')}
           </label>
-          <Select
-            value={leadSource || undefined}
-            onValueChange={(v) => onLeadSourceChange(v as LeadSource)}
-          >
+          <Select value={selectValue} onValueChange={handleSourceChange}>
             <SelectTrigger>
               <SelectValue
                 placeholder={t('students.referral.lead_source_placeholder')}
@@ -113,14 +142,29 @@ const ReferralFields = ({
             <SelectContent>
               {LEAD_SOURCES.map((src) => (
                 <SelectItem key={src} value={src}>
-                  {t(`students.lead_source.${src}`)}
+                  {t(
+                    `students.lead_source.${src}`,
+                    t(`leads.sources.${src}`, src),
+                  )}
                 </SelectItem>
               ))}
+              {customSources.length > 0 && (
+                <>
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-1.5">
+                    {t('leads.custom_sources', 'Kompaniya manbalari')}
+                  </div>
+                  {customSources.map((cs) => (
+                    <SelectItem key={cs.id} value={`custom:${cs.id}`}>
+                      {cs.name}
+                    </SelectItem>
+                  ))}
+                </>
+              )}
             </SelectContent>
           </Select>
         </div>
 
-        {leadSource === 'other' && (
+        {isFreeformOther && (
           <div className="space-y-2">
             <label className="text-sm font-medium">
               {t('students.lead_source.other')}
