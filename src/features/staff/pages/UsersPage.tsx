@@ -20,7 +20,6 @@ import { usePageSize } from '@/hooks/useListQueryState';
 import { extractErrorMessage } from '@/lib/errors';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -39,7 +38,6 @@ import { format } from 'date-fns';
 import {
   UserGear,
   Plus,
-  MagnifyingGlass,
   PencilSimple,
   Trash,
   Power,
@@ -49,13 +47,17 @@ import {
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DeletedBadge } from '@/components/ui/DeletedBadge';
+import { SearchWithHotkey } from '@/components/filter/SearchWithHotkey';
+import { ActiveFilterChips } from '@/components/filter/ActiveFilterChips';
+import { MobileFilterSheet } from '@/components/filter/MobileFilterSheet';
+import { useFilterBarState } from '@/hooks/useFilterBarState';
 import { cn } from '@/lib/utils';
 import type { User, UserRole } from '@/features/staff/types';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataGrid, createDataGridColumnHelper } from '@/shared/ui/data-grid';
 
 const formatDate = (d?: string) => {
-  if (!d) return '—';
+  if (!d) return '-';
   try {
     return format(new Date(d), 'dd.MM.yyyy');
   } catch {
@@ -105,7 +107,7 @@ const UserLifecycleButton = ({ user, onSelect }: UserLifecycleButtonProps) => {
       aria-label={label}
       title={label}
       className={cn(
-        'flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors',
+        'flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors',
         isAccountant && !user.is_active
           ? 'hover:bg-primary/10 hover:text-primary'
           : 'hover:bg-destructive/10 hover:text-destructive',
@@ -196,6 +198,55 @@ const UsersPage = () => {
   }, [currentPage, usersPage !== undefined, totalPages]);
 
   const { data: branches } = useBranches();
+  const selectedBranch = branchId
+    ? branches?.find((b) => b.id === branchId)
+    : undefined;
+  const branchLabel = selectedBranch?.name || branchId;
+
+  const clearAllFilters = () => {
+    setParams({
+      q: undefined,
+      role: undefined,
+      branch_id: undefined,
+      is_active: undefined,
+      page: undefined,
+    });
+  };
+
+  const { chips, activeCount, isMobileOpen, setIsMobileOpen, clearAll } =
+    useFilterBarState({
+      filters: [
+        Boolean(isOwner && userRole === 'accountant') && {
+          id: 'role',
+          label: t('users.detail.role'),
+          value: t('roles.accountant'),
+          onRemove: () => setUserRole('manager'),
+        },
+        Boolean(isCrossTenant && userRole !== 'accountant' && branchId) && {
+          id: 'branch',
+          label: t('common.branch'),
+          value: branchLabel || '',
+          onRemove: () => setBranchId(undefined),
+        },
+        Boolean(isActiveParam) && {
+          id: 'status',
+          label: t('common.status'),
+          value:
+            isActiveParam === 'true'
+              ? t('common.active')
+              : t('common.inactive'),
+          onRemove: () => setIsActive('all'),
+        },
+        Boolean(search.trim()) && {
+          id: 'search',
+          label: t('common.search'),
+          value: search,
+          onRemove: () => setSearch(''),
+        },
+      ],
+      onClearAll: clearAllFilters,
+    });
+
   const createMut = useCreateCompanyUser();
   const updateMut = useUpdateUser();
   const lifecycleMut = useChangeUserLifecycle();
@@ -365,7 +416,7 @@ const UsersPage = () => {
                   }}
                   aria-label={t('common.restore')}
                   title={t('common.restore')}
-                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 >
                   <ArrowCounterClockwise className="h-3.5 w-3.5" />
                 </button>
@@ -381,7 +432,7 @@ const UsersPage = () => {
                   }}
                   aria-label={t('common.edit')}
                   title={t('common.edit')}
-                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 >
                   <PencilSimple className="h-3.5 w-3.5" />
                 </button>
@@ -398,7 +449,7 @@ const UsersPage = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         eyebrow={usersTitle}
         title={usersTitle}
@@ -415,82 +466,198 @@ const UsersPage = () => {
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3">
-        {isOwner && (
-          <Select
-            value={userRole}
-            onValueChange={(value) => setUserRole(value as CompanyUserRole)}
-          >
-            <SelectTrigger
-              aria-label={t('users.detail.role')}
-              className="w-40 bg-secondary border-border"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="manager">{t('roles.manager')}</SelectItem>
-              <SelectItem value="accountant">
-                {t('roles.accountant')}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        )}
+      {/* Filter bar */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 flex-1 min-w-[200px] md:max-w-xs">
+            <SearchWithHotkey
+              placeholder={t('users.search_placeholder')}
+              aria-label={t('users.search_placeholder')}
+              value={search}
+              onChange={setSearch}
+              className="w-full"
+            />
+            <div className="md:hidden shrink-0">
+              <MobileFilterSheet
+                open={isMobileOpen}
+                onOpenChange={setIsMobileOpen}
+                activeCount={activeCount}
+                onClearAll={clearAll}
+              >
+                {isMobileOpen && (
+                  <div className="flex flex-col gap-4">
+                    {isOwner && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1.5 block">
+                          {t('users.detail.role')}
+                        </Label>
+                        <Select
+                          value={userRole}
+                          onValueChange={(value) =>
+                            setUserRole(value as CompanyUserRole)
+                          }
+                        >
+                          <SelectTrigger
+                            aria-label={t('users.detail.role')}
+                            className="w-full bg-secondary border-border h-11"
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="manager">
+                              {t('roles.manager')}
+                            </SelectItem>
+                            <SelectItem value="accountant">
+                              {t('roles.accountant')}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
 
-        {isCrossTenant && userRole !== 'accountant' && (
-          <Select
-            value={branchId || 'all'}
-            onValueChange={(v) => setBranchId(v === 'all' ? undefined : v)}
-          >
-            <SelectTrigger className="w-40 bg-secondary border-border">
-              <SelectValue placeholder={t('common.branch')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('common.all')}</SelectItem>
-              {(branches || []).map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+                    {isCrossTenant && userRole !== 'accountant' && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1.5 block">
+                          {t('common.branch')}
+                        </Label>
+                        <Select
+                          value={branchId || 'all'}
+                          onValueChange={(v) =>
+                            setBranchId(v === 'all' ? undefined : v)
+                          }
+                        >
+                          <SelectTrigger className="w-full bg-secondary border-border h-11">
+                            <SelectValue placeholder={t('common.branch')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">
+                              {t('common.all')}
+                            </SelectItem>
+                            {(branches || []).map((b) => (
+                              <SelectItem key={b.id} value={b.id}>
+                                {b.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
 
-        <Select value={isActiveParam ?? 'all'} onValueChange={setIsActive}>
-          <SelectTrigger className="w-36 bg-secondary border-border">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('common.all')}</SelectItem>
-            <SelectItem value="true">{t('common.active')}</SelectItem>
-            <SelectItem value="false">{t('common.inactive')}</SelectItem>
-          </SelectContent>
-        </Select>
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1.5 block">
+                        {t('common.status')}
+                      </Label>
+                      <Select
+                        value={isActiveParam ?? 'all'}
+                        onValueChange={setIsActive}
+                      >
+                        <SelectTrigger className="w-full bg-secondary border-border h-11">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t('common.all')}</SelectItem>
+                          <SelectItem value="true">
+                            {t('common.active')}
+                          </SelectItem>
+                          <SelectItem value="false">
+                            {t('common.inactive')}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-        <div className="relative flex-1 min-w-[200px]">
-          <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={t('users.search_placeholder')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-secondary border-border"
-          />
+                    {canViewDeleted && (
+                      <div className="flex items-center justify-between py-2">
+                        <Label htmlFor="users-show-deleted-mobile">
+                          {t('common.show_deleted')}
+                        </Label>
+                        <Switch
+                          id="users-show-deleted-mobile"
+                          checked={includeDeleted}
+                          onCheckedChange={(checked) => {
+                            setIncludeDeleted(checked);
+                            setParam('page', undefined);
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </MobileFilterSheet>
+            </div>
+          </div>
+
+          {/* Desktop controls */}
+          <div className="hidden md:flex flex-wrap items-center gap-3">
+            {isOwner && (
+              <Select
+                value={userRole}
+                onValueChange={(value) => setUserRole(value as CompanyUserRole)}
+              >
+                <SelectTrigger
+                  aria-label={t('users.detail.role')}
+                  className="w-40 bg-secondary border-border"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manager">{t('roles.manager')}</SelectItem>
+                  <SelectItem value="accountant">
+                    {t('roles.accountant')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
+            {isCrossTenant && userRole !== 'accountant' && (
+              <Select
+                value={branchId || 'all'}
+                onValueChange={(v) => setBranchId(v === 'all' ? undefined : v)}
+              >
+                <SelectTrigger className="w-40 bg-secondary border-border">
+                  <SelectValue placeholder={t('common.branch')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('common.all')}</SelectItem>
+                  {(branches || []).map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            <Select value={isActiveParam ?? 'all'} onValueChange={setIsActive}>
+              <SelectTrigger className="w-36 bg-secondary border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
+                <SelectItem value="true">{t('common.active')}</SelectItem>
+                <SelectItem value="false">{t('common.inactive')}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {canViewDeleted && (
+              <div className="flex items-center gap-2">
+                <Label htmlFor="users-show-deleted">
+                  {t('common.show_deleted')}
+                </Label>
+                <Switch
+                  id="users-show-deleted"
+                  checked={includeDeleted}
+                  onCheckedChange={(checked) => {
+                    setIncludeDeleted(checked);
+                    setParam('page', undefined);
+                  }}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
-        {canViewDeleted && (
-          <div className="flex items-center gap-2">
-            <Label htmlFor="users-show-deleted">
-              {t('common.show_deleted')}
-            </Label>
-            <Switch
-              id="users-show-deleted"
-              checked={includeDeleted}
-              onCheckedChange={(checked) => {
-                setIncludeDeleted(checked);
-                setParam('page', undefined);
-              }}
-            />
-          </div>
-        )}
+        <ActiveFilterChips chips={chips} onClearAll={clearAll} />
       </div>
 
       <div className="relative">
@@ -586,7 +753,7 @@ const UsersPage = () => {
                         }}
                         aria-label={t('common.restore')}
                         title={t('common.restore')}
-                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                       >
                         <ArrowCounterClockwise className="h-3.5 w-3.5" />
                       </button>
@@ -601,7 +768,7 @@ const UsersPage = () => {
                         }}
                         aria-label={t('common.edit')}
                         title={t('common.edit')}
-                        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                       >
                         <PencilSimple className="h-3.5 w-3.5" />
                       </button>

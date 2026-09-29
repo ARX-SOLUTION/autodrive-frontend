@@ -253,17 +253,20 @@ const PaymentsPage = () => {
 
   const clearAllFilters = () => {
     setParams({
+      branch_id: undefined,
       date_from: undefined,
       date_to: undefined,
       status: undefined,
       method: undefined,
       course_type: undefined,
       q: undefined,
+      page: undefined,
     });
+    setCurrentPage(1);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PaymentsPageHeader
         isCrossTenant={isCrossTenant}
         canRecordPayment={canRecordPayment}
@@ -313,7 +316,7 @@ const PaymentsPage = () => {
       {/* SECTION 4: Table */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground text-balance">
+          <h2 className="text-sm font-semibold text-foreground">
             {t('payments.payment_list')}
           </h2>
           <span className="text-xs text-muted-foreground">

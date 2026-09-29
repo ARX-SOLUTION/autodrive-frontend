@@ -530,11 +530,10 @@ const ExpensesPage = () => {
   const isFetching = attentionFilter ? isSweepFetching : isPageFetching;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         eyebrow={t('expenses.title')}
         title={t('expenses.title')}
-        description={t('expenses.subtitle')}
         icon={<Wallet className="h-3.5 w-3.5" aria-hidden="true" />}
         actions={
           <div className="flex flex-wrap gap-2">

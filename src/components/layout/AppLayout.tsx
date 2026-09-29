@@ -156,7 +156,7 @@ export const AppLayout = () => {
           className={cn(
             'relative flex flex-col',
             isMapWorkspace ? 'h-dvh overflow-hidden' : 'min-h-dvh',
-            sidebarExpanded ? 'lg:ml-64' : 'lg:ml-[72px]',
+            sidebarExpanded ? 'lg:ml-64' : 'lg:ml-[86px]',
           )}
         >
           <div className={cn(!isMapWorkspace && 'sticky top-0 z-30')}>
@@ -174,7 +174,7 @@ export const AppLayout = () => {
             tabIndex={-1}
             className={cn(
               'flex-1 outline-none',
-              isMapWorkspace ? 'relative min-h-0' : 'p-4 sm:p-6 md:p-8 lg:p-10',
+              isMapWorkspace ? 'relative min-h-0' : 'p-4 lg:p-6',
             )}
           >
             {isMapWorkspace && (

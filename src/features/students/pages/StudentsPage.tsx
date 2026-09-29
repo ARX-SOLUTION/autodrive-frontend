@@ -135,12 +135,36 @@ const StudentsPage = () => {
   const setHasGroup = (v: boolean | undefined) =>
     setParam('has_group', v === undefined ? undefined : String(v));
 
-  // Dashboard drill-through filters (autodrive-ls5) — no UI control, just
-  // consumed from the URL when navigated to with a status/debt context.
+  // Dashboard drill-through filters (autodrive-ls5) — consumed from URL
+  // when navigated to with status/debt context, now exposed via ActiveFilterChips.
   const status = (searchParams.get('status') as StudentStatus) || undefined;
+  const setStatus = (v: StudentStatus | undefined) => setParam('status', v);
+
   const hasDebt = searchParams.get('has_debt')
     ? searchParams.get('has_debt') === 'true'
     : undefined;
+  const setHasDebt = (v: boolean | undefined) =>
+    setParam('has_debt', v === undefined ? undefined : String(v));
+
+  const clearAllFilters = () => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('course_type');
+        next.delete('branch_id');
+        next.delete('operator_id');
+        next.delete('has_group');
+        next.delete('date_from');
+        next.delete('date_to');
+        next.delete('status');
+        next.delete('has_debt');
+        next.delete('q');
+        next.delete('page');
+        return next;
+      },
+      { replace: true },
+    );
+  };
   const referredByUserId = searchParams.get('referred_by_user_id') ?? undefined;
   const referredByStudentId =
     searchParams.get('referred_by_student_id') ?? undefined;
@@ -406,7 +430,7 @@ const StudentsPage = () => {
   const startIndex = (currentPage - 1) * pageSize;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <StudentsPageHeader
         totalStudents={totalStudents}
         isExporting={isExporting}
@@ -437,6 +461,11 @@ const StudentsPage = () => {
           setDateRange={setDateRange}
           search={search}
           setSearch={setSearch}
+          status={status}
+          setStatus={setStatus}
+          hasDebt={hasDebt}
+          setHasDebt={setHasDebt}
+          onClearAll={clearAllFilters}
           canViewDeleted={canViewDeleted}
           includeDeleted={includeDeleted}
           setIncludeDeleted={changeIncludeDeleted}

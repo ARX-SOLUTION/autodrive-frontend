@@ -115,11 +115,10 @@ const AuditLogPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         eyebrow={t('audit.title')}
         title={t('audit.title')}
-        description={t('audit.subtitle')}
         icon={<ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />}
       />
 
@@ -151,7 +150,7 @@ const AuditLogPage = () => {
       {/* Table */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground text-balance">
+          <h2 className="text-sm font-semibold text-foreground">
             {t('audit.entries_list')}
           </h2>
           <span className="text-xs text-muted-foreground">

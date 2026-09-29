@@ -56,6 +56,10 @@ const ROOT_PATHS: Record<string, AppRoutePath> = {
 const titleCase = (s: string) =>
   s.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
+const ID_SEGMENT =
+  /^(\d+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+const VIEW_LABEL_ROOTS = ['vehicle-inspections', 'vehicle-fuel'];
+
 export const Breadcrumbs = () => {
   const { pathname } = useLocation();
   const { t } = useTranslation();
@@ -63,14 +67,18 @@ export const Breadcrumbs = () => {
 
   if (segments.length < 2 || segments[0] === 'login') return null;
 
-  const crumbs = segments.map((segment, idx) => {
+  const crumbs = segments.flatMap((segment, idx) => {
     const href = idx === 0 ? ROOT_PATHS[segment] : undefined;
-    const key =
-      idx > 0 && ['vehicle-inspections', 'vehicle-fuel'].includes(segments[0])
-        ? 'common.view'
-        : SEGMENT_KEYS[segment];
-    return { segment, href, label: key ? t(key) : titleCase(segment) };
+    if (idx > 0 && VIEW_LABEL_ROOTS.includes(segments[0])) {
+      return [{ segment, href, label: t('common.view') }];
+    }
+    // Detail pages show the entity name in their own header.
+    if (ID_SEGMENT.test(segment)) return [];
+    const key = SEGMENT_KEYS[segment];
+    return [{ segment, href, label: key ? t(key) : titleCase(segment) }];
   });
+
+  if (crumbs.length < 2) return null;
 
   return (
     <nav

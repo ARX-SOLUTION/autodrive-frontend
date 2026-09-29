@@ -54,4 +54,32 @@ describe('PaymentsFilterBar payment methods', () => {
       screen.getByRole('button', { name: 'payments.payment_transfer' }),
     ).toHaveAttribute('data-value', 'perechisleniya');
   });
+
+  it('renders payment method active chip with correct payment_method label', () => {
+    render(
+      <PaymentsFilterBar
+        isCrossTenant={false}
+        branches={undefined}
+        branchId={undefined}
+        onBranchChange={vi.fn()}
+        paymentStatus="all"
+        onStatusChange={vi.fn()}
+        paymentMethod="naqd"
+        onMethodChange={vi.fn()}
+        courseType="all"
+        onCourseTypeChange={vi.fn()}
+        dateFrom={undefined}
+        dateTo={undefined}
+        onDateRangeChange={vi.fn()}
+        search=""
+        onSearchChange={vi.fn()}
+        hasAnyFilter={true}
+        onClearAll={vi.fn()}
+      />,
+    );
+
+    const chip = screen.getByTestId('active-filter-chip-method');
+    expect(chip.textContent).toContain('payments.payment_method');
+    expect(chip.textContent).toContain('payments.payment_naqd');
+  });
 });

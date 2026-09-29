@@ -23,6 +23,7 @@ import {
   UserPlus,
   UsersThree,
   Wallet,
+  GasPump,
 } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,10 @@ import { FinanceSummarySection } from '@/features/dashboard/components/FinanceSu
 
 const RevenueTrendChart = lazy(
   () => import('@/features/dashboard/components/RevenueTrendChart'),
+);
+
+const FleetWorkloadOperationsCenter = lazy(
+  () => import('@/features/dashboard/components/FleetWorkloadOperationsCenter'),
 );
 
 const UZ_TIMEZONE = 'Asia/Tashkent';
@@ -708,7 +713,7 @@ const CompanyRevenueDashboard = () => {
     'revenue' | 'active_students' | 'outstanding_debt' | 'collection_rate'
   >('revenue');
   const [detailView, setDetailView] = useState<
-    'financial' | 'academic' | 'staff'
+    'financial' | 'academic' | 'staff' | 'operations'
   >('financial');
   const { data: branches = [] } = useBranches(canViewAllBranches);
   const query = useMemo(
@@ -885,6 +890,16 @@ const CompanyRevenueDashboard = () => {
         'O‘qituvchi yuklamasi va ishlarning o‘z vaqtida bajarilishi.',
       ),
       icon: UsersThree,
+    },
+    {
+      key: 'operations',
+      label: t('operations.title', 'Instruktorlar va Avtopark Nazorati'),
+      buttonLabel: t('operations.tab_operations', 'Operatsion Radar'),
+      description: t(
+        'operations.subtitle',
+        'Filiallar kesimida amaliyot soatlari, toliqish xavfi va yoqilg‘i sarfi me’yorlari monitoringi.',
+      ),
+      icon: GasPump,
     },
   ];
   const activeDetailView =
@@ -1457,7 +1472,7 @@ const CompanyRevenueDashboard = () => {
                 'dashboard.v2.analysis_tabs_label',
                 'Tahlil yo‘nalishi',
               )}
-              className="grid w-full grid-cols-3 gap-1 rounded-lg border border-border bg-muted/50 p-1 lg:w-auto lg:min-w-[520px]"
+              className="grid w-full grid-cols-2 gap-1 rounded-lg border border-border bg-muted/50 p-1 sm:grid-cols-4 lg:w-auto lg:min-w-[620px]"
             >
               {detailViews.map((view) => (
                 <button
@@ -1801,6 +1816,19 @@ const CompanyRevenueDashboard = () => {
                   </div>
                 )}
               </>
+            )}
+
+            {detailView === 'operations' && (
+              <Suspense
+                fallback={
+                  <div className="space-y-4 pt-2">
+                    <Skeleton className="h-32 w-full rounded-lg" />
+                    <Skeleton className="h-64 w-full rounded-lg" />
+                  </div>
+                }
+              >
+                <FleetWorkloadOperationsCenter />
+              </Suspense>
             )}
 
             {detailView === 'staff' && (

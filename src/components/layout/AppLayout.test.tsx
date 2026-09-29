@@ -82,7 +82,7 @@ describe('AppLayout mobile sidebar auto-close on navigation', () => {
     fireEvent.click(screen.getByText('toggle-desktop'));
 
     expect(screen.getByTestId('desktop-expanded')).toHaveTextContent('false');
-    expect(contentShell.className).toContain('lg:ml-[72px]');
+    expect(contentShell.className).toContain('lg:ml-[86px]');
     expect(localStorage.getItem('autodrive-sidebar-expanded')).toBe('false');
   });
 
@@ -96,7 +96,7 @@ describe('AppLayout mobile sidebar auto-close on navigation', () => {
 
     expect(screen.getByTestId('desktop-expanded')).toHaveTextContent('false');
     expect(screen.getByRole('main').parentElement!.className).toContain(
-      'lg:ml-[72px]',
+      'lg:ml-[86px]',
     );
   });
 });

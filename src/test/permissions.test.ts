@@ -58,6 +58,7 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
 
   it('operator handles day-to-day but cannot add staff', () => {
     expect(roleCan('operator', 'recordPayment')).toBe(true);
+    expect(roleCan('operator', 'accessLeads')).toBe(true);
     expect(roleCan('operator', 'manageGroups')).toBe(false);
     expect(roleCan('operator', 'manageStaff')).toBe(false);
     expect(roleCan('operator', 'manageBranches')).toBe(false);
@@ -67,12 +68,14 @@ describe('permissions matrix (bd autodrive-6ef.2)', () => {
     expect(roleCan('teacher', 'takeAttendance')).toBe(true);
     expect(roleCan('teacher', 'viewDashboard')).toBe(true);
     expect(roleCan('teacher', 'viewOwnSettlements')).toBe(true);
+    expect(roleCan('teacher', 'accessLeads')).toBe(false);
     expect(roleCan('teacher', 'recordPayment')).toBe(false);
     expect(roleCan('teacher', 'manageStudents')).toBe(false);
   });
 
   it('accountant has no operational capability except T8B dashboard', () => {
     expect(roleCan('accountant', 'accessOperations')).toBe(false);
+    expect(roleCan('accountant', 'accessLeads')).toBe(false);
     expect(roleCan('accountant', 'viewDashboard')).toBe(true);
     expect(roleCan('accountant', 'recordPayment')).toBe(false);
   });

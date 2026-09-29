@@ -21,6 +21,7 @@ const ROUTE_PHOSPHOR_ICONS = [
   'ClipboardText',
   'CreditCard',
   'Exam',
+  'FunnelSimple',
   'GraduationCap',
   'Headphones',
   'House',

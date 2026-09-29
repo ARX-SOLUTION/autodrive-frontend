@@ -5,11 +5,18 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuthStore } from '@/store/authStore';
+import { useUrlParams } from '@/hooks/useUrlParams';
+import { useFilterBarState } from '@/hooks/useFilterBarState';
+import { parsePage } from '@/lib/listQuery';
+import { ActiveFilterChips } from '@/components/filter/ActiveFilterChips';
 import { useBranches } from '@/features/branches/api/branchService';
 import { useVehiclesPage } from '@/features/vehicles/api/vehicleService';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { PageHeader } from '@/components/layout/PageHeader';
 import PaginationControls from '@/components/ui/PaginationControls';
 import {
   Form,
@@ -19,6 +26,7 @@ import {
   FormControl,
   FormMessage,
 } from '@/components/ui/form';
+import { ClipboardText } from '@phosphor-icons/react';
 import {
   useInspections,
   useInspectionSummary,
@@ -38,15 +46,68 @@ const schema = z.object({
   notes: z.string(),
 });
 const selectClass =
-  'h-10 w-full rounded-md border border-input bg-background px-3';
+  'h-11 md:h-10 w-full rounded-md border border-border bg-secondary px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
 export default function InspectionsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const [branchId, setBranchId] = useState('');
   const branches = useBranches(user?.role === 'owner');
-  const [page, setPage] = useState(1);
-  const [status, setStatus] = useState('');
+  const { searchParams, setParams } = useUrlParams();
+  const branchId = searchParams.get('branch_id') ?? '';
+  const status = searchParams.get('status') ?? '';
+  const page = parsePage(searchParams.get('page'));
+
+  const handleBranchChange = (nextBranchId: string) => {
+    setParams({
+      branch_id: nextBranchId || undefined,
+      page: undefined,
+    });
+  };
+
+  const handleStatusChange = (nextStatus: string) => {
+    setParams({
+      status: nextStatus || undefined,
+      page: undefined,
+    });
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setParams({
+      page: nextPage > 1 ? String(nextPage) : undefined,
+    });
+  };
+
+  const clearFilters = () => {
+    setParams({
+      branch_id: undefined,
+      status: undefined,
+      page: undefined,
+    });
+  };
+
+  const selectedBranch = branchId
+    ? branches.data?.find((b) => b.id === branchId)
+    : undefined;
+  const branchLabel = selectedBranch?.name || branchId;
+
+  const { chips, clearAll } = useFilterBarState({
+    filters: [
+      Boolean(user?.role === 'owner' && branchId) && {
+        id: 'branch',
+        label: t('common.branch'),
+        value: branchLabel,
+        onRemove: () => handleBranchChange(''),
+      },
+      Boolean(status) && {
+        id: 'status',
+        label: t('common.status'),
+        value: t(`inspections.${status}`, { defaultValue: status }),
+        onRemove: () => handleStatusChange(''),
+      },
+    ],
+    onClearAll: clearFilters,
+  });
+
   const [create, setCreate] = useState(false);
   const [vehicleSearch, setVehicleSearch] = useState('');
   const [vehiclePage, setVehiclePage] = useState(1);
@@ -86,38 +147,86 @@ export default function InspectionsPage() {
   const mutation = useInspectionMutation(createInspection);
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{t('inspections.title')}</h1>
-        {user?.role === 'teacher' && (
-          <Button onClick={() => setCreate((v) => !v)}>
-            {t('inspections.create')}
-          </Button>
-        )}
+      <PageHeader
+        eyebrow={t('vehicles.title')}
+        title={t('inspections.title')}
+        icon={<ClipboardText className="h-3.5 w-3.5" aria-hidden="true" />}
+        actions={
+          user?.role === 'teacher' ? (
+            <Button
+              aria-expanded={create}
+              aria-controls="inspection-create-form"
+              onClick={() => setCreate((v) => !v)}
+            >
+              {t(create ? 'common.cancel' : 'inspections.create')}
+            </Button>
+          ) : undefined
+        }
+      />
+      <div className="space-y-2">
+        <div className="glass-card grid gap-3 p-4 sm:grid-cols-2">
+          {user?.role === 'owner' && (
+            <select
+              className={selectClass}
+              aria-label={t('common.branch')}
+              value={branchId}
+              onChange={(e) => handleBranchChange(e.target.value)}
+            >
+              <option value="">{t('common.all_branches')}</option>
+              {branches.data?.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
+              ))}
+            </select>
+          )}
+          <select
+            className={selectClass}
+            aria-label={t('common.status')}
+            value={status}
+            onChange={(e) => handleStatusChange(e.target.value)}
+          >
+            <option value="">{t('common.all')}</option>
+            {['draft', 'submitted', 'approved', 'rejected'].map((s) => (
+              <option key={s} value={s}>
+                {t(`inspections.${s}`)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <ActiveFilterChips chips={chips} onClearAll={clearAll} />
       </div>
-      {user?.role === 'owner' && (
-        <select
-          className={selectClass}
-          aria-label={t('common.branch')}
-          value={branchId}
-          onChange={(e) => {
-            setBranchId(e.target.value);
-            setPage(1);
-          }}
+      {summary.isLoading && (
+        <div
+          className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+          aria-label={t('common.loading')}
         >
-          <option value="">{t('common.all_branches')}</option>
-          {branches.data?.map((branch) => (
-            <option key={branch.id} value={branch.id}>
-              {branch.name}
-            </option>
+          {Array.from({ length: 4 }, (_, index) => (
+            <Skeleton key={index} className="h-24 rounded-lg" />
           ))}
-        </select>
+        </div>
+      )}
+      {summary.isError && (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4"
+        >
+          <p className="text-sm text-destructive">{t('common.error')}</p>
+          <Button variant="outline" onClick={() => void summary.refetch()}>
+            {t('common.retry')}
+          </Button>
+        </div>
       )}
       {summary.data && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {Object.entries(summary.data).map(([key, value]) => (
             <div className="glass-card p-4" key={key}>
-              <p>{t(`inspections.${key}`)}</p>
-              <strong className="text-2xl">{value}</strong>
+              <p className="text-sm text-muted-foreground">
+                {t(`inspections.${key}`)}
+              </p>
+              <strong className="mt-1 block text-2xl tabular-nums">
+                {value}
+              </strong>
             </div>
           ))}
         </div>
@@ -125,6 +234,7 @@ export default function InspectionsPage() {
       {create && user?.role === 'teacher' && (
         <Form {...form}>
           <form
+            id="inspection-create-form"
             className="glass-card space-y-4 p-4"
             onSubmit={form.handleSubmit(async (values) => {
               try {
@@ -274,57 +384,76 @@ export default function InspectionsPage() {
           </form>
         </Form>
       )}
-      <select
-        className={selectClass}
-        aria-label={t('common.status')}
-        value={status}
-        onChange={(e) => {
-          setStatus(e.target.value);
-          setPage(1);
-        }}
-      >
-        <option value="">{t('common.all')}</option>
-        {['draft', 'submitted', 'approved', 'rejected'].map((s) => (
-          <option key={s} value={s}>
-            {t(`inspections.${s}`)}
-          </option>
-        ))}
-      </select>
       {rows.isLoading ? (
-        <Skeleton className="h-40" />
+        <div className="space-y-3" aria-label={t('common.loading')}>
+          {Array.from({ length: 3 }, (_, index) => (
+            <Skeleton key={index} className="h-24 rounded-lg" />
+          ))}
+        </div>
       ) : rows.isError ? (
-        <Button onClick={() => void rows.refetch()}>{t('common.retry')}</Button>
+        <EmptyState
+          title={t('common.error')}
+          description={t('inspections.load_error_desc')}
+          action={{
+            label: t('common.retry'),
+            onClick: () => void rows.refetch(),
+          }}
+        />
       ) : rows.data?.data.length ? (
         <div className="grid gap-3">
           {rows.data.data.map((row) => (
             <Link
-              className="glass-card block space-y-1 p-4"
+              className="glass-card block space-y-2 rounded-lg p-4 transition-colors hover:border-primary/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               key={row.id}
               to="/vehicle-inspections/$id"
               params={{ id: row.id }}
             >
-              <strong>
-                {row.vehicle.plate_number} · {t(`inspections.${row.kind}`)}
-              </strong>
-              <p>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <strong className="text-foreground">
+                  {row.vehicle.plate_number} · {t(`inspections.${row.kind}`)}
+                </strong>
+                <Badge variant="outline">
+                  {t(`inspections.${row.status}`)}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
                 {row.author.name} → {row.receiver.name}
               </p>
-              <p>
-                {t(`inspections.${row.status}`)} · {row.odometer_km} km ·{' '}
-                {new Date(row.created_at).toLocaleString()}
+              <p className="text-sm tabular-nums text-muted-foreground">
+                {row.odometer_km.toLocaleString(i18n.language)} km ·{' '}
+                <time dateTime={row.created_at}>
+                  {new Intl.DateTimeFormat(i18n.language, {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                    timeZone: 'Asia/Tashkent',
+                  }).format(new Date(row.created_at))}
+                </time>
               </p>
             </Link>
           ))}
         </div>
       ) : (
-        <p>{t('inspections.empty')}</p>
+        <EmptyState
+          title={t('inspections.empty')}
+          description={t(
+            status ? 'inspections.no_results_desc' : 'inspections.empty_desc',
+          )}
+          action={
+            status || branchId
+              ? {
+                  label: t('common.clear'),
+                  onClick: clearFilters,
+                }
+              : undefined
+          }
+        />
       )}
       <PaginationControls
         currentPage={page}
         totalPages={rows.data?.meta.totalPages ?? 1}
         totalItems={rows.data?.meta.total ?? 0}
         pageSize={20}
-        onPageChange={setPage}
+        onPageChange={handlePageChange}
       />
     </div>
   );

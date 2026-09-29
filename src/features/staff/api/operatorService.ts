@@ -40,11 +40,20 @@ export const useOperatorsPage = (
   page: number,
   limit: number,
   search?: string,
+  branchId?: string,
+  isActive?: boolean,
 ) => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const userBranchId = useAuthStore((s) => s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
+  const effectiveBranchId = isCrossTenant ? branchId : userBranchId;
   return useQuery<ListResponse<User>>({
-    queryKey: operatorKeys.page({ branchId, page, limit, search }),
+    queryKey: operatorKeys.page({
+      branchId: effectiveBranchId,
+      page,
+      limit,
+      search,
+      isActive,
+    }),
     queryFn: async ({ signal }) => {
       const { data } = await axiosInstance.get<unknown>('/users', {
         params: {
@@ -52,12 +61,14 @@ export const useOperatorsPage = (
           page,
           limit,
           search: search || undefined,
+          branchId: effectiveBranchId || undefined,
+          isActive: isActive !== undefined ? isActive : undefined,
         } satisfies UsersQuery,
         signal,
       });
       return parseListResponse<User>(data, page, limit);
     },
-    enabled: !!branchId || isCrossTenant,
+    enabled: !!effectiveBranchId || isCrossTenant,
   });
 };
 

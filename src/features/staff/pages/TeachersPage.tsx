@@ -4,11 +4,16 @@ import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useSearchSortFilters } from '@/hooks/useSearchSortFilters';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useUrlParams } from '@/hooks/useUrlParams';
+import { useFilterBarState } from '@/hooks/useFilterBarState';
+import { useIsCrossTenant } from '@/hooks/useCan';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { SearchWithHotkey } from '@/components/filter/SearchWithHotkey';
+import { ActiveFilterChips } from '@/components/filter/ActiveFilterChips';
+import { MobileFilterSheet } from '@/components/filter/MobileFilterSheet';
 import {
   Plus,
-  MagnifyingGlass,
   PencilSimple,
   Trash,
   UsersThree,
@@ -45,6 +50,13 @@ const TeachersPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { pageSize, setPageSize } = usePageSize();
+  const isCrossTenant = useIsCrossTenant();
+  const { searchParams, setParams } = useUrlParams();
+  const branchId = searchParams.get('branch_id') ?? '';
+  const status = searchParams.get('status') ?? '';
+  const isActive =
+    status === 'active' ? true : status === 'inactive' ? false : undefined;
+
   // MagnifyingGlass/sort/page live in the URL so reload/back/share preserve them
   // (autodrive-b85.3 -- mirrors admin-panel's useSearchSortFilters).
   const {
@@ -61,17 +73,80 @@ const TeachersPage = () => {
   const [editItem, setEditItem] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  const handleBranchChange = (nextBranchId: string) => {
+    setParams({
+      branch_id: nextBranchId || undefined,
+      page: undefined,
+    });
+  };
+
+  const handleStatusChange = (nextStatus: string) => {
+    setParams({
+      status: nextStatus || undefined,
+      page: undefined,
+    });
+  };
+
+  const clearAllFilters = () => {
+    setParams({
+      q: undefined,
+      branch_id: undefined,
+      status: undefined,
+      page: undefined,
+    });
+  };
+
+  const teacherArgs: [number, number, string?, string?, boolean?] = [
+    currentPage,
+    pageSize,
+    debouncedSearch,
+  ];
+  if (branchId || isActive !== undefined) {
+    teacherArgs.push(branchId || undefined, isActive);
+  }
+
   const {
     data: teachersPage,
     isLoading,
     isFetching,
     isError,
     refetch,
-  } = useTeachersPage(currentPage, pageSize, debouncedSearch);
+  } = useTeachersPage(...teacherArgs);
   const teachers = useMemo(() => teachersPage?.data ?? [], [teachersPage]);
   const total = teachersPage?.meta.total ?? 0;
   const totalPages = Math.max(1, teachersPage?.meta.totalPages ?? 1);
   const { data: branches } = useBranches();
+
+  const selectedBranch = branchId
+    ? branches?.find((b) => b.id === branchId)
+    : undefined;
+  const branchLabel = selectedBranch?.name || branchId;
+
+  const { chips, activeCount, isMobileOpen, setIsMobileOpen, clearAll } =
+    useFilterBarState({
+      filters: [
+        Boolean(isCrossTenant && branchId) && {
+          id: 'branch',
+          label: t('common.branch'),
+          value: branchLabel,
+          onRemove: () => handleBranchChange(''),
+        },
+        Boolean(status) && {
+          id: 'status',
+          label: t('common.status'),
+          value:
+            status === 'active' ? t('common.active') : t('common.inactive'),
+          onRemove: () => handleStatusChange(''),
+        },
+        Boolean(search.trim()) && {
+          id: 'search',
+          label: t('common.search'),
+          value: search,
+          onRemove: () => setSearch(''),
+        },
+      ],
+      onClearAll: clearAllFilters,
+    });
   const createMut = useCreateTeacher();
   const updateMut = useUpdateTeacher();
   const deleteMut = useDeleteTeacher();
@@ -261,7 +336,7 @@ const TeachersPage = () => {
                 }}
                 aria-label={t('common.edit')}
                 title={t('common.edit')}
-                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 <PencilSimple className="h-3.5 w-3.5" />
               </button>
@@ -273,7 +348,7 @@ const TeachersPage = () => {
                 }}
                 aria-label={t('common.delete')}
                 title={t('common.delete')}
-                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
               >
                 <Trash className="h-3.5 w-3.5" />
               </button>
@@ -285,7 +360,7 @@ const TeachersPage = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         eyebrow={teachersTitle}
         title={teachersTitle}
@@ -297,14 +372,101 @@ const TeachersPage = () => {
           </Button>
         }
       />
-      <div className="relative max-w-sm">
-        <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder={t('teachers.search_placeholder')}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 bg-secondary border-border"
-        />
+      {/* Filter bar */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 flex-1 min-w-[200px] md:max-w-xs">
+            <SearchWithHotkey
+              placeholder={t('teachers.search_placeholder')}
+              aria-label={t('teachers.search_placeholder')}
+              value={search}
+              onChange={setSearch}
+              className="w-full"
+            />
+            <div className="md:hidden shrink-0">
+              <MobileFilterSheet
+                open={isMobileOpen}
+                onOpenChange={setIsMobileOpen}
+                activeCount={activeCount}
+                onClearAll={clearAll}
+              >
+                {isMobileOpen && (
+                  <div className="flex flex-col gap-4">
+                    {isCrossTenant && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1.5 block">
+                          {t('common.branch')}
+                        </Label>
+                        <select
+                          className="h-11 w-full rounded-md border border-border bg-secondary px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          aria-label={t('common.branch')}
+                          value={branchId}
+                          onChange={(e) => handleBranchChange(e.target.value)}
+                        >
+                          <option value="">{t('common.all_branches')}</option>
+                          {branches?.map((b) => (
+                            <option key={b.id} value={b.id}>
+                              {b.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1.5 block">
+                        {t('common.status')}
+                      </Label>
+                      <select
+                        className="h-11 w-full rounded-md border border-border bg-secondary px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        aria-label={t('common.status')}
+                        value={status}
+                        onChange={(e) => handleStatusChange(e.target.value)}
+                      >
+                        <option value="">{t('common.all')}</option>
+                        <option value="active">{t('common.active')}</option>
+                        <option value="inactive">{t('common.inactive')}</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </MobileFilterSheet>
+            </div>
+          </div>
+
+          {/* Desktop controls */}
+          <div className="hidden md:flex items-center gap-3">
+            {isCrossTenant && (
+              <div className="w-44">
+                <select
+                  className="h-10 w-full rounded-md border border-border bg-secondary px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label={t('common.branch')}
+                  value={branchId}
+                  onChange={(e) => handleBranchChange(e.target.value)}
+                >
+                  <option value="">{t('common.all_branches')}</option>
+                  {branches?.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="w-36">
+              <select
+                className="h-10 w-full rounded-md border border-border bg-secondary px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                aria-label={t('common.status')}
+                value={status}
+                onChange={(e) => handleStatusChange(e.target.value)}
+              >
+                <option value="">{t('common.all')}</option>
+                <option value="active">{t('common.active')}</option>
+                <option value="inactive">{t('common.inactive')}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <ActiveFilterChips chips={chips} onClearAll={clearAll} />
       </div>
       <div className="relative">
         {isFetching && !isLoading && (
@@ -409,7 +571,7 @@ const TeachersPage = () => {
                       }}
                       aria-label={t('common.edit')}
                       title={t('common.edit')}
-                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                       <PencilSimple className="h-3.5 w-3.5" />
                     </button>
@@ -421,7 +583,7 @@ const TeachersPage = () => {
                       }}
                       aria-label={t('common.delete')}
                       title={t('common.delete')}
-                      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                     >
                       <Trash className="h-3.5 w-3.5" />
                     </button>

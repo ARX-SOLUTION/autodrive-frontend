@@ -48,7 +48,8 @@ export type Capability =
   | 'viewOwnSettlements'
   | 'viewDeleted'
   | 'viewSchoolLearning'
-  | 'manageSchoolLearning';
+  | 'manageSchoolLearning'
+  | 'accessLeads';
 
 // Role groups — named so the matrix reads as intent, not a wall of literals.
 const OWNERS: readonly UserRole[] = ['dev', 'owner'];
@@ -128,6 +129,7 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   viewSchoolLearning: OPERATIONAL_ROLES,
   manageSchoolLearning: ['dev', 'owner', 'manager', 'teacher'],
   viewDeleted: OWNERS,
+  accessLeads: OPS,
 };
 
 /** Does this role have the capability? An absent/unknown role has none. */

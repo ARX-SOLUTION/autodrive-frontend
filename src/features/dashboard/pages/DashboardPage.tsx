@@ -523,7 +523,7 @@ const LegacyMainDashboard = () => {
                     <div className="text-2xl font-bold tracking-tight tabular-nums">
                       {formatNumber(totalCourseMix)}
                     </div>
-                    <div className="mt-0.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    <div className="mt-0.5 text-xs font-medium text-muted-foreground">
                       {t('dashboard.donut_students')}
                     </div>
                   </div>

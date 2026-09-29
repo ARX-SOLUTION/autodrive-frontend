@@ -26,6 +26,12 @@ import {
   type CalendarDateLocale,
 } from '@/lib/calendarDate';
 import { tashkentTodayCalendarDate } from '@/lib/tashkentDate';
+import {
+  DATE_PRESETS,
+  getDatePresetRange,
+  getActiveDatePreset,
+  type DatePresetKey,
+} from '@/lib/datePresets';
 
 export interface DateRangePickerProps {
   from?: string;
@@ -35,6 +41,8 @@ export interface DateRangePickerProps {
   'aria-label'?: string;
   className?: string;
   disabled?: boolean;
+  showPresets?: boolean;
+  presets?: boolean;
 }
 
 const DAY_MS = 86_400_000;
@@ -92,7 +100,10 @@ export const DateRangePicker = ({
   'aria-label': ariaLabel,
   className,
   disabled,
+  showPresets,
+  presets,
 }: DateRangePickerProps) => {
+  const shouldShowPresets = showPresets ?? presets ?? false;
   const { t, i18n } = useTranslation();
   const lang = (i18n.resolvedLanguage ?? i18n.language ?? 'uz').slice(0, 2);
   const locale: CalendarDateLocale =
@@ -179,6 +190,14 @@ export const DateRangePicker = ({
     setAnchor(undefined);
   };
 
+  const handlePresetSelect = (presetKey: DatePresetKey) => {
+    const range = getDatePresetRange(presetKey);
+    onChange(range.from, range.to);
+    setDraft(undefined);
+    setAnchor(undefined);
+    setOpen(false);
+  };
+
   const disabledDays = maxDate ? [{ after: maxDate }] : [];
 
   return (
@@ -196,7 +215,7 @@ export const DateRangePicker = ({
               hasCommitted ? undefined : (ariaLabel ?? t('daterange.open'))
             }
             className={cn(
-              'inline-flex h-9 min-w-[11rem] items-center gap-2 rounded-md border border-border bg-secondary px-3 text-sm',
+              'inline-flex h-10 min-w-[11rem] items-center gap-2 rounded-md border border-border bg-secondary px-3 text-sm',
               'hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               'disabled:pointer-events-none disabled:opacity-50',
               hasCommitted ? 'pr-8 text-foreground' : 'text-muted-foreground',
@@ -207,23 +226,51 @@ export const DateRangePicker = ({
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="range"
-            numberOfMonths={months}
-            selected={selected}
-            onSelect={handleSelect}
-            defaultMonth={
-              committedFrom ??
-              parseCalendarDate(tashkentTodayCalendarDate()) ??
-              maxDate
-            }
-            disabled={disabledDays}
-            autoFocus
-            labels={{
-              labelPrevious: () => t('datepicker.previous_month'),
-              labelNext: () => t('datepicker.next_month'),
-            }}
-          />
+          <div className="flex flex-col sm:flex-row">
+            {shouldShowPresets ? (
+              <div
+                className="flex border-b border-border p-2 gap-1 overflow-x-auto sm:w-32 sm:flex-col sm:border-b-0 sm:border-r sm:overflow-x-visible"
+                data-testid="date-range-presets"
+              >
+                {DATE_PRESETS.map((preset) => {
+                  const isActive = getActiveDatePreset(from, to) === preset.key;
+                  return (
+                    <button
+                      key={preset.key}
+                      type="button"
+                      onClick={() => handlePresetSelect(preset.key)}
+                      className={cn(
+                        'min-h-[44px] sm:min-h-0 sm:h-8 rounded-md px-2.5 py-1.5 text-xs text-left whitespace-nowrap transition-colors flex items-center',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        isActive
+                          ? 'bg-accent font-medium text-accent-foreground'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                      )}
+                    >
+                      {t(preset.labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+            <Calendar
+              mode="range"
+              numberOfMonths={months}
+              selected={selected}
+              onSelect={handleSelect}
+              defaultMonth={
+                committedFrom ??
+                parseCalendarDate(tashkentTodayCalendarDate()) ??
+                maxDate
+              }
+              disabled={disabledDays}
+              autoFocus
+              labels={{
+                labelPrevious: () => t('datepicker.previous_month'),
+                labelNext: () => t('datepicker.next_month'),
+              }}
+            />
+          </div>
         </PopoverContent>
       </Popover>
       {hasCommitted && !disabled ? (
@@ -231,7 +278,7 @@ export const DateRangePicker = ({
           type="button"
           aria-label={t('daterange.clear')}
           onClick={handleClear}
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-sm p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="absolute right-1 top-1/2 -translate-y-1/2 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>

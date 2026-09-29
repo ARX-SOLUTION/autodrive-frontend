@@ -31,9 +31,9 @@ export const EmptyState = ({
   description,
   action,
 }: EmptyStateProps) => (
-  <div className="flex flex-col items-center justify-center py-12 text-center">
-    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 p-3 text-primary">
-      <Icon className="h-6 w-6" />
+  <div className="flex flex-col items-center justify-center py-8 text-center">
+    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      <Icon className="h-5 w-5" />
     </div>
     <h3 className="font-heading text-sm font-semibold text-foreground text-balance">
       {title}

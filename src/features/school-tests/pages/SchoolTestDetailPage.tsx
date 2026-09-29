@@ -79,7 +79,7 @@ const SchoolTestDetailPage = () => {
   const canAssign = canManage && template.status === 'published';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Button
         variant="ghost"
         size="sm"

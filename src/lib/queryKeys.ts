@@ -54,6 +54,13 @@ export const drivingSessionKeys = {
 export const courseKeys = baseKeys('courses');
 export const lessonKeys = baseKeys('lessons');
 export const auditLogKeys = baseKeys('audit-logs');
+export const leadKeys = {
+  ...baseKeys('leads'),
+  board: (filters: Filters = {}) => ['leads', 'board', filters] as const,
+  metrics: (filters: Filters = {}) => ['leads', 'metrics', filters] as const,
+  activities: (leadId: string) => ['leads', 'activities', leadId] as const,
+  stages: () => ['leads', 'stages'] as const,
+};
 
 export const groupKeys = {
   ...baseKeys('groups'),

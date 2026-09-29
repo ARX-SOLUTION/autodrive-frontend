@@ -25,6 +25,8 @@ export const ROUTE_CAPABILITIES = {
   '/driving-sessions/$id': 'viewDrivingSessions',
   '/students': 'accessOperations',
   '/students/$id': 'accessOperations',
+  '/leads': 'accessLeads',
+  '/leads/$id': 'accessLeads',
   '/questions': 'viewSchoolLearning',
   '/questions/$id': 'viewSchoolLearning',
   '/school-tests': 'viewSchoolLearning',

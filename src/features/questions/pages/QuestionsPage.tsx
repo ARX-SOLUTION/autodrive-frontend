@@ -68,11 +68,10 @@ const QuestionsPage = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         eyebrow={t('questions.title')}
         title={t('questions.title')}
-        description={t('questions.subtitle')}
         icon={<Exam className="h-3.5 w-3.5" />}
         actions={
           canManage ? (

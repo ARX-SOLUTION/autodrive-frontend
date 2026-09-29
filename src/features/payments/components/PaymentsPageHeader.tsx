@@ -37,7 +37,6 @@ export const PaymentsPageHeader = ({
     <PageHeader
       eyebrow={title}
       title={title}
-      description={t('payments.subtitle')}
       icon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}
       actions={
         <>

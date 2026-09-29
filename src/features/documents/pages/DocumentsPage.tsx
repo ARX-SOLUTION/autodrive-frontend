@@ -9,11 +9,10 @@ const DocumentsPage = () => {
   const documentsTitle = t('documents.title');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         eyebrow={documentsTitle}
         title={documentsTitle}
-        description={t('documents.subtitle')}
         icon={<FileText className="h-3.5 w-3.5" aria-hidden="true" />}
         actions={
           <Button className="gap-2" disabled title={t('documents.coming_soon')}>

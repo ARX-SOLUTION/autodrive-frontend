@@ -267,7 +267,7 @@ export const FinanceSummarySection = ({
             <p className="text-[11px] font-semibold text-muted-foreground">
               {t(`dashboard.finance_summary.${key}`)}
             </p>
-            <p className="mt-2 font-heading text-xl font-bold tabular-nums">
+            <p className="mt-2 whitespace-nowrap font-heading text-lg font-bold tabular-nums">
               {formatMoney(data[key])}
             </p>
           </Card>

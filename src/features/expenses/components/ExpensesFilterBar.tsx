@@ -82,7 +82,7 @@ export const ExpensesFilterBar = ({
           <h2
             ref={headingRef}
             tabIndex={-1}
-            className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground text-balance"
+            className="text-sm font-semibold text-foreground"
           >
             {t('expenses.list_title')}
           </h2>
@@ -255,7 +255,6 @@ export const ExpensesFilterBar = ({
             )
           }
           aria-label={t('common.date')}
-          className="rounded-md border border-border bg-secondary px-2 py-1"
         />
       </div>
     </section>

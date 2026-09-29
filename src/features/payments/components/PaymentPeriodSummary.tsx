@@ -25,7 +25,7 @@ export const PaymentPeriodSummary = ({
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-primary text-balance">
+        <h2 className="text-sm font-semibold text-primary">
           {t('payments.selected_results')}
         </h2>
         {summary && !isError && (

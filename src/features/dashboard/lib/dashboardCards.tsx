@@ -82,9 +82,7 @@ export const KpiCard = ({
   return (
     <Card className="relative overflow-hidden p-5">
       <div className="mb-3 flex items-center justify-between">
-        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          {label}
-        </p>
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
         <div
           className={cn(
             'grid h-8 w-8 place-items-center rounded-md',

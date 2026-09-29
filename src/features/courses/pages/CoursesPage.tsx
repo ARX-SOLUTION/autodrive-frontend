@@ -73,11 +73,10 @@ const CoursesPage = () => {
   const coursesTitle = t('courses.title');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         eyebrow={coursesTitle}
         title={coursesTitle}
-        description={t('courses.subtitle')}
         icon={<BookOpen className="h-3.5 w-3.5" aria-hidden="true" />}
         actions={
           <Button className="gap-2" onClick={openCreate}>

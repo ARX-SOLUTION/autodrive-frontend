@@ -1,8 +1,8 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useState, useCallback, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { GraduationCap, Plus } from '@phosphor-icons/react';
+import { CaretRight, GraduationCap, Plus } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
@@ -26,7 +26,6 @@ import type {
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataCard } from '@/components/ui/DataCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import PaginationControls from '@/components/ui/PaginationControls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -36,9 +35,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { DataGrid, createDataGridColumnHelper } from '@/shared/ui/data-grid';
 
 const selectClass =
   'h-10 w-full rounded-md border border-input bg-background px-3 text-sm';
+
+const enrollmentColumnHelper = createDataGridColumnHelper<TrainingEnrollment>();
 
 const EnrollmentDialog = ({
   open,
@@ -59,122 +61,163 @@ const EnrollmentDialog = ({
   const [studentSearch, setStudentSearch] = useState('');
   const [studentId, setStudentId] = useState('');
   const [programId, setProgramId] = useState('');
-  const debouncedSearch = useDebounce(studentSearch.trim(), 250);
-  const students = useQuery({
-    queryKey: studentKeys.page({ search: debouncedSearch, limit: 50 }),
+  const debouncedSearch = useDebounce(studentSearch, 300);
+
+  const effectiveBranchId = canViewAll ? branchId : (ownBranchId ?? '');
+
+  const studentsQuery = useQuery({
+    queryKey: studentKeys.list({
+      branchId: effectiveBranchId || undefined,
+      search: debouncedSearch,
+    }),
     queryFn: ({ signal }) => searchStudents(debouncedSearch, signal),
-    enabled: open && debouncedSearch.length >= 2,
+    enabled: open && debouncedSearch.trim().length >= 2,
+    staleTime: 30_000,
   });
-  const programs = useActiveTrainingPrograms(branchId, open);
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+
+  const programs = useActiveTrainingPrograms(
+    effectiveBranchId,
+    Boolean(effectiveBranchId),
+  );
+
+  const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    if (!studentId || !programId || !branchId) return;
+    if (!studentId || !programId) return;
+
     create.mutate(
       {
         student_id: studentId,
         program_id: programId,
-        ...(canViewAll ? { branch_id: branchId } : {}),
       },
       {
         onSuccess: () => {
           toast.success(t('training.enrollment_created'));
-          close();
+          onClose();
         },
-        onError: (error) =>
-          toast.error(extractErrorMessage(error, t('common.error'))),
+        onError: (err) => {
+          toast.error(extractErrorMessage(err));
+        },
       },
     );
   };
-  const close = () => {
-    setStudentSearch('');
-    setStudentId('');
-    setProgramId('');
-    setBranchId(ownBranchId ?? '');
-    onClose();
-  };
+
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && close()}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{t('training.add_enrollment')}</DialogTitle>
-          <DialogDescription>{t('training.enrollment_desc')}</DialogDescription>
+          <DialogDescription>
+            {t('training.add_enrollment_desc')}
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {canViewAll && (
-            <label className="block space-y-1 text-sm">
-              <span>{t('common.branch')}</span>
+            <div>
+              <label
+                htmlFor="enrollment-branch"
+                className="mb-1 block text-sm font-medium"
+              >
+                {t('common.branch')}
+              </label>
               <select
+                id="enrollment-branch"
                 className={selectClass}
                 value={branchId}
                 onChange={(event) => {
                   setBranchId(event.target.value);
+                  setStudentId('');
                   setProgramId('');
                 }}
                 required
               >
-                <option value="">{t('common.select_placeholder')}</option>
+                <option value="">{t('common.select_branch')}</option>
                 {branches.map((branch) => (
                   <option key={branch.id} value={branch.id}>
                     {branch.name}
                   </option>
                 ))}
               </select>
-            </label>
+            </div>
           )}
-          <label className="block space-y-1 text-sm">
-            <span>{t('training.search_student')}</span>
-            <Input
-              value={studentSearch}
-              onChange={(event) => {
-                setStudentSearch(event.target.value);
-                setStudentId('');
-              }}
-              placeholder={t('training.search_student_hint')}
-            />
-          </label>
-          <label className="block space-y-1 text-sm">
-            <span>{t('training.student')}</span>
-            <select
-              className={selectClass}
-              value={studentId}
-              onChange={(event) => setStudentId(event.target.value)}
-              disabled={debouncedSearch.length < 2 || students.isLoading}
-              required
+
+          <div>
+            <label
+              htmlFor="student-search-input"
+              className="mb-1 block text-sm font-medium"
             >
-              <option value="">{t('common.select_placeholder')}</option>
-              {students.data?.map((student) => (
-                <option key={student.id} value={student.id}>
-                  {student.last_name} {student.first_name} · {student.phone}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block space-y-1 text-sm">
-            <span>{t('training.program')}</span>
+              {t('training.find_student')}
+            </label>
+            <Input
+              id="student-search-input"
+              value={studentSearch}
+              onChange={(event) => setStudentSearch(event.target.value)}
+              placeholder={t('training.search_student_placeholder')}
+              autoComplete="off"
+            />
+            {studentsQuery.data && studentsQuery.data.length > 0 && (
+              <div
+                role="listbox"
+                aria-label={t('training.find_student')}
+                className="mt-1 max-h-40 overflow-y-auto rounded-md border bg-popover p-1 text-sm shadow-md"
+              >
+                {studentsQuery.data.map((student) => (
+                  <button
+                    key={student.id}
+                    type="button"
+                    role="option"
+                    aria-selected={studentId === student.id}
+                    className={`w-full rounded px-2 py-1 text-left hover:bg-accent hover:text-accent-foreground ${
+                      studentId === student.id
+                        ? 'bg-accent font-medium text-accent-foreground'
+                        : ''
+                    }`}
+                    onClick={() => {
+                      setStudentId(student.id);
+                      setStudentSearch(
+                        `${student.last_name} ${student.first_name}`,
+                      );
+                    }}
+                  >
+                    {student.last_name} {student.first_name} ({student.phone})
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="training-program-select"
+              className="mb-1 block text-sm font-medium"
+            >
+              {t('training.program')}
+            </label>
             <select
+              id="training-program-select"
               className={selectClass}
               value={programId}
               onChange={(event) => setProgramId(event.target.value)}
-              disabled={!branchId || programs.isLoading}
               required
             >
-              <option value="">{t('common.select_placeholder')}</option>
-              {programs.data?.map((program) => (
-                <option key={program.id} value={program.id}>
-                  {program.name} · {program.category}
+              <option value="">{t('training.select_program')}</option>
+              {(programs.data ?? []).map((prog) => (
+                <option key={prog.id} value={prog.id}>
+                  {prog.name} ({prog.category} ·{' '}
+                  {Math.round(prog.required_minutes / 60)}h)
                 </option>
               ))}
             </select>
-          </label>
-          <p className="text-xs text-muted-foreground">
-            {t('training.no_attendance_conversion')}
-          </p>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={close}>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={onClose}>
               {t('common.cancel')}
             </Button>
-            <Button type="submit" disabled={create.isPending}>
-              {t('common.save')}
+            <Button
+              type="submit"
+              disabled={create.isPending || !studentId || !programId}
+            >
+              {create.isPending ? t('common.saving') : t('common.save')}
             </Button>
           </div>
         </form>
@@ -187,8 +230,8 @@ const TrainingEnrollmentsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const canCreate = useCan('createTrainingEnrollment');
   const canViewAll = useCan('viewAllBranches');
+  const canCreate = useCan('createTrainingEnrollment');
   const { data: branches = [] } = useBranches(canViewAll);
   const [branchId, setBranchId] = useState('');
   const [status, setStatus] = useState<TrainingEnrollmentStatus | ''>('');
@@ -202,14 +245,37 @@ const TrainingEnrollmentsPage = () => {
     setPageSize,
     setSearch,
   } = useListQueryState();
+  const effectiveBranch = canViewAll
+    ? branchId || undefined
+    : (user?.branch_id ?? undefined);
   const enrollments = useTrainingEnrollmentsPage({
-    branchId: canViewAll
-      ? branchId || undefined
-      : (user?.branch_id ?? undefined),
+    branchId: effectiveBranch,
     status: status || undefined,
     page,
     limit: pageSize,
   });
+  const programs = useActiveTrainingPrograms(
+    effectiveBranch ?? '',
+    Boolean(effectiveBranch),
+  );
+  const programMap = useMemo(
+    () => new Map((programs.data ?? []).map((prog) => [prog.id, prog])),
+    [programs.data],
+  );
+
+  const programName = useCallback(
+    (enrollment: TrainingEnrollment) => {
+      if (enrollment.program_name) return enrollment.program_name;
+      if (enrollment.program_id) {
+        return (
+          programMap.get(enrollment.program_id)?.name ?? t('training.program')
+        );
+      }
+      return t('training.legacy');
+    },
+    [programMap, t],
+  );
+
   const visibleEnrollments = useMemo(
     () =>
       (enrollments.data?.data ?? []).filter((enrollment) =>
@@ -217,26 +283,145 @@ const TrainingEnrollmentsPage = () => {
           debouncedSearch,
           enrollment.student.first_name,
           enrollment.student.last_name,
-          enrollment.program_name,
-          enrollment.category,
+          enrollment.category ?? '',
+          programName(enrollment),
         ),
       ),
-    [enrollments.data, debouncedSearch],
+    [enrollments.data, debouncedSearch, programName],
   );
-  const programName = (enrollment: TrainingEnrollment) =>
-    enrollment.program_id
-      ? (enrollment.program_name ?? t('training.program'))
-      : t('training.legacy');
-  const branchName = (id: string) =>
-    branches.find((branch) => branch.id === id)?.name ??
-    (id === user?.branch_id ? user?.branch_name : id);
+
+  const branchName = useCallback(
+    (id: string) =>
+      branches.find((branch) => branch.id === id)?.name ??
+      (id === user?.branch_id ? user?.branch_name : id),
+    [branches, user?.branch_id, user?.branch_name],
+  );
+
+  const startIndex = (page - 1) * pageSize;
+
+  const columns = useMemo(
+    () =>
+      enrollmentColumnHelper.columns([
+        enrollmentColumnHelper.display({
+          id: 'rowNumber',
+          header: '#',
+          meta: {
+            align: 'center',
+            cellClassName: 'text-muted-foreground w-12',
+          },
+          cell: ({ row }) => startIndex + row.getDisplayIndex() + 1,
+        }),
+        enrollmentColumnHelper.display({
+          id: 'student',
+          header: t('students.student'),
+          meta: { cellClassName: 'font-medium' },
+          cell: ({ row }) => (
+            <button
+              type="button"
+              onClick={() =>
+                navigate({
+                  to: '/training-enrollments/$id',
+                  params: { id: row.original.id },
+                })
+              }
+              className="text-left font-medium text-foreground hover:underline"
+            >
+              {row.original.student.last_name} {row.original.student.first_name}
+            </button>
+          ),
+        }),
+        enrollmentColumnHelper.display({
+          id: 'program',
+          header: t('training.program'),
+          meta: { cellClassName: 'text-muted-foreground' },
+          cell: ({ row }) => (
+            <span>
+              <span className="font-semibold text-foreground">
+                {row.original.category ?? '—'}
+              </span>
+              {' · '}
+              {programName(row.original)}
+            </span>
+          ),
+        }),
+        enrollmentColumnHelper.display({
+          id: 'branch',
+          header: t('common.branch'),
+          meta: { cellClassName: 'text-muted-foreground' },
+          cell: ({ row }) => branchName(row.original.branch_id),
+        }),
+        enrollmentColumnHelper.accessor('status', {
+          header: t('common.status'),
+          meta: { align: 'center' },
+          cell: ({ getValue }) => {
+            const val = getValue();
+            const colorClass =
+              val === 'active'
+                ? 'bg-success/10 text-success'
+                : val === 'completed'
+                  ? 'bg-info/10 text-info'
+                  : val === 'cancelled'
+                    ? 'bg-destructive/10 text-destructive'
+                    : 'bg-muted text-muted-foreground';
+            return (
+              <span
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${colorClass}`}
+              >
+                {t(`training.status.${val}`)}
+              </span>
+            );
+          },
+        }),
+        enrollmentColumnHelper.accessor('approved_minutes', {
+          header: t('driving.approved'),
+          meta: {
+            align: 'center',
+            cellClassName: 'tabular-nums text-muted-foreground font-medium',
+          },
+          cell: ({ getValue }) => `${getValue()} ${t('driving.minutes')}`,
+        }),
+        enrollmentColumnHelper.display({
+          id: 'remaining_minutes',
+          header: t('driving.remaining'),
+          meta: {
+            align: 'center',
+            cellClassName: 'tabular-nums text-muted-foreground',
+          },
+          cell: ({ row }) =>
+            row.original.remaining_minutes === null
+              ? t('common.na')
+              : `${row.original.remaining_minutes} ${t('driving.minutes')}`,
+        }),
+        enrollmentColumnHelper.display({
+          id: 'actions',
+          header: t('common.actions'),
+          meta: { align: 'center' },
+          cell: ({ row }) => (
+            <button
+              type="button"
+              onClick={() =>
+                navigate({
+                  to: '/training-enrollments/$id',
+                  params: { id: row.original.id },
+                })
+              }
+              aria-label={t('common.view')}
+              title={t('common.view')}
+              className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <CaretRight className="h-4 w-4" />
+            </button>
+          ),
+        }),
+      ]),
+    [branchName, navigate, programName, startIndex, t],
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         eyebrow={t('training.enrollments')}
         title={t('training.enrollments')}
-        description={t('training.enrollments_subtitle')}
         icon={<GraduationCap className="h-3.5 w-3.5" />}
         actions={
           canCreate && (
@@ -290,82 +475,90 @@ const TrainingEnrollmentsPage = () => {
           )}
         </select>
       </div>
-      {enrollments.isLoading ? (
-        <p>{t('common.loading')}</p>
-      ) : enrollments.isError ? (
-        <EmptyState
-          title={t('common.error')}
-          action={{
-            label: t('common.retry'),
-            onClick: () => void enrollments.refetch(),
-          }}
-        />
-      ) : enrollments.data?.data.length ? (
-        <>
-          {visibleEnrollments.length === 0 ? (
-            <EmptyState title={t('common.no_data')} />
-          ) : (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {visibleEnrollments.map((enrollment) => (
-                <DataCard
-                  key={enrollment.id}
-                  title={`${enrollment.student.last_name} ${enrollment.student.first_name}`}
-                  subtitle={`${enrollment.category ?? '—'} · ${programName(enrollment)}`}
-                  onClick={() =>
-                    navigate({
-                      to: '/training-enrollments/$id',
-                      params: { id: enrollment.id },
-                    })
-                  }
-                  fields={[
-                    {
-                      label: t('common.branch'),
-                      value: branchName(enrollment.branch_id),
-                    },
-                    {
-                      label: t('common.status'),
-                      value: t(`training.status.${enrollment.status}`),
-                    },
-                    {
-                      label: t('driving.approved'),
-                      value: `${enrollment.approved_minutes} ${t('driving.minutes')}`,
-                    },
-                    {
-                      label: t('driving.remaining'),
-                      value:
-                        enrollment.remaining_minutes === null
-                          ? t('common.na')
-                          : `${enrollment.remaining_minutes} ${t('driving.minutes')}`,
-                    },
-                  ]}
-                />
-              ))}
-            </div>
-          )}
-          <PaginationControls
-            currentPage={page}
-            totalPages={Math.max(1, enrollments.data.meta.totalPages)}
-            onPageChange={setPage}
-            pageSize={pageSize}
-            onPageSizeChange={setPageSize}
-            totalItems={enrollments.data.meta.total}
+
+      <DataGrid
+        data={visibleEnrollments}
+        columns={columns}
+        getRowId={(enrollment) => enrollment.id}
+        pagination={{
+          pageIndex: page - 1,
+          pageSize,
+          rowCount: enrollments.data?.meta.total ?? visibleEnrollments.length,
+          pageCount: Math.max(1, enrollments.data?.meta.totalPages ?? 1),
+        }}
+        onPaginationChange={({ pageIndex }) => setPage(pageIndex + 1)}
+        onPageSizeChange={setPageSize}
+        sorting={[]}
+        onSortingChange={() => undefined}
+        columnFilters={[]}
+        onColumnFiltersChange={() => undefined}
+        manualPagination
+        manualSorting={false}
+        manualFiltering
+        isInitialLoading={enrollments.isLoading}
+        isFetching={enrollments.isFetching}
+        labels={{
+          table: t('training.enrollments'),
+          loading: t('common.loading'),
+          fetching: t('common.loading'),
+          previousPage: t('common.previous'),
+          nextPage: t('common.next'),
+        }}
+        errorState={
+          enrollments.isError ? (
+            <EmptyState
+              title={t('common.error')}
+              action={{
+                label: t('common.retry'),
+                onClick: () => void enrollments.refetch(),
+              }}
+            />
+          ) : undefined
+        }
+        emptyState={<EmptyState title={t('common.no_data')} />}
+        renderMobileRow={({ row: enrollment }) => (
+          <DataCard
+            key={enrollment.id}
+            title={`${enrollment.student.last_name} ${enrollment.student.first_name}`}
+            subtitle={`${enrollment.category ?? '—'} · ${programName(enrollment)}`}
+            onClick={() =>
+              navigate({
+                to: '/training-enrollments/$id',
+                params: { id: enrollment.id },
+              })
+            }
+            fields={[
+              {
+                label: t('common.branch'),
+                value: branchName(enrollment.branch_id),
+              },
+              {
+                label: t('common.status'),
+                value: t(`training.status.${enrollment.status}`),
+              },
+              {
+                label: t('driving.approved'),
+                value: `${enrollment.approved_minutes} ${t('driving.minutes')}`,
+              },
+              {
+                label: t('driving.remaining'),
+                value:
+                  enrollment.remaining_minutes === null
+                    ? t('common.na')
+                    : `${enrollment.remaining_minutes} ${t('driving.minutes')}`,
+              },
+            ]}
           />
-        </>
-      ) : (
-        <EmptyState
-          title={t('training.empty_enrollments')}
-          description={t('training.empty_enrollments_desc')}
-        />
-      )}
-      {canCreate && (
-        <EnrollmentDialog
-          open={dialogOpen}
-          branches={branches}
-          ownBranchId={user?.branch_id ?? undefined}
-          canViewAll={canViewAll}
-          onClose={() => setDialogOpen(false)}
-        />
-      )}
+        )}
+      />
+
+      <EnrollmentDialog
+        open={dialogOpen}
+        branches={branches}
+        ownBranchId={user?.branch_id ?? undefined}
+        canViewAll={canViewAll}
+        onClose={() => setDialogOpen(false)}
+      />
     </div>
   );
 };
