@@ -1,9 +1,14 @@
 import { z } from 'zod';
 import { isValidUzPhone, uzPhoneE164 } from '@/lib/phoneFormater';
-import type { CreateStudentRequest } from '@/shared/api/contract';
+import type {
+  CreateStudentRequest,
+  UpdateStudentRequest,
+} from '@/shared/api/contract';
 import type { CourseType, Student } from '@/features/students/types';
 
-export type CreateStudentPayload = CreateStudentRequest;
+// idempotency_key is only set in edit mode (PATCH /students/:id).
+export type CreateStudentPayload = CreateStudentRequest &
+  Pick<UpdateStudentRequest, 'idempotency_key'>;
 
 export const makeStudentFormSchema = (
   t: (key: string) => string,

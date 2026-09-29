@@ -33,7 +33,7 @@ export const ROUTE_CAPABILITIES = {
   '/branches/$id': 'manageBranches',
   '/courses': 'manageStaff',
   '/courses/$id': 'manageStaff',
-  '/payments': 'recordPayment',
+  '/payments': 'viewPayments',
   '/operators': 'manageStaff',
   '/teachers': 'manageStaff',
   '/users': 'manageUsers',

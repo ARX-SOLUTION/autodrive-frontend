@@ -1897,6 +1897,8 @@ export interface components {
       gender?: 'male' | 'female';
       group_id?: string;
       has_document?: boolean;
+      /** @description Client-generated UUID, stable for one edit form submission. A retry with the same key does not record the added payment a second time. */
+      idempotency_key?: string;
       initial_payment?: number;
       last_name?: string;
       /** @enum {string} */

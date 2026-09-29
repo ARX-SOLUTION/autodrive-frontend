@@ -89,6 +89,7 @@
     "deleting": "O'chirilmoqda...",
     "error": "Xatolik yuz berdi",
     "retry": "Qayta urinish",
+    "concurrent_update": "Ma'lumot boshqa foydalanuvchi tomonidan o'zgartirildi. Yangilangan ma'lumotni tekshirib, qayta urinib ko'ring.",
     "success": "Muvaffaqiyatli",
     "not_found": "Topilmadi",
     "no_data": "Ma'lumot topilmadi",

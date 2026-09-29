@@ -1,4 +1,5 @@
 import type { AxiosError } from 'axios';
+import i18n from 'i18next';
 
 /**
  * Backend error envelope produced by NestJS `HttpExceptionFilter`.
@@ -10,9 +11,21 @@ type ApiErrorEnvelope = {
     message?: string;
     // class-validator constraint strings, e.g. ["phone must be a valid phone number"].
     // Present on VALIDATION_ERROR, where `message` is just the generic "Validation failed".
-    details?: string[];
+    // `{ reason }` on CONFLICT when a write lost an optimistic-concurrency race.
+    details?: string[] | { reason?: string };
   };
 };
+
+/** 409 from a write whose row was changed by someone else since it was read. */
+export function isConcurrentUpdateError(err: unknown): boolean {
+  const e = err as AxiosError<ApiErrorEnvelope>;
+  const details = e?.response?.data?.error?.details;
+  return (
+    e?.response?.status === 409 &&
+    !Array.isArray(details) &&
+    details?.reason === 'concurrent_update'
+  );
+}
 
 /**
  * Extracts a server-provided error message from an Axios error.
@@ -29,6 +42,9 @@ export function extractErrorMessage(
   err: unknown,
   fallback = 'An error occurred',
 ): string {
+  if (isConcurrentUpdateError(err)) {
+    return i18n.t('common.concurrent_update');
+  }
   const e = err as AxiosError<ApiErrorEnvelope>;
   const details = e?.response?.data?.error?.details;
   if (Array.isArray(details) && details.length > 0) {

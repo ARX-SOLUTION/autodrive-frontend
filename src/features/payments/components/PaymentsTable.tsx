@@ -67,6 +67,8 @@ export const PaymentsTable = ({
   // Matches the backend's PATCH/DELETE /payments/:id @Roles(owner, dev,
   // manager, operator) guard exactly (bd 9e4.4).
   const canManagePayments = useCan('recordPayment');
+  // Accountant views payments but has no /students/$id route.
+  const canOpenStudent = useCan('accessOperations');
   const [deleteTarget, setDeleteTarget] = useState<Payment | null>(null);
   const [editTarget, setEditTarget] = useState<Payment | null>(null);
   const deletePayment = useDeletePayment();
@@ -297,12 +299,21 @@ export const PaymentsTable = ({
         renderMobileRow={({ row }) => (
           <PaymentMobileCard
             payment={row}
-            onActivate={(element) => openStudent(row, element)}
+            onActivate={
+              canOpenStudent
+                ? (element) => openStudent(row, element)
+                : undefined
+            }
           />
         )}
-        onRowActivate={(payment, element) => openStudent(payment, element)}
-        getRowAriaLabel={(payment) => payment.student_name}
-        rowClassName={() => 'table-row-interactive'}
+        {...(canOpenStudent
+          ? {
+              onRowActivate: (payment: Payment, element: HTMLElement) =>
+                void openStudent(payment, element),
+              getRowAriaLabel: (payment: Payment) => payment.student_name,
+              rowClassName: () => 'table-row-interactive',
+            }
+          : { onRowActivate: undefined })}
         className={cn(
           'glass-card overflow-hidden p-3 transition-opacity duration-200 md:p-0',
           isFetching && !isLoading && 'opacity-50',

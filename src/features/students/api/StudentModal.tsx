@@ -131,6 +131,8 @@ const StudentModal = ({
 
   // ponytail: ref tracks which submit button was clicked; defaults to 'close' so Enter → Save
   const submitModeRef = useRef<'close' | 'add'>('close');
+  // One key per edit session: a retried save must not record amount_paid twice.
+  const idempotencyKeyRef = useRef(crypto.randomUUID());
 
   const resetForNext = () => {
     const current = form.getValues();
@@ -270,6 +272,7 @@ const StudentModal = ({
     if (open) {
       if (student) {
         form.reset(getEditStudentFormValues(student));
+        idempotencyKeyRef.current = crypto.randomUUID();
       } else {
         form.reset(defaultFormValues());
         // Focus first field after dialog animation settles
@@ -316,6 +319,7 @@ const StudentModal = ({
 
   const onFormValid = async (values: StudentFormValues) => {
     const payload = toCreateStudentPayload(values, courseType, !!student);
+    if (student) payload.idempotency_key = idempotencyKeyRef.current;
 
     const mode = submitModeRef.current;
     submitModeRef.current = 'close'; // reset for next submission

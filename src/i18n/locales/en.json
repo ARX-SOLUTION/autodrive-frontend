@@ -89,6 +89,7 @@
     "deleting": "Deleting...",
     "error": "An error occurred",
     "retry": "Retry",
+    "concurrent_update": "This data was changed by someone else. Review the refreshed data and try again.",
     "success": "Success",
     "not_found": "Not found",
     "no_data": "No data found",

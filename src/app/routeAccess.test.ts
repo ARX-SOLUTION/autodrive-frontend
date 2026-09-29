@@ -56,7 +56,7 @@ describe('protected route capability matrix', () => {
     ['/branches/$id', ['dev', 'owner']],
     ['/courses', ['dev', 'owner', 'manager']],
     ['/courses/$id', ['dev', 'owner', 'manager']],
-    ['/payments', ['dev', 'owner', 'manager', 'operator']],
+    ['/payments', ['dev', 'owner', 'manager', 'accountant', 'operator']],
     ['/operators', ['dev', 'owner', 'manager']],
     ['/teachers', ['dev', 'owner', 'manager']],
     ['/users', ['dev', 'owner']],

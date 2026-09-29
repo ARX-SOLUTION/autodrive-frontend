@@ -13,6 +13,7 @@ import { track } from '@/lib/umami';
 import type { ListResponse } from '@/shared/types/list';
 import { parseListResponse } from '@/lib/listResponse';
 import { parseItemEnvelope } from '@/lib/apiEnvelope';
+import { isConcurrentUpdateError } from '@/lib/errors';
 import type { AddStudentPayload } from '@/features/students/components/AddStudentDialog';
 import {
   studentKeys,
@@ -266,6 +267,11 @@ export const useUpdateStudent = () => {
       qc.invalidateQueries({ queryKey: paymentKeys.all });
       qc.invalidateQueries({ queryKey: dashboardKeys.all });
       track('student_update');
+    },
+    onError: (err) => {
+      if (isConcurrentUpdateError(err)) {
+        qc.invalidateQueries({ queryKey: studentKeys.all });
+      }
     },
   });
 };

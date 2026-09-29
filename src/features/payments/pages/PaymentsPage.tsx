@@ -3,7 +3,7 @@ import PaymentModal, {
   CreatePaymentPayload,
 } from '@/features/payments/api/PaymentModal';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useCan, useIsCrossTenant } from '@/hooks/useCan';
+import { useCan, useIsCompanyWide, useIsCrossTenant } from '@/hooks/useCan';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { usePageSize } from '@/hooks/useListQueryState';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
@@ -34,6 +34,7 @@ import { PaymentsTable } from '@/features/payments/components/PaymentsTable';
 const PaymentsPage = () => {
   const { t } = useTranslation();
   const isCrossTenant = useIsCrossTenant();
+  const isCompanyWide = useIsCompanyWide();
   const canRecordPayment = useCan('recordPayment');
   const user = useAuthStore((s) => s.user);
 
@@ -167,7 +168,8 @@ const PaymentsPage = () => {
     isError: isSnapshotError,
     refetch: refetchSnapshot,
   } = usePaymentSnapshot(branchId);
-  const { data: branches } = useBranches();
+  // GET /branches excludes accountant; its branch filter is cross-tenant only.
+  const { data: branches } = useBranches(user?.role !== 'accountant');
   const createPayment = useCreatePayment();
 
   const paymentQueryFilters = useMemo(
@@ -195,7 +197,7 @@ const PaymentsPage = () => {
     ],
   );
 
-  const canQueryPayments = !!branchId || isCrossTenant;
+  const canQueryPayments = !!branchId || isCompanyWide;
 
   const hasAnyFilter =
     hasDateFilter ||

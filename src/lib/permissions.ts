@@ -19,6 +19,7 @@ export type Capability =
   | 'manageStaff'
   | 'manageUsers'
   | 'recordPayment'
+  | 'viewPayments'
   | 'manageStudents'
   | 'manageGroups'
   | 'viewFuel'
@@ -72,6 +73,8 @@ export const CAPABILITIES: Record<Capability, readonly UserRole[]> = {
   // manageStaff (adding branch teachers/operators, which a manager may do).
   manageUsers: OWNERS,
   recordPayment: OPS,
+  // Mirrors backend GET /payments(/snapshot|/summary); writes stay recordPayment.
+  viewPayments: [...OPS, 'accountant'],
   manageStudents: OPS,
   manageGroups: ['dev', 'owner', 'manager'],
   viewFuel: ['owner', 'manager', 'teacher', 'accountant'],
@@ -138,4 +141,9 @@ export function roleCan(
 /** owner or dev — the cross-branch (company-wide) roles. */
 export function isCrossTenantRole(role: UserRole | undefined | null): boolean {
   return role === 'owner' || role === 'dev';
+}
+
+/** Cross-tenant roles plus accountant, whose data scope has no branch. */
+export function isCompanyWideRole(role: UserRole | undefined | null): boolean {
+  return isCrossTenantRole(role) || role === 'accountant';
 }
