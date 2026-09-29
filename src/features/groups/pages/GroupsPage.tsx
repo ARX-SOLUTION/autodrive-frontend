@@ -85,6 +85,16 @@ const GroupsPage = () => {
   const setCurrentPage = (p: number) =>
     setParam('page', p > 1 ? String(p) : undefined);
 
+  const clearAllFilters = () => {
+    setParams({
+      q: undefined,
+      course_type: undefined,
+      branch_id: undefined,
+      page: undefined,
+    });
+    setCurrentPage(1);
+  };
+
   const canViewDeleted = useCan('viewDeleted');
   // autodrive-cg9: owner-only "show deleted" toggle -- local state (not
   // URL), defaults off.
@@ -177,7 +187,7 @@ const GroupsPage = () => {
   const showBranchNav = isCrossTenant && (overview?.length ?? 0) > 1;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         eyebrow={groupsTitle}
         title={groupsTitle}
@@ -225,6 +235,7 @@ const GroupsPage = () => {
               setCurrentPage(1);
             }}
             hideBranchSelectOnDesktop={showBranchNav}
+            onClearAll={clearAllFilters}
           />
 
           <div className="relative">

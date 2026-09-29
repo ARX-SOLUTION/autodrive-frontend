@@ -1,5 +1,6 @@
 import {
   SquaresFour,
+  FunnelSimple,
   Buildings,
   GraduationCap,
   CreditCard,
@@ -17,11 +18,15 @@ import {
   MapTrifold,
   Exam,
   ClipboardText,
+  Briefcase,
+  SteeringWheel,
+  GearSix,
 } from '@phosphor-icons/react';
 import type { Capability } from '@/lib/permissions';
 import { drivingSessionsEnabled } from '@/lib/featureAvailability';
 
-export type NavSectionId = 'workspace' | 'learning' | 'team' | 'system';
+export type NavSectionId =
+  'workspace' | 'vehicles' | 'learning' | 'team' | 'system';
 
 export type AppRoutePath =
   | '/dashboard'
@@ -38,6 +43,7 @@ export type AppRoutePath =
   | '/driving-sessions'
   | '/courses'
   | '/students'
+  | '/leads'
   | '/questions'
   | '/school-tests'
   | '/payments'
@@ -59,11 +65,24 @@ export type NavItem = {
   pinnable?: boolean;
 };
 
-export const NAV_SECTIONS: Array<{ id: NavSectionId; labelKey: string }> = [
-  { id: 'workspace', labelKey: 'nav_sections.workspace' },
-  { id: 'learning', labelKey: 'nav_sections.learning' },
-  { id: 'team', labelKey: 'nav_sections.team' },
-  { id: 'system', labelKey: 'nav_sections.system' },
+export type NavSection = {
+  id: NavSectionId;
+  labelKey: string;
+  icon: typeof SquaresFour;
+  collapsible?: boolean;
+};
+
+export const NAV_SECTIONS: NavSection[] = [
+  {
+    id: 'workspace',
+    labelKey: 'nav_sections.workspace',
+    icon: Briefcase,
+    collapsible: false,
+  },
+  { id: 'vehicles', labelKey: 'nav_sections.vehicles', icon: SteeringWheel },
+  { id: 'learning', labelKey: 'nav_sections.learning', icon: GraduationCap },
+  { id: 'team', labelKey: 'nav_sections.team', icon: UsersThree },
+  { id: 'system', labelKey: 'nav_sections.system', icon: GearSix },
 ];
 
 // This is the one source of truth for the sidebar and Command Palette. Route
@@ -92,6 +111,14 @@ const allNavItems: NavItem[] = [
     cap: 'accessOperations',
   },
   {
+    path: '/leads',
+    labelKey: 'nav.leads',
+    icon: FunnelSimple,
+    section: 'workspace',
+    cap: 'accessLeads',
+    pinnable: true,
+  },
+  {
     path: '/groups',
     labelKey: 'nav.groups',
     icon: Stack,
@@ -102,21 +129,35 @@ const allNavItems: NavItem[] = [
     path: '/vehicle-fuel',
     labelKey: 'fuel.title',
     icon: Car,
-    section: 'workspace',
+    section: 'vehicles',
+    cap: 'viewFuel',
+  },
+  {
+    path: '/vehicle-inspections',
+    labelKey: 'inspections.title',
+    icon: ShieldCheck,
+    section: 'vehicles',
+    cap: 'viewInspections',
+  },
+  {
+    path: '/fuel-stations',
+    labelKey: 'fuel.stations',
+    icon: Buildings,
+    section: 'vehicles',
     cap: 'viewFuel',
   },
   {
     path: '/vehicles',
     labelKey: 'nav.vehicles',
     icon: Car,
-    section: 'workspace',
+    section: 'vehicles',
     cap: 'viewVehicles',
   },
   {
     path: '/fleet-map',
     labelKey: 'nav.fleet_map',
     icon: MapTrifold,
-    section: 'workspace',
+    section: 'vehicles',
     cap: 'viewFleetMap',
   },
   {

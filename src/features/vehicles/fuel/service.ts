@@ -220,3 +220,90 @@ export function useFuelVehicles(params: Record<string, unknown>) {
       ),
   });
 }
+
+export function useVehicleLastFuel(vehicleId?: string) {
+  const scope = useInspectionScope();
+  return useQuery({
+    queryKey: ['vehicle-fuel', scope, 'last-by-vehicle', vehicleId],
+    enabled: !!vehicleId,
+    queryFn: async ({ signal }) => {
+      const res = await parseListEnvelope<Fuel>(
+        (
+          await axios.get('/vehicle-fuel', {
+            params: { vehicle_id: vehicleId, limit: 1 },
+            signal,
+          })
+        ).data,
+        'fuel',
+      );
+      return res.data[0] ?? null;
+    },
+  });
+}
+
+export interface SubmitFuelProgress {
+  step: 'draft' | 'receipt' | 'odometer' | 'submitting' | 'done';
+  percent: number;
+  messageKey: string;
+}
+
+export async function submitFuelComplete({
+  values,
+  requestId,
+  receiptFile,
+  odometerFile,
+  onProgress,
+}: {
+  values: FuelForm;
+  requestId: string;
+  receiptFile?: File | null;
+  odometerFile?: File | null;
+  onProgress?: (progress: SubmitFuelProgress) => void;
+}) {
+  onProgress?.({ step: 'draft', percent: 15, messageKey: 'fuel.saving_draft' });
+  const saved = await saveFuel(values, requestId);
+
+  if (receiptFile) {
+    onProgress?.({
+      step: 'receipt',
+      percent: 40,
+      messageKey: 'fuel.uploading_receipt',
+    });
+    await uploadFuelEvidence(saved.id, 'receipt', receiptFile, (p) => {
+      onProgress?.({
+        step: 'receipt',
+        percent: 40 + Math.round(p * 0.25),
+        messageKey: 'fuel.uploading_receipt',
+      });
+    });
+  }
+
+  if (odometerFile) {
+    onProgress?.({
+      step: 'odometer',
+      percent: 70,
+      messageKey: 'fuel.uploading_odometer',
+    });
+    await uploadFuelEvidence(saved.id, 'odometer', odometerFile, (p) => {
+      onProgress?.({
+        step: 'odometer',
+        percent: 70 + Math.round(p * 0.2),
+        messageKey: 'fuel.uploading_odometer',
+      });
+    });
+  }
+
+  onProgress?.({
+    step: 'submitting',
+    percent: 92,
+    messageKey: 'fuel.submitting',
+  });
+  await fuelAction(saved.id, 'submit', {});
+  onProgress?.({
+    step: 'done',
+    percent: 100,
+    messageKey: 'fuel.submitted_success',
+  });
+
+  return saved;
+}

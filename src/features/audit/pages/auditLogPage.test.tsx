@@ -1,5 +1,5 @@
 import { parseCalendarDate } from '@/lib/calendarDate';
-import { screen } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
 import AuditLogPage from '@/features/audit/pages/AuditLogPage';
 import type { AuditLog } from '@/features/audit/types';
@@ -145,5 +145,30 @@ describe('AuditLogPage', () => {
     expect(screen.getAllByText('common.error').length).toBeGreaterThan(0);
     screen.getAllByText('common.retry')[0].click();
     expect(refetch).toHaveBeenCalled();
+  });
+
+  it('hydrates filter chips from URL and allows removing individual filters or clearing all', async () => {
+    await renderPage('/audit?entity=student&action=CREATE&q=Alice');
+
+    const entityChip = screen.getByTestId('active-filter-chip-entity');
+    const actionChip = screen.getByTestId('active-filter-chip-action');
+    const searchChip = screen.getByTestId('active-filter-chip-search');
+
+    expect(entityChip.textContent).toContain('audit.entity_student');
+    expect(actionChip.textContent).toContain('audit.action_create');
+    expect(searchChip.textContent).toContain('Alice');
+
+    // Remove entity chip
+    const removeBtn = entityChip.querySelector('button')!;
+    fireEvent.click(removeBtn);
+    expect(screen.queryByTestId('active-filter-chip-entity')).toBeNull();
+
+    // Clear all
+    const clearAllBtn = screen.getByRole('button', {
+      name: 'common.clear_all',
+    });
+    fireEvent.click(clearAllBtn);
+    expect(screen.queryByTestId('active-filter-chip-action')).toBeNull();
+    expect(screen.queryByTestId('active-filter-chip-search')).toBeNull();
   });
 });

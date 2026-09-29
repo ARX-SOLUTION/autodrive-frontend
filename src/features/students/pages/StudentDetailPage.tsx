@@ -310,7 +310,7 @@ const StudentDetailPage = () => {
                     student.has_document ? 'text-success' : 'text-destructive'
                   }
                 >
-                  {student.has_document ? '+' : '-'}
+                  {student.has_document ? t('common.yes') : t('common.no')}
                 </span>
               }
             />

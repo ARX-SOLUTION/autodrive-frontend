@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -83,23 +89,143 @@ describe('Sidebar navigation', () => {
     expect(onDesktopExpandedChange).toHaveBeenCalledWith(false);
   });
 
-  it('keeps collapsed desktop links labeled, recognizable, and navigable', async () => {
+  it('collapsed desktop: groups open a flyout menu that navigates and closes', async () => {
     const { router } = await renderSidebar(false, '/groups', false);
 
-    const dashboard = screen.getByLabelText('nav.dashboard');
-    expect(dashboard.className).toContain('justify-center');
-    expect(dashboard.querySelector('svg')).not.toBeNull();
-    expect(screen.getByText('nav.dashboard').className).toContain('sr-only');
+    const learning = screen.getByRole('button', {
+      name: 'nav_sections.learning',
+    });
+    expect(learning.getAttribute('data-active')).toBe('true');
+    const team = screen.getByRole('button', { name: 'nav_sections.team' });
+    expect(team.getAttribute('data-active')).toBe('false');
+    expect(screen.queryByLabelText('nav.branches')).toBeNull();
 
-    fireEvent.focus(dashboard);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent(
-      'nav.dashboard',
-    );
+    fireEvent.click(team);
+    const flyout = await screen.findByRole('dialog', {
+      name: 'nav_sections.team',
+    });
+    const branches = within(flyout).getByLabelText('nav.branches');
 
-    fireEvent.click(dashboard);
+    fireEvent.click(branches);
     await waitFor(() =>
-      expect(router.state.location.pathname).toBe('/dashboard'),
+      expect(router.state.location.pathname).toBe('/branches'),
     );
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('collapsed desktop: workspace pages stay directly visible in the rail', async () => {
+    await renderSidebar(false, '/groups', false);
+
+    expect(
+      screen.queryByRole('button', { name: 'nav_sections.workspace' }),
+    ).toBeNull();
+    const dashboard = screen.getByLabelText('nav.dashboard');
+    expect(dashboard.className).toContain('flex-col');
+    expect(screen.getByText('nav.dashboard').className).not.toContain(
+      'sr-only',
+    );
+  });
+
+  it('collapsed desktop: hover opens the flyout after a delay without stealing focus', async () => {
+    await renderSidebar(false, '/groups', false);
+    const team = screen.getByRole('button', { name: 'nav_sections.team' });
+
+    fireEvent.pointerEnter(team, { pointerType: 'mouse' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    const flyout = await screen.findByRole('dialog', {
+      name: 'nav_sections.team',
+    });
+    expect(flyout.contains(document.activeElement)).toBe(false);
+
+    fireEvent.pointerLeave(team, { pointerType: 'mouse' });
+    fireEvent.pointerEnter(flyout, { pointerType: 'mouse' });
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(screen.getByRole('dialog')).toBeTruthy();
+
+    fireEvent.pointerLeave(flyout, { pointerType: 'mouse' });
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('collapsed desktop: clicking a hover-opened flyout pins it open', async () => {
+    await renderSidebar(false, '/groups', false);
+    const team = screen.getByRole('button', { name: 'nav_sections.team' });
+
+    fireEvent.pointerEnter(team, { pointerType: 'mouse' });
+    await screen.findByRole('dialog', { name: 'nav_sections.team' });
+    fireEvent.click(team);
+    fireEvent.pointerLeave(team, { pointerType: 'mouse' });
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(screen.getByRole('dialog')).toBeTruthy();
+
+    fireEvent.click(team);
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('collapsed desktop: a single-item group stays a direct labeled link', async () => {
+    canGate = false;
+    const { router } = await renderSidebar(false, '/groups', false);
+
+    const profile = screen.getByLabelText('nav.profile');
+    expect(profile.className).toContain('flex-col');
+    expect(screen.getByText('nav.profile').className).not.toContain('sr-only');
+
+    fireEvent.click(profile);
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/profile'),
+    );
+  });
+
+  it('expanded desktop: groups collapse, remember state, and keep the active group open', async () => {
+    await renderSidebar(false, '/groups');
+
+    expect(
+      screen.queryByRole('button', { name: 'nav_sections.workspace' }),
+    ).toBeNull();
+    expect(screen.getByText('nav_sections.workspace')).toBeTruthy();
+    const learning = screen.getByRole('button', {
+      name: 'nav_sections.learning',
+    });
+    const team = screen.getByRole('button', { name: 'nav_sections.team' });
+    expect(learning).toHaveAttribute('aria-expanded', 'true');
+    expect(team).toHaveAttribute('aria-expanded', 'false');
+    expect(document.getElementById('desktop-nav-section-team')).toHaveAttribute(
+      'inert',
+    );
+
+    fireEvent.click(team);
+    expect(team).toHaveAttribute('aria-expanded', 'true');
+    expect(
+      document.getElementById('desktop-nav-section-team'),
+    ).not.toHaveAttribute('inert');
+
+    fireEvent.click(learning);
+    expect(learning).toHaveAttribute('aria-expanded', 'false');
+    expect(
+      JSON.parse(
+        localStorage.getItem('autodrive-sidebar-sections:default:user-1') ??
+          '[]',
+      ),
+    ).toEqual(['team']);
+  });
+
+  it('expanded desktop: navigating into a collapsed group re-opens it', async () => {
+    const { router } = await renderWithRouter(
+      <TooltipProvider>
+        <Sidebar
+          mobileOpen={false}
+          onMobileOpenChange={vi.fn()}
+          desktopExpanded
+          onDesktopExpandedChange={vi.fn()}
+        />
+      </TooltipProvider>,
+      { initialEntry: '/dashboard', routePattern: '/$' },
+    );
+
+    const team = screen.getByRole('button', { name: 'nav_sections.team' });
+    expect(team).toHaveAttribute('aria-expanded', 'false');
+
+    await router.navigate({ to: '/branches' });
+    await waitFor(() => expect(team).toHaveAttribute('aria-expanded', 'true'));
   });
 
   it('keeps pinned navigation present when the desktop sidebar collapses', async () => {
@@ -147,14 +273,11 @@ describe('Sidebar navigation', () => {
     expect(items.every((el) => el.getAttribute('data-active') === 'true')).toBe(
       true,
     );
-    expect(items.some((el) => el.className.includes('justify-center'))).toBe(
-      true,
-    );
+    expect(items.some((el) => el.className.includes('flex-col'))).toBe(true);
     expect(
       items.some(
         (el) =>
-          el.className.includes('h-11') &&
-          !el.className.includes('justify-center'),
+          el.className.includes('h-11') && !el.className.includes('flex-col'),
       ),
     ).toBe(true);
   });

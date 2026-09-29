@@ -48,11 +48,10 @@ const SchoolTestsPage = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         eyebrow={t('school_tests.title')}
         title={t('school_tests.title')}
-        description={t('school_tests.subtitle')}
         icon={<ClipboardText className="h-3.5 w-3.5" />}
         actions={
           canManage ? (

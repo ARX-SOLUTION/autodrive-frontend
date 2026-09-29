@@ -44,7 +44,7 @@ const AuditChangesView = (
 
     return (
       <div>
-        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground mb-2">
+        <p className="mb-2 text-sm font-semibold text-foreground">
           {t('audit.changes')}
         </p>
         {changedKeys.length === 0 ? (
@@ -95,7 +95,7 @@ const AuditChangesView = (
 
   return (
     <div>
-      <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground mb-2">
+      <p className="mb-2 text-sm font-semibold text-foreground">
         {action === 'CREATE'
           ? t('audit.created_data')
           : action === 'DELETE'

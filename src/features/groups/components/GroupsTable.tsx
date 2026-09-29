@@ -161,7 +161,7 @@ const GroupsTable = ({
                   e.stopPropagation();
                   onRestore(g.id);
                 }}
-                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               >
                 <ArrowCounterClockwise className="h-3.5 w-3.5" />
               </button>
@@ -178,7 +178,7 @@ const GroupsTable = ({
                     e.stopPropagation();
                     onEdit(g);
                   }}
-                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                 >
                   <PencilSimple className="h-3.5 w-3.5" />
                 </button>
@@ -189,7 +189,7 @@ const GroupsTable = ({
                     e.stopPropagation();
                     onDelete(g.id);
                   }}
-                  className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                  className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                 >
                   <Trash className="h-3.5 w-3.5" />
                 </button>

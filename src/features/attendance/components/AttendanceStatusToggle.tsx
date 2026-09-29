@@ -8,6 +8,7 @@ const TOGGLE_STATUSES = ['present', 'late', 'absent'] as const;
 interface AttendanceStatusToggleProps {
   value: AttendanceStatus | null;
   onChange: (status: AttendanceStatus) => void;
+  studentName?: string;
   className?: string;
 }
 
@@ -20,6 +21,7 @@ interface AttendanceStatusToggleProps {
 const AttendanceStatusToggle = ({
   value,
   onChange,
+  studentName,
   className,
 }: AttendanceStatusToggleProps) => {
   const { t } = useTranslation();
@@ -30,15 +32,16 @@ const AttendanceStatusToggle = ({
   };
 
   return (
-    <div className={cn('flex gap-2', className)}>
+    <div className={cn('flex items-center gap-1.5 sm:gap-2', className)}>
       {TOGGLE_STATUSES.map((status) => (
         <button
           key={status}
           type="button"
           onClick={() => onChange(status)}
           aria-pressed={value === status}
+          aria-label={`${labels[status]} - ${studentName || ''}`}
           className={cn(
-            'min-h-11 flex-1 rounded-[9px] px-2.5 text-xs font-semibold motion-safe:transition-colors duration-[120ms]',
+            'h-9 min-h-9 min-w-[58px] sm:min-w-[68px] px-2 sm:px-2.5 text-xs font-medium rounded-lg motion-safe:transition-colors duration-[120ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
             value === status
               ? statusTone[status].solid
               : 'border border-border bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground',

@@ -39,20 +39,167 @@ export const fuelSchema = z.object({
 export type FuelForm = z.infer<typeof fuelSchema>;
 export const canReviewFuel = (role?: string) =>
   ['owner', 'manager', 'accountant'].includes(role ?? '');
+
+export interface ClassifiedFuel {
+  fuel_type: (typeof fuelTypes)[number];
+  unit: 'litre' | 'm3';
+  is_fuel: boolean;
+}
+
+export const MAX_RECEIPT_SIZE_BYTES = 8 * 1024 * 1024;
+
+export function classifyFuelLine(name = '', mxik = ''): ClassifiedFuel {
+  const cleanName = name.toLowerCase();
+  const cleanMxik = mxik.trim();
+
+  if (
+    cleanName.includes('metan') ||
+    cleanName.includes('methane') ||
+    cleanName.includes('cng') ||
+    cleanMxik.startsWith('02711002')
+  ) {
+    return { fuel_type: 'methane', unit: 'm3', is_fuel: true };
+  }
+
+  if (
+    cleanName.includes('propan') ||
+    cleanName.includes('propane') ||
+    cleanName.includes('lpg') ||
+    cleanMxik.startsWith('02711001')
+  ) {
+    return { fuel_type: 'propane', unit: 'litre', is_fuel: true };
+  }
+
+  const petrolPatterns = [
+    'аи-',
+    'аи ',
+    'ai-',
+    'ai ',
+    'бензин',
+    'benzin',
+    'taheko',
+    'танеко',
+    'evro',
+    'евро',
+    '92',
+    '95',
+    '98',
+    '80',
+    '100',
+    'dizel',
+    'дизел',
+    'diesel',
+    'топливо',
+  ];
+
+  const isPetrolName = petrolPatterns.some((pattern) =>
+    cleanName.includes(pattern),
+  );
+  const isPetrolMxik = cleanMxik.startsWith('02710');
+
+  if (isPetrolName || isPetrolMxik) {
+    return { fuel_type: 'petrol', unit: 'litre', is_fuel: true };
+  }
+
+  const nonFuelKeywords = [
+    'suv',
+    'kofe',
+    'choy',
+    'shokolad',
+    'yuvish',
+    'xizmat',
+    'water',
+    'coffee',
+    'snack',
+  ];
+  const isNonFuel = nonFuelKeywords.some((w) => cleanName.includes(w));
+
+  return {
+    fuel_type: 'petrol',
+    unit: 'litre',
+    is_fuel: !isNonFuel,
+  };
+}
+
+export function detectFundingSource(
+  paymentInfo?: string,
+): 'school_card' | 'partner_credit' | 'advance' | 'personal' {
+  if (!paymentInfo) return 'school_card';
+  const text = paymentInfo.toLowerCase();
+  if (
+    text.includes('korporativ') ||
+    text.includes('korp') ||
+    text.includes('uzcard') ||
+    text.includes('humo') ||
+    text.includes('karta') ||
+    text.includes('pl.karta') ||
+    text.includes('bank kartasi')
+  ) {
+    return 'school_card';
+  }
+  if (
+    text.includes('nasiya') ||
+    text.includes('qarz') ||
+    text.includes('credit')
+  ) {
+    return 'partner_credit';
+  }
+  if (text.includes('avans') || text.includes('advance')) {
+    return 'advance';
+  }
+  if (
+    text.includes('naqd') ||
+    text.includes('cash') ||
+    text.includes('shaxsiy')
+  ) {
+    return 'personal';
+  }
+  return 'school_card';
+}
 export function fiscalQr(values: string[]) {
   for (const value of values) {
     try {
       const url = new URL(value);
+      const pathIsSupported = [
+        '/check',
+        '/epi',
+        '/epi/avans',
+        '/epi/kredit',
+      ].includes(url.pathname);
+      const oneValue = (key: string, pattern: RegExp) => {
+        const values = url.searchParams.getAll(key);
+        return values.length === 1 && pattern.test(values[0]);
+      };
+      const hasFiscalSign = url.searchParams.has('s');
+      const hasFiscalHash = url.searchParams.has('h');
       if (
+        value.length <= 2048 &&
         url.protocol === 'https:' &&
-        ['ofd.soliq.uz', 'new-ofd.soliq.uz'].includes(url.hostname) &&
-        ['/check', '/epi', '/epi/avans', '/epi/kredit'].includes(
-          url.pathname,
-        ) &&
-        ['t', 'r', 'c'].every((k) => url.searchParams.has(k)) &&
-        (url.searchParams.has('s') || url.searchParams.has('h'))
-      )
+        url.hostname === 'ofd.soliq.uz' &&
+        !url.port &&
+        !url.username &&
+        !url.password &&
+        !url.hash &&
+        pathIsSupported &&
+        oneValue('t', /^[A-Z0-9]{1,32}$/) &&
+        oneValue('r', /^\d{1,20}$/) &&
+        oneValue('c', /^\d{14}$/) &&
+        hasFiscalSign !== hasFiscalHash &&
+        (hasFiscalSign
+          ? oneValue('s', /^\d{12}$/)
+          : oneValue('h', /^[A-Za-z0-9_+/=-]{1,256}$/))
+      ) {
+        const date = url.searchParams.get('c') ?? '';
+        const localDate = `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}T${date.slice(8, 10)}:${date.slice(10, 12)}:${date.slice(12, 14)}`;
+        const calendar = new Date(`${localDate}Z`);
+        if (
+          Number.isNaN(calendar.getTime()) ||
+          calendar.toISOString().slice(0, 19) !== localDate
+        ) {
+          continue;
+        }
         return url.href;
+      }
     } catch {
       /* skip non URL codes */
     }
@@ -60,7 +207,7 @@ export function fiscalQr(values: string[]) {
   return null;
 }
 export async function decodeReceipt(file: File): Promise<string | null> {
-  if (file.size > 8 * 1024 * 1024) return null;
+  if (file.size > MAX_RECEIPT_SIZE_BYTES) return null;
   const Detector = (
     globalThis as unknown as {
       BarcodeDetector?: new (options: { formats: string[] }) => {

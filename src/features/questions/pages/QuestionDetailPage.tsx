@@ -59,7 +59,7 @@ const QuestionDetailPage = () => {
   const canRetire = canManage && isPrivate && question.status === 'published';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Button
         variant="ghost"
         size="sm"

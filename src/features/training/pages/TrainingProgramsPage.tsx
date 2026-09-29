@@ -264,11 +264,10 @@ const TrainingProgramsPage = () => {
     (id === user?.branch_id ? user?.branch_name : id);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         eyebrow={t('training.title')}
         title={t('training.title')}
-        description={t('training.subtitle')}
         icon={<BookOpen className="h-3.5 w-3.5" />}
         actions={
           canManage && (

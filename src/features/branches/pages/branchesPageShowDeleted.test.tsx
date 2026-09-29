@@ -8,32 +8,35 @@ import {
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import BranchesPage from '@/features/branches/pages/BranchesPage';
 import type { Branch } from '@/features/branches/types';
-import type { UserRole } from '@/features/staff/types';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
-// autodrive-cg9: owner-only "show deleted" toggle + restore on
-// BranchesPage. Role-parameterized authStore mock (real permissions
-// matrix), mirrors src/test/sidebarTeacherNav.test.tsx.
+// autodrive-cg9: owner-only "show deleted" toggle + restore on BranchesPage.
+// Role-parameterized authStore mock (real permissions matrix), mirrors
+// src/test/sidebarTeacherNav.test.tsx.
 
-const auth = vi.hoisted(() => ({ role: 'owner' as UserRole }));
+const auth = vi.hoisted(() => ({ role: 'owner' as string }));
 
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
-    selector({ user: { role: auth.role } }),
+    selector({
+      user: { role: auth.role, branch_id: null },
+    }),
 }));
 
 const LIVE_BRANCH: Branch = {
   id: 'br-live',
-  name: 'Yunusobod',
-  location: 'Tashkent',
-  active_students: 10,
-  created_at: '2026-06-01T00:00:00.000Z',
+  name: 'Yunusobod filiali',
+  location: 'Yunusobod 4-mavze',
+  phone: '+998901234567',
+  manager_name: 'Nigora Karimova',
+  active_students: 12,
+  created_at: '2026-01-01T00:00:00.000Z',
 };
 
 const DELETED_BRANCH: Branch = {
   ...LIVE_BRANCH,
   id: 'br-deleted',
-  name: 'Chilonzor',
+  name: 'Chilonzor filiali (yopilgan)',
   deleted_at: '2026-07-10T00:00:00.000Z',
 };
 
@@ -50,11 +53,7 @@ vi.mock('@/features/branches/api/branchService', () => ({
   useRestoreBranch: () => ({ mutate: h.restoreMutate, isPending: false }),
 }));
 
-const renderPage = () =>
-  renderWithRouter(<BranchesPage />, {
-    initialEntry: '/branches',
-    routePattern: '/branches',
-  });
+const renderPage = () => renderWithRouter(<BranchesPage />);
 
 afterEach(() => {
   auth.role = 'owner';
@@ -110,10 +109,9 @@ describe('BranchesPage deleted-row rendering (autodrive-cg9)', () => {
     });
     await renderPage();
 
-    // Desktop grid + mobile list both mount in jsdom -- 2 renders for the
-    // ONE deleted branch.
-    expect(screen.getAllByText('common.deleted')).toHaveLength(2);
-    expect(screen.getAllByLabelText('common.restore')).toHaveLength(2);
+    // DataGrid mounts only the active responsive representation.
+    expect(screen.getAllByText('common.deleted')).toHaveLength(1);
+    expect(screen.getAllByLabelText('common.restore')).toHaveLength(1);
     expect(screen.getAllByLabelText('common.edit').length).toBeGreaterThan(0);
   });
 

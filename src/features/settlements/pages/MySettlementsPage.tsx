@@ -98,11 +98,10 @@ const MySettlementsPage = () => {
 
   if (!canViewOwn) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <PageHeader
           eyebrow={t('my_settlements.title')}
           title={t('my_settlements.title')}
-          description={t('my_settlements.subtitle')}
           icon={<Wallet className="h-3.5 w-3.5" aria-hidden="true" />}
         />
       </div>
@@ -110,11 +109,10 @@ const MySettlementsPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         eyebrow={t('my_settlements.title')}
         title={t('my_settlements.title')}
-        description={t('my_settlements.subtitle')}
         icon={<Wallet className="h-3.5 w-3.5" aria-hidden="true" />}
       />
 

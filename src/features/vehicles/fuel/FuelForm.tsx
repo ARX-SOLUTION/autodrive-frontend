@@ -3,6 +3,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
+import { Plus, Trash, QrCode, ArrowClockwise } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PaginationControls from '@/components/ui/PaginationControls';
@@ -21,8 +22,10 @@ import {
   lookupReceipt,
   type Fuel,
 } from './service';
+
 export const selectClass =
   'h-10 w-full rounded-md border border-input bg-background px-3';
+
 const blankLine = () => ({
   fuel_type: '' as Values['lines'][number]['fuel_type'],
   unit: 'litre' as const,
@@ -32,6 +35,7 @@ const blankLine = () => ({
   name: '',
   mxik: '',
 });
+
 export default function FuelForm({ row }: { row?: Fuel }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -98,9 +102,12 @@ export default function FuelForm({ row }: { row?: Fuel }) {
       setScanMessage('manual_review');
     }
   };
+
+  const hasErrors = Object.keys(form.formState.errors).length > 0;
+
   return (
     <form
-      className="glass-card space-y-4 p-4"
+      className="glass-card space-y-5 p-5"
       onSubmit={form.handleSubmit(async (values) => {
         try {
           const saved = await mutation.mutateAsync(values);
@@ -111,9 +118,11 @@ export default function FuelForm({ row }: { row?: Fuel }) {
       })}
     >
       {!row && (
-        <>
-          <label className="block">
-            {t('fuel.vehicle_search')}
+        <div className="space-y-3">
+          <label className="block space-y-1">
+            <span className="text-xs font-medium">
+              {t('fuel.vehicle_search')}
+            </span>
             <Input
               value={search}
               onChange={(e) => {
@@ -122,8 +131,8 @@ export default function FuelForm({ row }: { row?: Fuel }) {
               }}
             />
           </label>
-          <label className="block">
-            {t('fuel.vehicle')}
+          <label className="block space-y-1">
+            <span className="text-xs font-medium">{t('fuel.vehicle')}</span>
             <select className={selectClass} {...form.register('vehicle_id')}>
               <option value="">{t('fuel.choose')}</option>
               {vehicles.data?.data.map((v) => (
@@ -138,49 +147,57 @@ export default function FuelForm({ row }: { row?: Fuel }) {
             totalPages={vehicles.data?.meta.totalPages ?? 1}
             onPageChange={setPage}
           />
-        </>
+        </div>
       )}
-      <label className="block">
-        {t('fuel.station_search')}
-        <Input
-          value={stationSearch}
-          onChange={(e) => {
-            setStationSearch(e.target.value);
-            setStationPage(1);
-          }}
+
+      <div className="space-y-3">
+        <label className="block space-y-1">
+          <span className="text-xs font-medium">
+            {t('fuel.station_search')}
+          </span>
+          <Input
+            value={stationSearch}
+            onChange={(e) => {
+              setStationSearch(e.target.value);
+              setStationPage(1);
+            }}
+          />
+        </label>
+        <label className="block space-y-1">
+          <span className="text-xs font-medium">{t('fuel.station')}</span>
+          <select className={selectClass} {...form.register('station_id')}>
+            <option value="">{t('fuel.choose')}</option>
+            {row &&
+              !stations.data?.data.some((s) => s.id === row.station_id) && (
+                <option value={row.station_id}>{row.station_name}</option>
+              )}
+            {stations.data?.data.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <PaginationControls
+          currentPage={stationPage}
+          totalPages={stations.data?.meta.totalPages ?? 1}
+          onPageChange={setStationPage}
         />
-      </label>
-      <label className="block">
-        {t('fuel.station')}
-        <select className={selectClass} {...form.register('station_id')}>
-          <option value="">{t('fuel.choose')}</option>
-          {row && !stations.data?.data.some((s) => s.id === row.station_id) && (
-            <option value={row.station_id}>{row.station_name}</option>
-          )}
-          {stations.data?.data.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <PaginationControls
-        currentPage={stationPage}
-        totalPages={stations.data?.meta.totalPages ?? 1}
-        onPageChange={setStationPage}
-      />
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2">
-        <label>
-          {t('fuel.occurred_at')}
+        <label className="block space-y-1">
+          <span className="text-xs font-medium">{t('fuel.occurred_at')}</span>
           <Input type="datetime-local" {...form.register('occurred_at')} />
         </label>
-        <label>
-          {t('fuel.odometer_km')}
+        <label className="block space-y-1">
+          <span className="text-xs font-medium">{t('fuel.odometer_km')}</span>
           <Input inputMode="numeric" {...form.register('odometer_km')} />
         </label>
       </div>
-      <label className="block">
-        {t('fuel.funding_source')}
+
+      <label className="block space-y-1">
+        <span className="text-xs font-medium">{t('fuel.funding_source')}</span>
         <select className={selectClass} {...form.register('funding_source')}>
           {['partner_credit', 'school_card', 'advance', 'personal'].map((v) => (
             <option key={v} value={v}>
@@ -189,8 +206,12 @@ export default function FuelForm({ row }: { row?: Fuel }) {
           ))}
         </select>
       </label>
-      <section className="space-y-2">
-        <h2>{t('fuel.scan')}</h2>
+
+      <section className="space-y-3 rounded-lg border p-4">
+        <h2 className="flex items-center gap-1.5 font-heading text-sm font-semibold">
+          <QrCode className="h-4 w-4 text-primary" />
+          {t('fuel.scan')}
+        </h2>
         <Input
           type="file"
           accept="image/jpeg,image/png,image/webp"
@@ -210,95 +231,129 @@ export default function FuelForm({ row }: { row?: Fuel }) {
             }
           }}
         />
-        <p className="text-sm text-muted-foreground">{t('fuel.qr_hint')}</p>
-        <label>
-          {t('fuel.qr_url')}
+        <p className="text-xs text-muted-foreground">{t('fuel.qr_hint')}</p>
+        <label className="block space-y-1">
+          <span className="text-xs font-medium">{t('fuel.qr_url')}</span>
           <Input {...form.register('qr_url')} />
         </label>
         <Button
           type="button"
           variant="outline"
+          size="sm"
           disabled={lookup.isPending}
           onClick={() => void read()}
+          className="gap-1.5"
         >
+          {lookup.isPending && (
+            <ArrowClockwise className="h-3.5 w-3.5 animate-spin" />
+          )}
           {t('fuel.lookup')}
         </Button>
-        {scanMessage && <p role="status">{t(`fuel.${scanMessage}`)}</p>}
-        <p>{t('fuel.classify_hint')}</p>
+        {scanMessage && (
+          <p role="status" className="text-xs text-muted-foreground">
+            {t(`fuel.${scanMessage}`)}
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground">
+          {t('fuel.classify_hint')}
+        </p>
       </section>
-      {lines.fields.map((line, index) => (
-        <fieldset className="space-y-3 rounded border p-3" key={line.id}>
-          <legend>
-            {t('fuel.line')} {index + 1}
-          </legend>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label>
-              {t('fuel.fuel_type')}
-              <select
-                className={selectClass}
-                {...form.register(`lines.${index}.fuel_type`)}
-              >
-                <option value="">{t('fuel.choose')}</option>
-                {fuelTypes.map((v) => (
-                  <option key={v} value={v}>
-                    {t(`fuel.${v}`)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              {t('fuel.unit')}
-              <select
-                className={selectClass}
-                {...form.register(`lines.${index}.unit`)}
-              >
-                <option value="">{t('fuel.choose')}</option>
-                {['litre', 'm3'].map((v) => (
-                  <option key={v} value={v}>
-                    {t(`fuel.${v}`)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {(
-              ['name', 'mxik', 'quantity', 'unit_price', 'line_total'] as const
-            ).map((key) => (
-              <label key={key}>
-                {t(`fuel.${key}`)}
-                <Input
-                  inputMode={
-                    ['quantity', 'unit_price', 'line_total'].includes(key)
-                      ? 'decimal'
-                      : undefined
-                  }
-                  {...form.register(`lines.${index}.${key}`)}
-                />
+
+      <div className="space-y-3">
+        {lines.fields.map((line, index) => (
+          <fieldset className="space-y-3 rounded-lg border p-4" key={line.id}>
+            <legend className="text-xs font-medium px-1">
+              {t('fuel.line')} {index + 1}
+            </legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block space-y-1">
+                <span className="text-xs font-medium">
+                  {t('fuel.fuel_type')}
+                </span>
+                <select
+                  className={selectClass}
+                  {...form.register(`lines.${index}.fuel_type`)}
+                >
+                  <option value="">{t('fuel.choose')}</option>
+                  {fuelTypes.map((v) => (
+                    <option key={v} value={v}>
+                      {t(`fuel.${v}`)}
+                    </option>
+                  ))}
+                </select>
               </label>
-            ))}
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => lines.remove(index)}
-          >
-            {t('fuel.remove_line')}
-          </Button>
-        </fieldset>
-      ))}
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => lines.append(blankLine())}
-      >
-        {t('fuel.add_line')}
-      </Button>
-      {Object.keys(form.formState.errors).length > 0 && (
-        <p role="alert">{t('fuel.invalid')}</p>
+              <label className="block space-y-1">
+                <span className="text-xs font-medium">{t('fuel.unit')}</span>
+                <select
+                  className={selectClass}
+                  {...form.register(`lines.${index}.unit`)}
+                >
+                  <option value="">{t('fuel.choose')}</option>
+                  {['litre', 'm3'].map((v) => (
+                    <option key={v} value={v}>
+                      {t(`fuel.${v}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {(
+                [
+                  'name',
+                  'mxik',
+                  'quantity',
+                  'unit_price',
+                  'line_total',
+                ] as const
+              ).map((key) => (
+                <label className="block space-y-1" key={key}>
+                  <span className="text-xs font-medium">
+                    {t(`fuel.${key}`)}
+                  </span>
+                  <Input
+                    inputMode={
+                      ['quantity', 'unit_price', 'line_total'].includes(key)
+                        ? 'decimal'
+                        : undefined
+                    }
+                    {...form.register(`lines.${index}.${key}`)}
+                  />
+                </label>
+              ))}
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-destructive hover:text-destructive"
+              onClick={() => lines.remove(index)}
+            >
+              <Trash className="h-3.5 w-3.5" />
+              {t('fuel.remove_line')}
+            </Button>
+          </fieldset>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => lines.append(blankLine())}
+        >
+          <Plus className="h-3.5 w-3.5" />
+          {t('fuel.add_line')}
+        </Button>
+      </div>
+
+      {hasErrors && (
+        <p role="alert" className="text-sm text-destructive font-medium">
+          {t('fuel.invalid')}
+        </p>
       )}
-      <div>
+
+      <div className="flex flex-wrap items-center gap-3 border-t pt-4">
         {row && (
-          <label>
-            {t('fuel.reason')}
+          <label className="flex-1 space-y-1 min-w-[200px]">
+            <span className="text-xs font-medium">{t('fuel.reason')}</span>
             <Input
               required
               value={reason}
@@ -306,14 +361,18 @@ export default function FuelForm({ row }: { row?: Fuel }) {
             />
           </label>
         )}
-        <Button disabled={mutation.isPending} type="submit">
+        <Button disabled={mutation.isPending} type="submit" className="gap-1.5">
+          {mutation.isPending && (
+            <ArrowClockwise className="h-3.5 w-3.5 animate-spin" />
+          )}
           {t('common.save')}
         </Button>
       </div>
-      <p className="text-sm">{t('fuel.save_hint')}</p>
+      <p className="text-xs text-muted-foreground">{t('fuel.save_hint')}</p>
     </form>
   );
 }
+
 function localDate(value: string) {
   const date = new Date(value);
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000)

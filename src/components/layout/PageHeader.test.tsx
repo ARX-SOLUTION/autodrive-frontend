@@ -30,15 +30,17 @@ describe('PageHeader', () => {
     expect(heading.tagName).toBe('H1');
   });
 
-  it('applies mono uppercase tracking classes to the eyebrow', () => {
-    const { container } = render(
-      <PageHeader eyebrow="Payments" title="Payment history" />,
-    );
+  it('hides the eyebrow when it repeats the title', () => {
+    render(<PageHeader eyebrow="Groups" title="Groups" />);
 
-    const eyebrow = container.querySelector('.tracking-\\[0\\.14em\\]');
-    expect(eyebrow).toBeTruthy();
-    expect(eyebrow?.className).toContain('font-mono');
-    expect(eyebrow?.className).toContain('uppercase');
-    expect(eyebrow?.className).toContain('tracking-[0.14em]');
+    expect(screen.getAllByText('Groups')).toHaveLength(1);
+  });
+
+  it('renders a distinct eyebrow as muted context', () => {
+    render(<PageHeader eyebrow="Payments" title="Payment history" />);
+
+    const eyebrow = screen.getByText('Payments');
+    expect(eyebrow.className).toContain('text-muted-foreground');
+    expect(eyebrow.className).not.toContain('uppercase');
   });
 });

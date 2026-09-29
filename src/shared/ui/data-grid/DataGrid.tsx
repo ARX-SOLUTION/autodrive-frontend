@@ -289,7 +289,7 @@ export function DataGrid<TData extends RowData>({
           <td
             key={cell.id}
             className={cn(
-              'px-4 py-3',
+              'h-11 px-3 py-1.5',
               ALIGN_CLASS[align],
               cell.column.columnDef.meta?.cellClassName,
             )}
@@ -379,7 +379,7 @@ export function DataGrid<TData extends RowData>({
                           rowSpan={header.rowSpan || undefined}
                           aria-sort={canSort ? getAriaSort(sorted) : undefined}
                           className={cn(
-                            'px-4 py-3 font-medium text-muted-foreground',
+                            'px-3 py-2.5 font-medium text-muted-foreground',
                             ALIGN_CLASS[align],
                             header.column.columnDef.meta?.headerClassName,
                           )}

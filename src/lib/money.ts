@@ -4,7 +4,7 @@
 //
 // "1234567" -> "1 234 567 soʻm" (space-grouped, ru-RU locale, apostrophe soʻm).
 
-const groupSep = (n: number): string =>
+export const groupSep = (n: number): string =>
   // ru-RU groups with a non-breaking space; normalise both nbsp and any comma
   // to a plain space so the output is consistent regardless of the JS runtime.
   n

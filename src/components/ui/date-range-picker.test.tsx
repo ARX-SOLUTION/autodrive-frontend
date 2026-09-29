@@ -144,4 +144,20 @@ describe('DateRangePicker', () => {
     clickDay('5');
     expect(onChange).not.toHaveBeenCalled();
   });
+
+  it('renders presets when showPresets is true and selecting a preset commits its range', () => {
+    const onChange = vi.fn();
+    render(
+      <DateRangePicker max="2026-12-31" onChange={onChange} showPresets />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'daterange.open' }));
+
+    const presetsContainer = screen.getByTestId('date-range-presets');
+    expect(presetsContainer).toBeInTheDocument();
+
+    const todayBtn = screen.getByRole('button', { name: 'date_presets.today' });
+    fireEvent.click(todayBtn);
+
+    expect(onChange).toHaveBeenCalledWith('2026-07-25', '2026-07-25');
+  });
 });

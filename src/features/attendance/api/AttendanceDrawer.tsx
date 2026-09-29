@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { MagnifyingGlass, X } from '@phosphor-icons/react';
 import {
   Sheet,
   SheetContent,
@@ -11,6 +12,7 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import AttendanceStatusToggle from '@/features/attendance/components/AttendanceStatusToggle';
 import {
@@ -43,6 +45,12 @@ const SUMMARY_STATUSES: AttendanceStatus[] = [
   'excused',
 ];
 
+export const normalizeText = (str: string) =>
+  str
+    .toLowerCase()
+    .replace(/['‘’ʻʼ`]/g, "'")
+    .trim();
+
 // Roster row avatar initials -- e.g. "Valiyev Ali" -> "VA". Purely
 // decorative, derived from the same studentName the row already renders.
 const initials = (name: string) =>
@@ -71,7 +79,10 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
   // empty; fall back to the group roster so there's someone to mark on the
   // very first save. Upgrade path: pre-seed rows server-side if this proves
   // too slow for large groups.
-  const { data: group } = useGroup(lesson?.group_id);
+  const { data: group, isLoading: groupLoading } = useGroup(lesson?.group_id);
+  const isLoadingRoster =
+    detailLoading ||
+    (Boolean(lesson?.group_id) && groupLoading && !detail?.attendance?.length);
   const batchAttendance = useBatchAttendance();
   // Explicit capability gate (was implicitly open to any role) — takeAttendance
   // includes every role incl. teacher (permissions.ts), so this keeps teacher
@@ -79,6 +90,7 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
   // rather than an accidental absence of a check.
   const canSave = useCan('takeAttendance');
   const [changes, setChanges] = useState<Record<string, AttendanceStatus>>({});
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Was `useEffect(() => setChanges({}), [lesson?.id])`
   // (react-hooks/set-state-in-effect). React's documented render-phase
@@ -88,6 +100,7 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
   if (lesson?.id !== changesForLessonId) {
     setChangesForLessonId(lesson?.id);
     setChanges({});
+    setSearchQuery('');
   }
 
   const roster = useMemo<RosterRow[]>(() => {
@@ -109,6 +122,16 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
       status: r.status,
     }));
   }, [detail, group]);
+
+  const filteredRoster = useMemo(() => {
+    const q = normalizeText(searchQuery);
+    if (!q) return roster;
+    const tokens = q.split(/\s+/).filter(Boolean);
+    return roster.filter((row) => {
+      const normalizedName = normalizeText(row.studentName);
+      return tokens.every((token) => normalizedName.includes(token));
+    });
+  }, [roster, searchQuery]);
 
   const lessonId = lesson?.id;
   const { statusByStudentId, markedCount, summaryCounts, saveRecords } =
@@ -167,7 +190,7 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
 
   return (
     <Sheet open={!!lesson} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
+      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl md:max-w-2xl">
         <SheetHeader className="border-b border-border p-5 text-left">
           <SheetTitle className="text-[17px] font-bold">
             {lesson?.group_name}
@@ -179,7 +202,7 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
         </SheetHeader>
 
         {roster.length > 0 && (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2 border-b border-border p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 border-b border-border p-4">
             {SUMMARY_STATUSES.map((status) => (
               <div
                 key={status}
@@ -212,30 +235,76 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
           </div>
         )}
 
+        {roster.length > 0 && (
+          <div className="border-b border-border px-4 py-2.5">
+            <div className="relative">
+              <MagnifyingGlass
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('common.search')}
+                aria-label={t('common.search')}
+                className="h-9 pl-9 pr-9 text-sm"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  aria-label={t('common.clear')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 space-y-1 overflow-y-auto p-4">
-          {detailLoading ? (
+          {isLoadingRoster ? (
             [1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)
           ) : roster.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
               {t('attendance.no_students')}
             </p>
+          ) : filteredRoster.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                {t('common.no_data')}
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery('')}
+                className="mt-2 text-xs text-primary"
+              >
+                {t('common.clear')}
+              </Button>
+            </div>
           ) : (
-            roster.map((row) => (
+            filteredRoster.map((row) => (
               <div
                 key={row.studentId}
                 className="flex items-center justify-between gap-3 rounded-xl p-2 motion-safe:transition-colors duration-150 hover:bg-muted/[40%]"
               >
-                <span className="flex min-w-0 items-center gap-2.5">
+                <div className="flex flex-1 min-w-0 items-center gap-2.5">
                   <span
-                    className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-muted font-mono text-xs font-semibold text-muted-foreground"
+                    className="grid h-8 w-8 sm:h-9 sm:w-9 shrink-0 place-items-center rounded-lg border border-border bg-muted font-mono text-[11px] sm:text-xs font-semibold text-muted-foreground"
                     aria-hidden="true"
                   >
                     {initials(row.studentName)}
                   </span>
-                  <span className="truncate text-[14.5px] font-semibold">
+                  <span
+                    className="break-words line-clamp-2 sm:line-clamp-1 font-semibold text-sm sm:text-[14.5px] text-foreground"
+                    title={row.studentName}
+                  >
                     {row.studentName}
                   </span>
-                </span>
+                </div>
                 <AttendanceStatusToggle
                   value={statusByStudentId.get(row.studentId) ?? null}
                   onChange={(status) =>
@@ -244,14 +313,15 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
                       [row.studentId]: status,
                     }))
                   }
-                  className="w-full max-w-[380px]"
+                  studentName={row.studentName}
+                  className="shrink-0"
                 />
               </div>
             ))
           )}
         </div>
 
-        <SheetFooter className="flex-row items-center justify-between border-t border-border p-4 sm:justify-between">
+        <SheetFooter className="flex-row flex-wrap items-center justify-between gap-3 border-t border-border p-4 sm:justify-between">
           <span className="font-mono text-xs text-muted-foreground">
             {t('attendance.marked_progress', {
               marked: markedCount,

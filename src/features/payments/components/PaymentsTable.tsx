@@ -16,7 +16,7 @@ import {
   useUpdatePayment,
 } from '@/features/payments/api/paymentService';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
-import { formatMoney } from '@/lib/money';
+import { formatMoney, groupSep } from '@/lib/money';
 import type { Payment } from '@/features/payments/types';
 import { cn } from '@/lib/utils';
 import { PaymentMobileCard } from '@/features/payments/components/PaymentsMobileList';
@@ -43,7 +43,6 @@ interface PaymentsTableProps {
 }
 
 const columnHelper = createDataGridColumnHelper<Payment>();
-const uzNumberFormatter = new Intl.NumberFormat('uz-UZ');
 
 /** SECTION 4: server-controlled payments grid with a mobile card renderer. */
 export const PaymentsTable = ({
@@ -135,7 +134,7 @@ export const PaymentsTable = ({
     }),
     columnHelper.accessor('total_price', {
       header: t('payments.total_price'),
-      cell: ({ getValue }) => uzNumberFormatter.format(getValue()),
+      cell: ({ getValue }) => groupSep(getValue()),
       meta: {
         align: 'right',
         cellClassName: 'whitespace-nowrap tabular-nums font-mono',
@@ -143,7 +142,7 @@ export const PaymentsTable = ({
     }),
     columnHelper.accessor('amount_paid', {
       header: t('payments.amount_paid'),
-      cell: ({ getValue }) => `+${uzNumberFormatter.format(getValue())}`,
+      cell: ({ getValue }) => `+${groupSep(getValue())}`,
       enableSorting: true,
       meta: {
         align: 'right',
@@ -158,9 +157,9 @@ export const PaymentsTable = ({
         return (
           <span className={debt > 0 ? 'text-destructive' : 'text-success'}>
             {debt > 0
-              ? uzNumberFormatter.format(debt)
+              ? groupSep(debt)
               : debt < 0
-                ? `${t('students.credit_label')}: ${uzNumberFormatter.format(Math.abs(debt))}`
+                ? `${t('students.credit_label')}: ${groupSep(Math.abs(debt))}`
                 : t('payments.fully_paid')}
           </span>
         );
@@ -196,7 +195,7 @@ export const PaymentsTable = ({
                     }}
                     aria-label={t('common.edit')}
                     title={t('common.edit')}
-                    className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
                     <PencilSimple className="h-3.5 w-3.5" />
                   </button>
@@ -208,7 +207,7 @@ export const PaymentsTable = ({
                     }}
                     aria-label={t('common.delete')}
                     title={t('common.delete')}
-                    className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   >
                     <Trash className="h-3.5 w-3.5" />
                   </button>
