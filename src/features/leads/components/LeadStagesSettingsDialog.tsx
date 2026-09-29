@@ -10,6 +10,7 @@ import {
   CircleNotch,
   Info,
   Check,
+  X,
 } from '@phosphor-icons/react';
 import {
   Dialog,
@@ -29,9 +30,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import {
   useLeadStagesQuery,
   useUpdateLeadStagesMutation,
+  useLeadSourcesQuery,
+  useCreateLeadSourceMutation,
+  useDeleteLeadSourceMutation,
 } from '../queries/leadsQueries';
 
 export interface LeadStagesSettingsDialogProps {
@@ -75,6 +81,14 @@ export const LeadStagesSettingsDialog = ({
   const [moveToStageId, setMoveToStageId] = useState<string>('');
   const [prevOpen, setPrevOpen] = useState(false);
   const [syncedStagesLength, setSyncedStagesLength] = useState(0);
+  const [newSourceName, setNewSourceName] = useState('');
+
+  const { data: allSources = [], isLoading: sourcesLoading } =
+    useLeadSourcesQuery({ enabled: open });
+  const createSourceMutation = useCreateLeadSourceMutation();
+  const deleteSourceMutation = useDeleteLeadSourceMutation();
+  const customSources = allSources.filter((s) => !s.isSystem);
+  const systemSources = allSources.filter((s) => s.isSystem);
 
   // Synchronize state when dialog opens or when stages finish loading
   if (open !== prevOpen) {
@@ -308,262 +322,426 @@ export const LeadStagesSettingsDialog = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {isLoading ? (
-            <div className="flex h-40 items-center justify-center text-muted-foreground gap-2">
-              <CircleNotch className="h-5 w-5 animate-spin" />
-              <span className="text-sm">
-                {t('common.loading', 'Loading...')}
-              </span>
-            </div>
-          ) : (
-            <>
-              {/* System start stage */}
-              {newStage ? (
-                <div className="rounded-lg border border-dashed border-border/80 bg-muted/30 p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="h-3 w-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: newStage.color }}
-                    />
-                    <div>
-                      <div className="text-sm font-medium text-foreground">
-                        {newStage.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {t('leads.system_stage', 'System stage')} (NEW)
+        <Tabs
+          defaultValue="stages"
+          className="flex flex-col flex-1 overflow-hidden"
+        >
+          <TabsList className="mx-6 mt-4 mb-0 w-auto self-start">
+            <TabsTrigger value="stages">
+              {t('leads.tab_stages', 'Bosqichlar')}
+            </TabsTrigger>
+            <TabsTrigger value="sources">
+              {t('leads.tab_sources', 'Manbalar')}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent
+            value="stages"
+            className="flex-1 overflow-y-auto p-6 space-y-6 mt-0"
+          >
+            {isLoading ? (
+              <div className="flex h-40 items-center justify-center text-muted-foreground gap-2">
+                <CircleNotch className="h-5 w-5 animate-spin" />
+                <span className="text-sm">
+                  {t('common.loading', 'Loading...')}
+                </span>
+              </div>
+            ) : (
+              <>
+                {/* System start stage */}
+                {newStage ? (
+                  <div className="rounded-lg border border-dashed border-border/80 bg-muted/30 p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="h-3 w-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: newStage.color }}
+                      />
+                      <div>
+                        <div className="text-sm font-medium text-foreground">
+                          {newStage.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {t('leads.system_stage', 'System stage')} (NEW)
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <span className="text-xs font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                    {t('common.locked', 'Fixed')}
-                  </span>
-                </div>
-              ) : null}
-
-              {/* Work stages list */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <span>{t('leads.work_stages', 'Work stages')}</span>
-                    <span className="text-xs text-muted-foreground font-normal">
-                      ({activeWorkCount} / {MAX_ACTIVE_WORK_STAGES})
+                    <span className="text-xs font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded">
+                      {t('common.locked', 'Fixed')}
                     </span>
                   </div>
+                ) : null}
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 gap-1.5 text-xs min-h-[36px]"
-                    onClick={handleAddStage}
-                    disabled={activeWorkCount >= MAX_ACTIVE_WORK_STAGES}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    <span>{t('leads.add_stage', 'Add Stage')}</span>
-                  </Button>
-                </div>
+                {/* Work stages list */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <span>{t('leads.work_stages', 'Work stages')}</span>
+                      <span className="text-xs text-muted-foreground font-normal">
+                        ({activeWorkCount} / {MAX_ACTIVE_WORK_STAGES})
+                      </span>
+                    </div>
 
-                <div className="space-y-2">
-                  {workStages.map((stage, index) => (
-                    <div
-                      key={stage.tempKey}
-                      className={`flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border p-3 transition-colors ${
-                        stage.isActive
-                          ? 'border-border bg-card'
-                          : 'border-border/60 bg-muted/20 opacity-70'
-                      }`}
-                      data-testid={`stage-item-${index}`}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1.5 text-xs min-h-[36px]"
+                      onClick={handleAddStage}
+                      disabled={activeWorkCount >= MAX_ACTIVE_WORK_STAGES}
                     >
-                      {/* Drag / Ordering buttons */}
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 min-h-[36px] min-w-[36px] text-muted-foreground hover:text-foreground"
-                          disabled={index === 0}
-                          onClick={() => handleMoveUp(index)}
-                          aria-label={t('leads.move_up', 'Move up')}
-                        >
-                          <ArrowUp className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 min-h-[36px] min-w-[36px] text-muted-foreground hover:text-foreground"
-                          disabled={index === workStages.length - 1}
-                          onClick={() => handleMoveDown(index)}
-                          aria-label={t('leads.move_down', 'Move down')}
-                        >
-                          <ArrowDown className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>{t('leads.add_stage', 'Add Stage')}</span>
+                    </Button>
+                  </div>
 
-                      {/* Stage Name input */}
-                      <div className="flex-1 min-w-[140px]">
-                        <Input
-                          value={stage.name}
-                          onChange={(e) =>
-                            handleUpdateName(index, e.target.value)
-                          }
-                          placeholder={t('leads.stage_name', 'Stage Name')}
-                          className="h-9 text-sm"
-                          aria-label={`${t('leads.stage_name', 'Stage Name')} ${index + 1}`}
-                        />
-                      </div>
-
-                      {/* Color Palette swatches */}
-                      <div className="flex items-center gap-1 flex-wrap">
-                        {PRESET_COLORS.map((hex) => {
-                          const isSelected =
-                            stage.color.toUpperCase() === hex.toUpperCase();
-                          return (
-                            <button
-                              key={hex}
-                              type="button"
-                              onClick={() => handleUpdateColor(index, hex)}
-                              aria-label={`Color ${hex}`}
-                              className="h-5 w-5 rounded-full flex items-center justify-center transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                              style={{ backgroundColor: hex }}
-                            >
-                              {isSelected ? (
-                                <Check
-                                  className="h-3 w-3 text-white"
-                                  weight="bold"
-                                />
-                              ) : null}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Active toggle and Delete action */}
-                      <div className="flex items-center gap-3 sm:ml-auto flex-shrink-0">
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={stage.isActive}
-                            onCheckedChange={(checked) =>
-                              handleToggleActive(index, checked)
-                            }
-                            aria-label={`${t('leads.active_status', 'Active')} ${stage.name || index + 1}`}
-                          />
-                          <span className="text-xs text-muted-foreground select-none">
-                            {stage.isActive
-                              ? t('leads.active_status', 'Active')
-                              : t('leads.inactive_status', 'Inactive')}
-                          </span>
-                        </div>
-
-                        {!stage.id ? (
+                  <div className="space-y-2">
+                    {workStages.map((stage, index) => (
+                      <div
+                        key={stage.tempKey}
+                        className={`flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border p-3 transition-colors ${
+                          stage.isActive
+                            ? 'border-border bg-card'
+                            : 'border-border/60 bg-muted/20 opacity-70'
+                        }`}
+                        data-testid={`stage-item-${index}`}
+                      >
+                        {/* Drag / Ordering buttons */}
+                        <div className="flex items-center gap-1 flex-shrink-0">
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 min-h-[36px] min-w-[36px] text-destructive hover:bg-destructive/10"
-                            onClick={() => handleRemoveNewStage(index)}
-                            aria-label={t('common.delete', 'Delete')}
+                            className="h-7 w-7 min-h-[36px] min-w-[36px] text-muted-foreground hover:text-foreground"
+                            disabled={index === 0}
+                            onClick={() => handleMoveUp(index)}
+                            aria-label={t('leads.move_up', 'Move up')}
                           >
-                            <Trash className="h-4 w-4" />
+                            <ArrowUp className="h-3.5 w-3.5" />
                           </Button>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 min-h-[36px] min-w-[36px] text-muted-foreground hover:text-foreground"
+                            disabled={index === workStages.length - 1}
+                            onClick={() => handleMoveDown(index)}
+                            aria-label={t('leads.move_down', 'Move down')}
+                          >
+                            <ArrowDown className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
 
-              {/* Lead reassignment fallback when deactivating existing stage */}
-              {hasDeactivatedExisting ? (
-                <div className="rounded-lg border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-4 space-y-2">
-                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-medium text-sm">
-                    <Info className="h-4 w-4" />
-                    <span>
-                      {t(
-                        'leads.target_stage_for_leads',
-                        'Target stage to move leads',
-                      )}
-                    </span>
+                        {/* Stage Name input */}
+                        <div className="flex-1 min-w-[140px]">
+                          <Input
+                            value={stage.name}
+                            onChange={(e) =>
+                              handleUpdateName(index, e.target.value)
+                            }
+                            placeholder={t('leads.stage_name', 'Stage Name')}
+                            className="h-9 text-sm"
+                            aria-label={`${t('leads.stage_name', 'Stage Name')} ${index + 1}`}
+                          />
+                        </div>
+
+                        {/* Color Palette swatches */}
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {PRESET_COLORS.map((hex) => {
+                            const isSelected =
+                              stage.color.toUpperCase() === hex.toUpperCase();
+                            return (
+                              <button
+                                key={hex}
+                                type="button"
+                                onClick={() => handleUpdateColor(index, hex)}
+                                aria-label={`${t('leads.select_color', 'Rang tanlash')}: ${hex}`}
+                                aria-pressed={isSelected}
+                                className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              >
+                                <span
+                                  className="h-5 w-5 rounded-full flex items-center justify-center shadow-2xs"
+                                  style={{ backgroundColor: hex }}
+                                >
+                                  {isSelected ? (
+                                    <Check
+                                      className="h-3 w-3 text-white"
+                                      weight="bold"
+                                    />
+                                  ) : null}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Active toggle and Delete action */}
+                        <div className="flex items-center gap-3 sm:ml-auto flex-shrink-0">
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={stage.isActive}
+                              onCheckedChange={(checked) =>
+                                handleToggleActive(index, checked)
+                              }
+                              aria-label={`${t('leads.active_status', 'Active')} ${stage.name || index + 1}`}
+                            />
+                            <span className="text-xs text-muted-foreground select-none">
+                              {stage.isActive
+                                ? t('leads.active_status', 'Active')
+                                : t('leads.inactive_status', 'Inactive')}
+                            </span>
+                          </div>
+
+                          {!stage.id ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 min-h-[36px] min-w-[36px] text-destructive hover:bg-destructive/10"
+                              onClick={() => handleRemoveNewStage(index)}
+                              aria-label={t('common.delete', 'Delete')}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t(
-                      'leads.target_stage_description',
-                      'Existing leads from deactivated stages will be moved to this selected stage.',
-                    )}
-                  </p>
-                  <Select
-                    value={moveToStageId}
-                    onValueChange={setMoveToStageId}
-                  >
-                    <SelectTrigger className="h-9 w-full bg-background">
-                      <SelectValue
-                        placeholder={t(
-                          'leads.delete_stage_move_leads',
-                          'Select stage',
+                </div>
+
+                {/* Lead reassignment fallback when deactivating existing stage */}
+                {hasDeactivatedExisting ? (
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-medium text-sm">
+                      <Info className="h-4 w-4" />
+                      <span>
+                        {t(
+                          'leads.target_stage_for_leads',
+                          'Target stage to move leads',
                         )}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {activeWorkStagesWithId.map((st) => (
-                        <SelectItem key={st.id} value={st.id!}>
-                          {st.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t(
+                        'leads.target_stage_description',
+                        'Existing leads from deactivated stages will be moved to this selected stage.',
+                      )}
+                    </p>
+                    <Select
+                      value={moveToStageId}
+                      onValueChange={setMoveToStageId}
+                    >
+                      <SelectTrigger className="h-9 w-full bg-background">
+                        <SelectValue
+                          placeholder={t(
+                            'leads.delete_stage_move_leads',
+                            'Select stage',
+                          )}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activeWorkStagesWithId.map((st) => (
+                          <SelectItem key={st.id} value={st.id!}>
+                            {st.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : null}
+
+                {/* System terminal stages (WON and LOST) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  {wonStage ? (
+                    <div className="rounded-lg border border-dashed border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/10 p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="h-3 w-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: wonStage.color }}
+                        />
+                        <div>
+                          <div className="text-sm font-medium text-foreground">
+                            {wonStage.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {t('leads.system_stage', 'System stage')} (WON)
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded">
+                        {t('common.locked', 'Fixed')}
+                      </span>
+                    </div>
+                  ) : null}
+
+                  {lostStage ? (
+                    <div className="rounded-lg border border-dashed border-rose-500/40 bg-rose-50/30 dark:bg-rose-950/10 p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="h-3 w-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: lostStage.color }}
+                        />
+                        <div>
+                          <div className="text-sm font-medium text-foreground">
+                            {lostStage.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {t('leads.system_stage', 'System stage')} (LOST)
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded">
+                        {t('common.locked', 'Fixed')}
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
+              </>
+            )}
+          </TabsContent>
 
-              {/* System terminal stages (WON and LOST) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                {wonStage ? (
-                  <div className="rounded-lg border border-dashed border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/10 p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="h-3 w-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: wonStage.color }}
-                      />
-                      <div>
-                        <div className="text-sm font-medium text-foreground">
-                          {wonStage.name}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {t('leads.system_stage', 'System stage')} (WON)
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-xs font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                      {t('common.locked', 'Fixed')}
-                    </span>
-                  </div>
-                ) : null}
-
-                {lostStage ? (
-                  <div className="rounded-lg border border-dashed border-rose-500/40 bg-rose-50/30 dark:bg-rose-950/10 p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="h-3 w-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: lostStage.color }}
-                      />
-                      <div>
-                        <div className="text-sm font-medium text-foreground">
-                          {lostStage.name}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {t('leads.system_stage', 'System stage')} (LOST)
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-xs font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                      {t('common.locked', 'Fixed')}
-                    </span>
-                  </div>
-                ) : null}
+          <TabsContent
+            value="sources"
+            className="flex-1 overflow-y-auto p-6 space-y-4 mt-0"
+          >
+            {sourcesLoading ? (
+              <div className="flex h-40 items-center justify-center text-muted-foreground gap-2">
+                <CircleNotch className="h-5 w-5 animate-spin" />
+                <span className="text-sm">
+                  {t('common.loading', 'Loading...')}
+                </span>
               </div>
-            </>
-          )}
-        </div>
+            ) : (
+              <>
+                {/* System sources */}
+                {systemSources.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      {t('leads.system_sources', 'Standart manbalar')}
+                    </p>
+                    <div className="space-y-1.5">
+                      {systemSources.map((src) => (
+                        <div
+                          key={src.id}
+                          className="flex items-center justify-between rounded-lg border border-dashed border-border/70 bg-muted/30 px-3 py-2"
+                        >
+                          <span className="text-sm text-foreground">
+                            {src.name}
+                          </span>
+                          <Badge variant="secondary" className="text-xs">
+                            {t('leads.source_standard', 'Standart')}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom sources */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    {t('leads.custom_sources_label', 'Kompaniya manbalari')}
+                  </p>
+                  {customSources.length === 0 && (
+                    <p className="text-sm text-muted-foreground py-2">
+                      {t(
+                        'leads.no_custom_sources',
+                        'Hali qo\u2018shilgan manbalar yo\u2018q',
+                      )}
+                    </p>
+                  )}
+                  <div className="space-y-1.5">
+                    {customSources.map((src) => (
+                      <div
+                        key={src.id}
+                        className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2"
+                      >
+                        <span className="text-sm text-foreground">
+                          {src.name}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          aria-label={t('common.delete', 'O\u2018chirish')}
+                          disabled={deleteSourceMutation.isPending}
+                          onClick={() => {
+                            deleteSourceMutation.mutate(src.id, {
+                              onSuccess: () => {
+                                toast.success(
+                                  t(
+                                    'leads.source_deleted',
+                                    'Manba o\u2018chirildi',
+                                  ),
+                                );
+                              },
+                              onError: (err) => {
+                                toast.error((err as Error).message);
+                              },
+                            });
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add new custom source */}
+                  <form
+                    className="flex gap-2 mt-3"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const name = newSourceName.trim();
+                      if (!name) return;
+                      createSourceMutation.mutate(name, {
+                        onSuccess: () => {
+                          setNewSourceName('');
+                          toast.success(
+                            t(
+                              'leads.source_created',
+                              'Yangi manba qo\u2018shildi',
+                            ),
+                          );
+                        },
+                        onError: (err) => {
+                          toast.error((err as Error).message);
+                        },
+                      });
+                    }}
+                  >
+                    <Input
+                      value={newSourceName}
+                      onChange={(e) => setNewSourceName(e.target.value)}
+                      placeholder={t(
+                        'leads.new_source_placeholder',
+                        'Manba nomi...',
+                      )}
+                      className="flex-1"
+                      maxLength={80}
+                    />
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={
+                        !newSourceName.trim() || createSourceMutation.isPending
+                      }
+                      className="min-h-[44px] gap-1.5 shrink-0"
+                    >
+                      {createSourceMutation.isPending ? (
+                        <CircleNotch className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Plus className="h-4 w-4" />
+                      )}
+                      {t('common.add', 'Qo\u2018shish')}
+                    </Button>
+                  </form>
+                </div>
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter className="p-4 border-t border-border flex flex-row items-center justify-end gap-2 bg-muted/20">
           <Button

@@ -9,6 +9,7 @@ import {
   Key,
   ShieldCheck,
   Trash,
+  Gift,
 } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -212,6 +213,29 @@ const StudentDetailPage = () => {
               <Badge variant="outline">
                 {t(`students.course.${student.course_type}`)}
               </Badge>
+              {Boolean(
+                student.referrals_count && student.referrals_count > 0,
+              ) && (
+                <Link
+                  to="/students"
+                  search={{ referred_by_student_id: student.id }}
+                  className="inline-flex"
+                >
+                  <Badge
+                    variant="outline"
+                    className="gap-1.5 border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                  >
+                    <Gift className="h-3.5 w-3.5" />
+                    <span>
+                      {t(
+                        'students.detail.referral_discount_badge',
+                        '{{count}} ta referal: chegirmaga tavsiya etiladi',
+                        { count: student.referrals_count },
+                      )}
+                    </span>
+                  </Badge>
+                </Link>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">

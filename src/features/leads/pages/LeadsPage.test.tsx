@@ -67,6 +67,18 @@ vi.mock('../queries/leadsQueries', () => ({
     mutate: vi.fn(),
     isPending: false,
   }),
+  useLeadSourcesQuery: () => ({
+    data: [],
+    isLoading: false,
+  }),
+  useCreateLeadSourceMutation: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+  useDeleteLeadSourceMutation: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
 }));
 
 vi.mock('@/features/branches/api/branchService', () => ({

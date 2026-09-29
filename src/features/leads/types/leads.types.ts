@@ -17,11 +17,14 @@ export type LeadLostReason =
 export type LeadSource =
   | 'telegram'
   | 'instagram'
+  | 'referral'
+  | 'directory_map'
+  | 'olx'
+  | 'walk_in'
+  | 'other'
   | 'website'
   | 'recommendation'
-  | 'banner'
-  | 'walk_in'
-  | 'other';
+  | 'banner';
 
 export type CourseType = 'tezkor' | 'avto_maktab';
 
@@ -38,6 +41,14 @@ export interface LeadStage {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CompanyLeadSource {
+  id: string;
+  name: string;
+  isSystem: boolean;
+  isActive: boolean;
+  createdAt: string;
 }
 
 export interface LeadActivity {
@@ -138,6 +149,10 @@ export interface LeadMetrics {
   >;
   byLostReason: Record<string, number>;
   byStage: Record<string, number>;
+  overdueCount?: number;
+  untouchedCount?: number;
+  funnelStages?: { stageId: string; stageName: string; count: number }[];
+  openPerStage?: { stageId: string; stageName: string; count: number }[];
 }
 
 export interface DuplicateCheckResult {

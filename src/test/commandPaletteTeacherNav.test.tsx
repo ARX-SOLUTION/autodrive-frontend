@@ -54,5 +54,21 @@ describe('CommandPalette teacher nav trim (autodrive-vh0.2)', () => {
     expect(screen.getByText('nav.expenses')).toBeTruthy();
     expect(screen.getByText('nav.dashboard')).toBeTruthy();
     expect(screen.queryByText('nav.students')).toBeNull();
+    expect(screen.queryByText('nav.leads')).toBeNull();
+  });
+
+  it('hides Leads command for teacher', async () => {
+    role = 'teacher';
+    await renderPalette();
+    expect(screen.queryByText('nav.leads')).toBeNull();
+  });
+
+  it('shows Leads command for manager, owner, dev, and operator', async () => {
+    for (const testRole of ['manager', 'owner', 'dev', 'operator'] as const) {
+      role = testRole;
+      cleanup();
+      await renderPalette();
+      expect(screen.getByText('nav.leads')).toBeTruthy();
+    }
   });
 });

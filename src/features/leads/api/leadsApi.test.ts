@@ -158,4 +158,66 @@ describe('leadsApi', () => {
       '/leads/l-1/activities/act-1',
     );
   });
+
+  it('adapts backend lead metrics response', async () => {
+    const rawBackendMetrics = {
+      openPerStage: [
+        { stageId: 's1', stageName: 'Yangi', count: 5 },
+        { stageId: 's2', stageName: 'Aloqa', count: 3 },
+      ],
+      funnelStages: [{ stageId: 's1', stageName: 'Yangi', count: 10 }],
+      leadToStudent: 25.5,
+      overdueCount: 2,
+      untouchedCount: 1,
+      lostByReason: [
+        { reason: 'EXPENSIVE', count: 3 },
+        { reason: 'FAR_AWAY', count: 2 },
+      ],
+      totalCreated: 20,
+      totalConverted: 5,
+    };
+    vi.mocked(axiosInstance.get).mockResolvedValueOnce({
+      data: rawBackendMetrics,
+    });
+
+    const result = await leadsApi.getMetrics({
+      branchId: 'b-1',
+      period: '30d',
+    });
+    expect(axiosInstance.get).toHaveBeenCalledWith('/leads/metrics', {
+      params: { branchId: 'b-1', period: '30d' },
+      signal: undefined,
+    });
+    expect(result.totalLeads).toBe(20);
+    expect(result.wonLeads).toBe(5);
+    expect(result.conversionRate).toBe(25.5);
+    expect(result.byStage).toEqual({ Yangi: 5, Aloqa: 3 });
+    expect(result.byLostReason).toEqual({ EXPENSIVE: 3, FAR_AWAY: 2 });
+    expect(result.lostLeads).toBe(5);
+    expect(result.overdueCount).toBe(2);
+    expect(result.untouchedCount).toBe(1);
+    expect(result.bySource).toEqual({});
+  });
+
+  it('preserves mock lead metrics response', async () => {
+    const mockMetrics = {
+      totalLeads: 10,
+      wonLeads: 2,
+      lostLeads: 1,
+      conversionRate: 20,
+      avgTimeToWonDays: 4,
+      bySource: { telegram: { count: 5, won: 1, conversionRate: 20 } },
+      byLostReason: { OTHER: 1 },
+      byStage: { Yangi: 7 },
+    };
+    vi.mocked(axiosInstance.get).mockResolvedValueOnce({
+      data: mockMetrics,
+    });
+
+    const result = await leadsApi.getMetrics();
+    expect(result.totalLeads).toBe(10);
+    expect(result.wonLeads).toBe(2);
+    expect(result.conversionRate).toBe(20);
+    expect(result.byStage).toEqual({ Yangi: 7 });
+  });
 });

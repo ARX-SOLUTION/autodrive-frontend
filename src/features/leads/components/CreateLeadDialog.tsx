@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Warning, CircleNotch } from '@phosphor-icons/react';
+import {
+  Warning,
+  CircleNotch,
+  Check,
+  CaretUpDown,
+} from '@phosphor-icons/react';
 import {
   Dialog,
   DialogContent,
@@ -21,11 +26,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useBranches } from '@/features/branches/api/branchService';
 import { useAuthStore } from '@/store/authStore';
+import { useTeachers } from '@/features/staff/api/teacherService';
+import { useOperators } from '@/features/staff/api/operatorService';
+import { useStudents } from '@/features/students/api/studentService';
 import {
   useCreateLeadMutation,
   useLeadStagesQuery,
+  useLeadSourcesQuery,
 } from '../queries/leadsQueries';
 import { leadsApi } from '../api/leadsApi';
 import type {
@@ -34,6 +58,8 @@ import type {
   Category,
   DuplicateCheckResult,
 } from '../types/leads.types';
+
+type ReferrerType = 'none' | 'student' | 'staff';
 
 export interface CreateLeadDialogProps {
   open: boolean;
@@ -45,9 +71,9 @@ export interface CreateLeadDialogProps {
 const SOURCES: LeadSource[] = [
   'telegram',
   'instagram',
-  'website',
-  'recommendation',
-  'banner',
+  'referral',
+  'directory_map',
+  'olx',
   'walk_in',
   'other',
 ];
@@ -81,6 +107,36 @@ export const CreateLeadDialog = ({
   const [courseType, setCourseType] = useState<CourseType | ''>('');
   const [category, setCategory] = useState<Category | ''>('');
   const [note, setNote] = useState('');
+
+  // Referrer state
+  const [referrerType, setReferrerType] = useState<ReferrerType>('none');
+  const [referrerStudentId, setReferrerStudentId] = useState<
+    string | undefined
+  >(undefined);
+  const [referrerStaffId, setReferrerStaffId] = useState<string | undefined>(
+    undefined,
+  );
+  const [studentPickerOpen, setStudentPickerOpen] = useState(false);
+  const [studentSearch, setStudentSearch] = useState('');
+  const debouncedStudentSearch = useDebounce(studentSearch, 300);
+
+  const { data: leadSources = [] } = useLeadSourcesQuery({ enabled: open });
+  const customSources = leadSources.filter((s) => !s.isSystem);
+  const { data: teachers } = useTeachers();
+  const { data: operators } = useOperators();
+  const staff = [...(teachers ?? []), ...(operators ?? [])];
+  const { data: students = [] } = useStudents(
+    undefined,
+    branchId || undefined,
+    1,
+    50,
+    undefined,
+    {
+      search: debouncedStudentSearch,
+      enabled: referrerType === 'student' && open,
+    },
+  );
+  const selectedStudent = students.find((s) => s.id === referrerStudentId);
 
   // Duplicate warning state
   const [duplicateResult, setDuplicateResult] =
@@ -142,6 +198,8 @@ export const CreateLeadDialog = ({
         courseType: courseType || undefined,
         category: category || undefined,
         note: note.trim() || undefined,
+        referrerStudentId,
+        referrerStaffId,
       },
       {
         onSuccess: (created) => {
@@ -173,6 +231,10 @@ export const CreateLeadDialog = ({
     setCourseType('');
     setCategory('');
     setNote('');
+    setReferrerType('none');
+    setReferrerStudentId(undefined);
+    setReferrerStaffId(undefined);
+    setStudentSearch('');
     setDuplicateResult(null);
     setAcknowledgedDuplicate(false);
   };
@@ -228,8 +290,12 @@ export const CreateLeadDialog = ({
                     )}
 
                     <div className="pt-2 flex items-center gap-2">
-                      <label className="flex items-center gap-2 cursor-pointer font-medium select-none">
+                      <label
+                        htmlFor="ack-duplicate-checkbox"
+                        className="flex items-center gap-2 cursor-pointer font-medium select-none"
+                      >
                         <input
+                          id="ack-duplicate-checkbox"
                           type="checkbox"
                           checked={acknowledgedDuplicate}
                           onChange={(e) =>
@@ -392,6 +458,168 @@ export const CreateLeadDialog = ({
                 />
               </div>
             )}
+
+            {/* Custom sources from company settings */}
+            {customSources.length > 0 && (
+              <div className="space-y-1.5">
+                <Label htmlFor="lead-source-custom">
+                  {t('leads.custom_source_label', 'Kompaniya manbalari')}
+                </Label>
+                <Select
+                  value={
+                    source === 'other' && sourceOther
+                      ? (customSources.find((cs) => cs.name === sourceOther)
+                          ?.id ?? '')
+                      : ''
+                  }
+                  onValueChange={(id) => {
+                    const found = customSources.find((cs) => cs.id === id);
+                    if (found) {
+                      setSource('other');
+                      setSourceOther(found.name);
+                    }
+                  }}
+                >
+                  <SelectTrigger id="lead-source-custom" className="w-full">
+                    <SelectValue
+                      placeholder={t(
+                        'leads.select_custom_source',
+                        'Kompaniya manbasini tanlang',
+                      )}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customSources.map((cs) => (
+                      <SelectItem key={cs.id} value={cs.id}>
+                        {cs.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Referrer - who recommended this lead */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="lead-referrer-type">
+                  {t('leads.referrer_type', 'Tavsiya qilgan')}
+                </Label>
+                <Select
+                  value={referrerType}
+                  onValueChange={(v) => {
+                    setReferrerType(v as ReferrerType);
+                    setReferrerStudentId(undefined);
+                    setReferrerStaffId(undefined);
+                    setStudentSearch('');
+                  }}
+                >
+                  <SelectTrigger id="lead-referrer-type" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">
+                      {t('leads.referrer_none', 'Tavsiya yo\u2018q')}
+                    </SelectItem>
+                    <SelectItem value="student">
+                      {t('leads.referrer_student', 'O\u2018quvchi')}
+                    </SelectItem>
+                    <SelectItem value="staff">
+                      {t('leads.referrer_staff', 'Xodim')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {referrerType === 'student' && (
+                <div className="space-y-1.5">
+                  <Label>{t('leads.referrer_student', 'O\u2018quvchi')}</Label>
+                  <Popover
+                    open={studentPickerOpen}
+                    onOpenChange={setStudentPickerOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={studentPickerOpen}
+                        className="w-full justify-between font-normal min-h-[44px]"
+                      >
+                        {selectedStudent
+                          ? `${selectedStudent.last_name ?? ''} ${selectedStudent.first_name}`.trim()
+                          : t(
+                              'leads.select_student',
+                              'O\u2018quvchini tanlang',
+                            )}
+                        <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder={t('common.search', 'Qidirish...')}
+                          value={studentSearch}
+                          onValueChange={setStudentSearch}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            {t('common.no_data', 'Ma\u2018lumot topilmadi')}
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {students.map((s) => (
+                              <CommandItem
+                                key={s.id}
+                                value={s.id}
+                                onSelect={() => {
+                                  setReferrerStudentId(s.id);
+                                  setStudentPickerOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    referrerStudentId === s.id
+                                      ? 'opacity-100'
+                                      : 'opacity-0',
+                                  )}
+                                />
+                                {s.last_name} {s.first_name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
+
+              {referrerType === 'staff' && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="lead-referrer-staff">
+                    {t('leads.referrer_staff', 'Xodim')}
+                  </Label>
+                  <Select
+                    value={referrerStaffId ?? ''}
+                    onValueChange={(v) => setReferrerStaffId(v || undefined)}
+                  >
+                    <SelectTrigger id="lead-referrer-staff" className="w-full">
+                      <SelectValue
+                        placeholder={t('leads.select_staff', 'Xodimni tanlang')}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {staff.map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.name ?? u.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
 
             {/* Course Type & Category */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

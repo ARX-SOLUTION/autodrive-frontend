@@ -264,6 +264,7 @@ export const LeadsPage = () => {
             <LeadMetricsView
               branchId={currentFilters.branch_id}
               period={currentFilters.period}
+              onPeriodChange={(p) => handleFilterChange({ period: p })}
             />
           </div>
         )}

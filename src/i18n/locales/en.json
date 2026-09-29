@@ -932,6 +932,7 @@
       "tab_exams": "Exams",
       "tab_attendance": "Attendance",
       "referrals_count": "Referral count",
+      "referral_discount_badge": "{{count}} referrals: discount recommended",
       "tab_group_history": "Group history",
       "group_history_change": "Group change",
       "group_history_empty": "No group history",
@@ -2221,10 +2222,13 @@
     "sources": {
       "telegram": "Telegram",
       "instagram": "Instagram",
+      "referral": "Referral",
+      "directory_map": "Maps (2GIS / Yandex)",
+      "olx": "OLX",
+      "walk_in": "Walk In",
       "website": "Website",
       "recommendation": "Recommendation",
       "banner": "Outdoor Ad / Banner",
-      "walk_in": "Walk In",
       "other": "Other"
     },
     "lost_reasons": {
@@ -2242,6 +2246,24 @@
       "TASK": "Task",
       "STAGE_CHANGE": "Stage Change",
       "SYSTEM": "System Event"
-    }
+    },
+    "tab_stages": "Stages",
+    "tab_sources": "Sources",
+    "referrer_type": "Referred by",
+    "referrer_none": "No referral",
+    "referrer_student": "Student",
+    "referrer_staff": "Staff",
+    "select_student": "Select student",
+    "select_staff": "Select staff",
+    "custom_source_label": "Company sources",
+    "select_custom_source": "Select company source",
+    "system_sources": "Standard sources",
+    "custom_sources_label": "Company sources",
+    "no_custom_sources": "No custom sources added yet",
+    "source_standard": "Standard",
+    "source_created": "New source added",
+    "source_deleted": "Source deleted",
+    "new_source_placeholder": "Source name...",
+    "referrer_staff_badge": "Referred by staff: {{name}}"
   }
 }

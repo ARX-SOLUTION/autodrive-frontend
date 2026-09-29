@@ -153,7 +153,7 @@ export const LeadsTable = ({
         cell: ({ getValue }) => {
           const nextStep = getValue();
           if (!nextStep) {
-            return <span className="text-xs text-muted-foreground/60">—</span>;
+            return <span className="text-xs text-muted-foreground/60">-</span>;
           }
           const nextDate = new Date(nextStep);
           const now = new Date();
@@ -287,53 +287,57 @@ export const LeadsTable = ({
         ) : undefined
       }
       emptyState={emptyState}
-      renderMobileRow={({ row }) => (
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => handleOpenLead(row)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleOpenLead(row);
-            }
-          }}
-          className="cursor-pointer space-y-2 rounded-lg border bg-card p-3 shadow-xs transition hover:border-primary/50"
-        >
-          <div className="flex items-center justify-between">
-            <div className="font-medium text-sm">
-              {row.firstName} {row.lastName || ''}
+      renderMobileRow={({ row }) => {
+        const leadName = `${row.firstName} ${row.lastName || ''}`.trim() || '-';
+        return (
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label={`${leadName}, ${row.phone}`}
+            onClick={() => handleOpenLead(row)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleOpenLead(row);
+              }
+            }}
+            className="cursor-pointer space-y-2 rounded-lg border bg-card p-3 shadow-xs transition hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <div className="flex items-center justify-between">
+              <div className="font-medium text-sm text-foreground">
+                {leadName}
+              </div>
+              {row.stage && (
+                <span
+                  className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                  style={{
+                    backgroundColor: `${row.stage.color}20`,
+                    color: row.stage.color,
+                  }}
+                >
+                  {row.stage.name}
+                </span>
+              )}
             </div>
-            {row.stage && (
-              <span
-                className="rounded-full px-2 py-0.5 text-[11px] font-medium"
-                style={{
-                  backgroundColor: `${row.stage.color}20`,
-                  color: row.stage.color,
-                }}
-              >
-                {row.stage.name}
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-mono">{formatPhone(row.phone)}</span>
+              <span>{row.branchName || '-'}</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-border/60 pt-1 text-xs text-muted-foreground">
+              <span className="capitalize">
+                {t(`leads.sources.${row.source}`, row.source)}
               </span>
-            )}
+              {row.assigneeName ? (
+                <span>{row.assigneeName}</span>
+              ) : (
+                <span className="text-muted-foreground italic">
+                  {t('leads.unassigned', 'Biriktirilmagan')}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span className="font-mono">{formatPhone(row.phone)}</span>
-            <span>{row.branchName || '-'}</span>
-          </div>
-          <div className="flex items-center justify-between border-t pt-1 text-xs text-muted-foreground">
-            <span className="capitalize">
-              {t(`leads.sources.${row.source}`, row.source)}
-            </span>
-            {row.assigneeName ? (
-              <span>{row.assigneeName}</span>
-            ) : (
-              <span className="text-muted-foreground/60">
-                {t('leads.unassigned', 'Biriktirilmagan')}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
+        );
+      }}
       onRowActivate={(lead) => handleOpenLead(lead)}
       getRowAriaLabel={(lead) =>
         `${lead.firstName} ${lead.lastName || ''}`.trim()

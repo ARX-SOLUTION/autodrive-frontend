@@ -932,6 +932,7 @@
       "tab_exams": "Экзамены",
       "tab_attendance": "Посещаемость",
       "referrals_count": "Количество приведённых",
+      "referral_discount_badge": "{{count}} рефералов: рекомендуется скидка",
       "tab_group_history": "История группы",
       "group_history_change": "Изменение группы",
       "group_history_empty": "История изменений группы отсутствует",
@@ -2221,10 +2222,13 @@
     "sources": {
       "telegram": "Telegram",
       "instagram": "Instagram",
+      "referral": "Рекомендация",
+      "directory_map": "Карты (2GIS / Яндекс)",
+      "olx": "OLX",
+      "walk_in": "Пришел лично",
       "website": "Веб-сайт",
       "recommendation": "Рекомендация",
       "banner": "Наружная реклама / Баннер",
-      "walk_in": "Пришел лично",
       "other": "Другое"
     },
     "lost_reasons": {
@@ -2242,6 +2246,24 @@
       "TASK": "Задача",
       "STAGE_CHANGE": "Смена этапа",
       "SYSTEM": "Системное событие"
-    }
+    },
+    "tab_stages": "Этапы",
+    "tab_sources": "Источники",
+    "referrer_type": "Кто порекомендовал",
+    "referrer_none": "Нет реферала",
+    "referrer_student": "Ученик",
+    "referrer_staff": "Сотрудник",
+    "select_student": "Выберите ученика",
+    "select_staff": "Выберите сотрудника",
+    "custom_source_label": "Источники компании",
+    "select_custom_source": "Выберите источник компании",
+    "system_sources": "Стандартные источники",
+    "custom_sources_label": "Источники компании",
+    "no_custom_sources": "Пользовательские источники не добавлены",
+    "source_standard": "Стандарт",
+    "source_created": "Новый источник добавлен",
+    "source_deleted": "Источник удалён",
+    "new_source_placeholder": "Название источника...",
+    "referrer_staff_badge": "Рекомендовал сотрудник: {{name}}"
   }
 }

@@ -60,6 +60,7 @@ export const leadKeys = {
   metrics: (filters: Filters = {}) => ['leads', 'metrics', filters] as const,
   activities: (leadId: string) => ['leads', 'activities', leadId] as const,
   stages: () => ['leads', 'stages'] as const,
+  sources: () => ['leads', 'sources'] as const,
 };
 
 export const groupKeys = {

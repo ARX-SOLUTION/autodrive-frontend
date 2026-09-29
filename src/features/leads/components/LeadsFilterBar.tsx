@@ -35,9 +35,9 @@ export interface LeadsFilterBarProps {
 const SOURCES: LeadSource[] = [
   'telegram',
   'instagram',
-  'website',
-  'recommendation',
-  'banner',
+  'referral',
+  'directory_map',
+  'olx',
   'walk_in',
   'other',
 ];
