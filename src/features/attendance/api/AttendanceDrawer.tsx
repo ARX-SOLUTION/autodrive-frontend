@@ -45,7 +45,7 @@ const SUMMARY_STATUSES: AttendanceStatus[] = [
   'excused',
 ];
 
-export const normalizeText = (str: string) =>
+const normalizeText = (str: string) =>
   str
     .toLowerCase()
     .replace(/['‘’ʻʼ`]/g, "'")

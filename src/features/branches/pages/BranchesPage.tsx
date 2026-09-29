@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -145,15 +145,18 @@ const BranchesPage = () => {
     setDialogOpen(true);
   };
 
-  const openEdit = (b: Branch) => {
-    setEditItem(b);
-    form.reset({
-      name: b.name,
-      location: b.location,
-      phone: formatUzPhoneInput(b.phone || ''),
-    });
-    setDialogOpen(true);
-  };
+  const openEdit = useCallback(
+    (b: Branch) => {
+      setEditItem(b);
+      form.reset({
+        name: b.name,
+        location: b.location,
+        phone: formatUzPhoneInput(b.phone || ''),
+      });
+      setDialogOpen(true);
+    },
+    [form],
+  );
 
   // Filter branches locally based on search
   const filteredBranches = useMemo(() => {
