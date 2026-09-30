@@ -106,28 +106,18 @@ export default function FuelCreateDialog({
   const vehiclesQuery = useFuelVehicles({ limit: 100 });
   const stationsQuery = useStations({ limit: 100, active: true });
 
-  useEffect(() => {
-    if (open && initialVehicleId) {
-      setVehicleId(initialVehicleId);
-    }
-  }, [open, initialVehicleId]);
-
-  useEffect(() => {
-    if (!open || vehicleId || initialVehicleId || !vehiclesQuery.data?.data)
-      return;
-    if (currentUser?.role === 'teacher') {
-      const myVehicle = vehiclesQuery.data.data.find(
-        (v) => v.current_custodian_id === currentUser.id,
-      );
-      if (myVehicle) {
-        setVehicleId(myVehicle.id);
-      }
-    }
-  }, [open, vehicleId, initialVehicleId, vehiclesQuery.data, currentUser]);
+  const teacherVehicleId =
+    currentUser?.role === 'teacher'
+      ? vehiclesQuery.data?.data?.find(
+          (v) => v.current_custodian_id === currentUser.id,
+        )?.id
+      : undefined;
 
   const selectedVehicleId =
     vehicleId ||
-    (vehiclesQuery.data?.data.length === 1
+    initialVehicleId ||
+    teacherVehicleId ||
+    (vehiclesQuery.data?.data?.length === 1
       ? vehiclesQuery.data.data[0].id
       : '');
   const lastFuelQuery = useVehicleLastFuel(selectedVehicleId || undefined);

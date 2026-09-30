@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -106,8 +106,9 @@ const VehicleFormDialog = ({
     },
   });
 
+  const watchedBranchId = useWatch({ control: form.control, name: 'branchId' });
   const selectedBranchId =
-    form.watch('branchId') || vehicle?.branch_id || defaultBranchId;
+    watchedBranchId || vehicle?.branch_id || defaultBranchId;
   const branchTeachers = teachers.filter(
     (tc) => !selectedBranchId || tc.branch_id === selectedBranchId,
   );

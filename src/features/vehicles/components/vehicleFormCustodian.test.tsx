@@ -2,11 +2,22 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import VehicleFormDialog from '@/features/vehicles/components/VehicleFormDialog';
 import type { Vehicle } from '@/features/vehicles/types';
+import type { Branch } from '@/features/branches/types';
 
 vi.mock('@/hooks/useCan', () => ({
   useCan: () => true,
   useIsCrossTenant: () => false,
 }));
+
+const mockBranches: Branch[] = [
+  {
+    id: 'b1',
+    name: 'Yunusobod',
+    location: 'Tashkent',
+    active_students: 10,
+    created_at: '2026-01-01T00:00:00Z',
+  },
+];
 
 const teachersMock = [
   { id: 't1', name: 'Alisher Qodirov', branch_id: 'b1' },
@@ -52,7 +63,7 @@ describe('VehicleFormDialog custodian assignment', () => {
       <VehicleFormDialog
         open
         vehicle={activeVehicle}
-        branches={[{ id: 'b1', name: 'Yunusobod' } as any]}
+        branches={mockBranches}
         onClose={vi.fn()}
       />,
     );
@@ -80,7 +91,7 @@ describe('VehicleFormDialog custodian assignment', () => {
         open
         vehicle={null}
         defaultBranchId="b1"
-        branches={[{ id: 'b1', name: 'Yunusobod' } as any]}
+        branches={mockBranches}
         onClose={vi.fn()}
       />,
     );
