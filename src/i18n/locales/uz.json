@@ -148,7 +148,11 @@
     "offline_banner": "Internet aloqasi yo'q",
     "demo_banner": "Demo markaz. Namunaviy ma'lumotlar bilan tanishing.",
     "tab_info": "Ma'lumot",
-    "rows_per_page": "Sahifadagi qatorlar"
+    "rows_per_page": "Sahifadagi qatorlar",
+    "currency": "so'm",
+    "total": "Jami",
+    "records": "ta yozuv",
+    "saved": "Saqlandi"
   },
   "datepicker": {
     "placeholder": "Sana tanlang",
@@ -1987,8 +1991,8 @@
     "save_hint": "Chekni qo‘shing, avtomobil va odometrni kiriting, yuborishdan oldin ma’lumotlarni tekshiring.",
     "create_steps": "Yoqilg‘i yozuvi bosqichlari",
     "step_receipt": "1. Chek va Soliq",
-    "step_vehicle": "2. Avtomobil va Odometr",
-    "step_review": "3. Tasdiqlash",
+    "step_vehicle": "1. Avtomobil tanlash",
+    "step_review": "5. Tasdiqlash",
     "step_progress": "{{total}} bosqichdan {{current}}-bosqich",
     "review_receipt_hint": "Chek surati va QR tekshiruvi tayyor. Yuborishdan oldin ma’lumotlarni ko‘rib chiqing.",
     "draft": "Qoralama",
@@ -2069,7 +2073,26 @@
     "retake_photo": "Qaytadan suratga olish",
     "change_photo": "Suratni almashtirish",
     "select_vehicle_prompt": "Avtomobilni tanlang",
-    "enter_odometer_prompt": "Hozirgi odometr ko‘rsatkichini kiriting (km)"
+    "enter_odometer_prompt": "Hozirgi odometr ko‘rsatkichini kiriting (km)",
+    "total_records": "Jami yozuvlar",
+    "empty_description": "Hozircha hech qanday yoqilg'i yozuvi kiritilmagan.",
+    "tax_verified": "Soliq orqali tasdiqlangan",
+    "history": "Tarix va audit",
+    "no_stations": "Hamkor shoxobchalar mavjud emas",
+    "no_stations_description": "Yoqilg'i kiritishdan oldin hamkor shoxobchalarni qo'shing.",
+    "step_receipt_upload": "2. Chek yuklash",
+    "step_receipt_details": "3. Chek ma'lumotlari",
+    "step_odometer": "4. Odometr",
+    "receipt_attached": "Chek surati biriktirildi",
+    "odometer_attached": "Odometr surati biriktirildi",
+    "assigned_vehicle_hint": "O'zingizga biriktirilgan avtomobil",
+    "no_assigned_vehicles": "Sizga biriktirilgan avtomobil topilmadi.",
+    "receipt_upload_clean_hint": "Chek suratini oling yoki yuklang. QR aniqlansa, ma'lumotlar avtomatik to'ldiriladi.",
+    "qr_not_detected_hint": "QR kod aniqlanmadi. Ma'lumotlarni keyingi qadamda qo'lda tekshirib to'ldirishingiz mumkin.",
+    "odometer_simple_hint": "Avtomobil asboblar panelidagi ko'rsatkichni kiriting va suratini ilova qiling.",
+    "manual_add_line": "Yana qator qo'shish",
+    "receipt_details_hint": "Yoqilg'i miqdori, narxi va shoxobchani tekshiring.",
+    "distance_travelled": "Bosib o'tilgan masofa"
   },
   "operations": {
     "live_center": "Markaz Rahbari Operatsion Radari",
@@ -2264,6 +2287,8 @@
     "source_created": "Yangi manba qo'shildi",
     "source_deleted": "Manba o'chirildi",
     "new_source_placeholder": "Manba nomi...",
-    "referrer_staff_badge": "Tavsiya qilgan xodim: {{name}}"
+    "referrer_staff_badge": "Tavsiya qilgan xodim: {{name}}",
+    "select_color": "Rang tanlash",
+    "custom_color": "Rang palitrasi"
   }
 }
