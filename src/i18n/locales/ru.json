@@ -148,7 +148,11 @@
     "offline_banner": "Нет подключения к интернету",
     "demo_banner": "Демо-центр. Изучите примерные данные.",
     "tab_info": "Информация",
-    "rows_per_page": "Строк на странице"
+    "rows_per_page": "Строк на странице",
+    "currency": "сум",
+    "total": "Всего",
+    "records": "записей",
+    "saved": "Сохранено"
   },
   "datepicker": {
     "placeholder": "Выберите дату",
@@ -1987,8 +1991,8 @@
     "save_hint": "Добавьте чек, укажите автомобиль и одометр, затем проверьте данные перед отправкой.",
     "create_steps": "Этапы записи заправки",
     "step_receipt": "1. Чек и Soliq",
-    "step_vehicle": "2. Автомобиль и одометр",
-    "step_review": "3. Подтверждение",
+    "step_vehicle": "1. Выбор автомобиля",
+    "step_review": "5. Подтверждение",
     "step_progress": "Этап {{current}} из {{total}}",
     "review_receipt_hint": "Фото чека и проверка QR готовы. Проверьте данные перед отправкой.",
     "draft": "Черновик",
@@ -2069,7 +2073,26 @@
     "retake_photo": "Сделать снимок заново",
     "change_photo": "Заменить фото",
     "select_vehicle_prompt": "Выберите автомобиль",
-    "enter_odometer_prompt": "Введите текущий одометр (км)"
+    "enter_odometer_prompt": "Введите текущий одометр (км)",
+    "total_records": "Всего записей",
+    "empty_description": "Записи о заправках пока отсутствуют.",
+    "tax_verified": "Подтверждено Налоговым комитетом",
+    "history": "История и аудит",
+    "no_stations": "Партнёрские АЗС отсутствуют",
+    "no_stations_description": "Добавьте партнёрские АЗС перед внесением записей о топливе.",
+    "step_receipt_upload": "2. Загрузка чека",
+    "step_receipt_details": "3. Данные чека",
+    "step_odometer": "4. Одометр",
+    "receipt_attached": "Фото чека прикреплено",
+    "odometer_attached": "Фото одометра прикреплено",
+    "assigned_vehicle_hint": "Закреплённый за вами автомобиль",
+    "no_assigned_vehicles": "Закреплённые за вами автомобили не найдены.",
+    "receipt_upload_clean_hint": "Сфотографируйте или загрузите чек. При обнаружении QR данные заполнятся автоматически.",
+    "qr_not_detected_hint": "QR-код не обнаружен. Вы сможете ввести данные вручную на следующем шаге.",
+    "odometer_simple_hint": "Введите показания одометра с приборной панели и прикрепите фото.",
+    "manual_add_line": "Добавить позицию",
+    "receipt_details_hint": "Проверьте количество топлива, цену и АЗС.",
+    "distance_travelled": "Пройденное расстояние"
   },
   "operations": {
     "live_center": "Операционный радар руководителя центра",
@@ -2264,6 +2287,8 @@
     "source_created": "Новый источник добавлен",
     "source_deleted": "Источник удалён",
     "new_source_placeholder": "Название источника...",
-    "referrer_staff_badge": "Рекомендовал сотрудник: {{name}}"
+    "referrer_staff_badge": "Рекомендовал сотрудник: {{name}}",
+    "select_color": "Выбор цвета",
+    "custom_color": "Палитра цветов"
   }
 }

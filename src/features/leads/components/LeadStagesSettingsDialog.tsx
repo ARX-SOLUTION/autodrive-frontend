@@ -33,6 +33,12 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import {
   useLeadStagesQuery,
   useUpdateLeadStagesMutation,
   useLeadSourcesQuery,
@@ -444,35 +450,110 @@ export const LeadStagesSettingsDialog = ({
                           />
                         </div>
 
-                        {/* Color Palette swatches */}
-                        <div className="flex items-center gap-1 flex-wrap">
-                          {PRESET_COLORS.map((hex) => {
-                            const isSelected =
-                              stage.color.toUpperCase() === hex.toUpperCase();
-                            return (
-                              <button
-                                key={hex}
-                                type="button"
-                                onClick={() => handleUpdateColor(index, hex)}
-                                aria-label={`${t('leads.select_color', 'Rang tanlash')}: ${hex}`}
-                                aria-pressed={isSelected}
-                                className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        {/* Compact Color Picker Popover */}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background shadow-2xs hover:border-primary/50 hover:scale-105 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0 cursor-pointer"
+                              aria-label={`${t('leads.stage_color', 'Rangi')}: ${stage.color}`}
+                              data-testid={`stage-color-trigger-${index}`}
+                            >
+                              <span
+                                className="h-5 w-5 rounded-full shadow-xs border border-black/10 dark:border-white/10"
+                                style={{ backgroundColor: stage.color }}
+                              />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="w-64 p-3 space-y-3"
+                            align="center"
+                            side="bottom"
+                          >
+                            <div className="flex items-center justify-between text-xs font-medium">
+                              <span className="text-foreground">
+                                {t('leads.select_color', 'Rang tanlash')}
+                              </span>
+                              <span className="font-mono text-muted-foreground uppercase">
+                                {stage.color}
+                              </span>
+                            </div>
+
+                            {/* Preset Colors Grid */}
+                            <div className="grid grid-cols-4 gap-2">
+                              {PRESET_COLORS.map((hex) => {
+                                const isSelected =
+                                  stage.color.toUpperCase() ===
+                                  hex.toUpperCase();
+                                return (
+                                  <button
+                                    key={hex}
+                                    type="button"
+                                    onClick={() =>
+                                      handleUpdateColor(index, hex)
+                                    }
+                                    className={cn(
+                                      'h-7 w-full rounded-md flex items-center justify-center transition-all hover:scale-105 border cursor-pointer',
+                                      isSelected
+                                        ? 'border-foreground ring-2 ring-ring ring-offset-1'
+                                        : 'border-border/40',
+                                    )}
+                                    style={{ backgroundColor: hex }}
+                                    aria-label={hex}
+                                  >
+                                    {isSelected ? (
+                                      <Check
+                                        className="h-3.5 w-3.5 text-white drop-shadow-xs"
+                                        weight="bold"
+                                      />
+                                    ) : null}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {/* Custom color input with native color dropper & hex input */}
+                            <div className="pt-2 border-t border-border/60 flex items-center gap-2">
+                              <label
+                                htmlFor={`color-native-${index}`}
+                                className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border overflow-hidden shrink-0 hover:border-primary/50 transition-colors"
+                                title={t(
+                                  'leads.custom_color',
+                                  'Rang palitrasi',
+                                )}
                               >
                                 <span
-                                  className="h-5 w-5 rounded-full flex items-center justify-center shadow-2xs"
-                                  style={{ backgroundColor: hex }}
-                                >
-                                  {isSelected ? (
-                                    <Check
-                                      className="h-3 w-3 text-white"
-                                      weight="bold"
-                                    />
-                                  ) : null}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
+                                  className="absolute inset-0"
+                                  style={{ backgroundColor: stage.color }}
+                                />
+                                <input
+                                  id={`color-native-${index}`}
+                                  type="color"
+                                  value={
+                                    stage.color.startsWith('#') &&
+                                    stage.color.length === 7
+                                      ? stage.color
+                                      : '#3B82F6'
+                                  }
+                                  onChange={(e) =>
+                                    handleUpdateColor(index, e.target.value)
+                                  }
+                                  className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                                />
+                              </label>
+                              <Input
+                                value={stage.color}
+                                onChange={(e) =>
+                                  handleUpdateColor(index, e.target.value)
+                                }
+                                placeholder="#3B82F6"
+                                className="h-8 font-mono text-xs uppercase flex-1"
+                                maxLength={7}
+                                aria-label={`${t('leads.stage_color', 'Rangi')} hex`}
+                              />
+                            </div>
+                          </PopoverContent>
+                        </Popover>
 
                         {/* Active toggle and Delete action */}
                         <div className="flex items-center gap-3 sm:ml-auto flex-shrink-0">

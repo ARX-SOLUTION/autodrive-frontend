@@ -148,7 +148,11 @@
     "offline_banner": "No internet connection",
     "demo_banner": "Demo center. Explore the sample data.",
     "tab_info": "Info",
-    "rows_per_page": "Rows per page"
+    "rows_per_page": "Rows per page",
+    "currency": "UZS",
+    "total": "Total",
+    "records": "records",
+    "saved": "Saved"
   },
   "datepicker": {
     "placeholder": "Pick a date",
@@ -1987,8 +1991,8 @@
     "save_hint": "Add the receipt, assign the vehicle and odometer, then review before submitting.",
     "create_steps": "Fuel record steps",
     "step_receipt": "1. Receipt & Soliq",
-    "step_vehicle": "2. Vehicle & Odometer",
-    "step_review": "3. Review & Submit",
+    "step_vehicle": "1. Vehicle selection",
+    "step_review": "5. Review & Submit",
     "step_progress": "Step {{current}} of {{total}}",
     "review_receipt_hint": "Receipt image and QR lookup are ready. Check these details before submitting.",
     "draft": "Draft",
@@ -2069,7 +2073,26 @@
     "retake_photo": "Retake photo",
     "change_photo": "Change photo",
     "select_vehicle_prompt": "Select vehicle",
-    "enter_odometer_prompt": "Enter current odometer (km)"
+    "enter_odometer_prompt": "Enter current odometer (km)",
+    "total_records": "Total records",
+    "empty_description": "No fuel records found yet.",
+    "tax_verified": "Tax verified",
+    "history": "History & audit",
+    "no_stations": "No partner fuel stations",
+    "no_stations_description": "Add partner fuel stations before logging fuel entries.",
+    "step_receipt_upload": "2. Receipt upload",
+    "step_receipt_details": "3. Receipt details",
+    "step_odometer": "4. Odometer",
+    "receipt_attached": "Receipt photo attached",
+    "odometer_attached": "Odometer photo attached",
+    "assigned_vehicle_hint": "Vehicle assigned to you",
+    "no_assigned_vehicles": "No assigned vehicles found.",
+    "receipt_upload_clean_hint": "Take a photo or upload receipt. If QR is detected, data will be auto-filled.",
+    "qr_not_detected_hint": "QR code not detected. You can enter details manually on the next step.",
+    "odometer_simple_hint": "Enter the odometer reading from the dashboard and attach a photo.",
+    "manual_add_line": "Add line",
+    "receipt_details_hint": "Verify fuel volume, unit price, and station.",
+    "distance_travelled": "Distance travelled"
   },
   "operations": {
     "live_center": "Center Director Operational Radar",
@@ -2264,6 +2287,8 @@
     "source_created": "New source added",
     "source_deleted": "Source deleted",
     "new_source_placeholder": "Source name...",
-    "referrer_staff_badge": "Referred by staff: {{name}}"
+    "referrer_staff_badge": "Referred by staff: {{name}}",
+    "select_color": "Select color",
+    "custom_color": "Custom color palette"
   }
 }

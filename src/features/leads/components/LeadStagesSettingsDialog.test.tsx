@@ -180,4 +180,32 @@ describe('LeadStagesSettingsDialog', () => {
     expect(callPayload.stages[1].name).toBe('Sinov darsi');
     expect(handleOpenChange).toHaveBeenCalledWith(false);
   });
+
+  it('opens color picker popover and allows updating stage color', async () => {
+    mockMutateAsync.mockResolvedValueOnce([]);
+
+    render(<LeadStagesSettingsDialog open={true} onOpenChange={vi.fn()} />);
+
+    const colorTrigger = screen.getByTestId('stage-color-trigger-0');
+    expect(colorTrigger).toBeInTheDocument();
+
+    fireEvent.click(colorTrigger);
+
+    const emeraldSwatch = screen.getByRole('button', { name: '#10B981' });
+    expect(emeraldSwatch).toBeInTheDocument();
+
+    fireEvent.click(emeraldSwatch);
+
+    const saveBtn = screen.getByRole('button', {
+      name: /common\.save|saqlash|save/i,
+    });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledTimes(1);
+    });
+
+    const callPayload = mockMutateAsync.mock.calls[0][0];
+    expect(callPayload.stages[0].color).toBe('#10B981');
+  });
 });
