@@ -264,3 +264,19 @@ export async function decodeReceipt(file: File): Promise<string | null> {
     bitmap.close();
   }
 }
+
+export function extractFiscalQrDate(urlStr: string): string | null {
+  try {
+    const url = new URL(urlStr);
+    const c = url.searchParams.get('c');
+    if (!c || c.length !== 14 || !/^\d{14}$/.test(c)) return null;
+    const year = c.slice(0, 4);
+    const month = c.slice(4, 6);
+    const day = c.slice(6, 8);
+    const hour = c.slice(8, 10);
+    const minute = c.slice(10, 12);
+    return `${year}-${month}-${day}T${hour}:${minute}`;
+  } catch {
+    return null;
+  }
+}

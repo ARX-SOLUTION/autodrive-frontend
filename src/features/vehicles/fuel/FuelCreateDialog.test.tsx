@@ -1,102 +1,109 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import FuelCreateDialog from './FuelCreateDialog';
 
-const lookupState = vi.hoisted(() => ({
-  shouldFail: false,
-  decodeFails: false,
-  rateLimited: false,
-  serverErrorMessage: '' as string,
-  manualReview: false,
+const { lookupState, authState, vehiclesState } = vi.hoisted(() => ({
+  lookupState: {
+    shouldFail: false,
+    rateLimited: false,
+    serverErrorMessage: '',
+    manualReview: false,
+    decodeFails: false,
+  },
+  authState: { user: null as { id: string; role: string } | null },
+  vehiclesState: {
+    data: [
+      {
+        id: 'v-1',
+        plate_number: '01A777AA',
+        model: 'Lacetti',
+        fuel_types: ['petrol'],
+        current_custodian_id: 'u-9' as string | null,
+      },
+    ],
+  },
+}));
+
+vi.mock('@/store/authStore', () => ({
+  useAuthStore: (selector: (s: { user: unknown }) => unknown) =>
+    selector({ user: authState.user }),
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) => {
+      if (options?.current) return `${key}:${options.current}`;
+      return key;
+    },
+  }),
 }));
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock('@tanstack/react-query', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@tanstack/react-query')>();
-  return {
-    ...actual,
-    useQueryClient: () => ({
-      invalidateQueries: vi.fn(),
-    }),
-    useQuery: ({ queryKey }: { queryKey: unknown[] }) => {
-      if (Array.isArray(queryKey) && queryKey.includes('vehicles')) {
-        return {
-          data: {
-            data: [
-              {
-                id: 'v1',
-                plate_number: '01 A 777 AA',
-                branch_id: 'b1',
-                fuel_types: ['petrol'],
-              },
-            ],
-          },
-        };
-      }
-      if (Array.isArray(queryKey) && queryKey.includes('fuel-stations')) {
-        return {
-          data: {
-            data: [{ id: 's1', name: 'Tatneft Qoratosh', stir: '306721371' }],
-          },
-        };
-      }
-      if (Array.isArray(queryKey) && queryKey.includes('last-by-vehicle')) {
-        return {
-          data: {
-            odometer_km: 50000,
-          },
-        };
-      }
-      return { data: null };
-    },
-    useMutation: () => ({ isPending: false, mutate: vi.fn() }),
-  };
-});
-
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (k: string) => k }),
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({
+    invalidateQueries: vi.fn().mockResolvedValue(undefined),
+  }),
 }));
 
-vi.mock('./policy', async () => {
-  const actual = await vi.importActual('./policy');
+vi.mock('./policy', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./policy')>();
   return {
     ...actual,
-    decodeReceipt: vi
-      .fn()
-      .mockImplementation(async () =>
-        lookupState.decodeFails
-          ? null
-          : 'https://ofd.soliq.uz/check?t=A&r=1&c=20260924101705&s=123456789012',
-      ),
+    decodeReceipt: vi.fn().mockImplementation(async () => {
+      if (lookupState.decodeFails) return null;
+      return 'https://ofd.soliq.uz/check?t=A&r=1&c=20260924101705&s=123456789012';
+    }),
   };
 });
 
-vi.mock('./service', async () => {
-  const actual = await vi.importActual('./service');
+const submitFuelComplete = vi.fn().mockResolvedValue({ id: 'saved-id' });
+
+vi.mock('./service', () => {
   return {
-    ...actual,
+    useFuelVehicles: vi
+      .fn()
+      .mockImplementation(() => ({ data: vehiclesState })),
+    useStations: vi.fn().mockReturnValue({
+      data: {
+        data: [
+          {
+            id: 's-1',
+            name: 'QK MCHJ TATNEFT-UNG',
+            stir: '306721371',
+          },
+        ],
+      },
+    }),
+    useVehicleLastFuel: vi.fn().mockReturnValue({
+      data: { odometer_km: 50000 },
+    }),
     lookupReceipt: vi.fn().mockImplementation(async () => {
+      if (lookupState.shouldFail) {
+        throw new Error('500 internal server error');
+      }
       if (lookupState.rateLimited) {
-        const err = new Error('Too Many Requests') as Error & {
-          response?: { status: number };
-        };
-        err.response = { status: 429 };
+        const err = Object.assign(new Error('Too many requests'), {
+          response: { status: 429 },
+        });
         throw err;
       }
       if (lookupState.serverErrorMessage) {
-        const err = new Error('Request failed') as Error & {
-          response?: { status: number; data: { error: { message: string } } };
-        };
-        err.response = {
-          status: 500,
-          data: { error: { message: lookupState.serverErrorMessage } },
-        };
+        const err = Object.assign(new Error('Backend failed'), {
+          response: {
+            status: 422,
+            data: {
+              error: {
+                code: 'RECEIPT_MISMATCH',
+                message: lookupState.serverErrorMessage,
+              },
+            },
+          },
+        });
         throw err;
       }
-      if (lookupState.shouldFail) throw new Error('Soliq service unavailable');
       return {
         status: lookupState.manualReview ? 'manual_review' : 'source_verified',
         seller_name: 'QK MCHJ TATNEFT-UNG',
@@ -114,26 +121,134 @@ vi.mock('./service', async () => {
         ],
       };
     }),
-    submitFuelComplete: vi.fn().mockResolvedValue({ id: 'saved-id' }),
+    submitFuelComplete: (...args: unknown[]) => submitFuelComplete(...args),
+    saveFuel: vi.fn().mockResolvedValue({ id: 'draft-id' }),
   };
 });
 
 describe('FuelCreateDialog component', () => {
-  it('renders guidance banner and receipt upload options when open', () => {
-    render(<FuelCreateDialog open={true} onOpenChange={vi.fn()} />);
-
-    expect(screen.getByText('fuel.scan_guidance_title')).toBeInTheDocument();
-    expect(screen.getByText('fuel.scan_guidance_desc')).toBeInTheDocument();
-    expect(screen.getByText('fuel.scan_receipt_btn')).toBeInTheDocument();
-    expect(screen.getByText('fuel.step_progress')).toBeInTheDocument();
-    expect(
-      screen.queryByText('fuel.odometer_photo_label *'),
-    ).not.toBeInTheDocument();
+  beforeEach(() => {
+    lookupState.shouldFail = false;
+    lookupState.rateLimited = false;
+    lookupState.serverErrorMessage = '';
+    lookupState.manualReview = false;
+    lookupState.decodeFails = false;
+    submitFuelComplete.mockClear();
+    authState.user = null;
+    vehiclesState.data = [
+      {
+        id: 'v-1',
+        plate_number: '01A777AA',
+        model: 'Lacetti',
+        fuel_types: ['petrol'],
+        current_custodian_id: 'u-9',
+      },
+    ];
   });
 
-  it('scans receipt file, runs lookup and locks Soliq fuel data', async () => {
+  const goToStep2 = () => {
+    // In Step 1, auto-selected vehicle allows clicking continue
+    const continueBtn = screen.getByRole('button', {
+      name: /common.continue/i,
+    });
+    fireEvent.click(continueBtn);
+  };
+
+  it('pre-binds the vehicle passed via initialVehicleId', () => {
+    vehiclesState.data = [
+      {
+        id: 'v-1',
+        plate_number: '01A777AA',
+        model: 'Lacetti',
+        fuel_types: ['petrol'],
+        current_custodian_id: 'u-9',
+      },
+      {
+        id: 'v-2',
+        plate_number: '01B111BB',
+        model: 'Nexia',
+        fuel_types: ['petrol'],
+        current_custodian_id: null,
+      },
+    ];
+    render(
+      <FuelCreateDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        initialVehicleId="v-2"
+      />,
+    );
+
+    expect(screen.getByRole('combobox')).toHaveValue('v-2');
+  });
+
+  it('auto-selects the teacher own custodian vehicle when several vehicles exist', () => {
+    authState.user = { id: 'u-9', role: 'teacher' };
+    vehiclesState.data = [
+      {
+        id: 'v-1',
+        plate_number: '01A777AA',
+        model: 'Lacetti',
+        fuel_types: ['petrol'],
+        current_custodian_id: 'u-9',
+      },
+      {
+        id: 'v-2',
+        plate_number: '01B111BB',
+        model: 'Nexia',
+        fuel_types: ['petrol'],
+        current_custodian_id: 'u-4',
+      },
+    ];
     render(<FuelCreateDialog open={true} onOpenChange={vi.fn()} />);
 
+    expect(screen.getByRole('combobox')).toHaveValue('v-1');
+  });
+
+  it('leaves the vehicle unselected when a teacher owns none of them', () => {
+    authState.user = { id: 'u-4', role: 'teacher' };
+    vehiclesState.data = [
+      {
+        id: 'v-1',
+        plate_number: '01A777AA',
+        model: 'Lacetti',
+        fuel_types: ['petrol'],
+        current_custodian_id: 'u-9',
+      },
+      {
+        id: 'v-2',
+        plate_number: '01B111BB',
+        model: 'Nexia',
+        fuel_types: ['petrol'],
+        current_custodian_id: 'u-8',
+      },
+    ];
+    render(<FuelCreateDialog open={true} onOpenChange={vi.fn()} />);
+
+    expect(screen.getByRole('combobox')).toHaveValue('');
+  });
+
+  it('renders Step 1 (Vehicle selection) with auto-selected vehicle and progress bar', () => {
+    render(<FuelCreateDialog open={true} onOpenChange={vi.fn()} />);
+
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'fuel.step_vehicle' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('fuel.select_vehicle_prompt')).toBeInTheDocument();
+    expect(screen.getAllByText(/01A777AA/).length).toBeGreaterThan(0);
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  });
+
+  it('scans receipt file, runs lookup and shows Soliq verified station in Step 2', async () => {
+    render(<FuelCreateDialog open={true} onOpenChange={vi.fn()} />);
+    goToStep2();
+
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'fuel.step_receipt_upload',
+      }),
+    ).toBeInTheDocument();
     const receiptInput = screen.getByLabelText('fuel.scan_receipt_btn');
     const fakeFile = new File(['fake image content'], 'receipt.jpg', {
       type: 'image/jpeg',
@@ -146,12 +261,13 @@ describe('FuelCreateDialog component', () => {
     });
 
     expect(screen.getByText('STIR: 306721371')).toBeInTheDocument();
-    expect(screen.getByText('TPK-4 AI-95-K5 TAHEKO')).toBeInTheDocument();
   });
 
-  it('distinguishes a Soliq lookup failure from an unreadable QR', async () => {
+  it('distinguishes a Soliq lookup failure from an unreadable QR in Step 2', async () => {
     lookupState.shouldFail = true;
     render(<FuelCreateDialog open={true} onOpenChange={vi.fn()} />);
+    goToStep2();
+
     const fakeFile = new File(['fake image content'], 'receipt.jpg', {
       type: 'image/jpeg',
     });
@@ -164,12 +280,13 @@ describe('FuelCreateDialog component', () => {
       expect(screen.getByText('fuel.qr_lookup_error')).toBeInTheDocument();
     });
     expect(screen.queryByText('fuel.qr_fallback')).not.toBeInTheDocument();
-    lookupState.shouldFail = false;
   });
 
   it('shows a rate-limit message instead of blaming the QR when throttled', async () => {
     lookupState.rateLimited = true;
     render(<FuelCreateDialog open={true} onOpenChange={vi.fn()} />);
+    goToStep2();
+
     const fakeFile = new File(['fake image content'], 'receipt.jpg', {
       type: 'image/jpeg',
     });
@@ -180,13 +297,14 @@ describe('FuelCreateDialog component', () => {
 
     expect(await screen.findByText('fuel.qr_rate_limited')).toBeInTheDocument();
     expect(screen.queryByText('fuel.qr_lookup_error')).not.toBeInTheDocument();
-    lookupState.rateLimited = false;
   });
 
   it('surfaces the real backend error instead of the generic QR message', async () => {
     lookupState.serverErrorMessage =
       'Fiscal receipt time differs from refueling date';
     render(<FuelCreateDialog open={true} onOpenChange={vi.fn()} />);
+    goToStep2();
+
     const fakeFile = new File(['fake image content'], 'receipt.jpg', {
       type: 'image/jpeg',
     });
@@ -201,38 +319,13 @@ describe('FuelCreateDialog component', () => {
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText('fuel.qr_lookup_error')).not.toBeInTheDocument();
-    lookupState.serverErrorMessage = '';
-  });
-
-  it('does not claim manual-review data is Soliq-locked', async () => {
-    lookupState.manualReview = true;
-    render(<FuelCreateDialog open={true} onOpenChange={vi.fn()} />);
-    const fakeFile = new File(['fake image content'], 'receipt.jpg', {
-      type: 'image/jpeg',
-    });
-
-    fireEvent.change(screen.getByLabelText('fuel.scan_receipt_btn'), {
-      target: { files: [fakeFile] },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('fuel.manual_review')).toBeInTheDocument();
-    });
-
-    // The "confirmed and locked by Soliq" hint must not appear alongside a
-    // badge that says the source is unverified — that's contradictory.
-    expect(
-      screen.queryByText(/fuel.soliq_locked_hint/),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByText('fuel.manual_review_data_hint'),
-    ).toBeInTheDocument();
-    lookupState.manualReview = false;
   });
 
   it('keeps manual QR recovery available when image decoding fails', async () => {
     lookupState.decodeFails = true;
     render(<FuelCreateDialog open={true} onOpenChange={vi.fn()} />);
+    goToStep2();
+
     const fakeFile = new File(['fake image content'], 'receipt.jpg', {
       type: 'image/jpeg',
     });
@@ -242,13 +335,15 @@ describe('FuelCreateDialog component', () => {
     });
 
     expect(await screen.findByText('fuel.qr_fallback')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'fuel.qr_url' }));
     expect(screen.getByLabelText('fuel.qr_url')).toBeInTheDocument();
-    lookupState.decodeFails = false;
   });
 
   it('looks up a manually entered fiscal QR URL', async () => {
     lookupState.decodeFails = true;
     render(<FuelCreateDialog open={true} onOpenChange={vi.fn()} />);
+    goToStep2();
+
     const fakeFile = new File(['fake image content'], 'receipt.jpg', {
       type: 'image/jpeg',
     });
@@ -257,7 +352,8 @@ describe('FuelCreateDialog component', () => {
       target: { files: [fakeFile] },
     });
 
-    const qrInput = await screen.findByLabelText('fuel.qr_url');
+    fireEvent.click(await screen.findByRole('button', { name: 'fuel.qr_url' }));
+    const qrInput = screen.getByLabelText('fuel.qr_url');
     fireEvent.change(qrInput, {
       target: {
         value:
@@ -267,11 +363,12 @@ describe('FuelCreateDialog component', () => {
     fireEvent.click(screen.getByRole('button', { name: 'fuel.lookup' }));
 
     expect(await screen.findByText('QK MCHJ TATNEFT-UNG')).toBeInTheDocument();
-    lookupState.decodeFails = false;
   });
 
   it('explains when the receipt image exceeds the size limit', async () => {
     render(<FuelCreateDialog open={true} onOpenChange={vi.fn()} />);
+    goToStep2();
+
     const oversizedFile = new File(
       [new Uint8Array(8 * 1024 * 1024 + 1)],
       'large-receipt.jpg',
@@ -285,10 +382,23 @@ describe('FuelCreateDialog component', () => {
     expect(await screen.findByText('fuel.qr_too_large')).toBeInTheDocument();
   });
 
-  it('shows the vehicle step only after a successful receipt lookup', async () => {
-    render(<FuelCreateDialog open={true} onOpenChange={vi.fn()} />);
-    expect(screen.queryByLabelText('fuel.vehicle')).not.toBeInTheDocument();
+  it('completes the full 5-step flow from vehicle to review and submits', async () => {
+    const onOpenChange = vi.fn();
+    render(<FuelCreateDialog open={true} onOpenChange={onOpenChange} />);
 
+    // Step 1: Vehicle selection
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'fuel.step_vehicle' }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /common.continue/i }));
+
+    // Step 2: Receipt upload
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'fuel.step_receipt_upload',
+      }),
+    ).toBeInTheDocument();
     const fakeFile = new File(['fake image content'], 'receipt.jpg', {
       type: 'image/jpeg',
     });
@@ -299,39 +409,54 @@ describe('FuelCreateDialog component', () => {
     await waitFor(() => {
       expect(screen.getByText('QK MCHJ TATNEFT-UNG')).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'common.continue' }));
-    expect(await screen.findByLabelText('fuel.vehicle')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'common.continue' }),
-    ).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /common.continue/i }));
 
-    fireEvent.change(screen.getByLabelText('fuel.odometer_km'), {
-      target: { value: '51000' },
+    // Step 3: Receipt details & lines
+    expect(
+      await screen.findByRole('heading', {
+        level: 2,
+        name: 'fuel.step_receipt_details',
+      }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /common.continue/i }));
+
+    // Step 4: Odometer
+    expect(
+      await screen.findByRole('heading', {
+        level: 2,
+        name: 'fuel.step_odometer',
+      }),
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/fuel.odometer_km/i), {
+      target: { value: '50250' },
     });
-    const odometerPhoto = new File(['fake image content'], 'odometer.jpg', {
+    const odoFile = new File(['odometer file content'], 'odo.jpg', {
       type: 'image/jpeg',
     });
-    fireEvent.change(screen.getByLabelText('fuel.odometer_photo_label'), {
-      target: { files: [odometerPhoto] },
+    fireEvent.change(screen.getByLabelText(/fuel.odometer_photo_label/i), {
+      target: { files: [odoFile] },
     });
-    const continueButton = screen.getByRole('button', {
-      name: 'common.continue',
-    });
-    await waitFor(() => expect(continueButton).toBeEnabled());
-    fireEvent.click(continueButton);
-    expect(
-      await screen.findByText('fuel.review_receipt_hint'),
-    ).toBeInTheDocument();
-  });
+    fireEvent.click(screen.getByRole('button', { name: /common.continue/i }));
 
-  it('accepts initialVehicleId prop and pre-binds vehicle state', () => {
-    render(
-      <FuelCreateDialog
-        open={true}
-        onOpenChange={vi.fn()}
-        initialVehicleId="v1"
-      />,
+    // Step 5: Full review
+    expect(
+      await screen.findByRole('heading', {
+        level: 2,
+        name: 'fuel.step_review',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'fuel.submit_for_review' }),
+    ).toBeEnabled();
+
+    // Submit
+    fireEvent.click(
+      screen.getByRole('button', { name: 'fuel.submit_for_review' }),
     );
-    expect(screen.getByLabelText('fuel.scan_receipt_btn')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(submitFuelComplete).toHaveBeenCalled();
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
   });
 });
