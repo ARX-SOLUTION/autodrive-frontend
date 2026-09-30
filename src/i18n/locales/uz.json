@@ -640,7 +640,14 @@
       "service_odometer_due": "Servis odometri yetgan",
       "age_limit_b": "B toifasi uchun yosh chegarasi oshgan",
       "age_limit_other": "Toifa uchun yosh chegarasi oshgan"
-    }
+    },
+    "current_custodian": "Mas'ul shaxs (Kustodian)",
+    "no_custodian": "Biriktirilmagan (Akt orqali topshiriladi)",
+    "sessions": "Haydash seanslari va jadval",
+    "no_sessions": "Bu avtomobilga hali haydash mashg'ulotlari biriktirilmagan",
+    "active_now": "Hozir amalda",
+    "session_conflict_notice": "PostgreSQL GiST qoidasi: 1 ta avtomobil bir vaqtning o'zida ikkita haydash mashg'ulotiga qo'shilishi baza darajasida taqiqlangan.",
+    "view_session": "Sessiyani ko'rish"
   },
   "fleet_map": {
     "subtitle": "Filial avtomobillarini bir joyda ko‘ring. Joylashuv GPS ulangach ko‘rinadi.",
@@ -1096,9 +1103,12 @@
     "subtitle": "Kompaniya xarajatlari va to'lov majburiyatlari",
     "add": "Xarajat qo'shish",
     "list_title": "Xarajatlar ro'yxati",
+    "search_placeholder": "Nomi yoki kabul qiluvchi bo‘yicha qidirish...",
     "count_result": "{{count}} ta natija",
     "empty": "Xarajatlar yo'q",
     "empty_desc": "Birinchi kompaniya yoki filial xarajatini qo'shing.",
+    "empty_filtered": "Hech qanday xarajat topilmadi",
+    "empty_filtered_desc": "Filtrlarni o‘zgartiring yoki qidiruvni tozalang.",
     "not_found": "Xarajat topilmadi",
     "not_found_desc": "Yozuv o'chirilgan yoki sizda ko'rish huquqi yo'q.",
     "load_error": "Xarajatlarni yuklashda xatolik yuz berdi",

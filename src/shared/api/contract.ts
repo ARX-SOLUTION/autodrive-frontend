@@ -124,6 +124,7 @@ export type ExpensesQuery = {
   attention?: 'overdue';
   date_from?: string;
   date_to?: string;
+  search?: string;
   page?: number;
   limit?: number;
 };

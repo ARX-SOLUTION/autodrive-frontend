@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCan } from '@/hooks/useCan';
 import { formatMoney } from '@/lib/money';
+import { formatDate } from '@/shared/lib/studentsFormat';
 import type { OverdueExpense } from '@/features/expenses/types';
 
 interface ExpenseOverdueReturnContext {
@@ -206,7 +207,9 @@ export const ExpenseOverdueSweep = ({
                             {t('expenses.form.due_date')}
                           </dt>
                           <dd className="mt-0.5 font-medium tabular-nums">
-                            {expense.due_date ?? t('common.na')}
+                            {expense.due_date
+                              ? formatDate(expense.due_date)
+                              : t('common.na')}
                           </dd>
                         </div>
                         <div>

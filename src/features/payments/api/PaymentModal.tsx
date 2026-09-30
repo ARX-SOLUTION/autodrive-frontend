@@ -27,6 +27,7 @@ import {
 import { CaretUpDown, Check, CircleNotch } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { formatMoney, groupDigits } from '@/lib/money';
+import { newRequestId } from '@/lib/idempotencyKey';
 import { formatPhone } from '@/lib/phoneFormater';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -144,7 +145,10 @@ const PaymentModal = ({
   const debouncedStudentSearch = useDebounce(studentSearch, 300);
   // ponytail (M1): stable per modal-open, so a retried/double-clicked submit
   // reuses the same key; reopening the modal for a new payment gets a fresh one.
-  const idempotencyKeyRef = useRef(crypto.randomUUID());
+  // Lazy useState, not useRef(crypto.randomUUID()) — a useRef argument is
+  // re-evaluated every render, and the bare call throws on a non-secure origin.
+  const idempotencyKeyRef = useRef('');
+  const getIdempotencyKey = () => (idempotencyKeyRef.current ||= newRequestId());
   const submitLockedRef = useRef(false);
   const wasLoadingRef = useRef(false);
   const [submitLocked, setSubmitLocked] = useState(false);
@@ -178,7 +182,7 @@ const PaymentModal = ({
         amount: payment?.amount_paid ?? 0,
         payment_method: payment?.payment_method ?? 'naqd',
       });
-      idempotencyKeyRef.current = crypto.randomUUID();
+      idempotencyKeyRef.current = newRequestId();
     }
     // `payment` is captured once by the caller at "open edit" time (same
     // convention as StudentsPage's editStudent state) so its identity is
@@ -238,7 +242,7 @@ const PaymentModal = ({
     setSubmitLocked(true);
 
     try {
-      onSubmit({ ...values, idempotency_key: idempotencyKeyRef.current });
+      onSubmit({ ...values, idempotency_key: getIdempotencyKey() });
     } catch (error) {
       submitLockedRef.current = false;
       setSubmitLocked(false);

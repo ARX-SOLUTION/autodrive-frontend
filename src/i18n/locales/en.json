@@ -640,7 +640,14 @@
       "service_odometer_due": "Service mileage is due",
       "age_limit_b": "Vehicle exceeds the age limit for category B",
       "age_limit_other": "Vehicle exceeds the age limit for this category"
-    }
+    },
+    "current_custodian": "Current Custodian",
+    "no_custodian": "Not assigned (transferred via inspection act)",
+    "sessions": "Driving Sessions & Schedule",
+    "no_sessions": "No driving sessions scheduled for this vehicle yet",
+    "active_now": "Active now",
+    "session_conflict_notice": "PostgreSQL GiST rule: concurrent driving sessions for the same vehicle are strictly prohibited at database level.",
+    "view_session": "View session"
   },
   "fleet_map": {
     "subtitle": "View branch vehicles in one place. Locations will appear after GPS is connected.",
@@ -1096,9 +1103,12 @@
     "subtitle": "Company expenses and payment obligations",
     "add": "Add expense",
     "list_title": "Expense list",
+    "search_placeholder": "Search by title or payee...",
     "count_result": "{{count}} results",
     "empty": "No expenses",
     "empty_desc": "Add the first company or branch expense.",
+    "empty_filtered": "No expenses found",
+    "empty_filtered_desc": "Adjust the filters or clear your search.",
     "not_found": "Expense not found",
     "not_found_desc": "The record was deleted or you do not have access to it.",
     "load_error": "Unable to load expenses",

@@ -1,5 +1,11 @@
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
@@ -30,8 +36,12 @@ import type {
 } from '@/features/expenses/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { parseCalendarDate } from '@/lib/calendarDate';
+import { formatMoney } from '@/lib/money';
+import { newRequestId } from '@/lib/idempotencyKey';
+import { formatDate } from '@/shared/lib/studentsFormat';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import { useAuthStore } from '@/store/authStore';
 import { ExpenseFormDialog } from '@/features/expenses/components/ExpenseFormDialog';
@@ -47,9 +57,6 @@ const statusVariant = (status: ExpenseStatus) => {
   if (status === 'paid') return 'default' as const;
   return 'secondary' as const;
 };
-
-const formatAmount = (amount: string, currency: string) =>
-  `${amount} ${currency}`;
 
 const MONEY_PATTERN = /^(?:0|[1-9]\d{0,9})\.\d{2}$/;
 
@@ -213,7 +220,10 @@ const ExpenseDetailPage = () => {
         ) {
           return;
         }
-        if (historyResult.data.expense.status === 'partially_paid') {
+        // Any expense with an outstanding balance, not just partially_paid: a
+        // `planned` row reached this shortcut through the overdue sweep, and it
+        // used to land on an empty amount box.
+        if (Number(historyResult.data.expense.remaining_amount) > 0) {
           setAmountState({
             expenseId,
             value: historyResult.data.expense.remaining_amount,
@@ -521,29 +531,27 @@ const ExpenseDetailPage = () => {
           <dl className="glass-card grid grid-cols-1 gap-x-8 gap-y-4 p-5 text-sm sm:grid-cols-2 lg:grid-cols-3">
             <DetailField
               label={t('expenses.detail.amount')}
-              value={formatAmount(serverExpense.amount, t('expenses.currency'))}
+              value={formatMoney(serverExpense.amount)}
             />
             <DetailField
               label={t('expenses.detail.paid')}
-              value={formatAmount(
-                serverExpense.paid_amount,
-                t('expenses.currency'),
-              )}
+              value={formatMoney(serverExpense.paid_amount)}
             />
             <DetailField
               label={t('expenses.detail.remaining')}
-              value={formatAmount(
-                serverExpense.remaining_amount,
-                t('expenses.currency'),
-              )}
+              value={formatMoney(serverExpense.remaining_amount)}
             />
             <DetailField
               label={t('expenses.detail.expense_date')}
-              value={serverExpense.expense_date}
+              value={formatDate(serverExpense.expense_date)}
             />
             <DetailField
               label={t('expenses.detail.due_date')}
-              value={serverExpense.due_date ?? t('common.na')}
+              value={
+                serverExpense.due_date
+                  ? formatDate(serverExpense.due_date)
+                  : t('common.na')
+              }
             />
             <DetailField
               label={t('expenses.detail.branch')}
@@ -561,14 +569,9 @@ const ExpenseDetailPage = () => {
               label={t('expenses.detail.payee')}
               value={serverExpense.payee ?? t('common.na')}
             />
-            <DetailField
-              label={t('expenses.detail.created_by')}
-              value={serverExpense.created_by_id}
-            />
-            <DetailField
-              label={t('expenses.detail.version')}
-              value={String(serverExpense.version)}
-            />
+            {/* ponytail: created_by_id was a raw UUID and version an internal
+                counter. Both are audit-log material, not list material — the
+                audit log and the events panel already carry them. */}
             <div className="sm:col-span-2 lg:col-span-3">
               <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                 {t('expenses.detail.note')}
@@ -632,15 +635,11 @@ const ExpenseDetailPage = () => {
                                 : ''
                             }
                           >
-                            {formatAmount(
-                              payment.amount,
-                              t('expenses.currency'),
-                            )}{' '}
-                            ·{' '}
+                            {formatMoney(payment.amount)} ·{' '}
                             {t(
                               `expenses.payments.methods.${payment.payment_method}`,
                             )}{' '}
-                            · {payment.date}
+                            · {formatDate(payment.date)}
                           </span>
                           {payment.voided_at && payment.void_reason && (
                             <span className="text-xs text-muted-foreground italic">
@@ -686,127 +685,159 @@ const ExpenseDetailPage = () => {
               {canManageFinance &&
                 serverExpense.status !== 'cancelled' &&
                 serverExpense.status !== 'paid' && (
-                  <form
-                    className="grid gap-3 sm:grid-cols-2"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      setConflict(false);
-                      setPaymentError(null);
-                      const canonicalAmount = canonicalPaymentAmount(amount);
-                      const normalizedDate = date.trim();
-                      const normalizedNote = note.trim() || null;
-                      if (!canonicalAmount) {
-                        setPaymentError('expenses.payments.invalid_amount');
-                        return;
-                      }
-                      if (!parseCalendarDate(normalizedDate)) {
-                        setPaymentError('expenses.payments.invalid_date');
-                        return;
-                      }
-                      const fingerprint = JSON.stringify([
-                        canonicalAmount,
-                        method,
-                        normalizedDate,
-                        normalizedNote,
-                      ]);
-                      if (paymentAttempt.current?.fingerprint !== fingerprint) {
-                        paymentAttempt.current = {
-                          fingerprint,
-                          idempotencyKey: crypto.randomUUID(),
-                        };
-                      }
-                      paymentMutation.mutate(
-                        {
-                          amount: canonicalAmount,
-                          payment_method: method,
-                          date: normalizedDate,
-                          note: normalizedNote,
-                          idempotency_key:
-                            paymentAttempt.current.idempotencyKey,
-                          expected_version: serverExpense.version,
-                        },
-                        {
-                          onSuccess: () => {
-                            setAmountState({ expenseId: id, value: '' });
-                            setDate('');
-                            setNote('');
-                            paymentAttempt.current = null;
+                  <>
+                    {/* Errors sit above the fields they refer to and announce
+                        themselves, rather than rendering below the submit
+                        button where a 409 about stale data is invisible. */}
+                    {(conflict || paymentError) && (
+                      <p
+                        role="alert"
+                        className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                      >
+                        {t(
+                          conflict
+                            ? 'expenses.payments.conflict'
+                            : (paymentError as string),
+                        )}
+                      </p>
+                    )}
+                    <form
+                      className="grid gap-3 sm:grid-cols-2"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        setConflict(false);
+                        setPaymentError(null);
+                        const canonicalAmount = canonicalPaymentAmount(amount);
+                        const normalizedDate = date.trim();
+                        const normalizedNote = note.trim() || null;
+                        if (!canonicalAmount) {
+                          setPaymentError('expenses.payments.invalid_amount');
+                          return;
+                        }
+                        if (!parseCalendarDate(normalizedDate)) {
+                          setPaymentError('expenses.payments.invalid_date');
+                          return;
+                        }
+                        const fingerprint = JSON.stringify([
+                          canonicalAmount,
+                          method,
+                          normalizedDate,
+                          normalizedNote,
+                        ]);
+                        if (
+                          paymentAttempt.current?.fingerprint !== fingerprint
+                        ) {
+                          paymentAttempt.current = {
+                            fingerprint,
+                            idempotencyKey: newRequestId(),
+                          };
+                        }
+                        paymentMutation.mutate(
+                          {
+                            amount: canonicalAmount,
+                            payment_method: method,
+                            date: normalizedDate,
+                            note: normalizedNote,
+                            idempotency_key:
+                              paymentAttempt.current.idempotencyKey,
+                            expected_version: serverExpense.version,
                           },
-                          onError: (error) => {
-                            if (
-                              (error as { response?: { status?: number } })
-                                .response?.status === 409
-                            ) {
-                              setConflict(true);
-                              void Promise.all([
-                                expenseQuery.refetch(),
-                                historyQuery.refetch(),
-                              ]);
-                            }
+                          {
+                            onSuccess: () => {
+                              setAmountState({ expenseId: id, value: '' });
+                              setDate('');
+                              setNote('');
+                              paymentAttempt.current = null;
+                            },
+                            onError: (error) => {
+                              if (
+                                (error as { response?: { status?: number } })
+                                  .response?.status === 409
+                              ) {
+                                setConflict(true);
+                                void Promise.all([
+                                  expenseQuery.refetch(),
+                                  historyQuery.refetch(),
+                                ]);
+                              }
+                            },
                           },
-                        },
-                      );
-                    }}
-                  >
-                    <Input
-                      aria-label={t('expenses.payments.amount')}
-                      value={amount}
-                      onChange={(e) =>
-                        setAmountState({ expenseId: id, value: e.target.value })
-                      }
-                      placeholder="0.00"
-                      disabled={paymentControlsDisabled}
-                      required
-                    />
-                    <select
-                      aria-label={t('expenses.payments.method')}
-                      value={method}
-                      onChange={(e) =>
-                        setMethod(e.target.value as ExpensePaymentMethod)
-                      }
-                      disabled={paymentControlsDisabled}
-                      className="rounded-md border border-border bg-secondary px-3 text-sm"
+                        );
+                      }}
                     >
-                      <option value="naqd">
-                        {t('expenses.payments.methods.naqd')}
-                      </option>
-                      <option value="karta">
-                        {t('expenses.payments.methods.karta')}
-                      </option>
-                      <option value="perechisleniya">
-                        {t('expenses.payments.methods.perechisleniya')}
-                      </option>
-                    </select>
-                    <Input
-                      aria-label={t('expenses.payments.date')}
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      disabled={paymentControlsDisabled}
-                      required
-                    />
-                    <Input
-                      aria-label={t('expenses.payments.note')}
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      disabled={paymentControlsDisabled}
-                    />
-                    <Button type="submit" disabled={paymentControlsDisabled}>
-                      {paymentMutation.isPending
-                        ? t('expenses.payments.saving')
-                        : t('expenses.payments.submit')}
-                    </Button>
-                    {conflict && (
-                      <p className="text-sm text-destructive sm:col-span-2">
-                        {t('expenses.payments.conflict')}
-                      </p>
-                    )}
-                    {paymentError && (
-                      <p className="text-sm text-destructive sm:col-span-2">
-                        {t(paymentError)}
-                      </p>
-                    )}
-                  </form>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="expense-payment-amount">
+                          {t('expenses.payments.amount')}
+                        </Label>
+                        <Input
+                          id="expense-payment-amount"
+                          value={amount}
+                          onChange={(e) =>
+                            setAmountState({
+                              expenseId: id,
+                              value: e.target.value,
+                            })
+                          }
+                          placeholder="0.00"
+                          disabled={paymentControlsDisabled}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="expense-payment-method">
+                          {t('expenses.payments.method')}
+                        </Label>
+                        <select
+                          id="expense-payment-method"
+                          value={method}
+                          onChange={(e) =>
+                            setMethod(e.target.value as ExpensePaymentMethod)
+                          }
+                          disabled={paymentControlsDisabled}
+                          className="h-10 w-full rounded-md border border-border bg-secondary px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <option value="naqd">
+                            {t('expenses.payments.methods.naqd')}
+                          </option>
+                          <option value="karta">
+                            {t('expenses.payments.methods.karta')}
+                          </option>
+                          <option value="perechisleniya">
+                            {t('expenses.payments.methods.perechisleniya')}
+                          </option>
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="expense-payment-date">
+                          {t('expenses.payments.date')}
+                        </Label>
+                        <Input
+                          id="expense-payment-date"
+                          type="date"
+                          value={date}
+                          onChange={(e) => setDate(e.target.value)}
+                          disabled={paymentControlsDisabled}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="expense-payment-note">
+                          {t('expenses.payments.note')}
+                        </Label>
+                        <Input
+                          id="expense-payment-note"
+                          value={note}
+                          onChange={(e) => setNote(e.target.value)}
+                          disabled={paymentControlsDisabled}
+                        />
+                      </div>
+                      <Button type="submit" disabled={paymentControlsDisabled}>
+                        {paymentMutation.isPending
+                          ? t('expenses.payments.saving')
+                          : t('expenses.payments.submit')}
+                      </Button>
+                    </form>
+                  </>
                 )}
             </section>
           </TabsContent>
@@ -851,7 +882,13 @@ const ExpenseDetailPage = () => {
   );
 };
 
-const DetailField = ({ label, value }: { label: string; value: string }) => (
+const DetailField = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: ReactNode;
+}) => (
   <div className="flex flex-col gap-0.5">
     <dt className="text-xs uppercase tracking-wide text-muted-foreground">
       {label}

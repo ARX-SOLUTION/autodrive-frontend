@@ -24,7 +24,10 @@ export const SummaryCard = ({
   <div className={cn('glass-card p-4', className)}>
     <div className="flex items-center justify-between gap-2">
       <p className="truncate text-sm text-muted-foreground">{title}</p>
-      <div className="shrink-0 text-primary [&_svg]:h-4 [&_svg]:w-4">
+      {/* ponytail: icon is non-text, so WCAG 1.4.11 wants 3:1, not 4.5:1.
+          --primary on its own /10 tint was 2.02:1; --warning-strong keeps the
+          brand amber and reaches 5.99:1. */}
+      <div className="rounded-lg bg-primary/10 p-2.5 text-warning-strong">
         {icon}
       </div>
     </div>

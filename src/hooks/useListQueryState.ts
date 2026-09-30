@@ -68,6 +68,20 @@ export function useListQueryState<TTab extends string = string>(options?: {
 }
 
 export function usePageSize() {
-  const { pageSize, setPageSize } = useListQueryState();
+  // ponytail: useListQueryState() below would mount a write-only useDebounce
+  // whose setState lands in this component's tree and re-renders the whole list
+  // page ~300ms after the last keystroke, for a value nobody reads. Reaching
+  // for the pieces directly keeps usePageSize free of that render.
+  const { searchParams, setParams } = useUrlParams();
+  const pageSize = resolvePageSize(
+    searchParams.get('limit'),
+    readStoredPageSize(),
+  );
+  const setPageSize = (size: number) => {
+    const next = parsePageSize(String(size));
+    if (!next) return;
+    writeStoredPageSize(next);
+    setParams({ limit: String(next), page: undefined });
+  };
   return { pageSize, setPageSize };
 }

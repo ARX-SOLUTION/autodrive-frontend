@@ -13,7 +13,6 @@ import {
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePageSize } from '@/hooks/useListQueryState';
-import { matchesListQuery } from '@/lib/listQuery';
 import { ListSearchField } from '@/components/ui/ListSearchField';
 import { useCan } from '@/hooks/useCan';
 import { useAuthStore } from '@/store/authStore';
@@ -192,8 +191,11 @@ const ExpenseDailyBrief = ({
       icon: <CalendarCheck className="h-5 w-5" aria-hidden="true" />,
     },
   ];
-  const hasNoAttention =
-    !!counts && metrics.every((metric) => metric.value === 0);
+  // "No attention needed" is about money that needs action. pending_total is a
+  // superset of due+overdue and created_yesterday is a different axis entirely,
+  // so neither belongs in this test — the old version printed "nothing needs
+  // attention" next to 3 rows created yesterday.
+  const hasNoAttention = !!counts && due === 0 && overdue === 0;
 
   return (
     <section aria-labelledby="expense-daily-brief-title" aria-busy={isLoading}>
@@ -282,9 +284,23 @@ const ExpensesPage = () => {
   const { searchParams, setParam, setParams } = useUrlParams();
   const { pageSize, setPageSize } = usePageSize();
   const expenseSearch = searchParams.get('q') ?? '';
-  const setExpenseSearch = (value: string) =>
-    setParams({ q: value.length > 0 ? value : undefined, page: undefined });
-  const debouncedExpenseSearch = useDebounce(expenseSearch, 300);
+  // The input is local so typing stays responsive; only the debounced value
+  // reaches the URL, and the URL is what feeds the server-side `search`.
+  const [searchDraft, setSearchDraft] = useState(expenseSearch);
+  const debouncedSearchDraft = useDebounce(searchDraft, 300);
+  const pushedSearch = useRef(expenseSearch);
+  useEffect(() => {
+    if (debouncedSearchDraft === expenseSearch) return;
+    pushedSearch.current = debouncedSearchDraft;
+    setParams({
+      q: debouncedSearchDraft.length > 0 ? debouncedSearchDraft : undefined,
+      page: undefined,
+    });
+  }, [debouncedSearchDraft, expenseSearch, setParams]);
+  // Back navigation or an external reset owns the field; typing does not.
+  useEffect(() => {
+    if (expenseSearch !== pushedSearch.current) setSearchDraft(expenseSearch);
+  }, [expenseSearch]);
 
   const branchFilter = isManager
     ? (managerBranchId ?? 'all')
@@ -385,6 +401,7 @@ const ExpensesPage = () => {
     attention: attentionFilter,
     dateFrom: dateFrom ? toLocalDateStr(dateFrom) : undefined,
     dateTo: dateTo ? toLocalDateStr(dateTo) : undefined,
+    search: expenseSearch || undefined,
     page: currentPage,
     limit: pageSize,
   };
@@ -462,7 +479,9 @@ const ExpensesPage = () => {
     !!dateTo ||
     expenseSearch.length > 0;
 
-  const clearAll = () =>
+  const clearAll = () => {
+    pushedSearch.current = '';
+    setSearchDraft('');
     setParams({
       branch_id: undefined,
       scope: undefined,
@@ -474,6 +493,7 @@ const ExpensesPage = () => {
       page: undefined,
       q: undefined,
     });
+  };
 
   const dismissDailyBrief = () => {
     dailyBriefDismissal.dismiss();
@@ -501,19 +521,9 @@ const ExpensesPage = () => {
     });
 
   const canRenderExpenseData = canViewExpenses && hasManagerScope;
-  const visibleExpenses = useMemo(() => {
-    const rows = canRenderExpenseData ? (expensesPage?.data ?? []) : [];
-    return rows.filter((expense) =>
-      matchesListQuery(
-        debouncedExpenseSearch,
-        expense.title,
-        expense.payee,
-        expense.note,
-        expense.branch_name,
-        expense.category,
-      ),
-    );
-  }, [canRenderExpenseData, debouncedExpenseSearch, expensesPage?.data]);
+  const visibleExpenses = canRenderExpenseData
+    ? (expensesPage?.data ?? [])
+    : [];
   const visibleOverdueExpenses = canRenderExpenseData ? overdueExpenses : [];
   const totalExpenses = canRenderExpenseData
     ? (expensesPage?.meta.total ?? 0)
@@ -587,9 +597,9 @@ const ExpensesPage = () => {
       )}
 
       <ListSearchField
-        value={expenseSearch}
-        onChange={setExpenseSearch}
-        placeholder={t('expenses.title')}
+        value={searchDraft}
+        onChange={setSearchDraft}
+        placeholder={t('expenses.search_placeholder')}
       />
 
       <ExpensesFilterBar
@@ -648,6 +658,7 @@ const ExpensesPage = () => {
             totalExpenses={totalExpenses}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
+            isFiltered={hasAnyFilter}
           />
         )}
       </div>
