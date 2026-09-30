@@ -50,7 +50,7 @@ jobs:
 
   build:
     needs: quality
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'xam1dullo'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -79,7 +79,7 @@ jobs:
 
   deploy:
     needs: build
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'xam1dullo'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     # Job-level concurrency: serialize deploys PER APP and never cancel one.
     # Workflow-level concurrency above cancels stale PR runs only; a push to
     # main during a deploy must NOT abort it mid-migration.
