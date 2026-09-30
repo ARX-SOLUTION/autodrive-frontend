@@ -2,7 +2,7 @@ import { useState } from 'react';
 import FuelTypes from '../fuel/FuelTypes';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { Car, Warning } from '@phosphor-icons/react';
+import { Car, User, Warning } from '@phosphor-icons/react';
 import { useVehicle } from '@/features/vehicles/api/vehicleService';
 import { useBranches } from '@/features/branches/api/branchService';
 import { useCan } from '@/hooks/useCan';
@@ -15,13 +15,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import VehicleFormDialog from '@/features/vehicles/components/VehicleFormDialog';
 import VehicleOperations from '@/features/vehicles/components/VehicleOperations';
+import VehicleSessionsTab from '@/features/vehicles/components/VehicleSessionsTab';
 
 const VehicleDetailPage = () => {
   const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const [tab, setTab] = useUrlTab(
-    ['info', 'documents', 'maintenance', 'transfers'] as const,
+    ['info', 'documents', 'maintenance', 'transfers', 'sessions'] as const,
     'info',
   );
   const canManage = useCan('manageVehicles');
@@ -67,6 +68,23 @@ const VehicleDetailPage = () => {
               <p className="text-sm text-muted-foreground">
                 {vehicle.make} {vehicle.model} · {branchName(vehicle.branch_id)}
               </p>
+              <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                {vehicle.current_custodian ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/80 px-2.5 py-1 font-medium text-secondary-foreground">
+                    <User className="h-3.5 w-3.5 text-primary" />
+                    <span>{t('vehicles.current_custodian')}:</span>
+                    <strong className="text-foreground">
+                      {vehicle.current_custodian.name}
+                    </strong>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
+                    <User className="h-3.5 w-3.5 opacity-60" />
+                    <span>{t('vehicles.current_custodian')}:</span>
+                    <span>{t('vehicles.no_custodian')}</span>
+                  </span>
+                )}
+              </div>
             </div>
             {canManage && (
               <Button variant="outline" onClick={() => setEditOpen(true)}>
@@ -110,6 +128,7 @@ const VehicleDetailPage = () => {
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList className="h-auto min-h-10 max-w-full flex-wrap">
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
+          <TabsTrigger value="sessions">{t('vehicles.sessions')}</TabsTrigger>
           <TabsTrigger value="documents">{t('vehicles.documents')}</TabsTrigger>
           <TabsTrigger value="maintenance">
             {t('vehicles.maintenance')}
@@ -120,6 +139,10 @@ const VehicleDetailPage = () => {
           <dl className="glass-card grid gap-4 p-5 text-sm sm:grid-cols-2">
             {[
               [t('common.branch'), branchName(vehicle.branch_id)],
+              [
+                t('vehicles.current_custodian'),
+                vehicle.current_custodian?.name ?? t('vehicles.no_custodian'),
+              ],
               [t('vehicles.vin'), vehicle.vin || t('common.na')],
               [t('vehicles.year'), String(vehicle.manufacture_year)],
               [t('vehicles.categories'), vehicle.categories.join(', ')],
@@ -135,6 +158,9 @@ const VehicleDetailPage = () => {
               </div>
             ))}
           </dl>
+        </TabsContent>
+        <TabsContent value="sessions">
+          <VehicleSessionsTab vehicleId={vehicle.id} />
         </TabsContent>
         <TabsContent value="documents" className="space-y-4">
           {canManage && (
