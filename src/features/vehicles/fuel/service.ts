@@ -211,6 +211,7 @@ export function useFuelVehicles(params: Record<string, unknown>) {
       parseListEnvelope<{
         id: string;
         plate_number: string;
+        model: string;
         branch_id: string;
         fuel_types: string[];
         current_custodian_id?: string | null;
