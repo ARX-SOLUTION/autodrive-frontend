@@ -19,6 +19,7 @@ export type VehicleDocumentType =
 export interface Vehicle {
   fuel_types?: string[];
   current_custodian_id?: string | null;
+  current_custodian?: { id: string; name: string } | null;
   id: string;
   company_id: string;
   branch_id: string;
