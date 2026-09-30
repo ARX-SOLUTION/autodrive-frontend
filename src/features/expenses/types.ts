@@ -166,6 +166,7 @@ export interface ExpenseListFilters {
   attention?: 'overdue';
   dateFrom?: string;
   dateTo?: string;
+  search?: string;
   page?: number;
   limit?: number;
 }

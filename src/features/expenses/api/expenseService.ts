@@ -60,6 +60,7 @@ export const toExpenseQueryParams = (
   attention: filters.attention,
   date_from: filters.dateFrom,
   date_to: filters.dateTo,
+  search: filters.search?.trim() || undefined,
   page: filters.page,
   limit: filters.limit,
 });
@@ -348,6 +349,7 @@ export const fetchOverdueExpenseSweep = async (
     attention: 'overdue',
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
+    search: filters.search,
     page: 1,
     limit: OVERDUE_SWEEP_LIMIT,
   };
@@ -362,10 +364,22 @@ export const fetchOverdueExpenseSweep = async (
   const seenIds = new Set<string>();
   appendOverdueSweepRows(rows, seenIds, firstPage);
 
-  for (let page = 2; page <= expected.totalPages; page += 1) {
-    const response = await fetchExpensesPage({ ...pageFilters, page }, signal);
-    assertOverdueSweepPage(response, page, expected);
-    appendOverdueSweepRows(rows, seenIds, response);
+  // ponytail: pages 2..N fan out in one shot instead of N-1 serial round trips.
+  // The `assertOverdueSweepPage` metadata check already rejects any page that
+  // disagrees with page 1, so parallel reads stay safe. Sequential was 100 rows
+  // per RTT; add a cap when totalPages gets large enough for N requests to hurt
+  // the API rather than the user.
+  if (expected.totalPages > 1) {
+    const pages = await Promise.all(
+      Array.from(
+        { length: expected.totalPages - 1 },
+        (_, index) => index + 2,
+      ).map((page) => fetchExpensesPage({ ...pageFilters, page }, signal)),
+    );
+    pages.forEach((response, index) => {
+      assertOverdueSweepPage(response, index + 2, expected);
+      appendOverdueSweepRows(rows, seenIds, response);
+    });
   }
 
   if (rows.length !== expected.total) {

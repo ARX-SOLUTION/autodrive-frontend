@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Warning, X } from '@phosphor-icons/react';
 import { formatUzPhoneInput, uzLocalDigits } from '@/lib/phoneFormater';
 import { groupDigits } from '@/lib/money';
+import { newRequestId } from '@/lib/idempotencyKey';
 import { DatePicker } from '@/components/ui/date-picker';
 import {
   Student,
@@ -132,7 +133,8 @@ const StudentModal = ({
   // ponytail: ref tracks which submit button was clicked; defaults to 'close' so Enter → Save
   const submitModeRef = useRef<'close' | 'add'>('close');
   // One key per edit session: a retried save must not record amount_paid twice.
-  const idempotencyKeyRef = useRef(crypto.randomUUID());
+  const idempotencyKeyRef = useRef('');
+  const getIdempotencyKey = () => (idempotencyKeyRef.current ||= newRequestId());
 
   const resetForNext = () => {
     const current = form.getValues();
@@ -272,7 +274,7 @@ const StudentModal = ({
     if (open) {
       if (student) {
         form.reset(getEditStudentFormValues(student));
-        idempotencyKeyRef.current = crypto.randomUUID();
+        idempotencyKeyRef.current = newRequestId();
       } else {
         form.reset(defaultFormValues());
         // Focus first field after dialog animation settles
@@ -319,7 +321,7 @@ const StudentModal = ({
 
   const onFormValid = async (values: StudentFormValues) => {
     const payload = toCreateStudentPayload(values, courseType, !!student);
-    if (student) payload.idempotency_key = idempotencyKeyRef.current;
+    if (student) payload.idempotency_key = getIdempotencyKey();
 
     const mode = submitModeRef.current;
     submitModeRef.current = 'close'; // reset for next submission

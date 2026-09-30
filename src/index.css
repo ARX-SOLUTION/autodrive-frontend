@@ -173,7 +173,10 @@
   --border: 39 19% 82%;
   --hair: 39 26% 88%;
   --input: 39 20% 76%;
-  --ring: var(--brand-orange);
+  /* Darker than --brand-orange: a 2px focus ring must clear 3:1 against BOTH
+     the offset colour and the adjacent surface (WCAG 2.2 SC 1.4.11). Amber at
+     53% L was 1.95:1 on --background. This is 5.36:1. */
+  --ring: 32 82% 31%;
   --radius: 0.5rem;
 
   --sidebar-background: 45 45% 98%;

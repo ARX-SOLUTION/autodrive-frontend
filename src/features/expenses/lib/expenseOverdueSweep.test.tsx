@@ -236,7 +236,7 @@ describe('ExpenseOverdueSweep', () => {
     expect(link).toHaveTextContent('Company rent');
     expect(link).toHaveTextContent('expenses.form.company_wide');
     expect(link).toHaveTextContent('expenses.category.rent');
-    expect(link).toHaveTextContent('2026-08-31');
+    expect(link).toHaveTextContent('31.08.2026');
     expect(link).toHaveTextContent('7');
     const remainingAmount = within(link).getByText(formatMoney('101.00'));
     expect(remainingAmount).not.toHaveClass('whitespace-nowrap');
@@ -735,7 +735,9 @@ describe('ExpensesPage overdue query selection', () => {
       false,
       '2026-09-01',
     );
-    expect(screen.getByText('expenses.empty')).toBeInTheDocument();
+    // A branch filter is active, so the empty copy points at the filter rather
+    // than telling the user to create their first expense.
+    expect(screen.getByText('expenses.empty_filtered')).toBeInTheDocument();
   });
 
   it.each(['owner', 'accountant', 'manager'] as const)(

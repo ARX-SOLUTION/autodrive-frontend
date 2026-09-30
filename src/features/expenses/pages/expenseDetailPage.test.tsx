@@ -263,9 +263,11 @@ describe('ExpenseDetailPage', () => {
     });
 
     expect(screen.getByText('Office rent')).toBeInTheDocument();
-    expect(screen.getByText('125000.00 expenses.currency')).toBeInTheDocument();
-    expect(screen.getByText('25000.00 expenses.currency')).toBeInTheDocument();
-    expect(screen.getByText('100000.00 expenses.currency')).toBeInTheDocument();
+    // Detail money now goes through the shared formatMoney, so it groups and
+    // carries the so'm suffix exactly like the table does.
+    expect(screen.getByText("125 000 so'm")).toBeInTheDocument();
+    expect(screen.getByText("25 000 so'm")).toBeInTheDocument();
+    expect(screen.getByText("100 000 so'm")).toBeInTheDocument();
     expect(
       screen.getByText('expenses.status.partially_paid'),
     ).toBeInTheDocument();
@@ -277,7 +279,10 @@ describe('ExpenseDetailPage', () => {
 
     expect(screen.getByText('expenses.payments.active')).toBeInTheDocument();
     expect(screen.getByText('expenses.payments.voided')).toBeInTheDocument();
-    expect(screen.getByText(/2026-08-30/)).toBeInTheDocument();
+    // Payment dates render through the shared formatDate, not raw ISO.
+    await waitFor(() =>
+      expect(screen.getByText(/· 30\.08\.2026/)).toBeInTheDocument(),
+    );
   });
 
   it('shows the expense event timeline for owner/accountant finance roles', async () => {
@@ -900,35 +905,52 @@ describe('ExpenseDetailPage', () => {
     expect(queryState.refetch).not.toHaveBeenCalled();
   });
 
-  it.each(['planned', 'paid', 'cancelled'] as const)(
-    'does not prefill after an authoritative %s result',
-    async (status) => {
-      const freshExpense = {
-        ...expense,
-        status,
-        remaining_amount: '123.45',
-      };
-      queryState.data = expense;
-      historyState.data = history;
-      historyState.refetch.mockResolvedValue({
-        isSuccess: true,
-        data: { ...history, expense: freshExpense },
-      });
+  it('prefills after an authoritative planned result that still owes money', async () => {
+    // A `planned` row reaches this shortcut through the overdue sweep, so it
+    // has an outstanding balance and must prefill like a partially_paid one.
+    const freshExpense = { ...expense, status: 'planned' as const };
+    queryState.data = expense;
+    historyState.data = history;
+    historyState.refetch.mockResolvedValue({
+      isSuccess: true,
+      data: { ...history, expense: freshExpense },
+    });
 
-      await renderWithRouter(<ExpenseDetailPage />, {
-        initialEntry: '/expenses/expense-1?tab=payments&action=pay_remaining',
-        routePattern: '/expenses/$id',
-        params: { id: 'expense-1' },
-      });
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1?tab=payments&action=pay_remaining',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
 
-      await waitFor(() =>
-        expect(
-          screen.getByLabelText('expenses.payments.amount'),
-        ).not.toBeDisabled(),
-      );
-      expect(screen.getByLabelText('expenses.payments.amount')).toHaveValue('');
-    },
-  );
+    await waitFor(() =>
+      expect(screen.getByLabelText('expenses.payments.amount')).toHaveValue(
+        freshExpense.remaining_amount,
+      ),
+    );
+  });
+
+  it('does not prefill when the authoritative result is already settled', async () => {
+    const freshExpense = { ...expense, remaining_amount: '0.00' };
+    queryState.data = expense;
+    historyState.data = history;
+    historyState.refetch.mockResolvedValue({
+      isSuccess: true,
+      data: { ...history, expense: freshExpense },
+    });
+
+    await renderWithRouter(<ExpenseDetailPage />, {
+      initialEntry: '/expenses/expense-1?tab=payments&action=pay_remaining',
+      routePattern: '/expenses/$id',
+      params: { id: 'expense-1' },
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText('expenses.payments.amount'),
+      ).not.toBeDisabled(),
+    );
+    expect(screen.getByLabelText('expenses.payments.amount')).toHaveValue('');
+  });
 
   it('preserves user edits across cache rerenders after consuming an intent', async () => {
     const freshExpense = { ...expense, remaining_amount: '90432.12' };

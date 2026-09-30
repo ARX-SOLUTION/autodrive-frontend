@@ -18,6 +18,7 @@ import { useConfirmedClose } from '@/hooks/useConfirmedClose';
 import { useCan } from '@/hooks/useCan';
 import { useAuthStore } from '@/store/authStore';
 import { groupDigits } from '@/lib/money';
+import { newRequestId } from '@/lib/idempotencyKey';
 import { mutationErrorToast } from '@/lib/mutationErrorToast';
 import {
   useCreateExpense,
@@ -173,7 +174,13 @@ export const ExpenseFormDialog = ({
   const { data: teachers = [] } = useExpenseTeacherOptions(
     isSettlement && open,
   );
-  const idempotencyKeyRef = useRef(crypto.randomUUID());
+  // ponytail: a ref, not useState — the reset-on-open effect below assigns a
+  // fresh key, and setState there would cascade a render. Initialised empty
+  // because useRef(fn()) would call newRequestId on every render; the reset
+  // effect seeds it before the form can submit.
+  const idempotencyKeyRef = useRef('');
+  const getIdempotencyKey = () =>
+    (idempotencyKeyRef.current ||= newRequestId());
   const [conflict, setConflict] = useState(false);
   const financialFieldsLocked = Boolean(
     editExpense &&
@@ -248,10 +255,10 @@ export const ExpenseFormDialog = ({
     if (!open) return;
     if (isSettlement) {
       settlementForm.reset(settlementDefaults());
-      idempotencyKeyRef.current = crypto.randomUUID();
+      idempotencyKeyRef.current = newRequestId();
     } else {
       expenseForm.reset(expenseDefaults());
-      if (!editExpense) idempotencyKeyRef.current = crypto.randomUUID();
+      if (!editExpense) idempotencyKeyRef.current = newRequestId();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editExpense?.id, isSettlement]);
@@ -352,7 +359,7 @@ export const ExpenseFormDialog = ({
             branch_id:
               values.branchTarget === 'company' ? null : values.branchTarget,
           }),
-      idempotency_key: idempotencyKeyRef.current,
+      idempotency_key: getIdempotencyKey(),
       ...(values.vehicleId ? { vehicle_id: values.vehicleId } : {}),
     };
 
@@ -360,7 +367,7 @@ export const ExpenseFormDialog = ({
       createExpense.mutate(payload, {
         onSuccess: () => {
           toast.success(t('expenses.created'));
-          idempotencyKeyRef.current = crypto.randomUUID();
+          idempotencyKeyRef.current = newRequestId();
           closeDialog();
         },
         onError: (error) => mutationErrorToast(error, t, submitMutation),
@@ -378,14 +385,14 @@ export const ExpenseFormDialog = ({
       due_date: values.dueDate?.trim() || null,
       payee: values.payee?.trim() || null,
       note: values.note?.trim() || null,
-      idempotency_key: idempotencyKeyRef.current,
+      idempotency_key: getIdempotencyKey(),
     };
 
     const submitMutation = () =>
       createSettlement.mutate(payload, {
         onSuccess: () => {
           toast.success(t('expenses.settlement.created'));
-          idempotencyKeyRef.current = crypto.randomUUID();
+          idempotencyKeyRef.current = newRequestId();
           closeDialog();
         },
         onError: (error) => mutationErrorToast(error, t, submitMutation),

@@ -208,6 +208,7 @@ describe('ExpensesPage daily brief', () => {
     expect(screen.getByRole('status')).toHaveTextContent(
       'expenses.daily_brief.loading',
     );
+    // No filter is active on this entry, so the copy is the plain empty state.
     expect(screen.getByText('expenses.empty')).toBeInTheDocument();
     loading.unmount();
 
@@ -233,7 +234,7 @@ describe('ExpensesPage daily brief', () => {
     expect(
       screen.getByRole('heading', { name: 'expenses.daily_brief.title' }),
     ).toHaveFocus();
-    expect(screen.getByText('expenses.empty')).toBeInTheDocument();
+    expect(screen.getByText('expenses.empty_filtered')).toBeInTheDocument();
     error.unmount();
 
     mocks.useExpenseTriageCounts.mockReturnValue({

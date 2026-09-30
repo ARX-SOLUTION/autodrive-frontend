@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { createDataGridColumnHelper, DataGrid } from '@/shared/ui/data-grid';
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useCan } from '@/hooks/useCan';
 import { useViewTransitionNavigate } from '@/hooks/useViewTransitionNavigate';
 import { formatMoney } from '@/lib/money';
+import { formatDate } from '@/shared/lib/studentsFormat';
 import type { Expense, ExpenseStatus } from '@/features/expenses/types';
 import { cn } from '@/lib/utils';
 import { Wallet, Warning } from '@phosphor-icons/react';
@@ -25,6 +27,8 @@ interface ExpensesTableProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   onPageSizeChange?: (size: number) => void;
+  /** Any active filter or search term — swaps the empty copy and copy. */
+  isFiltered?: boolean;
 }
 
 const columnHelper = createDataGridColumnHelper<Expense>();
@@ -82,7 +86,10 @@ const ExpenseMobileCard = ({
         subtitle={expense.branch_name ?? t('expenses.form.company_wide')}
         onClick={(event) => onActivate(event.currentTarget)}
         fields={[
-          { label: t('expenses.table.date'), value: expense.expense_date },
+          {
+            label: t('expenses.table.date'),
+            value: formatDate(expense.expense_date),
+          },
           ...(expense.vehicle_plate_number
             ? [
                 {
@@ -134,93 +141,102 @@ export const ExpensesTable = ({
   totalPages,
   onPageChange,
   onPageSizeChange,
+  isFiltered = false,
 }: ExpensesTableProps) => {
   const { t } = useTranslation();
   const canManageFinance = useCan('manageCompanyFinance');
   const navigate = useViewTransitionNavigate();
 
-  const columns = columnHelper.columns([
-    columnHelper.display({
-      id: 'index',
-      header: '#',
-      cell: ({ row }) => (currentPage - 1) * pageSize + row.index + 1,
-      meta: {
-        align: 'center',
-        cellClassName: 'text-muted-foreground',
-      },
-    }),
-    columnHelper.accessor('title', {
-      header: t('expenses.table.title'),
-      cell: ({ getValue }) => getValue(),
-      meta: { cellClassName: 'font-medium' },
-    }),
-    columnHelper.accessor('branch_name', {
-      header: t('expenses.table.branch'),
-      cell: ({ getValue }) => getValue() ?? t('expenses.form.company_wide'),
-      meta: { cellClassName: 'text-muted-foreground' },
-    }),
-    columnHelper.accessor('vehicle_plate_number', {
-      header: t('expenses.table.vehicle'),
-      cell: ({ getValue }) => getValue() ?? t('common.na'),
-      meta: { cellClassName: 'text-muted-foreground' },
-    }),
-    columnHelper.accessor('category', {
-      header: t('expenses.table.category'),
-      cell: ({ getValue }) => t(`expenses.category.${getValue()}`),
-      meta: { cellClassName: 'text-xs' },
-    }),
-    columnHelper.accessor('expense_date', {
-      header: t('expenses.table.date'),
-      cell: ({ getValue }) => getValue(),
-      meta: { cellClassName: 'text-muted-foreground tabular-nums' },
-    }),
-    columnHelper.accessor('amount', {
-      header: t('expenses.table.amount'),
-      cell: ({ getValue }) => formatMoney(getValue()),
-      meta: {
-        align: 'right',
-        cellClassName: 'whitespace-nowrap tabular-nums font-mono',
-      },
-    }),
-    columnHelper.accessor('paid_amount', {
-      header: t('expenses.table.paid'),
-      cell: ({ getValue }) => formatMoney(getValue()),
-      meta: {
-        align: 'right',
-        cellClassName: 'whitespace-nowrap tabular-nums font-mono',
-      },
-    }),
-    columnHelper.accessor('remaining_amount', {
-      header: t('expenses.table.remaining'),
-      cell: ({ getValue }) => formatMoney(getValue()),
-      meta: {
-        align: 'right',
-        cellClassName: 'whitespace-nowrap tabular-nums font-mono',
-      },
-    }),
-    columnHelper.accessor('status', {
-      header: t('expenses.table.status'),
-      cell: ({ getValue }) => (
-        <Badge variant={statusVariant(getValue())}>
-          {t(statusLabelKey(getValue()))}
-        </Badge>
-      ),
-      meta: { align: 'center' },
-    }),
-    ...(canManageFinance
-      ? [
-          columnHelper.display({
-            id: 'payment-action',
-            header: t('expenses.payments.title'),
-            cell: ({ row }) =>
-              row.original.status === 'partially_paid' ? (
-                <PayRemainingLink expense={row.original} />
-              ) : null,
-            meta: { align: 'center' },
-          }),
-        ]
-      : []),
-  ]);
+  // ponytail: memoised because a fresh array identity invalidates TanStack
+  // Table's column tree, which re-instantiates every Cell object on each
+  // render — 11 columns x pageSize cells. t and canManageFinance are the real
+  // dependencies; the row-index cell reads currentPage/pageSize off the row.
+  const columns = useMemo(
+    () =>
+      columnHelper.columns([
+        columnHelper.display({
+          id: 'index',
+          header: '#',
+          cell: ({ row }) => (currentPage - 1) * pageSize + row.index + 1,
+          meta: {
+            align: 'center',
+            cellClassName: 'text-muted-foreground',
+          },
+        }),
+        columnHelper.accessor('title', {
+          header: t('expenses.table.title'),
+          cell: ({ getValue }) => getValue(),
+          meta: { cellClassName: 'font-medium' },
+        }),
+        columnHelper.accessor('branch_name', {
+          header: t('expenses.table.branch'),
+          cell: ({ getValue }) => getValue() ?? t('expenses.form.company_wide'),
+          meta: { cellClassName: 'text-muted-foreground' },
+        }),
+        columnHelper.accessor('vehicle_plate_number', {
+          header: t('expenses.table.vehicle'),
+          cell: ({ getValue }) => getValue() ?? t('common.na'),
+          meta: { cellClassName: 'text-muted-foreground' },
+        }),
+        columnHelper.accessor('category', {
+          header: t('expenses.table.category'),
+          cell: ({ getValue }) => t(`expenses.category.${getValue()}`),
+          meta: { cellClassName: 'text-xs' },
+        }),
+        columnHelper.accessor('expense_date', {
+          header: t('expenses.table.date'),
+          cell: ({ getValue }) => formatDate(getValue()),
+          meta: { cellClassName: 'text-muted-foreground tabular-nums' },
+        }),
+        columnHelper.accessor('amount', {
+          header: t('expenses.table.amount'),
+          cell: ({ getValue }) => formatMoney(getValue()),
+          meta: {
+            align: 'right',
+            cellClassName: 'whitespace-nowrap tabular-nums font-mono',
+          },
+        }),
+        columnHelper.accessor('paid_amount', {
+          header: t('expenses.table.paid'),
+          cell: ({ getValue }) => formatMoney(getValue()),
+          meta: {
+            align: 'right',
+            cellClassName: 'whitespace-nowrap tabular-nums font-mono',
+          },
+        }),
+        columnHelper.accessor('remaining_amount', {
+          header: t('expenses.table.remaining'),
+          cell: ({ getValue }) => formatMoney(getValue()),
+          meta: {
+            align: 'right',
+            cellClassName: 'whitespace-nowrap tabular-nums font-mono',
+          },
+        }),
+        columnHelper.accessor('status', {
+          header: t('expenses.table.status'),
+          cell: ({ getValue }) => (
+            <Badge variant={statusVariant(getValue())}>
+              {t(statusLabelKey(getValue()))}
+            </Badge>
+          ),
+          meta: { align: 'center' },
+        }),
+        ...(canManageFinance
+          ? [
+              columnHelper.display({
+                id: 'payment-action',
+                header: t('expenses.payments.title'),
+                cell: ({ row }) =>
+                  row.original.status === 'partially_paid' ? (
+                    <PayRemainingLink expense={row.original} />
+                  ) : null,
+                meta: { align: 'center' },
+              }),
+            ]
+          : []),
+      ]),
+    [t, canManageFinance, currentPage, pageSize],
+  );
 
   const openExpense = (expense: Expense, element: HTMLElement | null) =>
     navigate(
@@ -232,7 +248,15 @@ export const ExpensesTable = ({
       `expense-${expense.id}`,
     );
 
-  const emptyState = (
+  // A filtered-to-nothing list must not tell the user to create their first
+  // expense while the footer still reads "1–10 / 400".
+  const emptyState = isFiltered ? (
+    <EmptyState
+      icon={Wallet}
+      title={t('expenses.empty_filtered')}
+      description={t('expenses.empty_filtered_desc')}
+    />
+  ) : (
     <EmptyState
       icon={Wallet}
       title={t('expenses.empty')}

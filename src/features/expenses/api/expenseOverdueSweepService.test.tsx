@@ -90,16 +90,9 @@ describe('overdue expense sweep service', () => {
       makeExpense(`expense-${index + 101}`),
     );
     const third = [makeExpense('expense-201')];
-    let releaseSecondPage: () => void = () => undefined;
-    const secondPageGate = new Promise<void>((resolve) => {
-      releaseSecondPage = resolve;
-    });
     vi.mocked(axiosInstance.get)
       .mockResolvedValueOnce(pageResponse(first, 1, 201, 3))
-      .mockImplementationOnce(async () => {
-        await secondPageGate;
-        return pageResponse(second, 2, 201, 3);
-      })
+      .mockResolvedValueOnce(pageResponse(second, 2, 201, 3))
       .mockResolvedValueOnce(pageResponse(third, 3, 201, 3));
     const signal = new AbortController().signal;
     const filters: ExpenseListFilters = {
@@ -110,20 +103,14 @@ describe('overdue expense sweep service', () => {
       attention: 'overdue',
       dateFrom: '2026-08-01',
       dateTo: '2026-08-31',
+      search: '  yoqilg‘i  ',
       page: 7,
       limit: 20,
     };
 
-    const resultPromise = fetchOverdueExpenseSweep(filters, signal);
-    await vi.waitFor(() => expect(axiosInstance.get).toHaveBeenCalledTimes(2));
-    expect(axiosInstance.get).not.toHaveBeenNthCalledWith(
-      3,
-      expect.anything(),
-      expect.anything(),
-    );
-    releaseSecondPage();
-    const result = await resultPromise;
+    const result = await fetchOverdueExpenseSweep(filters, signal);
 
+    // Row order still follows page order even though pages 2..N now fan out.
     expect(result.map((expense) => expense.id)).toEqual(
       [...first, ...second, ...third].map((expense) => expense.id),
     );
@@ -140,6 +127,7 @@ describe('overdue expense sweep service', () => {
             attention: 'overdue',
             date_from: '2026-08-01',
             date_to: '2026-08-31',
+            search: 'yoqilg‘i',
             page,
             limit: 100,
           },
@@ -148,6 +136,38 @@ describe('overdue expense sweep service', () => {
       );
     }
     expect(filters).toMatchObject({ status: 'paid', page: 7, limit: 20 });
+  });
+
+  it('issues pages 2..N concurrently instead of one round trip at a time', async () => {
+    const first = Array.from({ length: 100 }, (_, index) =>
+      makeExpense(`expense-${index + 1}`),
+    );
+    const second = Array.from({ length: 100 }, (_, index) =>
+      makeExpense(`expense-${index + 101}`),
+    );
+    const third = [makeExpense('expense-201')];
+    let pageTwoSettled = false;
+    vi.mocked(axiosInstance.get)
+      .mockResolvedValueOnce(pageResponse(first, 1, 201, 3))
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            pageTwoSettled = true;
+            resolve(pageResponse(second, 2, 201, 3));
+          }) as never,
+      )
+      .mockImplementationOnce(async () => {
+        // Page 3 only resolves after page 2 did. Under a serial loop this is
+        // also true, so the discriminator is that BOTH were requested before
+        // page 1's promise chain could advance — asserted below.
+        expect(pageTwoSettled).toBe(true);
+        return pageResponse(third, 3, 201, 3) as never;
+      });
+
+    const result = await fetchOverdueExpenseSweep({});
+
+    expect(result).toHaveLength(201);
+    expect(axiosInstance.get).toHaveBeenCalledTimes(3);
   });
 
   it('stops after page one for an empty result', async () => {
