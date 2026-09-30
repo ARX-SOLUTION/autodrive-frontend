@@ -47,9 +47,16 @@ vi.mock('@/features/branches/api/branchService', () => ({
   useBranches: () => ({ data: [{ id: 'b1', name: 'Yunusobod' }] }),
 }));
 
+vi.mock('@/features/staff/api/teacherService', () => ({
+  useTeachers: () => ({
+    data: [{ id: 't1', name: 'Alisher Qodirov', branch_id: 'b1' }],
+  }),
+}));
+
 const access = vi.hoisted(() => ({ canManage: false }));
 vi.mock('@/hooks/useCan', () => ({
   useCan: (cap: string) => cap === 'manageVehicles' && access.canManage,
+  useIsCrossTenant: () => false,
 }));
 
 afterEach(() => {

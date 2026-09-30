@@ -10,6 +10,7 @@ import {
   useUpdateVehicle,
 } from '@/features/vehicles/api/vehicleService';
 import { extractErrorMessage } from '@/lib/errors';
+import { useTeachers } from '@/features/staff/api/teacherService';
 import type { Branch } from '@/features/branches/types';
 import { VEHICLE_CATEGORIES, type Vehicle } from '@/features/vehicles/types';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,7 @@ const schema = (required: string) =>
       ),
     categories: z.array(z.enum(VEHICLE_CATEGORIES)).min(1, required),
     status: z.enum(['active', 'out_of_service', 'retired']),
+    currentCustodianId: z.string().optional(),
   });
 
 type Values = z.infer<ReturnType<typeof schema>>;
@@ -86,6 +88,8 @@ const VehicleFormDialog = ({
   const canViewAllBranches = useCan('viewAllBranches');
   const create = useCreateVehicle();
   const update = useUpdateVehicle();
+  const { data: teachers = [] } = useTeachers();
+
   const form = useForm<Values>({
     resolver: zodResolver(schema(t('common.required'))),
     defaultValues: {
@@ -98,8 +102,15 @@ const VehicleFormDialog = ({
       odometerKm: '',
       categories: [],
       status: 'active',
+      currentCustodianId: '',
     },
   });
+
+  const selectedBranchId =
+    form.watch('branchId') || vehicle?.branch_id || defaultBranchId;
+  const branchTeachers = teachers.filter(
+    (tc) => !selectedBranchId || tc.branch_id === selectedBranchId,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -115,6 +126,10 @@ const VehicleFormDialog = ({
             odometerKm: String(vehicle.odometer_km),
             categories: vehicle.categories,
             status: vehicle.status,
+            currentCustodianId:
+              vehicle.current_custodian?.id ??
+              vehicle.current_custodian_id ??
+              '',
           }
         : {
             branchId: defaultBranchId ?? '',
@@ -126,6 +141,7 @@ const VehicleFormDialog = ({
             odometerKm: '',
             categories: [],
             status: 'active',
+            currentCustodianId: '',
           },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -147,6 +163,7 @@ const VehicleFormDialog = ({
       categories: values.categories,
       odometer_km:
         values.odometerKm === '' ? undefined : Number(values.odometerKm),
+      current_custodian_id: values.currentCustodianId || null,
     };
     const handlers = {
       onSuccess: () => {
@@ -298,6 +315,40 @@ const VehicleFormDialog = ({
                           inputMode="numeric"
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="currentCustodianId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('vehicles.current_custodian')}</FormLabel>
+                      <Select
+                        value={field.value || 'unassigned'}
+                        onValueChange={(val) =>
+                          field.onChange(val === 'unassigned' ? '' : val)
+                        }
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={t('vehicles.select_custodian')}
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="unassigned">
+                            {t('vehicles.no_custodian')}
+                          </SelectItem>
+                          {branchTeachers.map((tc) => (
+                            <SelectItem key={tc.id} value={tc.id}>
+                              {tc.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

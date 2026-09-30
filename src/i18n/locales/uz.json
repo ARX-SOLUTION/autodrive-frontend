@@ -642,7 +642,9 @@
       "age_limit_other": "Toifa uchun yosh chegarasi oshgan"
     },
     "current_custodian": "Mas'ul shaxs (Kustodian)",
-    "no_custodian": "Biriktirilmagan (Akt orqali topshiriladi)",
+    "no_custodian": "Biriktirilmagan",
+    "select_custodian": "Mas'ul instruktorni tanlang",
+    "assign_custodian": "Instruktor biriktirish",
     "sessions": "Haydash seanslari va jadval",
     "no_sessions": "Bu avtomobilga hali haydash mashg'ulotlari biriktirilmagan",
     "active_now": "Hozir amalda",

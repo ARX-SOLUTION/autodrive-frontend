@@ -2,7 +2,7 @@ import { useState } from 'react';
 import FuelTypes from '../fuel/FuelTypes';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { Car, User, Warning } from '@phosphor-icons/react';
+import { Car, GasPump, User, Warning } from '@phosphor-icons/react';
 import { useVehicle } from '@/features/vehicles/api/vehicleService';
 import { useBranches } from '@/features/branches/api/branchService';
 import { useCan } from '@/hooks/useCan';
@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import VehicleFormDialog from '@/features/vehicles/components/VehicleFormDialog';
 import VehicleOperations from '@/features/vehicles/components/VehicleOperations';
 import VehicleSessionsTab from '@/features/vehicles/components/VehicleSessionsTab';
+import FuelCreateDialog from '@/features/vehicles/fuel/FuelCreateDialog';
 
 const VehicleDetailPage = () => {
   const { id } = useParams({ strict: false });
@@ -30,6 +31,7 @@ const VehicleDetailPage = () => {
   const user = useAuthStore((state) => state.user);
   const { data: branches = [] } = useBranches(canViewAllBranches);
   const [editOpen, setEditOpen] = useState(false);
+  const [fuelOpen, setFuelOpen] = useState(false);
   const { data: vehicle, isLoading, isError, refetch } = useVehicle(id ?? '');
   const branchName = (branchId: string) =>
     branches.find((branch) => branch.id === branchId)?.name ??
@@ -86,11 +88,25 @@ const VehicleDetailPage = () => {
                 )}
               </div>
             </div>
-            {canManage && (
-              <Button variant="outline" onClick={() => setEditOpen(true)}>
-                {t('common.edit')}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFuelOpen(true)}
+              >
+                <GasPump className="mr-1.5 h-4 w-4 text-primary" />
+                {t('fuel.create')}
               </Button>
-            )}
+              {canManage && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditOpen(true)}
+                >
+                  {t('common.edit')}
+                </Button>
+              )}
+            </div>
           </div>
           <p
             className={
@@ -286,6 +302,13 @@ const VehicleDetailPage = () => {
           vehicle={vehicle}
           branches={branches}
           onClose={() => setEditOpen(false)}
+        />
+      )}
+      {fuelOpen && (
+        <FuelCreateDialog
+          open={fuelOpen}
+          onOpenChange={setFuelOpen}
+          initialVehicleId={vehicle.id}
         />
       )}
     </EntityDetailShell>

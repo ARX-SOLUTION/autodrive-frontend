@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import type { AxiosError } from 'axios';
+import { useAuthStore } from '@/store/authStore';
 import { extractErrorMessage } from '@/lib/errors';
 import {
   decodeReceipt,
@@ -50,16 +51,19 @@ interface FuelCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (id: string) => void;
+  initialVehicleId?: string;
 }
 
 export default function FuelCreateDialog({
   open,
   onOpenChange,
   onSuccess,
+  initialVehicleId,
 }: FuelCreateDialogProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const currentUser = useAuthStore((s) => s.user);
 
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
@@ -79,7 +83,7 @@ export default function FuelCreateDialog({
   const [lookupData, setLookupData] = useState<Lookup | null>(null);
   const [qrErrorDetail, setQrErrorDetail] = useState<string | null>(null);
 
-  const [vehicleId, setVehicleId] = useState('');
+  const [vehicleId, setVehicleId] = useState(initialVehicleId ?? '');
   const [stationId, setStationId] = useState('');
   const [odometerKm, setOdometerKm] = useState('');
   const [fundingSource, setFundingSource] = useState<
@@ -101,6 +105,26 @@ export default function FuelCreateDialog({
 
   const vehiclesQuery = useFuelVehicles({ limit: 100 });
   const stationsQuery = useStations({ limit: 100, active: true });
+
+  useEffect(() => {
+    if (open && initialVehicleId) {
+      setVehicleId(initialVehicleId);
+    }
+  }, [open, initialVehicleId]);
+
+  useEffect(() => {
+    if (!open || vehicleId || initialVehicleId || !vehiclesQuery.data?.data)
+      return;
+    if (currentUser?.role === 'teacher') {
+      const myVehicle = vehiclesQuery.data.data.find(
+        (v) => v.current_custodian_id === currentUser.id,
+      );
+      if (myVehicle) {
+        setVehicleId(myVehicle.id);
+      }
+    }
+  }, [open, vehicleId, initialVehicleId, vehiclesQuery.data, currentUser]);
+
   const selectedVehicleId =
     vehicleId ||
     (vehiclesQuery.data?.data.length === 1

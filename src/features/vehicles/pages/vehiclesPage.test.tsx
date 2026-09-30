@@ -40,7 +40,10 @@ vi.mock('@/features/branches/api/branchService', () => ({
   useBranches: () => ({ data: [{ id: 'b1', name: 'Yunusobod' }] }),
 }));
 
-vi.mock('@/hooks/useCan', () => ({ useCan: () => false }));
+vi.mock('@/hooks/useCan', () => ({
+  useCan: () => false,
+  useIsCrossTenant: () => false,
+}));
 
 afterEach(() => {
   cleanup();

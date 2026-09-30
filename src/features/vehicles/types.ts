@@ -89,6 +89,7 @@ export interface CreateVehicleRequest {
   manufacture_year: number;
   categories: VehicleCategory[];
   odometer_km?: number;
+  current_custodian_id?: string | null;
 }
 
 export type UpdateVehicleRequest = Partial<CreateVehicleRequest> & {

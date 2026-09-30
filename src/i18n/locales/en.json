@@ -642,7 +642,9 @@
       "age_limit_other": "Vehicle exceeds the age limit for this category"
     },
     "current_custodian": "Current Custodian",
-    "no_custodian": "Not assigned (transferred via inspection act)",
+    "no_custodian": "Unassigned",
+    "select_custodian": "Select responsible instructor",
+    "assign_custodian": "Assign instructor",
     "sessions": "Driving Sessions & Schedule",
     "no_sessions": "No driving sessions scheduled for this vehicle yet",
     "active_now": "Active now",
