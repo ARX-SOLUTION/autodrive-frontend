@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { MagnifyingGlass, X } from '@phosphor-icons/react';
@@ -26,6 +25,7 @@ import { AttendanceStatus } from '@/features/attendance/types';
 import { statusTone } from '@/lib/attendanceStatus';
 import { extractErrorMessage } from '@/lib/errors';
 import { cn } from '@/lib/utils';
+import { formatTashkentDateTime } from '@/lib/calendarDateTime';
 
 interface RosterRow {
   studentId: string;
@@ -69,7 +69,7 @@ const initials = (name: string) =>
 // single roster, so those mock sections land here instead. Same
 // state/mutation wiring throughout.
 const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: detail, isLoading: detailLoading } = useLessonById({
     id: lesson?.id || '',
   });
@@ -196,7 +196,7 @@ const AttendanceDrawer = ({ lesson, onClose }: AttendanceDrawerProps) => {
             {lesson?.group_name}
           </SheetTitle>
           <SheetDescription className="font-mono text-xs text-muted-foreground">
-            {lesson && format(new Date(lesson.date), 'EEEE, dd.MM · HH:mm')}
+            {lesson && formatTashkentDateTime(lesson.date, i18n.language)}
             {lesson?.teacher_name ? ` · ${lesson.teacher_name}` : ''}
           </SheetDescription>
         </SheetHeader>

@@ -11,6 +11,7 @@ import {
   Gear,
 } from '@phosphor-icons/react';
 import { useUrlParams } from '@/hooks/useUrlParams';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useAuthStore } from '@/store/authStore';
 import {
   useLeadBoardQuery,
@@ -116,19 +117,24 @@ export const LeadsPage = () => {
     setSearchParams(currentView ? { view: currentView } : {});
   };
 
+  const debouncedSearch = useDebounce(currentFilters.q, 300);
+  const queryFilters = { ...currentFilters, q: debouncedSearch };
+  const searchPending = currentFilters.q !== debouncedSearch;
+
   // Queries for Board and List
   const { isLoading: stagesLoading } = useLeadStagesQuery();
-  const { data: board = [], isLoading: boardLoading } = useLeadBoardQuery(
-    currentFilters,
-    { enabled: viewMode === 'board' },
-  );
+  const {
+    data: board = [],
+    isLoading: boardLoading,
+    isFetching: boardFetching,
+  } = useLeadBoardQuery(queryFilters, { enabled: viewMode === 'board' });
   const {
     data: listData,
     isLoading: listLoading,
     isFetching: listFetching,
     isError: listError,
     refetch: refetchList,
-  } = useLeadsQuery(currentFilters, { enabled: viewMode === 'list' });
+  } = useLeadsQuery(queryFilters, { enabled: viewMode === 'list' });
 
   return (
     <div className="flex h-full flex-col gap-4 p-4 md:p-6">
@@ -218,7 +224,16 @@ export const LeadsPage = () => {
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-hidden">
+      <div
+        className="flex-1 overflow-hidden"
+        aria-busy={
+          viewMode === 'board'
+            ? searchPending || boardFetching
+            : viewMode === 'list'
+              ? searchPending || listFetching
+              : undefined
+        }
+      >
         {viewMode === 'board' && (
           <div className="h-full">
             {stagesLoading || boardLoading ? (

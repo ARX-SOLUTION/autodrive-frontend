@@ -61,7 +61,7 @@ const copy: Record<LoginLang, LoginCopy> = {
       "Kompaniyangiz hali faollashtirilmagan. Administrator bilan bog'laning.",
     demo: "Demo emailni to'ldirish",
     demoHint: "Demo parolini kiriting, so'ng tizimga kiring",
-    demoSignIn: 'Demo sifatida kirish',
+    demoSignIn: 'Roʻyxatdan oʻtmasdan demoga kiring',
     demoSignInHint: "Namunaviy ma'lumotlar bilan demo markaz ochiladi",
     demoRetry: 'Demo kirishni qayta urinish',
     demoAutoError:
@@ -94,7 +94,7 @@ const copy: Record<LoginLang, LoginCopy> = {
       'Ваша компания ещё не активирована. Свяжитесь с администратором.',
     demo: 'Подставить демо-email',
     demoHint: 'Введите демо-пароль, затем войдите',
-    demoSignIn: 'Войти как демо',
+    demoSignIn: 'Попробовать демо без регистрации',
     demoSignInHint: 'Открывает демо-центр с примерными данными',
     demoRetry: 'Повторить демо-вход',
     demoAutoError:
@@ -127,7 +127,7 @@ const copy: Record<LoginLang, LoginCopy> = {
       'Your company is not activated yet. Contact your administrator.',
     demo: 'Fill demo email',
     demoHint: 'Enter the demo password, then sign in',
-    demoSignIn: 'Sign in as demo',
+    demoSignIn: 'Try the demo without signing up',
     demoSignInHint: 'Opens the demo center with sample data',
     demoRetry: 'Retry demo sign-in',
     demoAutoError:

@@ -420,6 +420,7 @@ const StudentDetailPage = () => {
         onClose={() => setPayOpen(false)}
         onSubmit={handlePayment}
         loading={createPayment.isPending}
+        students={[student]}
         lockedStudentId={student.id}
         lockedStudentName={fullName}
         lockedStudentDebt={student.debt}
@@ -431,6 +432,7 @@ const StudentDetailPage = () => {
         onClose={() => setEditPaymentTarget(null)}
         onSubmit={handleEditPayment}
         loading={updatePayment.isPending}
+        students={[student]}
         payment={editPaymentTarget}
         submitError={updatePayment.isError}
       />

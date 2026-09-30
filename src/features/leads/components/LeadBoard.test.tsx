@@ -4,6 +4,7 @@ import {
   fireEvent,
   waitFor,
   cleanup,
+  within,
 } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { LeadBoard } from './LeadBoard';
@@ -106,10 +107,42 @@ describe('LeadBoard', () => {
   it('renders all kanban columns with counts', () => {
     render(<LeadBoard columns={mockColumns} />);
 
-    expect(screen.getByText('Yangi lid')).toBeInTheDocument();
-    expect(screen.getByText('Aloqa qilindi')).toBeInTheDocument();
-    expect(screen.getByText('Yo‘qotildi')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Yangi lid' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Aloqa qilindi' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Yo‘qotildi' }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Ali/i)).toBeInTheDocument();
+  });
+
+  it('offers wrapping stage/count buttons that scroll the board and focus their column', () => {
+    render(<LeadBoard columns={mockColumns} />);
+    const navigation = screen.getByRole('navigation', { name: 'leads.stage' });
+    const board = screen.getByTestId('leads-kanban-board');
+    const column = screen.getByTestId('kanban-column-stage-lost');
+    const scrollTo = vi.fn();
+    board.scrollTo = scrollTo;
+    Object.defineProperty(column, 'offsetLeft', { value: 640 });
+
+    const jump = within(navigation).getByRole('button', {
+      name: 'Yo‘qotildi 0',
+    });
+    expect(navigation).toHaveClass('flex-wrap');
+    expect(jump).toHaveAttribute('aria-controls', column.id);
+    fireEvent.click(jump);
+
+    expect(scrollTo).toHaveBeenCalledWith({ left: 640, behavior: 'smooth' });
+    expect(document.activeElement).toBe(column);
+    const media = vi
+      .spyOn(window, 'matchMedia')
+      .mockReturnValue({ matches: true } as MediaQueryList);
+    fireEvent.click(jump);
+    expect(scrollTo).toHaveBeenLastCalledWith({ left: 640, behavior: 'auto' });
+    media.mockRestore();
   });
 
   it('calls onAddLeadClick when clicking plus button on NEW stage', () => {

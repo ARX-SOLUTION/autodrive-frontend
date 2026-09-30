@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useIsCrossTenant } from '@/hooks/useCan';
 import {
   Lesson,
+  LessonSummary,
   CreateLessonPayload,
   UpdateLessonPayload,
   BatchAttendancePayload,
@@ -29,17 +30,18 @@ export interface LessonsPageParams {
   branchId?: string;
   page: number;
   limit: number;
+  search?: string;
 }
 
 export const fetchLessonsPage = async (
-  { page, limit }: LessonsPageParams,
+  { page, limit, search }: LessonsPageParams,
   signal?: AbortSignal,
 ): Promise<PaginatedLessons> => {
   const { data: res } = await axiosInstance.get<unknown>('/lessons', {
-    params: { page, limit } satisfies LessonsQuery,
+    params: { page, limit, search } satisfies LessonsQuery,
     signal,
   });
-  const { data } = parseListResponse<Lesson>(res, page, limit);
+  const { data } = parseListResponse<LessonSummary>(res, page, limit);
   // Backend LessonListResponse is flat ({data,total,page,limit}), not nested
   // under meta. Preserve the real cross-page total when it is present.
   const total =
@@ -57,12 +59,12 @@ export const lessonsPageQueryOptions = (
     enabled,
   });
 
-export const useLessons = (page = 1, limit = 50) => {
+export const useLessons = (page = 1, limit = 50, search?: string) => {
   const branchId = useAuthStore((s) => s.user?.branch_id ?? undefined);
   const isCrossTenant = useIsCrossTenant();
   return useQuery(
     lessonsPageQueryOptions(
-      { branchId, page, limit },
+      { branchId, page, limit, search: search?.trim() || undefined },
       !!branchId || isCrossTenant,
     ),
   );
@@ -179,25 +181,20 @@ export const useBatchAttendance = () => {
       qc.setQueriesData<Lesson | PaginatedLessons>(
         { queryKey: lessonKeys.all },
         (cached) => {
-          if (!cached) return cached;
-
-          const updateLesson = (lesson: Lesson): Lesson => {
-            if (lesson.id !== variables.lessonId) return lesson;
-            return {
-              ...lesson,
-              attendance: lesson.attendance.map((record) => {
-                const status = statuses.get(record.student_id);
-                return status && status !== record.status
-                  ? { ...record, status }
-                  : record;
-              }),
-            };
-          };
-
-          if ('data' in cached) {
-            return { ...cached, data: cached.data.map(updateLesson) };
+          // A list summary cannot infer count changes from a partial batch.
+          // It refreshes on settlement; only full detail rosters update here.
+          if (!cached || 'data' in cached || cached.id !== variables.lessonId) {
+            return cached;
           }
-          return updateLesson(cached);
+          return {
+            ...cached,
+            attendance: cached.attendance.map((record) => {
+              const status = statuses.get(record.student_id);
+              return status && status !== record.status
+                ? { ...record, status }
+                : record;
+            }),
+          };
         },
       );
 

@@ -258,10 +258,13 @@ describe('PaymentModal edit mode', () => {
 
     expect(screen.getByText('payments.edit_payment')).toBeInTheDocument();
     expect(screen.getByText('Aziz Karimov')).toBeInTheDocument();
+    expect(screen.getByText(PAYMENT.branch_name)).toBeInTheDocument();
     expect((screen.getByPlaceholderText('0') as HTMLInputElement).value).toBe(
       '500 000',
     );
-    expect(screen.getAllByText('Card').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('payments.method.karta').length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getByText('common.save')).toBeInTheDocument();
   });
 

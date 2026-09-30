@@ -30,6 +30,11 @@ export interface Lesson {
   attendance: AttendanceRecord[];
 }
 
+export type LessonSummary = Omit<Lesson, 'attendance'> & {
+  present_count: number;
+  total_count: number;
+};
+
 export type CreateLessonPayload = CreateLessonRequest;
 
 // SLICE B (autodrive-vh0.4): mirrors the backend's UpdateLessonDto
@@ -40,7 +45,7 @@ export type UpdateLessonPayload = UpdateLessonRequest;
 export type BatchAttendancePayload = BatchAttendanceRequest;
 
 export interface PaginatedLessons {
-  data: Lesson[];
+  data: LessonSummary[];
   total: number;
   page: number;
   limit: number;

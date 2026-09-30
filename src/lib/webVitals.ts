@@ -8,7 +8,10 @@ const report = (metric: Metric): void => {
     console.log(`[web-vitals] ${metric.name}`, metric.value.toFixed(2), metric);
   }
   track(`web_vitals_${metric.name.toLowerCase()}`, {
-    value: Math.round(metric.value),
+    value:
+      metric.name === 'CLS'
+        ? Number(metric.value.toFixed(3))
+        : Math.round(metric.value),
     rating: metric.rating,
   });
 };

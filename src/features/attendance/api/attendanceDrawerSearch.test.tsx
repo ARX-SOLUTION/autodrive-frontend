@@ -54,6 +54,29 @@ afterEach(() => {
 });
 
 describe('AttendanceDrawer search & layout', () => {
+  it('formats the lesson header in Uzbek with the Tashkent local time', () => {
+    render(<AttendanceDrawer lesson={lesson} onClose={vi.fn()} />);
+    expect(screen.getByText('10.07.2026 14:00')).toBeInTheDocument();
+  });
+
+  it('lets an excused mark be selected and saved with the full roster flow', async () => {
+    render(<AttendanceDrawer lesson={lesson} onClose={vi.fn()} />);
+
+    const excused = screen.getByRole('button', {
+      name: 'attendance.status_excused - Karimov Islom',
+    });
+    fireEvent.click(excused);
+    expect(excused).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'attendance.save' }));
+
+    await vi.waitFor(() =>
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        lessonId: 'l1',
+        records: [{ lessonId: 'l1', studentId: 's1', status: 'excused' }],
+      }),
+    );
+  });
+
   it('renders student name with wrapping classes and accessible search input', () => {
     render(<AttendanceDrawer lesson={lesson} onClose={vi.fn()} />);
 

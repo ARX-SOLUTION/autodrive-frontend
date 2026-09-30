@@ -235,7 +235,7 @@ const GroupDetailPage = () => {
                   className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm"
                 >
                   <span className="font-medium">
-                    {DAY_LABELS[entry.day_of_week]}
+                    {t(DAY_LABELS[entry.day_of_week])}
                   </span>
                   <span>
                     {entry.start_time}—{entry.end_time}

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { addDays, startOfWeek, format, parseISO, isSameDay } from 'date-fns';
+import { addDays, startOfWeek, format, isSameDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -59,12 +59,14 @@ import { useCan } from '@/hooks/useCan';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { extractErrorMessage } from '@/lib/errors';
 import { cn } from '@/lib/utils';
+import { parseCalendarDate } from '@/lib/calendarDate';
+import { isoToParts, nowTashkentParts } from '@/lib/calendarDateTime';
 import AttendanceDrawer from '@/features/attendance/api/AttendanceDrawer';
 import { PageHeader } from '@/components/layout/PageHeader';
 
 const formatTime = (iso: string) => {
   try {
-    return format(new Date(iso), 'HH:mm');
+    return isoToParts(iso).time;
   } catch {
     return iso;
   }
@@ -169,7 +171,7 @@ const SchedulePage = () => {
     ['calendar', 'templates'] as const,
     'calendar',
   );
-  const today = new Date();
+  const today = parseCalendarDate(nowTashkentParts().date)!;
 
   const lessonTypeLabel: Record<LessonType, string> = {
     theory: t('schedule.type_theory'),
@@ -180,19 +182,8 @@ const SchedulePage = () => {
   );
 
   const weekEnd = addDays(weekStart, 6);
-  const dateFrom = weekStart.toISOString();
-  const dateTo = weekEnd.toISOString();
-
-  const { data: templates, isLoading: templatesLoading } =
-    useScheduleTemplates();
-  const { data: lessons, isLoading: lessonsLoading } = useCalendarLessons(
-    dateFrom,
-    dateTo,
-  );
-  const { data: groups } = useGroups();
-  const createTemplate = useCreateTemplate();
-  const deleteTemplate = useDeleteTemplate();
-  const generateLessons = useGenerateLessons();
+  const dateFrom = format(weekStart, 'yyyy-MM-dd');
+  const dateTo = format(weekEnd, 'yyyy-MM-dd');
 
   const canEdit = useCan('manageSchedule');
 
@@ -203,6 +194,23 @@ const SchedulePage = () => {
   const [selectedLesson, setSelectedLesson] = useState<CalendarLesson | null>(
     null,
   );
+
+  const { data: templates, isLoading: templatesLoading } = useScheduleTemplates(
+    tab === 'templates',
+  );
+  const {
+    data: lessons,
+    isLoading: lessonsLoading,
+    isError: lessonsError,
+    refetch: refetchLessons,
+  } = useCalendarLessons(dateFrom, dateTo, tab === 'calendar');
+  const { data: groups } = useGroups(
+    {},
+    canEdit && (createOpen || generateOpen),
+  );
+  const createTemplate = useCreateTemplate();
+  const deleteTemplate = useDeleteTemplate();
+  const generateLessons = useGenerateLessons();
 
   // Create template form
   const templateForm = useForm<TemplateFormValues>({
@@ -236,7 +244,7 @@ const SchedulePage = () => {
         key,
         (lessons || []).filter((l) => {
           try {
-            return isSameDay(parseISO(l.date), day);
+            return isoToParts(l.date).date === key;
           } catch {
             return false;
           }
@@ -402,6 +410,21 @@ const SchedulePage = () => {
                 <Skeleton key={i} className="h-32 w-full" />
               ))}
             </div>
+          ) : lessonsError ? (
+            <EmptyState
+              title={t('common.error')}
+              action={{
+                label: t('common.retry'),
+                onClick: () => void refetchLessons(),
+              }}
+            />
+          ) : !lessons?.length ? (
+            <EmptyState
+              icon={Calendar}
+              title={t('schedule.week_empty')}
+              description={t('schedule.week_empty_desc')}
+              action={{ label: t('schedule.next_week'), onClick: nextWeek }}
+            />
           ) : (
             <div className="overflow-x-auto rounded-xl border border-border bg-card p-[18px]">
               <div className="grid min-w-[840px] grid-cols-7 gap-3">
@@ -419,7 +442,7 @@ const SchedulePage = () => {
                             : 'border-hair text-muted-foreground',
                         )}
                       >
-                        {format(day, 'EEE')}{' '}
+                        {t(DAY_LABELS[day.getDay() || 7])}{' '}
                         <span
                           className={cn(
                             'num font-mono',
@@ -480,7 +503,7 @@ const SchedulePage = () => {
                   >
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="font-medium text-sm">
-                        {DAY_LABELS[tpl.day_of_week]}
+                        {t(DAY_LABELS[tpl.day_of_week])}
                       </span>
                       <span className="text-sm text-foreground">
                         {tpl.start_time}—{tpl.end_time}
@@ -583,7 +606,7 @@ const SchedulePage = () => {
                       <SelectContent>
                         {Object.entries(DAY_LABELS).map(([key, label]) => (
                           <SelectItem key={key} value={key}>
-                            {label}
+                            {t(label)}
                           </SelectItem>
                         ))}
                       </SelectContent>

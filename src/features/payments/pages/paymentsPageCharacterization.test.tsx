@@ -1,21 +1,28 @@
 import { parseCalendarDate } from '@/lib/calendarDate';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, screen, fireEvent, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import PaymentsPage from '@/features/payments/pages/PaymentsPage';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 import type { Payment } from '@/features/payments/types';
+import type { CreatePaymentPayload } from '@/features/payments/api/PaymentModal';
 
 // Characterization tests for PaymentsPage (autodrive decomposition work):
 // they capture the page's CURRENT observable behavior and must pass both
 // before and after extracting subcomponents into src/features/payments/components/.
 
-const { authState, usePaymentsPageMock } = vi.hoisted(() => {
-  const authState: {
-    user: { role: string; branch_id: string | null } | null;
-  } = { user: { role: 'owner', branch_id: null } };
-  return { authState, usePaymentsPageMock: vi.fn() };
-});
+const { authState, usePaymentsPageMock, createPaymentMutate } = vi.hoisted(
+  () => {
+    const authState: {
+      user: { role: string; branch_id: string | null } | null;
+    } = { user: { role: 'owner', branch_id: null } };
+    return {
+      authState,
+      usePaymentsPageMock: vi.fn(),
+      createPaymentMutate: vi.fn(),
+    };
+  },
+);
 
 vi.mock('@/store/authStore', () => {
   const useAuthStore = (selector: (s: typeof authState) => unknown) =>
@@ -43,7 +50,7 @@ vi.mock('@/features/payments/api/paymentService', async (importOriginal) => {
       isLoading: false,
     }),
     usePaymentSummary: () => ({ data: undefined }),
-    useCreatePayment: () => ({ mutate: vi.fn(), isPending: false }),
+    useCreatePayment: () => ({ mutate: createPaymentMutate, isPending: false }),
     // PaymentsTable (autodrive-9e4.4) now calls these for its own row
     // actions -- without a mock they'd hit the real useMutation/
     // useQueryClient with no QueryClientProvider in this test tree.
@@ -60,7 +67,32 @@ vi.mock('@/features/branches/api/branchService', () => ({
 }));
 
 vi.mock('@/features/payments/api/PaymentModal', () => ({
-  default: () => null,
+  default: ({
+    open,
+    onClose,
+    onSubmit,
+  }: {
+    open: boolean;
+    onClose: () => void;
+    onSubmit: (data: CreatePaymentPayload) => void;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="payments.add_payment">
+        <button onClick={onClose}>common.cancel</button>
+        <button
+          onClick={() =>
+            onSubmit({
+              student_id: 's1',
+              amount: 100000,
+              payment_method: 'naqd',
+              idempotency_key: 'payment-attempt',
+            })
+          }
+        >
+          common.save
+        </button>
+      </div>
+    ) : null,
 }));
 
 const payment = (over: Partial<Payment> = {}): Payment => ({
@@ -96,6 +128,7 @@ const renderPage = (url = '/payments') =>
 
 beforeEach(() => {
   authState.user = { role: 'owner', branch_id: null };
+  createPaymentMutate.mockReset();
   usePaymentsPageMock.mockReset();
   usePaymentsPageMock.mockReturnValue(
     pageOf([
@@ -112,6 +145,64 @@ beforeEach(() => {
 });
 
 describe('PaymentsPage characterization', () => {
+  it('opens the create action and clears only that action after confirmed close', async () => {
+    const { router } = await renderPage(
+      '/payments?action=create&branch_id=b1&course_type=tezkor&q=aziz',
+    );
+
+    expect(
+      screen.getByRole('dialog', { name: 'payments.add_payment' }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+
+    await waitFor(() => {
+      const search = new URLSearchParams(router.state.location.searchStr);
+      expect(search.has('action')).toBe(false);
+      expect(search.get('branch_id')).toBe('b1');
+      expect(search.get('course_type')).toBe('tezkor');
+      expect(search.get('q')).toBe('aziz');
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
+  it('clears the create action only after the server confirms a payment', async () => {
+    const { router } = await renderPage('/payments?action=create&branch_id=b1');
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+
+    expect(createPaymentMutate).toHaveBeenCalledOnce();
+    expect(
+      new URLSearchParams(router.state.location.searchStr).get('action'),
+    ).toBe('create');
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    act(() => createPaymentMutate.mock.calls[0][1].onSuccess());
+    await waitFor(() => {
+      const search = new URLSearchParams(router.state.location.searchStr);
+      expect(search.has('action')).toBe(false);
+      expect(search.get('branch_id')).toBe('b1');
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
+  it('reacts to a create action when already on the payments page', async () => {
+    const { router } = await renderPage();
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    await act(async () => {
+      await router.navigate({ href: '/payments?action=create' });
+    });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it.each(['teacher', 'accountant'])(
+    'does not open a create action for %s',
+    async (role) => {
+      authState.user = { role, branch_id: 'b1' };
+      await renderPage('/payments?action=create');
+      expect(screen.queryByRole('dialog')).toBeNull();
+    },
+  );
+
   it('keeps pagination outside the payments table card', async () => {
     usePaymentsPageMock.mockReturnValue(pageOf([payment()], 2));
     await renderPage();

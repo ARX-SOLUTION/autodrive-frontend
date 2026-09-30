@@ -1,9 +1,14 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getDemoLoginPassword,
   isDemoCompanyUser,
   isOneClickDemoLoginEnabled,
 } from './demoSession';
+
+beforeEach(() => {
+  vi.stubEnv('VITE_ENABLE_DEMO_LOGIN', 'false');
+  vi.stubEnv('VITE_DEMO_PASSWORD', '');
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();

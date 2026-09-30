@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { useConfirmedClose } from '@/hooks/useConfirmedClose';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import {
   Camera,
   CheckCircle,
@@ -100,6 +102,7 @@ export default function FuelCreateDialog({
   // 4: Odometr (Odometer reading & attachment)
   // 5: Tasdiqlash full (Full review & confirmation)
   const [step, setStep] = useState<FuelFlowStep>(1);
+  const [hasProgressed, setHasProgressed] = useState(false);
 
   // Step 1: Vehicle
   const [vehicleId, setVehicleId] = useState(initialVehicleId ?? '');
@@ -428,6 +431,7 @@ export default function FuelCreateDialog({
       if (!vehicleId && selectedVehicleId) {
         setVehicleId(selectedVehicleId);
       }
+      setHasProgressed(true);
       setStep(2);
       return;
     }
@@ -579,24 +583,34 @@ export default function FuelCreateDialog({
     setQrStatus('idle');
     setLookupData(null);
     setQrErrorDetail(null);
-    setVehicleId('');
+    setVehicleId(initialVehicleId ?? '');
     setStationId('');
     setOdometerKm('');
     setFundingSource('school_card');
     setOccurredAt(localDate(new Date().toISOString()));
     setLines([blankLine()]);
     setStep(1);
+    setHasProgressed(false);
     setSubmitProgress(null);
     if (receiptInputRef.current) receiptInputRef.current.value = '';
     if (odometerInputRef.current) odometerInputRef.current.value = '';
   };
 
+  const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
+    useConfirmedClose(
+      Boolean(
+        hasProgressed ||
+        vehicleId !== (initialVehicleId ?? '') ||
+        receiptFile ||
+        manualQr ||
+        lookupData,
+      ),
+      closeAfterSave,
+    );
+
   const handleDialogOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) {
-      if (isSubmitting) return;
-      resetFlow();
-    }
-    onOpenChange(nextOpen);
+    if (nextOpen) onOpenChange(true);
+    else if (!isSubmitting) attemptClose();
   };
 
   const stepTitles: Record<FuelFlowStep, string> = {
@@ -1393,6 +1407,14 @@ export default function FuelCreateDialog({
           </div>
         </div>
       </DialogContent>
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={cancelDiscard}
+        onConfirm={confirmDiscard}
+        title={t('common.discard_changes_title')}
+        description={t('common.discard_changes_desc')}
+        confirmLabel={t('common.discard')}
+      />
     </Dialog>
   );
 }

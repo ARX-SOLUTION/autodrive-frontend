@@ -61,6 +61,8 @@ interface Student {
   first_name: string;
   last_name: string;
   phone?: string;
+  branch_name?: string;
+  group_name?: string;
   debt?: number;
 }
 
@@ -94,9 +96,9 @@ interface PaymentModalProps {
 }
 
 const paymentMethodLabels: Record<PaymentMethod, string> = {
-  naqd: 'Cash',
-  karta: 'Card',
-  perechisleniya: 'Transfer',
+  naqd: 'payments.method.naqd',
+  karta: 'payments.method.karta',
+  perechisleniya: 'payments.method.perechisleniya',
 };
 
 const paymentSchema = z.object({
@@ -148,7 +150,8 @@ const PaymentModal = ({
   // Lazy useState, not useRef(crypto.randomUUID()) — a useRef argument is
   // re-evaluated every render, and the bare call throws on a non-secure origin.
   const idempotencyKeyRef = useRef('');
-  const getIdempotencyKey = () => (idempotencyKeyRef.current ||= newRequestId());
+  const getIdempotencyKey = () =>
+    (idempotencyKeyRef.current ||= newRequestId());
   const submitLockedRef = useRef(false);
   const wasLoadingRef = useRef(false);
   const [submitLocked, setSubmitLocked] = useState(false);
@@ -196,14 +199,14 @@ const PaymentModal = ({
     payment,
   });
   if (
-    open &&
-    (pickerResetKey.open !== open ||
-      pickerResetKey.lockedStudentId !== lockedStudentId ||
-      pickerResetKey.payment !== payment)
+    pickerResetKey.open !== open ||
+    pickerResetKey.lockedStudentId !== lockedStudentId ||
+    pickerResetKey.payment !== payment
   ) {
     setPickerResetKey({ open, lockedStudentId, payment });
     setStudentSearch('');
     setSelectedStudentCache(undefined);
+    setStudentPopoverOpen(false);
   }
 
   // react-hooks/incompatible-library: form.watch() during render isn't
@@ -211,7 +214,11 @@ const PaymentModal = ({
   const studentId = useWatch({ control: form.control, name: 'student_id' });
   const studentOptions = studentPage?.data ?? students;
   const selectedStudent =
-    studentOptions.find((s) => s.id === studentId) ?? selectedStudentCache;
+    students.find((s) => s.id === studentId) ??
+    studentOptions.find((s) => s.id === studentId) ??
+    (selectedStudentCache?.id === studentId ? selectedStudentCache : undefined);
+  const selectedBranchName =
+    selectedStudent?.branch_name ?? payment?.branch_name;
 
   // Debt baseline for both the info card and the exceeds-debt confirm. Edit
   // mode reconstructs the pre-this-payment debt from the ledger row itself
@@ -320,9 +327,7 @@ const PaymentModal = ({
                         className="w-full justify-start bg-secondary border-border font-normal opacity-100"
                       >
                         {effectiveLockedName ??
-                          t('students.select_student', {
-                            defaultValue: 'Student',
-                          })}
+                          t('payments.validation.select_student')}
                       </Button>
                     ) : (
                       <Popover
@@ -341,9 +346,7 @@ const PaymentModal = ({
                             >
                               {selectedStudent
                                 ? `${selectedStudent.last_name} ${selectedStudent.first_name}`
-                                : t('students.select_student', {
-                                    defaultValue: 'Select a student',
-                                  })}
+                                : t('payments.validation.select_student')}
                               <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </FormControl>
@@ -441,6 +444,23 @@ const PaymentModal = ({
                 )}
               />
 
+              {(selectedStudent?.phone ||
+                selectedBranchName ||
+                selectedStudent?.group_name) && (
+                <div className="space-y-1 text-sm text-muted-foreground">
+                  {selectedStudent?.phone && (
+                    <p>{formatPhone(selectedStudent.phone)}</p>
+                  )}
+                  {(selectedBranchName || selectedStudent?.group_name) && (
+                    <p>
+                      {[selectedBranchName, selectedStudent?.group_name]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {effectiveDebt !== undefined && (
                 <div
                   className={cn(
@@ -515,7 +535,7 @@ const PaymentModal = ({
                       <SelectContent>
                         {Object.entries(paymentMethodLabels).map(([k, v]) => (
                           <SelectItem key={k} value={k}>
-                            {v}
+                            {t(v)}
                           </SelectItem>
                         ))}
                       </SelectContent>

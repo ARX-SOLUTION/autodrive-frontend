@@ -39,11 +39,11 @@ export interface GenerateResult {
 }
 
 export const DAY_LABELS: Record<number, string> = {
-  1: 'Dushanba',
-  2: 'Seshanba',
-  3: 'Chorshanba',
-  4: 'Payshanba',
-  5: 'Juma',
-  6: 'Shanba',
-  7: 'Yakshanba',
+  1: 'schedule.day_monday',
+  2: 'schedule.day_tuesday',
+  3: 'schedule.day_wednesday',
+  4: 'schedule.day_thursday',
+  5: 'schedule.day_friday',
+  6: 'schedule.day_saturday',
+  7: 'schedule.day_sunday',
 };

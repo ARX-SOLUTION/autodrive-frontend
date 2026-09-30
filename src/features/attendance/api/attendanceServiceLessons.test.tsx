@@ -39,6 +39,34 @@ describe('useLessons', () => {
     useAuthStore.getState().setAuth('token', user);
   });
 
+  it('sends search to the paginated API and separates filtered cache entries', async () => {
+    vi.mocked(axiosInstance.get).mockResolvedValue({
+      data: {
+        success: true,
+        data: { data: [lesson], total: 1, page: 1, limit: 50 },
+      },
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useLessons(1, 50, 'Group B'), {
+      wrapper,
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(axiosInstance.get).toHaveBeenLastCalledWith('/lessons', {
+      params: { page: 1, limit: 50, search: 'Group B' },
+      signal: expect.any(AbortSignal),
+    });
+    expect(queryClient.getQueryCache().getAll()[0].queryKey).toContainEqual(
+      expect.objectContaining({ search: 'Group B' }),
+    );
+  });
+
   it('unwraps the real {success, data:{data,total,page,limit}} /lessons envelope', async () => {
     (axiosInstance.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       data: {

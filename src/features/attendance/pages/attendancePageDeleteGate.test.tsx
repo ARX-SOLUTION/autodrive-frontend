@@ -3,12 +3,12 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import AttendancePage from '@/features/attendance/pages/AttendancePage';
 import { useAuthStore } from '@/store/authStore';
 import { useCreateLesson } from '@/features/attendance/api/attendanceService';
-import { Lesson } from '@/features/attendance/types';
+import { LessonSummary } from '@/features/attendance/types';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 vi.mock('@/store/authStore', () => ({ useAuthStore: vi.fn() }));
 
-const lesson: Lesson = {
+const lesson: LessonSummary = {
   id: 'l1',
   title: 'Theory 101',
   date: '2026-07-10T09:00:00.000Z',
@@ -18,7 +18,8 @@ const lesson: Lesson = {
   branch_id: 'b1',
   created_by_id: 'u1',
   created_at: '2026-07-01T00:00:00.000Z',
-  attendance: [],
+  present_count: 1,
+  total_count: 2,
 };
 
 vi.mock('@/features/attendance/api/attendanceService', () => ({
@@ -81,8 +82,20 @@ describe('AttendancePage delete-lesson gate', () => {
 // autodrive-6ef.27: the dense row list + inline expand-to-table was replaced
 // with cards that open the same AttendanceDrawer SchedulePage uses.
 describe('AttendancePage card -> drawer', () => {
+  it('displays early lessons with their Tashkent date and time on the list card', async () => {
+    const previousDate = lesson.date;
+    lesson.date = '2026-09-27T20:00:00.000Z';
+    try {
+      await renderAsRole('manager');
+      expect(screen.getByText('28.09.2026 01:00')).toBeInTheDocument();
+    } finally {
+      lesson.date = previousDate;
+    }
+  });
+
   it('opens the AttendanceDrawer when a lesson card is clicked', async () => {
     await renderAsRole('manager');
+    expect(screen.getByText('schedule.status_marked')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Theory 101'));
     expect(
       await screen.findByText('attendance.no_students'),

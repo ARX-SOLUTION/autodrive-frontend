@@ -35,6 +35,20 @@ describe('initWebVitals', () => {
       rating: 'good',
     });
 
+    const reportCLS = mocks.onCLS.mock.calls[0]?.[0] as (
+      metric: Metric,
+    ) => void;
+    reportCLS({
+      name: 'CLS',
+      value: 0.12345,
+      rating: 'needs-improvement',
+    } as Metric);
+
+    expect(mocks.track).toHaveBeenLastCalledWith('web_vitals_cls', {
+      value: 0.123,
+      rating: 'needs-improvement',
+    });
+
     consoleLog.mockRestore();
   });
 });

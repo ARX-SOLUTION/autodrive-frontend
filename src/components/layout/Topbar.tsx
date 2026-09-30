@@ -209,7 +209,17 @@ export const Topbar = ({
       {canRecordPayment && (
         <button
           type="button"
-          onClick={() => navigate({ to: '/payments' })}
+          onClick={() =>
+            navigate({
+              to: '/payments',
+              search: {
+                action: 'create',
+                branch_id: canViewAllBranches
+                  ? searchParams.get('branch_id') || undefined
+                  : undefined,
+              },
+            })
+          }
           className="hidden h-10 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground shadow-[0_2px_6px_hsl(var(--primary)/0.24)] transition-[background-color,box-shadow,scale] duration-150 ease-out hover:bg-primary/90 active:scale-[0.96] lg:inline-flex"
         >
           <Plus className="h-4 w-4" />
