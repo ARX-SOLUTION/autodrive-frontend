@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import type { AxiosError } from 'axios';
+import { useAuthStore } from '@/store/authStore';
 import { extractErrorMessage } from '@/lib/errors';
 import {
   decodeReceipt,
@@ -50,16 +51,19 @@ interface FuelCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (id: string) => void;
+  initialVehicleId?: string;
 }
 
 export default function FuelCreateDialog({
   open,
   onOpenChange,
   onSuccess,
+  initialVehicleId,
 }: FuelCreateDialogProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const currentUser = useAuthStore((s) => s.user);
 
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
@@ -79,7 +83,7 @@ export default function FuelCreateDialog({
   const [lookupData, setLookupData] = useState<Lookup | null>(null);
   const [qrErrorDetail, setQrErrorDetail] = useState<string | null>(null);
 
-  const [vehicleId, setVehicleId] = useState('');
+  const [vehicleId, setVehicleId] = useState(initialVehicleId ?? '');
   const [stationId, setStationId] = useState('');
   const [odometerKm, setOdometerKm] = useState('');
   const [fundingSource, setFundingSource] = useState<
@@ -101,9 +105,19 @@ export default function FuelCreateDialog({
 
   const vehiclesQuery = useFuelVehicles({ limit: 100 });
   const stationsQuery = useStations({ limit: 100, active: true });
+
+  const teacherVehicleId =
+    currentUser?.role === 'teacher'
+      ? vehiclesQuery.data?.data?.find(
+          (v) => v.current_custodian_id === currentUser.id,
+        )?.id
+      : undefined;
+
   const selectedVehicleId =
     vehicleId ||
-    (vehiclesQuery.data?.data.length === 1
+    initialVehicleId ||
+    teacherVehicleId ||
+    (vehiclesQuery.data?.data?.length === 1
       ? vehiclesQuery.data.data[0].id
       : '');
   const lastFuelQuery = useVehicleLastFuel(selectedVehicleId || undefined);

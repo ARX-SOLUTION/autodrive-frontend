@@ -213,6 +213,7 @@ export function useFuelVehicles(params: Record<string, unknown>) {
         plate_number: string;
         branch_id: string;
         fuel_types: string[];
+        current_custodian_id?: string | null;
       }>(
         (await axios.get('/vehicle-fuel/vehicles/options', { params, signal }))
           .data,

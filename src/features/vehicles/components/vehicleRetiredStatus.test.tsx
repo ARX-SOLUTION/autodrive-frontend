@@ -3,7 +3,13 @@ import { describe, expect, it, vi } from 'vitest';
 import VehicleFormDialog from '@/features/vehicles/components/VehicleFormDialog';
 import type { Vehicle } from '@/features/vehicles/types';
 
-vi.mock('@/hooks/useCan', () => ({ useCan: () => true }));
+vi.mock('@/hooks/useCan', () => ({
+  useCan: () => true,
+  useIsCrossTenant: () => false,
+}));
+vi.mock('@/features/staff/api/teacherService', () => ({
+  useTeachers: () => ({ data: [] }),
+}));
 vi.mock('@/features/vehicles/api/vehicleService', () => ({
   useCreateVehicle: () => ({ mutate: vi.fn(), isPending: false }),
   useUpdateVehicle: () => ({ mutate: vi.fn(), isPending: false }),

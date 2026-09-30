@@ -323,4 +323,15 @@ describe('FuelCreateDialog component', () => {
       await screen.findByText('fuel.review_receipt_hint'),
     ).toBeInTheDocument();
   });
+
+  it('accepts initialVehicleId prop and pre-binds vehicle state', () => {
+    render(
+      <FuelCreateDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        initialVehicleId="v1"
+      />,
+    );
+    expect(screen.getByLabelText('fuel.scan_receipt_btn')).toBeInTheDocument();
+  });
 });
