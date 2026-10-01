@@ -29,10 +29,8 @@ import {
   type VehicleStatus,
 } from '@/features/vehicles/types';
 
-const publicDemoTiles = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const tileUrl =
-  import.meta.env.VITE_FLEET_MAP_TILE_URL?.trim() ||
-  (import.meta.env.DEV ? publicDemoTiles : undefined);
+const defaultTiles = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const tileUrl = import.meta.env.VITE_FLEET_MAP_TILE_URL?.trim() || defaultTiles;
 const osmAttribution =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 const providerAttribution =
