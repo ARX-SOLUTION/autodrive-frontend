@@ -13,9 +13,17 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
+  const { token, activeBranchId } = useAuthStore.getState();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  if (
+    activeBranchId &&
+    !/^\/(auth|permissions)(\/|$)|\/users\/[^/]+\/(access|delegation)$/.test(
+      config.url ?? '',
+    )
+  ) {
+    config.headers['X-Branch-Id'] = activeBranchId;
   }
   return config;
 });

@@ -1,3 +1,4 @@
+import { requestBranchId } from '@/lib/permissions';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -37,8 +38,8 @@ const VehiclesPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const canInspect = useCan('viewInspections');
-  const canManage = useCan('manageVehicles');
+  const canInspect = useCan('vehicle_inspections.create');
+  const canManage = useCan('vehicles.create');
   const canViewAllBranches = useCan('viewAllBranches');
   const { data: branches = [] } = useBranches(canViewAllBranches);
   const { searchParams, setParams } = useUrlParams();
@@ -90,7 +91,9 @@ const VehiclesPage = () => {
   const vehicles = useVehiclesPage({
     branchId: canViewAllBranches
       ? branchId || undefined
-      : (user?.branch_id ?? undefined),
+      : (useAuthStore.getState?.()?.activeBranchId ??
+        user?.branch_id ??
+        undefined),
     search: debouncedSearch.trim() || undefined,
     status: status || undefined,
     category: category || undefined,
@@ -184,7 +187,8 @@ const VehiclesPage = () => {
           meta: { cellClassName: 'text-muted-foreground' },
           cell: ({ row }) =>
             branchNames.get(row.original.branch_id) ??
-            (row.original.branch_id === user?.branch_id
+            (row.original.branch_id ===
+            requestBranchId(user, useAuthStore.getState?.()?.activeBranchId)
               ? user?.branch_name
               : row.original.branch_id),
         }),
@@ -281,7 +285,7 @@ const VehiclesPage = () => {
           ),
         }),
       ]),
-    [branchNames, navigate, startIndex, t, user?.branch_id, user?.branch_name],
+    [branchNames, navigate, startIndex, t, user],
   );
 
   return (
@@ -486,7 +490,11 @@ const VehiclesPage = () => {
                 label: t('common.branch'),
                 value:
                   branchNames.get(vehicle.branch_id) ??
-                  (vehicle.branch_id === user?.branch_id
+                  (vehicle.branch_id ===
+                  requestBranchId(
+                    user,
+                    useAuthStore.getState?.()?.activeBranchId,
+                  )
                     ? user?.branch_name
                     : vehicle.branch_id),
               },
@@ -534,7 +542,11 @@ const VehiclesPage = () => {
           open={formOpen}
           vehicle={null}
           branches={branches}
-          defaultBranchId={user?.branch_id ?? undefined}
+          defaultBranchId={
+            useAuthStore.getState?.()?.activeBranchId ??
+            user?.branch_id ??
+            undefined
+          }
           onClose={() => setFormOpen(false)}
         />
       )}

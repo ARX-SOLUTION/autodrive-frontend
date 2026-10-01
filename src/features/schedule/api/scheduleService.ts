@@ -1,9 +1,9 @@
 import {
   queryOptions,
-  useQuery,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { useIsCrossTenant } from '@/hooks/useCan';
@@ -38,7 +38,9 @@ export const scheduleTemplatesQueryOptions = (
   });
 
 export const useScheduleTemplates = (enabled = true) => {
-  const branchId = useAuthStore((s) => s.user?.branch_id ?? undefined);
+  const branchId = useAuthStore(
+    (s) => s.activeBranchId ?? s.user?.branch_id ?? undefined,
+  );
   const isCrossTenant = useIsCrossTenant();
   return useQuery(
     scheduleTemplatesQueryOptions(
@@ -126,7 +128,9 @@ export const useCalendarLessons = (
   dateTo: string,
   enabled = true,
 ) => {
-  const branchId = useAuthStore((s) => s.user?.branch_id ?? undefined);
+  const branchId = useAuthStore(
+    (s) => s.activeBranchId ?? s.user?.branch_id ?? undefined,
+  );
   const isCrossTenant = useIsCrossTenant();
   return useQuery(
     calendarLessonsQueryOptions(

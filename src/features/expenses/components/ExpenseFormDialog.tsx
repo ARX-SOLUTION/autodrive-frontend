@@ -1,3 +1,4 @@
+import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -167,11 +168,13 @@ export const ExpenseFormDialog = ({
   const canManageFinance = useCan('manageCompanyFinance');
   const isManager = canViewExpenses && !canManageFinance;
   const isSettlement = mode === 'settlement' && !editExpense;
-  const userBranchId = useAuthStore((state) => state.user?.branch_id);
+  const userBranchId = useAuthStore(
+    (state) => state.activeBranchId ?? state.user?.branch_id,
+  );
   const createExpense = useCreateExpense();
   const createSettlement = useCreateTeacherSettlement();
   const updateExpense = useUpdateExpense();
-  const { data: teachers = [] } = useExpenseTeacherOptions(
+  const { data: readTeachers = [] } = useExpenseTeacherOptions(
     isSettlement && open,
   );
   // ponytail: a ref, not useState — the reset-on-open effect below assigns a
@@ -263,6 +266,16 @@ export const ExpenseFormDialog = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editExpense?.id, isSettlement]);
 
+  const options = useWriteOptions(
+    'expenses',
+    editExpense ? 'update' : 'create',
+    branchTarget === 'company' ? userBranchId : branchTarget,
+    open,
+  );
+  const teachers = useMemo(
+    () => (options.scoped ? (options.data?.teachers ?? []) : readTeachers),
+    [options.scoped, options.data?.teachers, readTeachers],
+  );
   const selectedTeacherId = useWatch({
     control: settlementForm.control,
     name: 'teacherId',

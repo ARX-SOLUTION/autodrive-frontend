@@ -722,9 +722,11 @@ const CompanyRevenueDashboard = () => {
       getSearchQuery(
         params,
         canViewAllBranches ? params.get('branch_id') || undefined : undefined,
-        user?.branch_id ?? undefined,
+        useAuthStore.getState?.()?.activeBranchId ??
+          user?.branch_id ??
+          undefined,
       ),
-    [canViewAllBranches, params, user?.branch_id],
+    [canViewAllBranches, params, user],
   );
   const { data, isLoading, isFetching, isError, refetch } =
     useCompanyOverview(query);

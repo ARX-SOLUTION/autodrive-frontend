@@ -1,3 +1,4 @@
+import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -67,8 +68,20 @@ const ScheduleDialog = ({
     enrollment.branch_id,
     open,
   );
+  const options = useWriteOptions(
+    'driving_sessions',
+    'create',
+    enrollment.branch_id,
+    open,
+  );
+  const teacherChoices = options.scoped
+    ? (options.data?.teachers ?? [])
+    : practiceTeachers;
+  const vehicleChoices = options.scoped
+    ? (options.data?.vehicles ?? [])
+    : (vehicles.data?.data ?? []);
   const availableVehicles =
-    vehicles.data?.data.filter(
+    vehicleChoices.filter(
       (vehicle) =>
         vehicle.available_for_booking &&
         (!enrollment.category ||
@@ -146,7 +159,10 @@ const ScheduleDialog = ({
               <option value="">{t('common.select_placeholder')}</option>
               {availableVehicles.map((vehicle) => (
                 <option key={vehicle.id} value={vehicle.id}>
-                  {vehicle.plate_number} · {vehicle.make} {vehicle.model}
+                  {vehicle.plate_number}{' '}
+                  {'make' in vehicle && 'model' in vehicle
+                    ? `· ${vehicle.make} ${vehicle.model}`
+                    : ''}
                 </option>
               ))}
             </select>
@@ -198,14 +214,14 @@ const ScheduleDialog = ({
               required
             >
               <option value="">{t('common.select_placeholder')}</option>
-              {practiceTeachers.map((teacher) => (
+              {teacherChoices.map((teacher) => (
                 <option key={teacher.id} value={teacher.id}>
-                  {teacher.name ?? teacher.email}
+                  {teacher.name}
                 </option>
               ))}
             </select>
           </label>
-          {practiceTeachers.length === 0 && (
+          {teacherChoices.length === 0 && (
             <p className="text-xs text-destructive">
               {t('driving.no_practice_instructor')}
             </p>

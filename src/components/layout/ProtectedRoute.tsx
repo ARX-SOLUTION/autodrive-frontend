@@ -16,6 +16,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const user = useAuthStore((s) => s.user);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
   const { pathname } = useLocation();
   const router = useRouter();
 
@@ -29,6 +30,8 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     isAuthenticated,
     user?.role,
     user?.must_change_password,
+    user?.access_version,
+    activeBranchId,
   ]);
 
   if (!hasHydrated) {

@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import axios from '@/api/axiosInstance';
 import { parseItemEnvelope, parseListEnvelope } from '@/lib/apiEnvelope';
 import { useInspectionScope } from '../inspections/service';

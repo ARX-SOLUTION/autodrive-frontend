@@ -97,7 +97,12 @@ export const CreateLeadDialog = ({
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('+998');
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
-  const branchId = selectedBranchId ?? user?.branch_id ?? branches[0]?.id ?? '';
+  const branchId =
+    selectedBranchId ??
+    useAuthStore.getState?.()?.activeBranchId ??
+    user?.branch_id ??
+    branches[0]?.id ??
+    '';
 
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
   const stageId = selectedStageId ?? defaultStageId ?? stages[0]?.id ?? '';

@@ -1,9 +1,9 @@
 import {
-  useQuery,
   useMutation,
   useQueryClient,
   queryOptions,
 } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import { leadKeys, studentKeys } from '@/lib/queryKeys';
 import { leadsApi } from '../api/leadsApi';
 import type {

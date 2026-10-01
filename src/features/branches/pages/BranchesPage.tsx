@@ -92,8 +92,10 @@ const EMPTY_FORM: BranchFormValues = {
 const BranchesPage = () => {
   const { t } = useTranslation();
   const goToBranch = useViewTransitionNavigate();
-  const canManageBranches = useCan('manageBranches');
-  const canViewDeleted = useCan('viewDeleted');
+  const canManageBranches = useCan('branches.create');
+  const canUpdateBranches = useCan('branches.update');
+  const canDeleteBranches = useCan('branches.delete');
+  const canViewDeleted = useCan('branches.restore');
   // owner-only "show deleted" toggle -- local state (not URL), defaults off.
   const [includeDeleted, setIncludeDeleted] = useState(false);
   const [editItem, setEditItem] = useState<Branch | null>(null);
@@ -364,32 +366,36 @@ const BranchesPage = () => {
                         <ArrowCounterClockwise className="h-3.5 w-3.5" />
                       </button>
                     )
-                  : canManageBranches && (
+                  : (canUpdateBranches || canDeleteBranches) && (
                       <>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEdit(b);
-                          }}
-                          aria-label={t('common.edit')}
-                          title={t('common.edit')}
-                          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                        >
-                          <PencilSimple className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteId(b.id);
-                          }}
-                          aria-label={t('common.delete')}
-                          title={t('common.delete')}
-                          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                        >
-                          <Trash className="h-3.5 w-3.5" />
-                        </button>
+                        {canUpdateBranches && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEdit(b);
+                            }}
+                            aria-label={t('common.edit')}
+                            title={t('common.edit')}
+                            className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          >
+                            <PencilSimple className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        {canDeleteBranches && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(b.id);
+                            }}
+                            aria-label={t('common.delete')}
+                            title={t('common.delete')}
+                            className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </>
                     )}
               </div>
@@ -397,7 +403,15 @@ const BranchesPage = () => {
           },
         }),
       ]),
-    [canManageBranches, canViewDeleted, goToBranch, openEdit, startIndex, t],
+    [
+      canUpdateBranches,
+      canDeleteBranches,
+      canViewDeleted,
+      goToBranch,
+      openEdit,
+      startIndex,
+      t,
+    ],
   );
 
   return (
@@ -525,32 +539,36 @@ const BranchesPage = () => {
                       <ArrowCounterClockwise className="h-3.5 w-3.5" />
                     </button>
                   )
-                : canManageBranches && (
+                : (canUpdateBranches || canDeleteBranches) && (
                     <>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEdit(b);
-                        }}
-                        aria-label={t('common.edit')}
-                        title={t('common.edit')}
-                        className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                      >
-                        <PencilSimple className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteId(b.id);
-                        }}
-                        aria-label={t('common.delete')}
-                        title={t('common.delete')}
-                        className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                      >
-                        <Trash className="h-3.5 w-3.5" />
-                      </button>
+                      {canUpdateBranches && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEdit(b);
+                          }}
+                          aria-label={t('common.edit')}
+                          title={t('common.edit')}
+                          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        >
+                          <PencilSimple className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                      {canDeleteBranches && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteId(b.id);
+                          }}
+                          aria-label={t('common.delete')}
+                          title={t('common.delete')}
+                          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        >
+                          <Trash className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </>
                   )
             }

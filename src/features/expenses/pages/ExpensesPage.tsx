@@ -275,10 +275,18 @@ const ExpensesPage = () => {
   const { t } = useTranslation();
   const canViewExpenses = useCan('viewExpenses');
   const canManageFinance = useCan('manageCompanyFinance');
+  const mayCreate = useCan('expenses.create');
+  const mayExport = useCan('expenses.export');
+  const mayAudit = useCan('audit.read');
+  const userWithAccess = useAuthStore((state) => state.user);
+  const showDeletedHistory =
+    userWithAccess?.permissions === undefined ? canManageFinance : mayAudit;
   const authUser = useAuthStore((state) => state.user);
   const isManager = canViewExpenses && !canManageFinance;
   const managerBranchId = isManager
-    ? (authUser?.branch_id ?? undefined)
+    ? (useAuthStore.getState?.()?.activeBranchId ??
+      authUser?.branch_id ??
+      undefined)
     : undefined;
 
   const { searchParams, setParam, setParams } = useUrlParams();
@@ -547,7 +555,7 @@ const ExpensesPage = () => {
         icon={<Wallet className="h-3.5 w-3.5" aria-hidden="true" />}
         actions={
           <div className="flex flex-wrap gap-2">
-            {canManageFinance && (
+            {showDeletedHistory && (
               <Button
                 variant="outline"
                 className="gap-2"
@@ -557,7 +565,7 @@ const ExpensesPage = () => {
                 {t('expenses.deleted_history.action')}
               </Button>
             )}
-            {canManageFinance && (
+            {mayExport && (
               <Button
                 variant="outline"
                 className="gap-2"
@@ -576,10 +584,12 @@ const ExpensesPage = () => {
                 {t('expenses.settlement.add')}
               </Button>
             )}
-            <Button className="gap-2" onClick={openExpenseForm}>
-              <Plus className="h-4 w-4" aria-hidden="true" />{' '}
-              {t('expenses.add')}
-            </Button>
+            {mayCreate && (
+              <Button className="gap-2" onClick={openExpenseForm}>
+                <Plus className="h-4 w-4" aria-hidden="true" />{' '}
+                {t('expenses.add')}
+              </Button>
+            )}
           </div>
         }
       />
@@ -669,7 +679,7 @@ const ExpensesPage = () => {
         branches={isManager ? [] : branches}
         onClose={() => setFormOpen(false)}
       />
-      {canManageFinance && deletedHistoryOpen && (
+      {showDeletedHistory && deletedHistoryOpen && (
         <DeletedExpenseHistoryDialog
           open={deletedHistoryOpen}
           onOpenChange={setDeletedHistoryOpen}

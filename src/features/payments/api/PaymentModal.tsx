@@ -1,3 +1,4 @@
+import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm, useWatch } from 'react-hook-form';
@@ -212,7 +213,28 @@ const PaymentModal = ({
   // react-hooks/incompatible-library: form.watch() during render isn't
   // compiler-safe; useWatch({ control }) is RHF's own drop-in replacement.
   const studentId = useWatch({ control: form.control, name: 'student_id' });
-  const studentOptions = studentPage?.data ?? students;
+  const options = useWriteOptions(
+    'payments',
+    payment ? 'update' : 'create',
+    branchId,
+    open,
+  );
+  const studentOptions: Student[] = options.scoped
+    ? (options.data?.students ?? [])
+        .map((student) => ({
+          ...student,
+          debt:
+            student.total_price === undefined ||
+            student.amount_paid === undefined
+              ? undefined
+              : student.total_price - student.amount_paid,
+        }))
+        .filter((student) =>
+          `${student.last_name} ${student.first_name}`
+            .toLowerCase()
+            .includes(debouncedStudentSearch.toLowerCase()),
+        )
+    : (studentPage?.data ?? students);
   const selectedStudent =
     students.find((s) => s.id === studentId) ??
     studentOptions.find((s) => s.id === studentId) ??

@@ -1,3 +1,4 @@
+import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
@@ -69,7 +70,7 @@ const GroupFormDialog = ({
   const { t } = useTranslation();
   const createMutation = useCreateGroup();
   const updateMutation = useUpdateGroup();
-  const { data: teachers } = useTeachers();
+  const { data: readTeachers } = useTeachers();
 
   const groupFormSchema = makeGroupFormSchema(t);
 
@@ -119,6 +120,14 @@ const GroupFormDialog = ({
   // semantics, called unconditionally like any other hook.
   const nameValue = useWatch({ control: form.control, name: 'name' });
   const branchIdValue = useWatch({ control: form.control, name: 'branchId' });
+  const options = useWriteOptions(
+    'groups',
+    editGroup ? 'update' : 'create',
+    branchIdValue,
+    open,
+  );
+  const teachers = options.scoped ? options.data?.teachers : readTeachers;
+  const branchOptions = options.scoped ? options.branches : branches;
   const debouncedName = useDebounce(nameValue, 300);
   const [dupWarningDismissed, setDupWarningDismissed] = useState(false);
   // react-hooks/set-state-in-effect (surfaced once the incompatible-library
@@ -224,7 +233,7 @@ const GroupFormDialog = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {branches.map((b) => (
+                        {branchOptions.map((b) => (
                           <SelectItem key={b.id} value={b.id}>
                             {b.name}
                           </SelectItem>
@@ -286,7 +295,7 @@ const GroupFormDialog = ({
                         </SelectItem>
                         {(teachers || []).map((teacher) => (
                           <SelectItem key={teacher.id} value={teacher.id}>
-                            {teacher.name || teacher.email}
+                            {teacher.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

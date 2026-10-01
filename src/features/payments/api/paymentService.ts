@@ -1,9 +1,9 @@
 import {
   queryOptions,
-  useQuery,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import axiosInstance from '@/api/axiosInstance';
 import { useIsCompanyWide } from '@/hooks/useCan';
 import {

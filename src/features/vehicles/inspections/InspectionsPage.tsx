@@ -1,3 +1,5 @@
+import { useWriteOptions } from '@/hooks/useWriteOptions';
+import { useCan } from '@/hooks/useCan';
 import { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -51,6 +53,7 @@ export default function InspectionsPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const mayCreate = useCan('vehicle_inspections.create');
   const branches = useBranches(user?.role === 'owner');
   const { searchParams, setParams } = useUrlParams();
   const branchId = searchParams.get('branch_id') ?? '';
@@ -131,6 +134,19 @@ export default function InspectionsPage() {
     page: vehiclePage,
     limit: 20,
   });
+  const options = useWriteOptions(
+    'vehicle_inspections',
+    'create',
+    undefined,
+    create,
+  );
+  const vehicleChoices = options.scoped
+    ? (options.data?.vehicles ?? []).filter((vehicle) =>
+        vehicle.plate_number
+          .toLowerCase()
+          .includes(vehicleSearch.toLowerCase()),
+      )
+    : (vehicles.data?.data ?? []);
   const receivers = useInspectionReceivers(
     vehicleId,
     receiverSearch,
@@ -152,7 +168,7 @@ export default function InspectionsPage() {
         title={t('inspections.title')}
         icon={<ClipboardText className="h-3.5 w-3.5" aria-hidden="true" />}
         actions={
-          user?.role === 'teacher' ? (
+          mayCreate ? (
             <Button
               aria-expanded={create}
               aria-controls="inspection-create-form"
@@ -231,7 +247,7 @@ export default function InspectionsPage() {
           ))}
         </div>
       )}
-      {create && user?.role === 'teacher' && (
+      {create && mayCreate && (
         <Form {...form}>
           <form
             id="inspection-create-form"
@@ -278,9 +294,10 @@ export default function InspectionsPage() {
                       }}
                     >
                       <option value="">{t('inspections.choose')}</option>
-                      {vehicles.data?.data.map((v) => (
+                      {vehicleChoices.map((v) => (
                         <option value={v.id} key={v.id}>
-                          {v.plate_number} · {v.make} {v.model}
+                          {v.plate_number} {'make' in v ? String(v.make) : ''}{' '}
+                          {v.model}
                         </option>
                       ))}
                     </select>

@@ -1,3 +1,4 @@
+import { canAccessRoute } from '@/app/routeAccess';
 import {
   useEffect,
   useMemo,
@@ -302,7 +303,12 @@ export const Sidebar = ({
     viewSchoolLearning: useCan('viewSchoolLearning'),
     accessLeads: useCan('accessLeads'),
   };
-  const canSee = (item: NavItem) => !item.cap || gate[item.cap] === true;
+  const activeBranchId = useAuthStore((state) => state.activeBranchId);
+  const canSee = (item: NavItem) =>
+    !item.cap ||
+    (user?.permissions === undefined
+      ? gate[item.cap] === true
+      : canAccessRoute(user, item.path, item.cap, activeBranchId));
   const visibleItems = NAV_ITEMS.filter(canSee);
   const itemByPath = useMemo(
     () =>

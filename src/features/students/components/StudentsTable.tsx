@@ -1,3 +1,6 @@
+import { useAuthStore } from '@/store/authStore';
+import { userCan } from '@/lib/permissions';
+import { useCan } from '@/hooks/useCan';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/button';
@@ -80,8 +83,6 @@ export const StudentsTable = ({
   sortField,
   sortDir,
   toggleSort,
-  canManageStudents,
-  isCrossTenant,
   canViewPayments,
   onOpenStudent,
   onEdit,
@@ -91,6 +92,16 @@ export const StudentsTable = ({
   onRestore,
 }: StudentsTableProps) => {
   const { t } = useTranslation();
+  const canCreate = useCan('students.create');
+  const canUpdate = useCan('students.update');
+  const canDelete = useCan('students.delete');
+  const actor = useAuthStore((state) => state.user);
+  const canAt = (action: 'update' | 'delete', branchId: string) =>
+    actor?.permissions === undefined
+      ? action === 'update'
+        ? canUpdate
+        : canDelete
+      : userCan(actor, `students.${action}`, branchId);
   const localizedResultLabels = resultLabels(t);
 
   // debt is optional now (backend omits it for a teacher) -- canViewPayments
@@ -303,7 +314,7 @@ export const StudentsTable = ({
           </div>
         ) : (
           <div className="flex items-center justify-center gap-1">
-            {canManageStudents && (
+            {canAt('update', row.original.branch_id) && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -316,7 +327,7 @@ export const StudentsTable = ({
                 <PencilSimple className="h-3.5 w-3.5" />
               </button>
             )}
-            {isCrossTenant && (
+            {canAt('delete', row.original.branch_id) && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -366,7 +377,7 @@ export const StudentsTable = ({
         title={t('students.not_found')}
         description={t('students.not_found_desc')}
         action={
-          canManageStudents ? (
+          canCreate ? (
             <Button size="sm" className="gap-2" onClick={onCreate}>
               <Plus className="h-4 w-4" /> {t('students.add')}
             </Button>

@@ -1,3 +1,4 @@
+import { requestBranchId } from '@/lib/permissions';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUrlParams } from '@/hooks/useUrlParams';
@@ -63,7 +64,8 @@ const GroupsPage = () => {
   // branch, same as before this change (autodrive-b85.5).
   const defaultBranchId = isCrossTenant
     ? undefined
-    : user?.branch_id || undefined;
+    : requestBranchId(user, useAuthStore.getState?.()?.activeBranchId) ||
+      undefined;
   const branchId = searchParams.get('branch_id') ?? defaultBranchId;
   const setBranchId = (v: string | undefined) =>
     setParams({ branch_id: v, page: undefined });

@@ -144,7 +144,7 @@ export const ExpensesTable = ({
   isFiltered = false,
 }: ExpensesTableProps) => {
   const { t } = useTranslation();
-  const canManageFinance = useCan('manageCompanyFinance');
+  const canManageFinance = useCan('expenses.pay');
   const navigate = useViewTransitionNavigate();
 
   // ponytail: memoised because a fresh array identity invalidates TanStack

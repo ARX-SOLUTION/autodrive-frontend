@@ -81,6 +81,13 @@ interface UserLifecycleButtonProps {
 const UserLifecycleButton = ({ user, onSelect }: UserLifecycleButtonProps) => {
   const { t } = useTranslation();
   const isAccountant = user.role === 'accountant';
+  const canManage = useCan(
+    isAccountant
+      ? user.is_active
+        ? 'staff.deactivate'
+        : 'staff.activate'
+      : 'staff.delete',
+  );
   const label = t(
     isAccountant
       ? user.is_active
@@ -89,6 +96,7 @@ const UserLifecycleButton = ({ user, onSelect }: UserLifecycleButtonProps) => {
       : 'common.delete',
   );
 
+  if (!canManage) return null;
   return (
     <button
       type="button"
@@ -127,7 +135,8 @@ const UsersPage = () => {
   const { pageSize, setPageSize } = usePageSize();
   const navigate = useNavigate();
   const isCrossTenant = useIsCrossTenant();
-  const canViewDeleted = useCan('viewDeleted');
+  const canViewDeleted = useCan('staff.restore');
+  const canUpdateStaff = useCan('staff.update');
   const isOwner = useAuthStore((state) => state.user?.role === 'owner');
 
   // Filter state lives in the URL (autodrive-b85.2), same pattern as
@@ -423,19 +432,21 @@ const UsersPage = () => {
               ) : null
             ) : (
               <div className="flex items-center justify-center gap-1">
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setEditItem(user);
-                    setModalOpen(true);
-                  }}
-                  aria-label={t('common.edit')}
-                  title={t('common.edit')}
-                  className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                >
-                  <PencilSimple className="h-3.5 w-3.5" />
-                </button>
+                {canUpdateStaff && (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setEditItem(user);
+                      setModalOpen(true);
+                    }}
+                    aria-label={t('common.edit')}
+                    title={t('common.edit')}
+                    className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    <PencilSimple className="h-3.5 w-3.5" />
+                  </button>
+                )}
                 <UserLifecycleButton
                   user={user}
                   onSelect={setLifecycleTarget}
@@ -445,7 +456,7 @@ const UsersPage = () => {
           },
         }),
       ]),
-    [canViewDeleted, startIndex, t],
+    [canViewDeleted, canUpdateStaff, startIndex, t],
   );
 
   return (
@@ -458,7 +469,7 @@ const UsersPage = () => {
         })}
         icon={<UserGear className="h-3.5 w-3.5" aria-hidden="true" />}
         actions={
-          <RoleGate cap="manageStaff">
+          <RoleGate cap="staff.create">
             <Button className="gap-2" onClick={openCreate}>
               <Plus className="h-4 w-4" /> {t('users.add')}
             </Button>
@@ -760,18 +771,20 @@ const UsersPage = () => {
                     ) : null
                   ) : (
                     <>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openEdit(user);
-                        }}
-                        aria-label={t('common.edit')}
-                        title={t('common.edit')}
-                        className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                      >
-                        <PencilSimple className="h-3.5 w-3.5" />
-                      </button>
+                      {canUpdateStaff && (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openEdit(user);
+                          }}
+                          aria-label={t('common.edit')}
+                          title={t('common.edit')}
+                          className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        >
+                          <PencilSimple className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                       <UserLifecycleButton
                         user={user}
                         onSelect={setLifecycleTarget}

@@ -1,9 +1,9 @@
 import {
   queryOptions,
-  useQuery,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { useIsCrossTenant } from '@/hooks/useCan';
@@ -100,7 +100,9 @@ export const groupsListQueryOptions = (
 // search/branchId/courseType so GET /groups filters server-side instead of
 // the page re-filtering the full list client-side (autodrive-b85.5).
 export const useGroups = (params: GroupListParams = {}, enabled = true) => {
-  const authBranchId = useAuthStore((s) => s.user?.branch_id ?? undefined);
+  const authBranchId = useAuthStore(
+    (s) => s.activeBranchId ?? s.user?.branch_id ?? undefined,
+  );
   const isCrossTenant = useIsCrossTenant();
   return useQuery(
     groupsListQueryOptions(
@@ -126,7 +128,9 @@ export const groupsOverviewQueryOptions = (branchId?: string, enabled = true) =>
   });
 
 export const useGroupsOverview = () => {
-  const branchId = useAuthStore((s) => s.user?.branch_id ?? undefined);
+  const branchId = useAuthStore(
+    (s) => s.activeBranchId ?? s.user?.branch_id ?? undefined,
+  );
   const isCrossTenant = useIsCrossTenant();
   return useQuery(
     groupsOverviewQueryOptions(branchId, !!branchId || isCrossTenant),

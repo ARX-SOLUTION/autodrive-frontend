@@ -1,5 +1,6 @@
 import { redirect } from '@tanstack/react-router';
-import { roleCan, type Capability } from '@/lib/permissions';
+import { type Capability } from '@/lib/permissions';
+import { canAccessRoute } from '@/app/routeAccess';
 import { drivingSessionsEnabled } from '@/lib/featureAvailability';
 import { getDefaultAuthenticatedRoute } from '@/lib/defaultAuthenticatedRoute';
 import { useAuthStore } from '@/store/authStore';
@@ -38,14 +39,18 @@ export function requireCapability(
 ): void {
   requireAuthenticated(location);
   const auth = useAuthStore.getState();
-
   if (
     auth.hasHydrated &&
     auth.isAuthenticated &&
-    !roleCan(auth.user?.role, capability)
+    !canAccessRoute(
+      auth.user,
+      location.pathname,
+      capability,
+      auth.activeBranchId,
+    )
   ) {
     throw redirect({
-      to: getDefaultAuthenticatedRoute(auth.user?.role),
+      to: getDefaultAuthenticatedRoute(auth.user),
       replace: true,
     });
   }

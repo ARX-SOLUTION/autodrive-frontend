@@ -1,12 +1,76 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useContext } from 'react';
+import { QueryClientContext } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { useIsCrossTenant } from '@/hooks/useCan';
-import { User } from '@/features/staff/types';
+import {
+  User,
+  type StaffAccess,
+  type PermissionCatalogue,
+  type UpdateStaffAccess,
+} from '@/features/staff/types';
 import type { ListResponse } from '@/shared/types/list';
 import { parseListResponse } from '@/lib/listResponse';
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';
-import { userKeys } from '@/lib/queryKeys';
+import { authKeys, userKeys } from '@/lib/queryKeys';
+
+export const usePermissionCatalogue = (enabled = true) =>
+  useQuery(
+    {
+      queryKey: [
+        'permissions',
+        useAuthStore((s) => s.user?.id),
+        useAuthStore((s) => s.user?.access_version),
+      ],
+      enabled,
+      queryFn: async ({ signal }) => {
+        const { data } = await axiosInstance.get<unknown>('/permissions', {
+          signal,
+        });
+        return parseItemEnvelope<PermissionCatalogue>(data, 'permissions');
+      },
+    },
+    useContext(QueryClientContext) ?? queryClient,
+  );
+
+export const useStaffAccess = (id: string, enabled = true) =>
+  useQuery({
+    queryKey: [...userKeys.detail(id), 'access'],
+    enabled,
+    queryFn: async ({ signal }) => {
+      const { data } = await axiosInstance.get<unknown>(`/users/${id}/access`, {
+        signal,
+      });
+      return parseItemEnvelope<StaffAccess>(data, 'staff-access');
+    },
+  });
+
+export const useUpdateStaffAccess = (id: string, delegation = false) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (request: UpdateStaffAccess) => {
+      const { data } = await axiosInstance.patch<unknown>(
+        `/users/${id}/${delegation ? 'delegation' : 'access'}`,
+        request,
+      );
+      return parseItemEnvelope<StaffAccess>(data, 'staff-access');
+    },
+    onSuccess: async (access) => {
+      qc.setQueryData([...userKeys.detail(id), 'access'], access);
+      await qc.invalidateQueries({ queryKey: userKeys.all });
+      if (useAuthStore.getState().user?.id === id) {
+        const { fetchCurrentUser } =
+          await import('@/features/auth/api/authApi');
+        const user = await fetchCurrentUser();
+        useAuthStore.getState().setUser(user);
+        qc.setQueryData(authKeys.me(), user);
+      }
+    },
+  });
+};
 import type {
   CreateUserRequest,
   UpdateUserRequest,
@@ -22,7 +86,7 @@ type CompanyUserCreateRequest = Pick<
 >;
 
 export const useUsers = (role?: UsersQuery['role']) => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const branchId = useAuthStore((s) => s.activeBranchId ?? s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
     queryKey: userKeys.list({ branchId, role, page: 1, limit: 100 }),
@@ -57,7 +121,9 @@ export const useUsersPage = (
     includeDeleted?: boolean;
   },
 ) => {
-  const userBranchId = useAuthStore((s) => s.user?.branch_id);
+  const userBranchId = useAuthStore(
+    (s) => s.activeBranchId ?? s.user?.branch_id,
+  );
   const isCrossTenant = useIsCrossTenant();
   return useQuery<ListResponse<User>>({
     queryKey: userKeys.page({

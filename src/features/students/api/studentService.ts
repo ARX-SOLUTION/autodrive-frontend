@@ -1,10 +1,10 @@
 import {
   keepPreviousData,
   queryOptions,
-  useQuery,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import axiosInstance from '@/api/axiosInstance';
 import { useIsCrossTenant } from '@/hooks/useCan';
 import { Student, CourseType, StudentStatus } from '@/features/students/types';

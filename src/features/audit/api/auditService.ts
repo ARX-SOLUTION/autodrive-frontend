@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { AuditLog, AuditLogsResponse } from '@/features/audit/types';
@@ -22,7 +22,7 @@ export const useAuditLogs = ({
   limit?: number;
   enabled?: boolean;
 }) => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const branchId = useAuthStore((s) => s.activeBranchId ?? s.user?.branch_id);
   const role = useAuthStore((s) => s.user?.role);
   // Backend gates /audit-logs to owner/manager/dev — don't fire for others (operator/teacher → 403).
   const canViewAudit = role === 'owner' || role === 'manager' || role === 'dev';

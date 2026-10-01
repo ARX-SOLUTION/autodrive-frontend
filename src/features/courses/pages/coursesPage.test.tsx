@@ -1,3 +1,5 @@
+// These interaction tests exercise an actor with the necessary mutation grants.
+vi.mock('@/hooks/useCan', () => ({ useCan: () => true }));
 import { screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, afterEach } from 'vitest';
 import CoursesPage from '@/features/courses/pages/CoursesPage';

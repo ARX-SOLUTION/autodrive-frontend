@@ -1,3 +1,4 @@
+import { useCan } from '@/hooks/useCan';
 import { useRef, useState, type DragEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -57,7 +58,9 @@ export const LeadBoard = ({
     }
   };
 
+  const mayUpdate = useCan('leads.update');
   const handleDrop = (e: DragEvent<HTMLDivElement>, targetStage: LeadStage) => {
+    if (!mayUpdate) return;
     e.preventDefault();
     setActiveDropStageId(null);
 

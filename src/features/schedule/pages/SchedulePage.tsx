@@ -1,3 +1,4 @@
+import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { addDays, startOfWeek, format, isSameDay } from 'date-fns';
@@ -185,7 +186,8 @@ const SchedulePage = () => {
   const dateFrom = format(weekStart, 'yyyy-MM-dd');
   const dateTo = format(weekEnd, 'yyyy-MM-dd');
 
-  const canEdit = useCan('manageSchedule');
+  const canEdit = useCan('schedule.create');
+  const mayDelete = useCan('schedule.delete');
 
   // Dialog state
   const [createOpen, setCreateOpen] = useState(false);
@@ -204,10 +206,17 @@ const SchedulePage = () => {
     isError: lessonsError,
     refetch: refetchLessons,
   } = useCalendarLessons(dateFrom, dateTo, tab === 'calendar');
-  const { data: groups } = useGroups(
+  const { data: readGroups } = useGroups(
     {},
     canEdit && (createOpen || generateOpen),
   );
+  const options = useWriteOptions(
+    'schedule',
+    'create',
+    undefined,
+    createOpen || generateOpen,
+  );
+  const groups = options.scoped ? (options.data?.groups ?? []) : readGroups;
   const createTemplate = useCreateTemplate();
   const deleteTemplate = useDeleteTemplate();
   const generateLessons = useGenerateLessons();
@@ -528,7 +537,7 @@ const SchedulePage = () => {
                         </span>
                       )}
                     </div>
-                    {canEdit && (
+                    {mayDelete && (
                       <Button
                         variant="ghost"
                         size="sm"

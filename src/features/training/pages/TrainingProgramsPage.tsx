@@ -1,3 +1,4 @@
+import { requestBranchId } from '@/lib/permissions';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BookOpen, Plus } from '@phosphor-icons/react';
@@ -221,7 +222,8 @@ const ProgramDialog = ({
 const TrainingProgramsPage = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const canManage = useCan('manageTrainingPrograms');
+  const canCreate = useCan('training_programs.create');
+  const canUpdate = useCan('training_programs.update');
   const canViewAll = useCan('viewAllBranches');
   const { data: branches = [] } = useBranches(canViewAll);
   const [branchId, setBranchId] = useState('');
@@ -241,7 +243,9 @@ const TrainingProgramsPage = () => {
   const programs = useTrainingProgramsPage({
     branchId: canViewAll
       ? branchId || undefined
-      : (user?.branch_id ?? undefined),
+      : (useAuthStore.getState?.()?.activeBranchId ??
+        user?.branch_id ??
+        undefined),
     category: category || undefined,
     active: showInactive ? undefined : true,
     page,
@@ -261,7 +265,9 @@ const TrainingProgramsPage = () => {
   );
   const branchName = (id: string) =>
     branches.find((branch) => branch.id === id)?.name ??
-    (id === user?.branch_id ? user?.branch_name : id);
+    (id === requestBranchId(user, useAuthStore.getState?.()?.activeBranchId)
+      ? user?.branch_name
+      : id);
 
   return (
     <div className="space-y-4">
@@ -270,7 +276,7 @@ const TrainingProgramsPage = () => {
         title={t('training.title')}
         icon={<BookOpen className="h-3.5 w-3.5" />}
         actions={
-          canManage && (
+          canCreate && (
             <Button
               onClick={() => {
                 setEditing(null);
@@ -373,7 +379,7 @@ const TrainingProgramsPage = () => {
                     },
                   ]}
                   actions={
-                    canManage && (
+                    canUpdate && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -405,7 +411,7 @@ const TrainingProgramsPage = () => {
           description={t('training.empty_programs_desc')}
         />
       )}
-      {canManage && dialogOpen && (
+      {(editing ? canUpdate : canCreate) && dialogOpen && (
         <ProgramDialog
           open={dialogOpen}
           program={editing}

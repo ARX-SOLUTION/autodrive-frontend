@@ -13,6 +13,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
+import { usePermissionCatalogue } from '@/features/staff/api/userService';
 import { useBranches } from '@/features/branches/api/branchService';
 import { changeAppLanguage, SUPPORTED_LANGS } from '@/i18n';
 import {
@@ -54,13 +55,22 @@ export const Topbar = ({
   const { searchParams, setParam } = useUrlParams();
   const { theme, toggle } = useTheme();
   const user = useAuthStore((s) => s.user);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const setActiveBranch = useAuthStore((s) => s.setActiveBranch);
+  const scopedAccess = user?.permissions !== undefined;
   const canAccessOperations = useCan('accessOperations');
   const canRecordPayment = useCan('recordPayment');
   const canViewAllBranches = useCan('viewAllBranches');
   const isDashboard = location.pathname === '/dashboard';
-  const { data: branches = [], isLoading: branchesLoading } = useBranches(
-    canViewAllBranches && isDashboard,
-  );
+  const { data: legacyBranches = [], isLoading: legacyBranchesLoading } =
+    useBranches(!scopedAccess && canViewAllBranches && isDashboard);
+  const catalogue = usePermissionCatalogue(scopedAccess);
+  const branches = scopedAccess
+    ? (catalogue.data?.branches ?? [])
+    : legacyBranches;
+  const branchesLoading = scopedAccess
+    ? catalogue.isLoading
+    : legacyBranchesLoading;
   const currentLang = (i18n.resolvedLanguage ?? i18n.language ?? 'uz').slice(
     0,
     2,
@@ -69,18 +79,22 @@ export const Topbar = ({
   const themeLabel =
     theme === 'dark' ? t('actions.theme_light') : t('actions.theme_dark');
   const allBranchesLabel = t('nav.branches_all');
-  const selectedBranchId = isDashboard
-    ? searchParams.get('branch_id') || 'all'
-    : 'all';
+  const selectedBranchId = scopedAccess
+    ? (activeBranchId ?? 'all')
+    : isDashboard
+      ? searchParams.get('branch_id') || 'all'
+      : 'all';
   const selectedBranch = branches.find(
     (branch) => branch.id === selectedBranchId,
   );
-  const branchLabel = canViewAllBranches
+  const showBranchSwitcher = scopedAccess
+    ? branches.length > 1 || user?.role === 'owner'
+    : canViewAllBranches && isDashboard;
+  const branchLabel = showBranchSwitcher
     ? selectedBranchId === 'all'
       ? allBranchesLabel
       : selectedBranch?.name || t('dashboard.v2.branch', 'Filial')
-    : user?.branch_name;
-  const showBranchSwitcher = canViewAllBranches && isDashboard;
+    : (selectedBranch?.name ?? user?.branch_name);
   const searchHint = t(
     'actions.search_hint',
     "Talaba, to'lov qidirish",
@@ -106,8 +120,12 @@ export const Topbar = ({
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label={t('dashboard.v2.branch', 'Filial')}
-              disabled={branchesLoading}
-              className="group hidden h-11 min-w-52 max-w-72 cursor-pointer items-center gap-2.5 rounded-md border border-border bg-card px-3 text-left transition-[background-color,border-color,box-shadow] duration-150 ease-out hover:border-primary/50 hover:bg-accent/70 active:bg-accent data-[state=open]:border-primary/60 data-[state=open]:bg-accent data-[state=open]:shadow-[0_0_0_3px_hsl(var(--ring)/0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60 lg:flex"
+              disabled={
+                branchesLoading ||
+                (location.pathname.startsWith('/users/') &&
+                  searchParams.get('tab') === 'access')
+              }
+              className="group flex h-11 min-w-0 max-w-72 cursor-pointer items-center gap-2.5 rounded-md border border-border bg-card px-3 text-left transition-[background-color,border-color,box-shadow] duration-150 ease-out hover:border-primary/50 hover:bg-accent/70 active:bg-accent data-[state=open]:border-primary/60 data-[state=open]:bg-accent data-[state=open]:shadow-[0_0_0_3px_hsl(var(--ring)/0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60 sm:min-w-52"
             >
               <Buildings className="h-4 w-4 shrink-0 text-info" />
               <span className="min-w-0 flex-1 leading-tight">
@@ -126,9 +144,14 @@ export const Topbar = ({
             <DropdownMenuContent align="start" className="min-w-56">
               <DropdownMenuRadioGroup
                 value={selectedBranchId}
-                onValueChange={(value) =>
-                  setParam('branch_id', value === 'all' ? undefined : value)
-                }
+                onValueChange={(value) => {
+                  if (scopedAccess)
+                    setActiveBranch(value === 'all' ? null : value);
+                  setParam(
+                    'branch_id',
+                    isDashboard && value !== 'all' ? value : undefined,
+                  );
+                }}
               >
                 <DropdownMenuRadioItem value="all">
                   {allBranchesLabel}

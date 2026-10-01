@@ -20,7 +20,7 @@ const FinanceDashboard = lazy(
 const DashboardRouter = () => {
   const user = useAuthStore((state) => state.user);
   const navigate = useNavigate();
-  const defaultRoute = getDefaultAuthenticatedRoute(user?.role);
+  const defaultRoute = getDefaultAuthenticatedRoute(user);
   const canViewDashboard = defaultRoute === '/dashboard';
   const fallback = <Skeleton className="h-96 w-full rounded-lg" />;
 

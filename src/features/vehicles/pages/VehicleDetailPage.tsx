@@ -1,3 +1,4 @@
+import { requestBranchId } from '@/lib/permissions';
 import { useState } from 'react';
 import FuelTypes from '../fuel/FuelTypes';
 import { useNavigate, useParams } from '@tanstack/react-router';
@@ -26,16 +27,37 @@ const VehicleDetailPage = () => {
     ['info', 'documents', 'maintenance', 'transfers', 'sessions'] as const,
     'info',
   );
-  const canManage = useCan('manageVehicles');
+  const { data: vehicle, isLoading, isError, refetch } = useVehicle(id ?? '');
+  const canManage = useCan('vehicles.update', vehicle?.branch_id);
+  const canCreateDocument = useCan(
+    'vehicle_documents.create',
+    vehicle?.branch_id,
+  );
+  const canUpdateDocument = useCan(
+    'vehicle_documents.update',
+    vehicle?.branch_id,
+  );
+  const canCreateMaintenance = useCan(
+    'vehicle_maintenance.create',
+    vehicle?.branch_id,
+  );
+  const canUpdateMaintenance = useCan(
+    'vehicle_maintenance.update',
+    vehicle?.branch_id,
+  );
+  const canTransfer = useCan('vehicle_transfers.create', vehicle?.branch_id);
+  const canCreateFuel = useCan('fuel.create', vehicle?.branch_id);
   const canViewAllBranches = useCan('viewAllBranches');
   const user = useAuthStore((state) => state.user);
   const { data: branches = [] } = useBranches(canViewAllBranches);
   const [editOpen, setEditOpen] = useState(false);
   const [fuelOpen, setFuelOpen] = useState(false);
-  const { data: vehicle, isLoading, isError, refetch } = useVehicle(id ?? '');
   const branchName = (branchId: string) =>
     branches.find((branch) => branch.id === branchId)?.name ??
-    (branchId === user?.branch_id ? user?.branch_name : branchId);
+    (branchId ===
+    requestBranchId(user, useAuthStore.getState?.()?.activeBranchId)
+      ? user?.branch_name
+      : branchId);
   const formatDate = (value: string | null | undefined) =>
     value ? formatTashkentDate(value, i18n.language) : t('common.na');
 
@@ -89,14 +111,16 @@ const VehicleDetailPage = () => {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setFuelOpen(true)}
-              >
-                <GasPump className="mr-1.5 h-4 w-4 text-primary" />
-                {t('fuel.create')}
-              </Button>
+              {canCreateFuel && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFuelOpen(true)}
+                >
+                  <GasPump className="mr-1.5 h-4 w-4 text-primary" />
+                  {t('fuel.create')}
+                </Button>
+              )}
               {canManage && (
                 <Button
                   variant="outline"
@@ -179,7 +203,7 @@ const VehicleDetailPage = () => {
           <VehicleSessionsTab vehicleId={vehicle.id} />
         </TabsContent>
         <TabsContent value="documents" className="space-y-4">
-          {canManage && (
+          {canCreateDocument && (
             <VehicleOperations
               kind="document"
               vehicle={vehicle}
@@ -210,7 +234,7 @@ const VehicleDetailPage = () => {
                       </div>
                     )}
                   </dl>
-                  {canManage && (
+                  {canUpdateDocument && (
                     <VehicleOperations
                       kind="editDocument"
                       vehicle={vehicle}
@@ -226,7 +250,7 @@ const VehicleDetailPage = () => {
           )}
         </TabsContent>
         <TabsContent value="maintenance" className="space-y-4">
-          {canManage && (
+          {canCreateMaintenance && (
             <VehicleOperations
               kind="maintenance"
               vehicle={vehicle}
@@ -254,7 +278,7 @@ const VehicleDetailPage = () => {
                     {t('vehicles.next_due_odometer')}:{' '}
                     {record.next_due_odometer_km ?? t('common.na')}
                   </p>
-                  {canManage && (
+                  {canUpdateMaintenance && (
                     <VehicleOperations
                       kind="editMaintenance"
                       vehicle={vehicle}
@@ -270,7 +294,7 @@ const VehicleDetailPage = () => {
           )}
         </TabsContent>
         <TabsContent value="transfers" className="space-y-4">
-          {canViewAllBranches && (
+          {canTransfer && (
             <VehicleOperations
               kind="transfer"
               vehicle={vehicle}

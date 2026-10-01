@@ -1,3 +1,4 @@
+import { useCan } from '@/hooks/useCan';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -24,7 +25,6 @@ import {
   uploadFuelEvidence,
   fuelImage,
 } from './service';
-import { canReviewFuel } from './policy';
 import FuelForm from './FuelForm';
 
 const STATUS_CONFIG: Record<
@@ -183,6 +183,11 @@ export default function FuelDetailPage() {
   const { id } = useParams({ strict: false }) as { id: string };
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const mayUpdate = useCan('fuel.update');
+  const maySubmit = useCan('fuel.submit');
+  const mayReview = useCan('fuel.review');
+  const mayCancel = useCan('fuel.cancel');
+  const mayReadExpense = useCan('expenses.read');
   const query = useFuel(id);
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState<string[]>([]);
@@ -213,8 +218,10 @@ export default function FuelDetailPage() {
 
   const row = query.data;
   const edit =
-    ['draft', 'rejected'].includes(row.status) && row.author_id === user?.id;
-  const reviewer = canReviewFuel(user?.role);
+    mayUpdate &&
+    ['draft', 'rejected'].includes(row.status) &&
+    row.author_id === user?.id;
+  const reviewer = mayReview;
 
   return (
     <div className="space-y-4">
@@ -422,27 +429,31 @@ export default function FuelDetailPage() {
         ))}
       </div>
 
-      {(edit || reviewer) && (
+      {(edit || reviewer || maySubmit || mayCancel) && (
         <section className="glass-card space-y-4 p-5">
           <label className="block space-y-1.5">
             <span className="text-sm font-medium">{t('fuel.reason')}</span>
             <Input value={reason} onChange={(e) => setReason(e.target.value)} />
           </label>
           <div className="flex flex-wrap gap-2">
-            {edit && row.status === 'draft' && (
-              <Button
-                disabled={
-                  mutation.isPending ||
-                  busy.length > 0 ||
-                  !['receipt', 'odometer'].every((s) =>
-                    row.evidence.some((e) => e.slot === s),
-                  )
-                }
-                onClick={() => mutation.mutate({ action: 'submit', body: {} })}
-              >
-                {t('fuel.submit')}
-              </Button>
-            )}
+            {maySubmit &&
+              row.author_id === user?.id &&
+              row.status === 'draft' && (
+                <Button
+                  disabled={
+                    mutation.isPending ||
+                    busy.length > 0 ||
+                    !['receipt', 'odometer'].every((s) =>
+                      row.evidence.some((e) => e.slot === s),
+                    )
+                  }
+                  onClick={() =>
+                    mutation.mutate({ action: 'submit', body: {} })
+                  }
+                >
+                  {t('fuel.submit')}
+                </Button>
+              )}
             {reviewer &&
               row.status === 'submitted' &&
               ['approve', 'reject'].map((decision) => (
@@ -460,32 +471,30 @@ export default function FuelDetailPage() {
                   {t(`fuel.${decision}`)}
                 </Button>
               ))}
-            {['owner', 'accountant'].includes(user?.role ?? '') &&
-              row.status !== 'cancelled' && (
-                <Button
-                  variant="outline"
-                  disabled={mutation.isPending || !reason.trim()}
-                  onClick={() =>
-                    mutation.mutate({ action: 'cancel', body: { reason } })
-                  }
-                >
-                  {t('fuel.cancel')}
-                </Button>
-              )}
+            {mayCancel && row.status !== 'cancelled' && (
+              <Button
+                variant="outline"
+                disabled={mutation.isPending || !reason.trim()}
+                onClick={() =>
+                  mutation.mutate({ action: 'cancel', body: { reason } })
+                }
+              >
+                {t('fuel.cancel')}
+              </Button>
+            )}
           </div>
         </section>
       )}
 
-      {row.expense_id &&
-        ['owner', 'accountant', 'manager'].includes(user?.role ?? '') && (
-          <Link
-            to="/expenses/$id"
-            params={{ id: row.expense_id }}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-          >
-            {t('fuel.expense_link')}
-          </Link>
-        )}
+      {row.expense_id && mayReadExpense && (
+        <Link
+          to="/expenses/$id"
+          params={{ id: row.expense_id }}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+        >
+          {t('fuel.expense_link')}
+        </Link>
+      )}
 
       {row.history && row.history.length > 0 && (
         <section className="space-y-3">

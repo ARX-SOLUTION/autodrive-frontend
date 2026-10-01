@@ -181,7 +181,7 @@ const ProfilePage = () => {
     // Captured before the mutation: onSuccess replaces the user in the store
     // (must_change_password becomes false), so read the flag now.
     const wasForced = !!user?.must_change_password;
-    const forcedRedirect = getDefaultAuthenticatedRoute(user?.role);
+    const forcedRedirect = getDefaultAuthenticatedRoute(user);
     const payload = {
       currentPassword: values.currentPassword.trim(),
       newPassword: values.newPassword.trim(),

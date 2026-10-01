@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useCan } from '@/hooks/useCan';
-import type { Capability } from '@/lib/permissions';
+import type { AccessCapability } from '@/lib/permissions';
 
 /**
  * Render `children` only when the current user has `cap`. Cosmetic gating only
@@ -12,7 +12,7 @@ export function RoleGate({
   children,
   fallback = null,
 }: {
-  cap: Capability;
+  cap: AccessCapability;
   children: ReactNode;
   fallback?: ReactNode;
 }) {

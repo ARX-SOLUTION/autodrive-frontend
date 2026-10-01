@@ -27,7 +27,10 @@ const QuestionDetailPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams({ from: '/_authenticated/questions/$id' });
-  const canManage = useCan('manageSchoolLearning');
+  const canManage = useCan('questions.update');
+  const mayPublish = useCan('questions.publish');
+  const mayReview = useCan('questions.review');
+  const mayUpload = useCan('question_media.create');
   const { data: question, isLoading } = useQuestion(id);
   const { data: branches = [] } = useBranches(canManage);
   const publish = usePublishQuestion();
@@ -53,10 +56,10 @@ const QuestionDetailPage = () => {
   const version = activeQuestionVersion(question);
   const isPrivate = question.visibility === 'school_private';
   const canPublish =
-    canManage &&
+    mayPublish &&
     isPrivate &&
     (question.status === 'draft' || question.status === 'in_review');
-  const canRetire = canManage && isPrivate && question.status === 'published';
+  const canRetire = mayReview && isPrivate && question.status === 'published';
 
   return (
     <div className="space-y-4">
@@ -77,11 +80,13 @@ const QuestionDetailPage = () => {
         )}`}
         icon={<Exam className="h-3.5 w-3.5" />}
         actions={
-          canManage && isPrivate ? (
+          (canManage || canPublish || canRetire) && isPrivate ? (
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => setEditOpen(true)}>
-                {t('questions.edit')}
-              </Button>
+              {canManage && (
+                <Button variant="outline" onClick={() => setEditOpen(true)}>
+                  {t('questions.edit')}
+                </Button>
+              )}
               {canPublish ? (
                 <Button
                   onClick={() =>
@@ -147,7 +152,7 @@ const QuestionDetailPage = () => {
         </p>
       )}
 
-      {canManage && isPrivate ? (
+      {mayUpload && isPrivate ? (
         <div className="glass-card space-y-3 p-4">
           <h3 className="font-medium">{t('questions.upload_media')}</h3>
           <p className="text-xs text-muted-foreground">

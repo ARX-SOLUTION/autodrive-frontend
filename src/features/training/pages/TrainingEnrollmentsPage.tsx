@@ -1,5 +1,7 @@
+import { requestBranchId } from '@/lib/permissions';
+import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useMemo, useState, useCallback, type FormEvent } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { CaretRight, GraduationCap, Plus } from '@phosphor-icons/react';
@@ -80,6 +82,22 @@ const EnrollmentDialog = ({
     Boolean(effectiveBranchId),
   );
 
+  const options = useWriteOptions(
+    'training_enrollments',
+    'create',
+    effectiveBranchId,
+    open,
+  );
+  const studentChoices = options.scoped
+    ? (options.data?.students ?? []).filter((student) =>
+        `${student.last_name} ${student.first_name}`
+          .toLowerCase()
+          .includes(debouncedSearch.toLowerCase()),
+      )
+    : (studentsQuery.data ?? []);
+  const programChoices = options.scoped
+    ? (options.data?.programs ?? [])
+    : (programs.data ?? []);
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (!studentId || !programId) return;
@@ -154,13 +172,13 @@ const EnrollmentDialog = ({
               placeholder={t('training.search_student_placeholder')}
               autoComplete="off"
             />
-            {studentsQuery.data && studentsQuery.data.length > 0 && (
+            {studentChoices.length > 0 && (
               <div
                 role="listbox"
                 aria-label={t('training.find_student')}
                 className="mt-1 max-h-40 overflow-y-auto rounded-md border bg-popover p-1 text-sm shadow-md"
               >
-                {studentsQuery.data.map((student) => (
+                {studentChoices.map((student) => (
                   <button
                     key={student.id}
                     type="button"
@@ -178,7 +196,11 @@ const EnrollmentDialog = ({
                       );
                     }}
                   >
-                    {student.last_name} {student.first_name} ({student.phone})
+                    {student.last_name} {student.first_name} (
+                    {'phone' in student && typeof student.phone === 'string'
+                      ? student.phone
+                      : ''}
+                    )
                   </button>
                 ))}
               </div>
@@ -200,9 +222,9 @@ const EnrollmentDialog = ({
               required
             >
               <option value="">{t('training.select_program')}</option>
-              {(programs.data ?? []).map((prog) => (
+              {programChoices.map((prog) => (
                 <option key={prog.id} value={prog.id}>
-                  {prog.name} ({prog.category} ·{' '}
+                  {prog.name} ({prog.category ?? ''} ·{' '}
                   {Math.round(prog.required_minutes / 60)}h)
                 </option>
               ))}
@@ -247,7 +269,9 @@ const TrainingEnrollmentsPage = () => {
   } = useListQueryState();
   const effectiveBranch = canViewAll
     ? branchId || undefined
-    : (user?.branch_id ?? undefined);
+    : (useAuthStore.getState?.()?.activeBranchId ??
+      user?.branch_id ??
+      undefined);
   const enrollments = useTrainingEnrollmentsPage({
     branchId: effectiveBranch,
     status: status || undefined,
@@ -293,8 +317,10 @@ const TrainingEnrollmentsPage = () => {
   const branchName = useCallback(
     (id: string) =>
       branches.find((branch) => branch.id === id)?.name ??
-      (id === user?.branch_id ? user?.branch_name : id),
-    [branches, user?.branch_id, user?.branch_name],
+      (id === requestBranchId(user, useAuthStore.getState?.()?.activeBranchId)
+        ? user?.branch_name
+        : id),
+    [branches, user],
   );
 
   const startIndex = (page - 1) * pageSize;
@@ -555,7 +581,11 @@ const TrainingEnrollmentsPage = () => {
       <EnrollmentDialog
         open={dialogOpen}
         branches={branches}
-        ownBranchId={user?.branch_id ?? undefined}
+        ownBranchId={
+          useAuthStore.getState?.()?.activeBranchId ??
+          user?.branch_id ??
+          undefined
+        }
         canViewAll={canViewAll}
         onClose={() => setDialogOpen(false)}
       />

@@ -1,3 +1,4 @@
+import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -46,6 +47,16 @@ export const TestTemplateFormDialog = ({
   const [branchId, setBranchId] = useState(
     template?.branch_id ?? defaultBranchId ?? '',
   );
+  const options = useWriteOptions(
+    'test_templates',
+    template ? 'update' : 'create',
+    branchId,
+    open,
+  );
+  const questionChoices = options.scoped
+    ? (options.data?.questions ?? [])
+    : (available.data?.data ?? []);
+  const branchChoices = options.scoped ? options.branches : branches;
   const [title, setTitle] = useState(template?.title ?? '');
   const [description, setDescription] = useState(template?.description ?? '');
   const [questionCount, setQuestionCount] = useState(
@@ -179,7 +190,7 @@ export const TestTemplateFormDialog = ({
                 required
               >
                 <option value="">{t('common.select_placeholder')}</option>
-                {branches.map((branch) => (
+                {branchChoices.map((branch) => (
                   <option key={branch.id} value={branch.id}>
                     {branch.name}
                   </option>
@@ -294,7 +305,7 @@ export const TestTemplateFormDialog = ({
               {t('school_tests.select_questions')} ({selected.size})
             </div>
             <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-border p-2">
-              {(available.data?.data ?? []).map((question) => (
+              {questionChoices.map((question) => (
                 <label
                   key={question.id}
                   className="flex cursor-pointer items-start gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted/60"
@@ -313,7 +324,7 @@ export const TestTemplateFormDialog = ({
                   </span>
                 </label>
               ))}
-              {!available.data?.data.length ? (
+              {!questionChoices.length ? (
                 <p className="px-2 py-3 text-xs text-muted-foreground">
                   {t('school_tests.no_available_questions')}
                 </p>

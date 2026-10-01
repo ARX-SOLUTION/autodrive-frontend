@@ -98,6 +98,18 @@ vi.mock('@/features/expenses/api/expenseService', () => ({
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/hooks/useCan', () => ({
   useCan: (capability: string) => {
+    if (capability === 'expenses.update')
+      return permissionState.canViewExpenses;
+    if (
+      [
+        'expenses.delete',
+        'expenses.cancel',
+        'expenses.pay',
+        'expense_payments.delete',
+        'expense_payments.read',
+      ].includes(capability)
+    )
+      return permissionState.canManageFinance;
     if (capability === 'viewExpenses') return permissionState.canViewExpenses;
     if (capability === 'manageCompanyFinance')
       return permissionState.canManageFinance;

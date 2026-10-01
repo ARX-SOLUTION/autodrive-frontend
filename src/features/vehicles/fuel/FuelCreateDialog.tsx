@@ -1,3 +1,4 @@
+import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
@@ -150,34 +151,46 @@ export default function FuelCreateDialog({
 
   const vehiclesQuery = useFuelVehicles({ limit: 100 });
   const stationsQuery = useStations({ limit: 100, active: true });
+  const options = useWriteOptions('fuel', 'create', undefined, true);
+  const vehicleChoices = useMemo(
+    () =>
+      options.scoped
+        ? (options.data?.vehicles ?? [])
+        : (vehiclesQuery.data?.data ?? []),
+    [options.scoped, options.data?.vehicles, vehiclesQuery.data?.data],
+  );
+  const stationChoices = useMemo(
+    () =>
+      options.scoped
+        ? (options.data?.stations ?? [])
+        : (stationsQuery.data?.data ?? []),
+    [options.scoped, options.data?.stations, stationsQuery.data?.data],
+  );
 
   // Derived, not stored in an effect: writing vehicleId from an effect made
   // every mount a setState-in-effect (react-doctor). Step 1 commits the value
   // on Next via handleNext.
   const teacherVehicleId =
     currentUser?.role === 'teacher'
-      ? vehiclesQuery.data?.data?.find(
-          (v) => v.current_custodian_id === currentUser.id,
-        )?.id
+      ? vehicleChoices.find((v) => v.current_custodian_id === currentUser.id)
+          ?.id
       : undefined;
 
   const selectedVehicleId =
     vehicleId ||
     initialVehicleId ||
     teacherVehicleId ||
-    (vehiclesQuery.data?.data?.length === 1
-      ? vehiclesQuery.data.data[0].id
-      : '');
+    (vehicleChoices.length === 1 ? vehicleChoices[0].id : '');
 
   const lastFuelQuery = useVehicleLastFuel(selectedVehicleId || undefined);
 
   const selectedVehicle = useMemo(() => {
-    return vehiclesQuery.data?.data.find((v) => v.id === selectedVehicleId);
-  }, [vehiclesQuery.data?.data, selectedVehicleId]);
+    return vehicleChoices.find((v) => v.id === selectedVehicleId);
+  }, [vehicleChoices, selectedVehicleId]);
 
   const selectedStation = useMemo(() => {
-    return stationsQuery.data?.data.find((s) => s.id === stationId);
-  }, [stationsQuery.data?.data, stationId]);
+    return stationChoices.find((s) => s.id === stationId);
+  }, [stationChoices, stationId]);
 
   // Allowed fuel types for this vehicle
   const allowedFuelTypes = useMemo<
@@ -280,8 +293,8 @@ export default function FuelCreateDialog({
       const parsedDate = extractFiscalQrDate(canonicalUrl);
       if (parsedDate) setOccurredAt(parsedDate);
 
-      if (result.seller_tin && stationsQuery.data?.data) {
-        const matched = stationsQuery.data.data.find(
+      if (result.seller_tin && stationChoices.length) {
+        const matched = stationChoices.find(
           (s) => s.stir && s.stir.trim() === String(result.seller_tin).trim(),
         );
         if (matched) {
@@ -694,7 +707,7 @@ export default function FuelCreateDialog({
                   className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <option value="">{t('fuel.choose')}</option>
-                  {vehiclesQuery.data?.data.map((v) => (
+                  {vehicleChoices.map((v) => (
                     <option key={v.id} value={v.id}>
                       {v.plate_number} {v.model ? `(${v.model})` : ''}
                     </option>
@@ -940,7 +953,7 @@ export default function FuelCreateDialog({
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring font-medium"
                 >
                   <option value="">{t('fuel.choose')}</option>
-                  {stationsQuery.data?.data.map((s) => (
+                  {stationChoices.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name} {s.stir ? `(STIR: ${s.stir})` : ''}
                     </option>

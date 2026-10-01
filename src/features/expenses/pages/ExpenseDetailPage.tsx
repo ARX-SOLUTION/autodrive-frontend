@@ -82,6 +82,12 @@ const ExpenseDetailPage = () => {
   const canViewExpenses = useCan('viewExpenses');
   const canViewOwnSettlements = useCan('viewOwnSettlements');
   const canManageFinance = useCan('manageCompanyFinance');
+  const mayUpdate = useCan('expenses.update');
+  const mayDelete = useCan('expenses.delete');
+  const mayCancel = useCan('expenses.cancel');
+  const mayPay = useCan('expenses.pay');
+  const mayVoidPayment = useCan('expense_payments.delete');
+  const mayReadPayments = useCan('expense_payments.read');
   const authUser = useAuthStore((state) => state.user);
   const isManager = canViewExpenses && !canManageFinance;
   const isOwnSettlementView =
@@ -105,7 +111,7 @@ const ExpenseDetailPage = () => {
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [payRemainingRefresh, setPayRemainingRefresh] = useState({
     expenseId: id,
-    pending: searchParams.get('action') === 'pay_remaining' && canManageFinance,
+    pending: searchParams.get('action') === 'pay_remaining' && mayPay,
   });
   const payRemainingRefreshPending =
     payRemainingRefresh.expenseId === id && payRemainingRefresh.pending;
@@ -311,7 +317,7 @@ const ExpenseDetailPage = () => {
     );
   }
 
-  const canViewPaymentHistory = canManageFinance || isOwnSettlementView;
+  const canViewPaymentHistory = mayReadPayments || isOwnSettlementView;
   const requestedTab = searchParams.get('tab');
   const activeTab =
     urlTab === 'payments' && !canViewPaymentHistory
@@ -339,23 +345,29 @@ const ExpenseDetailPage = () => {
   }
 
   const canEditManagerExpense =
+    mayUpdate &&
     isManager &&
     serverExpense.category !== 'teacher_settlement' &&
     authUser?.id === serverExpense.created_by_id &&
     serverExpense.status === 'planned' &&
     serverExpense.paid_amount === '0.00' &&
     serverExpense.has_payment_history === false;
+  const canUpdateAcrossRecords =
+    authUser?.permissions === undefined
+      ? canManageFinance
+      : authUser.permissions.some(
+          (grant) =>
+            grant.permission === 'expenses.update' && grant.scope !== 'own',
+        );
   const canEditFinanceExpense =
-    canManageFinance &&
+    mayUpdate &&
+    canUpdateAcrossRecords &&
     serverExpense.category !== 'teacher_settlement' &&
     serverExpense.status !== 'cancelled';
   const canEditExpense = canEditFinanceExpense || canEditManagerExpense;
-  const canCancelExpense =
-    canManageFinance && serverExpense.status !== 'cancelled';
-  const canDeleteExpense =
-    canManageFinance && serverExpense.paid_amount === '0.00';
-  const paidDeleteLocked =
-    canManageFinance && serverExpense.paid_amount !== '0.00';
+  const canCancelExpense = mayCancel && serverExpense.status !== 'cancelled';
+  const canDeleteExpense = mayDelete && serverExpense.paid_amount === '0.00';
+  const paidDeleteLocked = mayDelete && serverExpense.paid_amount !== '0.00';
   const lifecyclePending = cancelMutation.isPending || deleteMutation.isPending;
   const paymentControlsDisabled =
     paymentMutation.isPending ||
@@ -660,7 +672,7 @@ const ExpenseDetailPage = () => {
                               <Badge variant="secondary">
                                 {t('expenses.payments.active')}
                               </Badge>
-                              {canManageFinance && (
+                              {mayVoidPayment && (
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -682,7 +694,7 @@ const ExpenseDetailPage = () => {
                   </>
                 );
               })()}
-              {canManageFinance &&
+              {mayPay &&
                 serverExpense.status !== 'cancelled' &&
                 serverExpense.status !== 'paid' && (
                   <>
@@ -882,13 +894,7 @@ const ExpenseDetailPage = () => {
   );
 };
 
-const DetailField = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: ReactNode;
-}) => (
+const DetailField = ({ label, value }: { label: string; value: ReactNode }) => (
   <div className="flex flex-col gap-0.5">
     <dt className="text-xs uppercase tracking-wide text-muted-foreground">
       {label}

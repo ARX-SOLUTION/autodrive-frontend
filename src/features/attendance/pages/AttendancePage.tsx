@@ -1,3 +1,4 @@
+import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useUrlParams } from '@/hooks/useUrlParams';
@@ -226,28 +227,29 @@ const AttendancePage = () => {
   // (autodrive-vh0.4) without touching SchedulePage's manageSchedule-only
   // template/generate gates. Both hooks called unconditionally (not `||`
   // short-circuited) -- react-hooks/rules-of-hooks.
-  const canManageScheduleLessons = useCan('manageSchedule');
-  const canManageOwnLesson = useCan('manageOwnLesson');
-  const canCreate = canManageScheduleLessons || canManageOwnLesson;
+  const canManageScheduleLessons = useCan('lessons.create');
+  const canManageOwnLesson = useCan('lessons.update');
+  const mayDelete = useCan('lessons.delete');
+  const canCreate = canManageScheduleLessons;
   // DELETE /lessons/:id is @Roles(owner, manager) only -- manageSchedule
   // also grants operator, so gate delete separately to match the backend.
   const role = useAuthStore((s) => s.user?.role);
   const userId = useAuthStore((s) => s.user?.id);
-  const canDeleteAny = role === 'owner' || role === 'manager';
+  const canDeleteAny = mayDelete;
   // A teacher may additionally delete a lesson they personally created
   // (backend: owner/manager unconditionally, else the creator if teacher).
   // manageOwnLesson deliberately excludes operator, so an operator-created
   // lesson never shows a delete button the backend would still 403.
   const canDeleteLesson = (lesson: LessonSummary) =>
-    canDeleteAny || (canManageOwnLesson && lesson.created_by_id === userId);
+    canDeleteAny && (role !== 'teacher' || lesson.created_by_id === userId);
   // PATCH /lessons/:id is @Roles(teacher) ONLY on the backend -- unlike
   // manageOwnLesson above (which also grants dev/owner/manager for the
   // delete-own affordance), edit must gate on role === 'teacher' directly.
   // Gating on manageOwnLesson here would show owner/manager an edit button
   // this teacher-only endpoint would 403 on.
   const canEditLesson = (lesson: LessonSummary) =>
-    role === 'teacher' && lesson.created_by_id === userId;
-  const groupOptions = groups || [];
+    canManageOwnLesson &&
+    (role !== 'teacher' || lesson.created_by_id === userId);
 
   // Groups already carry teacher_name (fetched for the create-dialog Select
   // below) -- reuse it for the card's teacher label instead of a new query.
@@ -268,6 +270,15 @@ const AttendancePage = () => {
     null,
   );
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const options = useWriteOptions(
+    'lessons',
+    editingLesson ? 'update' : 'create',
+    undefined,
+    createOpen,
+  );
+  const groupOptions = options.scoped
+    ? (options.data?.groups ?? [])
+    : groups || [];
   const { searchParams, setSearchParams } = useUrlParams();
 
   const form = useForm<CreateLessonFormValues>({

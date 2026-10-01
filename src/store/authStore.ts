@@ -2,6 +2,7 @@ import { User } from '@/features/staff/types';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { isCrossTenantRole } from '@/lib/permissions';
+import { resetAuthSessionState } from '@/lib/queryClient';
 
 interface AuthState {
   token: string | null;
@@ -11,6 +12,8 @@ interface AuthState {
   // Not persisted. Stays false until login or a settled /auth/me, so a stale
   // stored user cannot open the CRM tour before the server flag is known.
   sessionValidated: boolean;
+  activeBranchId: string | null;
+  setActiveBranch: (branchId: string | null) => void;
   setAuth: (token: string, user: User) => void;
   setUser: (user: User) => void;
   setSessionValidated: (value: boolean) => void;
@@ -30,18 +33,61 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       hasHydrated: false,
       sessionValidated: false,
-      setAuth: (token, user) =>
+      activeBranchId: null,
+      setActiveBranch: (branchId) => {
+        const user = get().user;
+        if (
+          branchId &&
+          user?.role !== 'owner' &&
+          user?.role !== 'dev' &&
+          !(user?.branch_ids ?? [user?.branch_id]).includes(branchId)
+        )
+          return;
+        if (branchId === get().activeBranchId) return;
+        resetAuthSessionState(undefined, { keepAuthMe: true });
+        set({ activeBranchId: branchId });
+      },
+      setAuth: (token, user) => {
+        resetAuthSessionState();
         set({
           token,
           user,
           isAuthenticated: true,
           hasHydrated: true,
           sessionValidated: true,
-        }),
+          activeBranchId:
+            user.role === 'owner' || user.role === 'dev'
+              ? null
+              : (user.branch_ids?.[0] ?? user.branch_id ?? null),
+        });
+      },
       // Revalidate the session (fresh user/role) without touching the
       // persisted token — used by useRestoreSession on every mount.
-      setUser: (user) =>
-        set({ user, isAuthenticated: true, hasHydrated: true }),
+      setUser: (user) => {
+        const previous = get().user;
+        if (
+          previous &&
+          (previous.id !== user.id ||
+            previous.company_id !== user.company_id ||
+            previous.access_version !== user.access_version ||
+            previous.role !== user.role)
+        ) {
+          resetAuthSessionState(undefined, { keepAuthMe: true });
+        }
+        const current = get().activeBranchId;
+        const ordinary = user.role !== 'owner' && user.role !== 'dev';
+        const initialBranch = !get().sessionValidated && !current && ordinary;
+        const activeBranchId = initialBranch
+          ? (user.branch_ids?.[0] ?? user.branch_id ?? null)
+          : current &&
+              user.branch_ids &&
+              !user.branch_ids.includes(current) &&
+              user.role !== 'owner' &&
+              user.role !== 'dev'
+            ? (user.branch_ids[0] ?? null)
+            : current;
+        set({ user, activeBranchId, isAuthenticated: true, hasHydrated: true });
+      },
       setSessionValidated: (sessionValidated) => set({ sessionValidated }),
       logout: () =>
         set({
@@ -50,6 +96,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           hasHydrated: true,
           sessionValidated: false,
+          activeBranchId: null,
         }),
       isOwner: () => get().user?.role === 'owner',
       isDev: () => get().user?.role === 'dev',

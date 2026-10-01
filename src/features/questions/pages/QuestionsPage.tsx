@@ -29,7 +29,7 @@ const QuestionsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const canManage = useCan('manageSchoolLearning');
+  const canManage = useCan('questions.create');
   const canViewAll = useCan('viewAllBranches');
   const { data: branches = [] } = useBranches(canViewAll || canManage);
   const [branchId, setBranchId] = useState('');
@@ -48,7 +48,9 @@ const QuestionsPage = () => {
 
   const effectiveBranch = canViewAll
     ? branchId || undefined
-    : (user?.branch_id ?? undefined);
+    : (useAuthStore.getState?.()?.activeBranchId ??
+      user?.branch_id ??
+      undefined);
 
   const questions = useQuestionsPage({
     // CRM staff list defaults to school_private so public bank is not mixed in.
@@ -207,7 +209,11 @@ const QuestionsPage = () => {
           open={createOpen}
           question={null}
           branches={branches}
-          defaultBranchId={user?.branch_id ?? undefined}
+          defaultBranchId={
+            useAuthStore.getState?.()?.activeBranchId ??
+            user?.branch_id ??
+            undefined
+          }
           onClose={() => setCreateOpen(false)}
         />
       ) : null}
