@@ -7,7 +7,6 @@ interface ImportMetaEnv {
   readonly VITE_UMAMI_WEBSITE_ID?: string;
   readonly VITE_STUDENT_PORTAL_URL?: string;
   readonly VITE_ENABLE_DEMO_LOGIN?: string;
-  readonly VITE_DEMO_PASSWORD?: string;
 }
 
 interface Window {

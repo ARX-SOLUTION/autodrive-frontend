@@ -26,7 +26,6 @@ const copy = getLoginCopy('uz');
 describe('LoginPage demo intent', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_ENABLE_DEMO_LOGIN', 'false');
-    vi.stubEnv('VITE_DEMO_PASSWORD', '');
     queryClient.clear();
     vi.clearAllMocks();
     loginMutation.isPending = false;
@@ -43,9 +42,8 @@ describe('LoginPage demo intent', () => {
     vi.unstubAllEnvs();
   });
 
-  const enableOneClickDemo = (password = 'env-demo-secret') => {
+  const enableOneClickDemo = () => {
     vi.stubEnv('VITE_ENABLE_DEMO_LOGIN', 'true');
-    vi.stubEnv('VITE_DEMO_PASSWORD', password);
   };
 
   it('switches between light and dark without submitting the login form', async () => {
@@ -183,8 +181,7 @@ describe('LoginPage demo intent', () => {
     expect(loginMutation.mutate).not.toHaveBeenCalled();
   });
 
-  it('keeps email-only demo when the password is set without the enable flag', async () => {
-    vi.stubEnv('VITE_DEMO_PASSWORD', 'env-demo-secret');
+  it('keeps email-only demo when the enable flag is off', async () => {
     await renderWithRouter(<LoginPage />, {
       initialEntry: '/login?demo=1',
       routePattern: '/login',
@@ -200,7 +197,7 @@ describe('LoginPage demo intent', () => {
     expect(screen.getByRole('button', { name: copy.demo })).toBeInTheDocument();
   });
 
-  it('signs in with the env password when one-click demo is enabled', async () => {
+  it('signs in through the server-held demo endpoint when one-click demo is enabled', async () => {
     enableOneClickDemo();
     await renderWithRouter(<LoginPage />, {
       initialEntry: '/login',
@@ -214,7 +211,7 @@ describe('LoginPage demo intent', () => {
     );
 
     expect(loginMutation.mutate).toHaveBeenCalledWith(
-      { email: 'demo@automaktab.uz', password: 'env-demo-secret' },
+      undefined,
       expect.any(Object),
     );
     expect(screen.getByLabelText(copy.passwordLabel)).toHaveValue('');
@@ -222,7 +219,7 @@ describe('LoginPage demo intent', () => {
   });
 
   it('submits one-click demo login from ?demo=1 when the production env is set', async () => {
-    enableOneClickDemo('another-env-secret');
+    enableOneClickDemo();
     await renderWithRouter(<LoginPage />, {
       initialEntry: '/login?demo=1',
       routePattern: '/login',
@@ -230,7 +227,7 @@ describe('LoginPage demo intent', () => {
 
     await waitFor(() =>
       expect(loginMutation.mutate).toHaveBeenCalledWith(
-        { email: 'demo@automaktab.uz', password: 'another-env-secret' },
+        undefined,
         expect.any(Object),
       ),
     );

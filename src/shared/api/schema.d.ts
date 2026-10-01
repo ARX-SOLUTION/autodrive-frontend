@@ -107,6 +107,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/auth/demo': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Open a server-provisioned demo session */
+    post: operations['AuthController_demo'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/auth/login': {
     parameters: {
       query?: never;
@@ -158,6 +175,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/auth/me/crm-tour': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Record CRM tour completion for the current user. Keeps the first timestamp. */
+    patch: operations['AuthController_completeCrmTour'];
+    trace?: never;
+  };
   '/auth/stop-impersonation': {
     parameters: {
       query?: never;
@@ -185,7 +219,7 @@ export interface paths {
     /** List published blog posts (public, paginated) */
     get: operations['BlogPostsController_list'];
     put?: never;
-    /** Create a blog post (dev/owner only) */
+    /** Create a blog post (dev only) */
     post: operations['BlogPostsController_create'];
     delete?: never;
     options?: never;
@@ -203,11 +237,11 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /** Delete a blog post (dev/owner only) */
+    /** Delete a blog post (dev only) */
     delete: operations['BlogPostsController_remove'];
     options?: never;
     head?: never;
-    /** Update a blog post, incl. draft/publish toggle (dev/owner only) */
+    /** Update a blog post, incl. draft/publish toggle (dev only) */
     patch: operations['BlogPostsController_update'];
     trace?: never;
   };
@@ -235,7 +269,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List blog posts of any status, paginated (dev/owner only) */
+    /** List blog posts of any status, paginated (dev only) */
     get: operations['BlogPostsController_listAdmin'];
     put?: never;
     post?: never;
@@ -252,7 +286,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Get a blog post by id, any status (dev/owner only) */
+    /** Get a blog post by id, any status (dev only) */
     get: operations['BlogPostsController_findByIdAdmin'];
     put?: never;
     post?: never;
@@ -393,6 +427,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/dashboard/expense-breakdown': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Expense-ledger totals by branch and category for dashboard drill-downs */
+    get: operations['DashboardController_getExpenseBreakdown'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/dashboard/finance-summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Reconciled finance KPI summary (income, paid outflows, cash-flow balance, outstanding, teacher payable) */
+    get: operations['DashboardController_getFinanceSummary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/dashboard/teacher-analytics': {
     parameters: {
       query?: never;
@@ -420,7 +488,7 @@ export interface paths {
     /** List demo requests (dev only, paginated) */
     get: operations['DemoRequestsController_list'];
     put?: never;
-    /** Submit a demo/lead request (public, throttled 5/min) */
+    /** Submit a demo/lead request (public, throttled 120/min/IP and 5/min/phone) */
     post: operations['DemoRequestsController_create'];
     delete?: never;
     options?: never;
@@ -477,6 +545,134 @@ export interface paths {
     patch: operations['DocumentsController_update'];
     trace?: never;
   };
+  '/driving-sessions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['DrivingSessionsController_findAll'];
+    put?: never;
+    post: operations['DrivingSessionsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/driving-sessions/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['DrivingSessionsController_findOne'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/driving-sessions/{id}/approve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['DrivingSessionsController_approve'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/driving-sessions/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['DrivingSessionsController_cancel'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/driving-sessions/{id}/correct': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['DrivingSessionsController_correct'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/driving-sessions/{id}/reject': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['DrivingSessionsController_reject'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/driving-sessions/{id}/submit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['DrivingSessionsController_submit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/driving-sessions/summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['DrivingSessionsController_summary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/exams': {
     parameters: {
       query?: never;
@@ -505,6 +701,281 @@ export interface paths {
     get: operations['ExamsController_findByStudentId'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/expenses': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ExpensesController_findAll'];
+    put?: never;
+    post: operations['ExpensesController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/expenses/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ExpensesController_findOne'];
+    put?: never;
+    post?: never;
+    delete: operations['ExpensesController_remove'];
+    options?: never;
+    head?: never;
+    patch: operations['ExpensesController_update'];
+    trace?: never;
+  };
+  '/expenses/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['ExpensesController_cancel'];
+    trace?: never;
+  };
+  '/expenses/{id}/history': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ExpensesController_getHistory'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/expenses/{id}/payments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ExpensesController_recordPayment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/expenses/{id}/payments/{paymentId}/void': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['ExpensesController_voidPayment'];
+    trace?: never;
+  };
+  '/expenses/branch-options': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ExpensesController_getBranchOptions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/expenses/history/deleted': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List deleted expenses with history available */
+    get: operations['ExpensesController_listDeletedHistory'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/expenses/month-close.csv': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ExpensesController_exportMonthClose'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/expenses/reviewed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Review expenses */
+    patch: operations['ExpensesController_review'];
+    trace?: never;
+  };
+  '/expenses/teacher-options': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ExpensesController_getTeacherOptions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/expenses/triage-counts': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get open expense triage counts */
+    get: operations['ExpensesController_getTriageCounts'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/expenses/vehicle-options': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ExpensesController_getVehicleOptions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/fuel-stations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['FuelStationsController_list'];
+    put?: never;
+    post: operations['FuelStationsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/fuel-stations/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['FuelStationsController_update'];
+    trace?: never;
+  };
+  '/fuel-stations/{id}/balance': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['FuelStationsController_balance'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/fuel-stations/{id}/reconciliations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['FuelStationsController_reconciliations'];
+    put?: never;
+    post: operations['FuelStationsController_reconcile'];
     delete?: never;
     options?: never;
     head?: never;
@@ -584,6 +1055,355 @@ export interface paths {
     };
     /** Liveness + DB readiness probe */
     get: operations['HealthController_check'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/lead-sources': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get all lead sources (system + company custom) */
+    get: operations['LeadSourcesController_findAll'];
+    put?: never;
+    /** Add a new custom lead source for company */
+    post: operations['LeadSourcesController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/lead-sources/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete a custom lead source */
+    delete: operations['LeadSourcesController_delete'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/lead-stages': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get all lead stages for company */
+    get: operations['LeadStagesController_findAll'];
+    /** Update/reorder WORK stages for company */
+    put: operations['LeadStagesController_updateStages'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/leads': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List leads with filters and pagination */
+    get: operations['LeadsController_findAll'];
+    put?: never;
+    /** Create a new lead */
+    post: operations['LeadsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/leads/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get lead detail by ID */
+    get: operations['LeadsController_findById'];
+    put?: never;
+    post?: never;
+    /** Soft delete a lead */
+    delete: operations['LeadsController_delete'];
+    options?: never;
+    head?: never;
+    /** Update lead with optimistic concurrency check */
+    patch: operations['LeadsController_update'];
+    trace?: never;
+  };
+  '/leads/{id}/activities': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get timeline activities for lead */
+    get: operations['LeadsController_getActivities'];
+    put?: never;
+    /** Add note, task, or log call/message/meeting */
+    post: operations['LeadsController_createActivity'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/leads/{id}/activities/{aid}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete activity (author within 24h or manager) */
+    delete: operations['LeadsController_deleteActivity'];
+    options?: never;
+    head?: never;
+    /** Update note body or mark task completed */
+    patch: operations['LeadsController_updateActivity'];
+    trace?: never;
+  };
+  '/leads/{id}/assign': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Assign lead to staff user or unassign */
+    post: operations['LeadsController_assign'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Assign lead to staff user or unassign (PATCH alias) */
+    patch: operations['LeadsController_assignPatch'];
+    trace?: never;
+  };
+  '/leads/{id}/convert': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Convert lead to enrolled student */
+    post: operations['LeadsController_convert'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/leads/{id}/stage': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Transition lead to another stage */
+    post: operations['LeadsController_transitionStage'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Transition lead to another stage (PATCH alias) */
+    patch: operations['LeadsController_transitionStagePatch'];
+    trace?: never;
+  };
+  '/leads/board': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Kanban board columns and lead cards */
+    get: operations['LeadsController_getBoard'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/leads/check-duplicate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Check phone for duplicate open leads and students (GET query) */
+    get: operations['LeadsController_checkDuplicateGet'];
+    put?: never;
+    /** Check phone for duplicate open leads and students */
+    post: operations['LeadsController_checkDuplicate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/leads/export.xlsx': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Export leads to spreadsheet/CSV */
+    get: operations['LeadsController_exportLeads'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/leads/metrics': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get funnel and conversion metrics */
+    get: operations['LeadsController_getMetrics'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/learner/assignments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List school assignments for the signed-in learner’s active school links */
+    get: operations['LearnerProgressController_listAssignments'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/learner/auth/login': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Log in to a learning account with phone + password */
+    post: operations['LearnerController_login'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/learner/auth/logout': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['LearnerController_logout'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/learner/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get the learning account and school links */
+    get: operations['LearnerController_me'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/learner/progress/topics': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Paginated weak topics from this learner’s finished attempts, including private practice */
+    get: operations['LearnerProgressController_listTopics'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/learner/results': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List this learner’s attempts only (school assignments and their own practice) */
+    get: operations['LearnerProgressController_listResults'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1078,6 +1898,239 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/questions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List questions visible to the staff actor */
+    get: operations['QuestionsController_findAll'];
+    put?: never;
+    post: operations['QuestionsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/questions/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['QuestionsController_findById'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit draft payload. Editing a published question creates a new immutable version. */
+    patch: operations['QuestionsController_updateDraft'];
+    trace?: never;
+  };
+  '/questions/{id}/dispute': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['QuestionsController_dispute'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/questions/{id}/media': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['QuestionsController_uploadMedia'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/questions/{id}/media/{mediaId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['QuestionsController_getMedia'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/questions/{id}/publish': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['QuestionsController_publish'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/questions/{id}/retire': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['QuestionsController_retire'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/questions/available-for-tests': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Published questions available for new tests (#215). Retired/disputed excluded. */
+    get: operations['QuestionsController_listAvailableForNewTests'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/questions/practice': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List published platform_public questions for practice (excludes private, retired, disputed) */
+    get: operations['QuestionsController_listPractice'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/questions/practice/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get a reviewed published public practice question */
+    get: operations['QuestionsController_getPracticeQuestion'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/questions/practice/{id}/check': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Check an answer against a currently published public question */
+    post: operations['QuestionsController_checkPracticeAnswer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/questions/practice/{id}/media/{mediaId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Fetch diagram bytes for a published public practice question */
+    get: operations['QuestionsController_getPracticeMedia'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/questions/practice/tickets': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List curated, reviewed public question tickets */
+    get: operations['QuestionsController_listPracticeTickets'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/questions/re-review': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Flag questions that cite a topic or legal provision for re-review after a rule change. They leave the practice pool until published again. */
+    post: operations['QuestionsController_flagForReReview'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/schedule/calendar': {
     parameters: {
       query?: never;
@@ -1196,6 +2249,23 @@ export interface paths {
     patch: operations['StudentsController_update'];
     trace?: never;
   };
+  '/students/{id}/learner-account': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Create or reset the learner portal login for a student (phone + password) */
+    put: operations['StudentsController_upsertLearnerAccount'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/students/{id}/restore': {
     parameters: {
       query?: never;
@@ -1264,6 +2334,54 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/teacher-settlements': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['TeacherSettlementsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/teacher-settlements/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['TeacherSettlementsController_listMine'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/teacher-settlements/me/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['TeacherSettlementsController_findMine'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/telegram/daily-report': {
     parameters: {
       query?: never;
@@ -1279,6 +2397,40 @@ export interface paths {
     head?: never;
     /** Enable/disable the daily report push (owner/manager only) */
     patch: operations['TelegramController_setDailyReport'];
+    trace?: never;
+  };
+  '/telegram/expense-digest': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Enable/disable expense digest delivery */
+    patch: operations['TelegramController_setExpenseDigest'];
+    trace?: never;
+  };
+  '/telegram/expense-digest/snooze': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Snooze expense digest delivery for 24 hours */
+    post: operations['TelegramController_snoozeExpenseDigest'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
   '/telegram/link': {
@@ -1330,6 +2482,345 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
+    trace?: never;
+  };
+  '/tests/assignments/{assignmentId}/start': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Start or resume a school assignment attempt */
+    post: operations['TestAttemptsController_startAssignment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tests/attempts/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get a learner attempt (reconnect) */
+    get: operations['TestAttemptsController_getLearnerAttempt'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tests/attempts/{id}/answers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Autosave answers on a learner attempt */
+    patch: operations['TestAttemptsController_saveLearnerAnswers'];
+    trace?: never;
+  };
+  '/tests/attempts/{id}/submit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Submit a learner attempt (idempotent) */
+    post: operations['TestAttemptsController_submitLearner'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tests/outcomes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Paginated school-assigned attempt outcomes. Public practice is excluded. */
+    get: operations['TestOutcomesController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tests/outcomes/groups': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Paginated per-group summary of school-assigned tests (practice excluded) */
+    get: operations['TestOutcomesController_listGroups'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tests/outcomes/topics': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Paginated weak topics from school-assigned attempts in the actor’s scope */
+    get: operations['TestOutcomesController_listTopics'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tests/practice/attempts/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Reconnect to a guest practice attempt */
+    get: operations['TestAttemptsController_getPracticeAttempt'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tests/practice/attempts/{id}/answers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Autosave answers on a guest practice attempt */
+    patch: operations['TestAttemptsController_savePracticeAnswers'];
+    trace?: never;
+  };
+  '/tests/practice/attempts/{id}/submit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Submit a guest practice attempt (idempotent) */
+    post: operations['TestAttemptsController_submitPractice'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tests/practice/preset': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get the configurable public practice preset for a license category (never a government exam) */
+    get: operations['TestAttemptsController_getPreset'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tests/practice/start': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Start a guest public B-category practice attempt (reviewed platform_public questions only) */
+    post: operations['TestAttemptsController_startPractice'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tests/templates': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List school test templates visible to the actor (teachers: own only) */
+    get: operations['TestTemplatesController_findAll'];
+    put?: never;
+    /** Create a school test template (draft) */
+    post: operations['TestTemplatesController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tests/templates/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get a school test template */
+    get: operations['TestTemplatesController_findOne'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update a draft/published template (republish needed) */
+    patch: operations['TestTemplatesController_update'];
+    trace?: never;
+  };
+  '/tests/templates/{id}/assignments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List assignments for a template */
+    get: operations['TestTemplatesController_listAssignments'];
+    put?: never;
+    /** Assign a published template to a group or student */
+    post: operations['TestTemplatesController_assign'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tests/templates/{id}/publish': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Publish a template for assignment */
+    post: operations['TestTemplatesController_publish'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/training-enrollments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['TrainingEnrollmentsController_findAll'];
+    put?: never;
+    post: operations['TrainingEnrollmentsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/training-enrollments/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['TrainingEnrollmentsController_findOne'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/training-programs': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['TrainingProgramsController_findAll'];
+    put?: never;
+    post: operations['TrainingProgramsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/training-programs/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['TrainingProgramsController_findOne'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['TrainingProgramsController_update'];
     trace?: never;
   };
   '/users': {
@@ -1412,10 +2903,472 @@ export interface paths {
     patch: operations['UsersController_restore'];
     trace?: never;
   };
+  '/vehicle-defects': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['VehicleDefectsController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-defects/{id}/evidence': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['VehicleDefectsController_evidence'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-defects/{id}/resolve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['VehicleDefectsController_resolve'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-fuel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['VehicleFuelController_list'];
+    put?: never;
+    post: operations['VehicleFuelController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-fuel/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['VehicleFuelController_detail'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['VehicleFuelController_update'];
+    trace?: never;
+  };
+  '/vehicle-fuel/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['VehicleFuelController_cancel'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-fuel/{id}/evidence': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['VehicleFuelController_upload'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-fuel/{id}/evidence/{evidenceId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['VehicleFuelController_download'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-fuel/{id}/review': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['VehicleFuelController_review'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-fuel/{id}/submit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['VehicleFuelController_submit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-fuel/lookup': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['VehicleFuelController_lookup'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-fuel/vehicles/{id}/types': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['VehicleFuelController_types'];
+    trace?: never;
+  };
+  '/vehicle-fuel/vehicles/options': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['VehicleFuelController_vehicles'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-inspections': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['VehicleInspectionsController_list'];
+    put?: never;
+    post: operations['VehicleInspectionsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-inspections/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['VehicleInspectionsController_detail'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['VehicleInspectionsController_update'];
+    trace?: never;
+  };
+  '/vehicle-inspections/{id}/evidence': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['VehicleInspectionsController_upload'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-inspections/{id}/evidence/{evidenceId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['VehicleInspectionsController_download'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-inspections/{id}/review': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['VehicleInspectionsController_review'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-inspections/{id}/submit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['VehicleInspectionsController_submit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-inspections/receivers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['VehicleInspectionsController_receivers'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicle-inspections/summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['VehicleInspectionsController_summary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicles': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['VehiclesController_findAll'];
+    put?: never;
+    post: operations['VehiclesController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicles/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['VehiclesController_findById'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['VehiclesController_update'];
+    trace?: never;
+  };
+  '/vehicles/{id}/documents': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['VehiclesController_addDocument'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicles/{id}/documents/{documentId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['VehiclesController_updateDocument'];
+    trace?: never;
+  };
+  '/vehicles/{id}/maintenance': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['VehiclesController_addMaintenance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/vehicles/{id}/maintenance/{maintenanceId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['VehiclesController_updateMaintenance'];
+    trace?: never;
+  };
+  '/vehicles/{id}/transfer': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['VehiclesController_transfer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    ApproveDrivingSessionDto: {
+      /** @description Required manager exception until a GPS provider is integrated */
+      gps_exception_reason: string;
+    };
+    AssignLeadDto: {
+      /** @description Assignee staff user ID, or null to unassign */
+      assigneeUserId?: Record<string, never> | null;
+    };
+    AssignTestDto: {
+      available_from?: string;
+      available_until?: string;
+      group_id?: string;
+      student_id?: string;
+    };
     BatchAttendanceDto: {
       lessonId: string;
       records: components['schemas']['UpsertAttendanceDto'][];
@@ -1459,15 +3412,23 @@ export interface components {
       updated_at: string;
       view_count: number;
     };
-    BulkCreateStudentDto: {
-      branch_id?: string;
-      /** Format: binary */
-      file: string;
+    CancelExpenseDto: {
+      /** @description Version from the currently rendered expense response */
+      expected_version: number;
+      /** @example Duplicate obligation */
+      reason: string;
     };
     ChangePasswordDto: {
       currentPassword: string;
       /** @description Min 8 chars, must contain a digit and an uppercase letter */
       newPassword: string;
+    };
+    CheckLeadDuplicateDto: {
+      /**
+       * @description Phone number to check for duplicates (+998XXXXXXXXX)
+       * @example +998901234567
+       */
+      phone: string;
     };
     CheckPhonesDto: {
       /**
@@ -1477,10 +3438,27 @@ export interface components {
        */
       phones: string[];
     };
+    CheckPracticeAnswerDto: {
+      /** @enum {string} */
+      locale: 'uz' | 'ru';
+      /** @enum {string} */
+      option_key: 'A' | 'B' | 'C' | 'D';
+    };
     CompanyDetailResponse: Record<string, never>;
     CompanyResponse: Record<string, never>;
     CompanyTelegramChatResponse: {
       telegram_chat_id: string | null;
+    };
+    ConvertLeadDto: {
+      /**
+       * @description Force convert even if duplicate phone exists in active students
+       * @default false
+       */
+      force: boolean;
+    };
+    CorrectDrivingSessionDto: {
+      actual_minutes: number;
+      reason: string;
     };
     CreateBlogPostDto: {
       body_en: string;
@@ -1547,6 +3525,8 @@ export interface components {
       phone: string;
       /** @example Tashkent */
       region: string;
+      /** @example pricing/uz */
+      source?: string;
       /** @enum {string} */
       student_count?: '<50' | '50-150' | '150-300' | '300+';
     };
@@ -1558,6 +3538,21 @@ export interface components {
       /** @enum {string} */
       type:
         'driving_license' | 'medical_certificate' | 'passport_copy' | 'other';
+    };
+    CreateDrivingSessionDto: {
+      /** Format: date-time */
+      ends_at: string;
+      /** Format: uuid */
+      enrollment_id: string;
+      /**
+       * Format: uuid
+       * @description Active PRACTICE teacher in the training branch
+       */
+      instructor_id: string;
+      /** Format: date-time */
+      starts_at: string;
+      /** Format: uuid */
+      vehicle_id: string;
     };
     CreateExamDto: {
       /**
@@ -1586,6 +3581,62 @@ export interface components {
        */
       studentId: string;
     };
+    CreateExpenseDto: {
+      /**
+       * @description Positive decimal string with exactly two fractional places
+       * @example 125000.00
+       */
+      amount: string;
+      /** Format: uuid */
+      branch_id?: string | null;
+      /** @enum {string} */
+      category:
+        | 'rent'
+        | 'utilities'
+        | 'vehicle'
+        | 'marketing'
+        | 'supplies'
+        | 'administrative'
+        | 'teacher_settlement'
+        | 'other';
+      /**
+       * Format: date
+       * @example 2026-09-05
+       */
+      due_date?: Record<string, never>;
+      /**
+       * Format: date
+       * @example 2026-08-31
+       */
+      expense_date: string;
+      /**
+       * Format: uuid
+       * @description Client-generated UUID, stable for retries of this exact expense payload.
+       */
+      idempotency_key: string;
+      note?: Record<string, never> | null;
+      payee?: Record<string, never> | null;
+      /** @example Ofis ijarasi */
+      title: string;
+      /** Format: uuid */
+      vehicle_id?: Record<string, never> | null;
+    };
+    CreateExpensePaymentDto: {
+      /** @example 250000.00 */
+      amount: string;
+      /**
+       * Format: date
+       * @example 2026-08-31
+       */
+      date: string;
+      /** @description Version returned by the expense API */
+      expected_version: number;
+      /** Format: uuid */
+      idempotency_key: string;
+      note?: Record<string, never> | null;
+      /** @enum {string} */
+      payment_method: 'naqd' | 'karta' | 'perechisleniya';
+    };
     CreateGroupDto: {
       branchId: string;
       /**
@@ -1597,6 +3648,110 @@ export interface components {
       name: string;
       /** @description UUID of the teacher to assign; null clears the assignment */
       teacherId?: Record<string, never> | null;
+    };
+    CreateInspectionDto: Record<string, never>;
+    CreateLeadActivityDto: {
+      /** @description Activity body or notes */
+      body?: string;
+      /** @description Due date for TASK activity (required for TASK) */
+      dueAt?: string;
+      /**
+       * @description Manual activity kind
+       * @enum {string}
+       */
+      kind: 'NOTE' | 'CALL' | 'MESSAGE' | 'MEETING' | 'TASK';
+    };
+    CreateLeadDto: {
+      /** @description Assignee staff user ID */
+      assigneeUserId?: string;
+      /** @description Target branch ID (required for owner without assigned branch) */
+      branchId?: string;
+      /**
+       * @example B
+       * @enum {string}
+       */
+      category?:
+        | 'A1'
+        | 'A'
+        | 'B'
+        | 'BC'
+        | 'C'
+        | 'D'
+        | 'BE'
+        | 'CE'
+        | 'DE'
+        | 'TRAM'
+        | 'TROLLEYBUS';
+      /**
+       * @example avto_maktab
+       * @enum {string}
+       */
+      courseType?: 'tezkor' | 'avto_maktab';
+      /** @description Desired group ID */
+      desiredGroupId?: string;
+      /**
+       * @description Lead email address
+       * @example lead@example.uz
+       */
+      email?: string;
+      /**
+       * @description Lead first name
+       * @example Aziz
+       */
+      firstName: string;
+      landing?: string;
+      /**
+       * @description Lead last name
+       * @example Karimov
+       */
+      lastName?: string;
+      /**
+       * @description Marketing consent for funnels/broadcasts
+       * @default false
+       */
+      marketingConsent: boolean;
+      /** @description Next scheduled follow-up or task date */
+      nextStepAt?: string;
+      /** @description Initial note or comments */
+      note?: string;
+      /**
+       * @description Uzbek phone number (+998XXXXXXXXX)
+       * @example +998901234567
+       */
+      phone: string;
+      referrer?: string;
+      /** @description Referrer staff user ID */
+      referrerStaffId?: string;
+      /** @description Referrer student ID */
+      referrerStudentId?: string;
+      /**
+       * @example telegram
+       * @enum {string}
+       */
+      source:
+        | 'referral'
+        | 'instagram'
+        | 'directory_map'
+        | 'telegram'
+        | 'walk_in'
+        | 'olx'
+        | 'other';
+      /** @description Other source detail if source is other */
+      sourceOther?: string;
+      /** @description Target initial lead stage ID */
+      stageId?: string;
+      utmCampaign?: string;
+      utmContent?: string;
+      utmMedium?: string;
+      utmSource?: string;
+      utmTerm?: string;
+    };
+    CreateLeadSourceDto: {
+      /**
+       * @description Custom lead source name
+       * @example Facebook Ads
+       */
+      name: string;
     };
     CreateLessonDto: {
       /** @example 2026-06-22T09:00:00Z */
@@ -1624,7 +3779,34 @@ export interface components {
       password: string;
       phone?: string;
       /** @enum {string} */
-      role: 'dev' | 'owner' | 'manager' | 'accountant' | 'operator' | 'teacher';
+      role: 'dev' | 'owner' | 'accountant' | 'manager' | 'operator' | 'teacher';
+    };
+    CreateQuestionDto: {
+      /** @description Required for school_private; ignored for platform_public */
+      branch_id?: string;
+      /** @enum {string} */
+      correct_option_key: 'A' | 'B' | 'C' | 'D';
+      diagram_media_id?: string;
+      legal_provision?: string;
+      locales: components['schemas']['QuestionLocaleInputDto'][];
+      source_url?: string;
+      /** @description Curated platform ticket number */
+      ticket_number?: number;
+      /** @enum {string} */
+      topic:
+        | 'traffic_signs'
+        | 'road_markings'
+        | 'right_of_way'
+        | 'speed_and_distance'
+        | 'signals'
+        | 'overtaking'
+        | 'pedestrian_crossings'
+        | 'first_aid'
+        | 'vehicle_safety'
+        | 'liability'
+        | 'general_rules';
+      /** @enum {string} */
+      visibility: 'platform_public' | 'school_private';
     };
     CreateStudentDto: {
       address?: string;
@@ -1643,8 +3825,6 @@ export interface components {
       has_document?: boolean;
       initial_payment?: number;
       last_name: string;
-      /** @description Min 8 chars, must contain a digit */
-      learner_password?: string;
       /** @enum {string} */
       lead_source?:
         | 'referral'
@@ -1655,6 +3835,8 @@ export interface components {
         | 'olx'
         | 'other';
       lead_source_other?: string;
+      /** @description Min 8 chars, must contain a digit */
+      learner_password: string;
       notes?: string;
       o83?: boolean;
       passport_number?: string;
@@ -1672,6 +3854,34 @@ export interface components {
       status?: 'active' | 'completed' | 'dropped' | 'suspended';
       total_price: number;
     };
+    CreateTeacherSettlementDto: {
+      /**
+       * @description Positive decimal string with exactly two fractional places
+       * @example 125000.00
+       */
+      amount: string;
+      /**
+       * Format: date
+       * @example 2026-09-05
+       */
+      due_date?: Record<string, never>;
+      /**
+       * Format: uuid
+       * @description Client-generated UUID, stable for retries of this exact settlement payload.
+       */
+      idempotency_key: string;
+      note?: Record<string, never> | null;
+      payee?: Record<string, never> | null;
+      /**
+       * @description Calendar month as YYYY-MM; stored as the first SQL date
+       * @example 2026-08
+       */
+      period_month: string;
+      /** Format: uuid */
+      teacher_id: string;
+      /** @example O'qituvchi hisob-kitobi */
+      title: string;
+    };
     CreateTemplateDto: {
       /**
        * @description 1=Dushanba ... 7=Yakshanba
@@ -1687,6 +3897,75 @@ export interface components {
       /** @example 09:00 */
       startTime: string;
     };
+    CreateTestTemplateDto: {
+      /**
+       * @default after_submit
+       * @enum {string}
+       */
+      answer_review_timing:
+        'never' | 'immediate' | 'after_submit' | 'after_deadline';
+      available_from?: string;
+      available_until?: string;
+      /** @description Required when actor is owner without a fixed branch */
+      branch_id?: string;
+      /**
+       * @default B
+       * @enum {string}
+       */
+      category: 'B';
+      description?: string;
+      /** @description 0-100 inclusive */
+      passing_threshold_percent: number;
+      question_count: number;
+      /** @description Published question IDs available to this school */
+      question_ids: string[];
+      /**
+       * @description 0 = unlimited retries
+       * @default 1
+       */
+      retry_limit: number;
+      /** @default false */
+      shuffle_options: boolean;
+      /** @default true */
+      shuffle_questions: boolean;
+      /** @description Seconds allowed once an attempt starts */
+      time_limit_seconds: number;
+      title: string;
+    };
+    CreateTrainingEnrollmentDto: {
+      /**
+       * Format: uuid
+       * @description Optional for owner/dev; manager is fixed to own branch
+       */
+      branch_id?: string;
+      /** Format: uuid */
+      program_id: string;
+      /** Format: uuid */
+      student_id: string;
+    };
+    CreateTrainingProgramDto: {
+      /** Format: uuid */
+      branch_id: string;
+      /** @enum {string} */
+      category:
+        | 'A1'
+        | 'A'
+        | 'B'
+        | 'C'
+        | 'D'
+        | 'BE'
+        | 'CE'
+        | 'DE'
+        | 'TRAM'
+        | 'TROLLEYBUS';
+      /** Format: uuid */
+      course_id?: string;
+      /** @enum {string} */
+      course_type: 'tezkor' | 'avto_maktab';
+      name: string;
+      /** @description Internally approved practice minutes; not a government certificate */
+      required_minutes: number;
+    };
     CreateUserDto: {
       branchId?: string;
       /** @example manager@autodrive.uz */
@@ -1697,9 +3976,86 @@ export interface components {
       /** @example +998901234567 */
       phone?: string;
       /** @enum {string} */
-      role: 'dev' | 'owner' | 'manager' | 'accountant' | 'operator' | 'teacher';
+      role: 'dev' | 'owner' | 'accountant' | 'manager' | 'operator' | 'teacher';
       /** @enum {string} */
       specialization: 'THEORY' | 'PRACTICE';
+    };
+    CreateVehicleDocumentDto: {
+      /** Format: date */
+      expires_on?: Record<string, never> | null;
+      label: string;
+      reference?: string;
+      /** @enum {string} */
+      type: 'registration' | 'insurance' | 'technical_inspection' | 'other';
+    };
+    CreateVehicleDto: {
+      /**
+       * Format: uuid
+       * @description Required for owner/dev; manager uses own branch
+       */
+      branch_id?: string;
+      categories: (
+        | 'A1'
+        | 'A'
+        | 'B'
+        | 'C'
+        | 'D'
+        | 'BE'
+        | 'CE'
+        | 'DE'
+        | 'TRAM'
+        | 'TROLLEYBUS'
+      )[];
+      /**
+       * Format: uuid
+       * @description Directly assigned instructor / custodian ID
+       */
+      current_custodian_id?: Record<string, never> | null;
+      make: string;
+      manufacture_year: number;
+      model: string;
+      odometer_km?: number;
+      /** @example 01 A 123 BC */
+      plate_number: string;
+      /** @example WVWZZZ1JZXW000001 */
+      vin?: string;
+    };
+    CreateVehicleMaintenanceDto: {
+      /** Format: date-time */
+      completed_at?: Record<string, never> | null;
+      description: string;
+      next_due_odometer_km?: Record<string, never> | null;
+      /** Format: date */
+      next_due_on?: Record<string, never> | null;
+      /** Format: date-time */
+      started_at: string;
+    };
+    DeletedExpenseHistoryListItemResponse: {
+      amount: string;
+      /** Format: uuid */
+      branch_id: string | null;
+      branch_name: string | null;
+      /** @enum {string} */
+      category:
+        | 'rent'
+        | 'utilities'
+        | 'vehicle'
+        | 'marketing'
+        | 'supplies'
+        | 'administrative'
+        | 'teacher_settlement'
+        | 'other';
+      /** Format: date-time */
+      deleted_at: string;
+      /** Format: uuid */
+      id: string;
+      title: string;
+    };
+    DeleteExpenseDto: {
+      /** @description Version from the currently rendered expense response */
+      expected_version: number;
+      /** @example Created in error */
+      reason: string;
     };
     DemoRequestMinimalResponse: {
       /** Format: date-time */
@@ -1720,6 +4076,139 @@ export interface components {
       status: 'new' | 'contacted' | 'archived';
       student_count?: Record<string, never>;
     };
+    ExpenseBreakdownBranchResponse: {
+      /** Format: uuid */
+      branch_id: string;
+      /** @example Yunusobod filiali */
+      branch_name: string;
+      /** @example 125000.00 */
+      total: string;
+    };
+    ExpenseBreakdownCategoryResponse: {
+      /**
+       * @example rent
+       * @enum {string}
+       */
+      category:
+        | 'rent'
+        | 'utilities'
+        | 'vehicle'
+        | 'marketing'
+        | 'supplies'
+        | 'administrative'
+        | 'teacher_settlement'
+        | 'other';
+      /** @example 125000.00 */
+      total: string;
+    };
+    ExpenseBreakdownCompanyWideResponse: {
+      /** @example 30000.00 */
+      total: string;
+    };
+    ExpenseBreakdownResponse: {
+      by_branch: components['schemas']['ExpenseBreakdownBranchResponse'][];
+      by_category: components['schemas']['ExpenseBreakdownCategoryResponse'][];
+      company_wide: components['schemas']['ExpenseBreakdownCompanyWideResponse'];
+      /** @example 2026-09-01 */
+      from: string;
+      /** @example 2026-09-30 */
+      to: string;
+      /**
+       * @description Sum of non-deleted expense ledger amounts in the selected expense-date window, including cancelled history records.
+       * @example 155000.00
+       */
+      total: string;
+    };
+    ExpenseResponse: {
+      amount: string;
+      /** Format: uuid */
+      branch_id: string | null;
+      branch_name: string | null;
+      /** @enum {string} */
+      category:
+        | 'rent'
+        | 'utilities'
+        | 'vehicle'
+        | 'marketing'
+        | 'supplies'
+        | 'administrative'
+        | 'teacher_settlement'
+        | 'other';
+      /** Format: date-time */
+      created_at: string;
+      /** Format: uuid */
+      created_by_id: string;
+      /** Format: date */
+      due_date: string | null;
+      /** Format: date */
+      expense_date: string;
+      has_payment_history?: boolean;
+      /** Format: uuid */
+      id: string;
+      note: string | null;
+      overdue_days?: number;
+      paid_amount: string;
+      payee: string | null;
+      /**
+       * @description YYYY-MM for teacher settlements; null otherwise
+       * @example 2026-08
+       */
+      period_month: string | null;
+      remaining_amount: string;
+      /** Format: date-time */
+      reviewed_at: string | null;
+      /** Format: uuid */
+      reviewed_by_id: string | null;
+      /** @enum {string} */
+      status: 'planned' | 'partially_paid' | 'paid' | 'cancelled';
+      /** Format: uuid */
+      teacher_id: string | null;
+      title: string;
+      /** Format: date-time */
+      updated_at: string;
+      /** Format: uuid */
+      vehicle_id: string | null;
+      vehicle_plate_number: string | null;
+      version: number;
+    };
+    ExpenseTriageCountsResponse: {
+      created_yesterday: number;
+      due_today: number;
+      due_within_three_days: number;
+      overdue_1_7: number;
+      overdue_8_30: number;
+      overdue_31_plus: number;
+      pending_total: number;
+    };
+    FlagQuestionsForReReviewDto: {
+      /** @description Exact legal_provision tag stored on the draft or published version */
+      legal_provision?: string;
+      /** @description Why the matched questions must be reviewed again */
+      reason: string;
+      /** @enum {string} */
+      topic?:
+        | 'traffic_signs'
+        | 'road_markings'
+        | 'right_of_way'
+        | 'speed_and_distance'
+        | 'signals'
+        | 'overtaking'
+        | 'pedestrian_crossings'
+        | 'first_aid'
+        | 'vehicle_safety'
+        | 'liability'
+        | 'general_rules';
+    };
+    FuelCancelDto: Record<string, never>;
+    FuelDraftDto: Record<string, never>;
+    FuelEvidenceDto: Record<string, never>;
+    FuelLookupDto: Record<string, never>;
+    FuelReconciliationDto: Record<string, never>;
+    FuelReviewDto: Record<string, never>;
+    FuelStationDto: Record<string, never>;
+    FuelStationUpdateDto: Record<string, never>;
+    FuelTypesDto: Record<string, never>;
+    FuelUpdateDto: Record<string, never>;
     GenerateLessonsDto: {
       groupId?: string;
       /**
@@ -1729,25 +4218,139 @@ export interface components {
       weeks: number;
     };
     GlobalConfigResponse: Record<string, never>;
+    InspectionEvidenceDto: Record<string, never>;
+    LeadStageTransitionDto: {
+      /**
+       * @description Required if moving to LOST stage
+       * @enum {string}
+       */
+      lostReason?:
+        | 'EXPENSIVE'
+        | 'CHOSE_OTHER_SCHOOL'
+        | 'INCONVENIENT_TIME'
+        | 'CHANGED_MIND'
+        | 'NO_ANSWER'
+        | 'OTHER';
+      /** @description Required if moving to LOST stage and lostReason is OTHER */
+      lostReasonOther?: string;
+      /**
+       * @description Target Lead Stage ID
+       * @example uuid
+       */
+      stageId: string;
+      /**
+       * @description Current record version for optimistic locking
+       * @example 1
+       */
+      version?: number;
+    };
     LoginDto: {
       /** @example user@example.com */
       email: string;
       /** @example password123 */
       password: string;
     };
+    LoginLearnerDto: {
+      /** @example password1 */
+      password: string;
+      /** @example +998901234567 */
+      phone: string;
+    };
     PlatformBranchResponse: Record<string, never>;
     PlatformImpersonationResponse: Record<string, never>;
     PlatformUserResponse: Record<string, never>;
+    PracticeAnswerCheckResponse: Record<string, never>;
+    PracticeExamPresetResponse: Record<string, never>;
+    PracticeQuestionResponse: Record<string, never>;
+    PracticeTicketResponse: Record<string, never>;
+    PublishQuestionDto: {
+      /** @description Required reviewer for platform_public publish */
+      reviewer_id?: string;
+    };
+    QuestionLocaleInputDto: {
+      explanation: string;
+      /** @enum {string} */
+      locale: 'uz' | 'ru' | 'en';
+      options: components['schemas']['QuestionOptionInputDto'][];
+      stem: string;
+    };
+    QuestionMediaResponse: Record<string, never>;
+    QuestionOptionInputDto: {
+      /** @enum {string} */
+      option_key: 'A' | 'B' | 'C' | 'D';
+      text: string;
+    };
+    QuestionResponse: Record<string, never>;
+    ReasonDrivingSessionDto: {
+      reason: string;
+    };
     ResetPasswordDto: {
       /** @description Min 8 chars, must contain a digit and an uppercase letter */
       password: string;
+    };
+    ResolveVehicleDefectDto: Record<string, never>;
+    ReviewExpenseItemDto: {
+      expected_version: number;
+      /** Format: uuid */
+      id: string;
+    };
+    ReviewExpensesDto: {
+      items: components['schemas']['ReviewExpenseItemDto'][];
+    };
+    ReviewInspectionDto: Record<string, never>;
+    SaveAttemptAnswerDto: {
+      item_id: string;
+      /** @enum {string} */
+      selected_option_key: 'A' | 'B' | 'C' | 'D';
+    };
+    SaveAttemptAnswersDto: {
+      answers: components['schemas']['SaveAttemptAnswerDto'][];
+    };
+    SavePracticeAnswersDto: {
+      answers: components['schemas']['SaveAttemptAnswerDto'][];
+      /** @description Opaque guest token returned by POST /tests/practice/start */
+      guest_token: string;
     };
     SetDailyReportDto: {
       /** @description Enable/disable the daily report push */
       enabled: boolean;
     };
+    SetExpenseDigestDto: {
+      /** @description Enable/disable expense digest delivery */
+      enabled: boolean;
+    };
+    StartAssignmentAttemptDto: {
+      /**
+       * @default uz
+       * @enum {string}
+       */
+      locale: 'uz' | 'ru' | 'en';
+    };
+    StartPracticeAttemptDto: {
+      /**
+       * @default B
+       * @enum {string}
+       */
+      category: 'B';
+      /**
+       * @default uz
+       * @enum {string}
+       */
+      locale: 'uz' | 'ru' | 'en';
+    };
+    SubmitDrivingSessionDto: {
+      actual_minutes: number;
+    };
+    SubmitInspectionDto: Record<string, never>;
+    SubmitPracticeAttemptDto: {
+      /** @description Opaque guest token returned by POST /tests/practice/start */
+      guest_token: string;
+    };
     TelegramLinkStatusResponse: {
       daily_report_enabled: boolean;
+      expense_digest_enabled: boolean;
+      /** Format: date-time */
+      expense_digest_snoozed_until: string | null;
       linked: boolean;
     };
     TelegramLinkTokenResponse: {
@@ -1756,6 +4359,14 @@ export interface components {
        * @example https://t.me/AutoMaktabBot?start=3f9c1e2a-...
        */
       deep_link: string;
+    };
+    TestAssignmentResponse: Record<string, never>;
+    TestAttemptResponse: Record<string, never>;
+    TestTemplateResponse: Record<string, never>;
+    TransferVehicleDto: {
+      reason: string;
+      /** Format: uuid */
+      to_branch_id: string;
     };
     UpdateBlogPostDto: {
       body_en?: string;
@@ -1831,6 +4442,53 @@ export interface components {
       type?:
         'driving_license' | 'medical_certificate' | 'passport_copy' | 'other';
     };
+    UpdateExpenseDto: {
+      /**
+       * @description Positive decimal string with exactly two fractional places
+       * @example 125000.00
+       */
+      amount?: string;
+      /** Format: uuid */
+      branch_id?: Record<string, never> | null;
+      /** @enum {string} */
+      category?:
+        | 'rent'
+        | 'utilities'
+        | 'vehicle'
+        | 'marketing'
+        | 'supplies'
+        | 'administrative'
+        | 'teacher_settlement'
+        | 'other';
+      /**
+       * Format: date
+       * @example 2026-09-05
+       */
+      due_date?: Record<string, never> | null;
+      /** @description Version from the currently rendered expense response */
+      expected_version: number;
+      /**
+       * Format: date
+       * @example 2026-08-31
+       */
+      expense_date?: string;
+      note?: Record<string, never> | null;
+      payee?: Record<string, never> | null;
+      /**
+       * @description Teacher settlement only. Calendar month as YYYY-MM; expense_date follows day 1.
+       * @example 2026-08
+       */
+      period_month?: string;
+      /**
+       * Format: uuid
+       * @description Teacher settlement only. Branch is derived from the selected teacher.
+       */
+      teacher_id?: string;
+      /** @example Ofis ijarasi */
+      title?: string;
+      /** Format: uuid */
+      vehicle_id?: Record<string, never> | null;
+    };
     UpdateGlobalConfigDto: {
       /**
        * @example [
@@ -1859,6 +4517,106 @@ export interface components {
       /** @description UUID of the teacher to assign; null clears the assignment */
       teacherId?: Record<string, never> | null;
     };
+    UpdateInspectionDto: Record<string, never>;
+    UpdateLeadActivityDto: {
+      /** @description Updated activity body */
+      body?: string;
+      /** @description Completion date for TASK activity, or null to unmark completed */
+      doneAt?: Record<string, never> | null;
+    };
+    UpdateLeadDto: {
+      assigneeUserId?: string;
+      /** @enum {string} */
+      category?:
+        | 'A1'
+        | 'A'
+        | 'B'
+        | 'BC'
+        | 'C'
+        | 'D'
+        | 'BE'
+        | 'CE'
+        | 'DE'
+        | 'TRAM'
+        | 'TROLLEYBUS';
+      /** @enum {string} */
+      courseType?: 'tezkor' | 'avto_maktab';
+      desiredGroupId?: string;
+      /** @description Lead email address */
+      email?: string;
+      /**
+       * @description Lead first name
+       * @example Aziz
+       */
+      firstName?: string;
+      landing?: string;
+      /**
+       * @description Lead last name
+       * @example Karimov
+       */
+      lastName?: string;
+      marketingConsent?: boolean;
+      nextStepAt?: string;
+      note?: string;
+      /**
+       * @description Uzbek phone number (+998XXXXXXXXX)
+       * @example +998901234567
+       */
+      phone?: string;
+      referrer?: string;
+      referrerStaffId?: string;
+      referrerStudentId?: string;
+      /** @enum {string} */
+      source?:
+        | 'referral'
+        | 'instagram'
+        | 'directory_map'
+        | 'telegram'
+        | 'walk_in'
+        | 'olx'
+        | 'other';
+      sourceOther?: string;
+      utmCampaign?: string;
+      utmContent?: string;
+      utmMedium?: string;
+      utmSource?: string;
+      utmTerm?: string;
+      /**
+       * @description Current record version for optimistic locking
+       * @example 1
+       */
+      version: number;
+    };
+    UpdateLeadStageItemDto: {
+      /**
+       * @description Stage color hex
+       * @example #F59E0B
+       */
+      color: string;
+      /** @description Stage UUID if updating an existing stage */
+      id?: string;
+      /**
+       * @description Active status
+       * @default true
+       */
+      isActive: boolean;
+      /**
+       * @description Stage display name
+       * @example Bog‘lanildi
+       */
+      name: string;
+      /**
+       * @description Display position
+       * @example 1
+       */
+      position: number;
+    };
+    UpdateLeadStagesDto: {
+      /** @description Target stage ID to move open leads into if a stage is being deactivated */
+      moveToStageId?: string;
+      /** @description Array of WORK stages (≤8 active stages) */
+      stages: components['schemas']['UpdateLeadStageItemDto'][];
+    };
     UpdateLessonDto: {
       /** @example 2026-06-22T09:00:00Z */
       date?: string;
@@ -1880,7 +4638,29 @@ export interface components {
       phone?: string;
       /** @enum {string} */
       role?:
-        'dev' | 'owner' | 'manager' | 'accountant' | 'operator' | 'teacher';
+        'dev' | 'owner' | 'accountant' | 'manager' | 'operator' | 'teacher';
+    };
+    UpdateQuestionDraftDto: {
+      /** @enum {string} */
+      correct_option_key?: 'A' | 'B' | 'C' | 'D';
+      diagram_media_id?: Record<string, never>;
+      legal_provision?: Record<string, never>;
+      locales?: components['schemas']['QuestionLocaleInputDto'][];
+      source_url?: Record<string, never>;
+      ticket_number?: Record<string, never> | null;
+      /** @enum {string} */
+      topic?:
+        | 'traffic_signs'
+        | 'road_markings'
+        | 'right_of_way'
+        | 'speed_and_distance'
+        | 'signals'
+        | 'overtaking'
+        | 'pedestrian_crossings'
+        | 'first_aid'
+        | 'vehicle_safety'
+        | 'liability'
+        | 'general_rules';
     };
     UpdateStudentDto: {
       address?: string;
@@ -1948,6 +4728,28 @@ export interface components {
       /** @example 09:00 */
       startTime?: string;
     };
+    UpdateTestTemplateDto: {
+      /** @enum {string} */
+      answer_review_timing?:
+        'never' | 'immediate' | 'after_submit' | 'after_deadline';
+      available_from?: Record<string, never>;
+      available_until?: Record<string, never>;
+      description?: string;
+      passing_threshold_percent?: number;
+      question_count?: number;
+      question_ids?: string[];
+      retry_limit?: number;
+      shuffle_options?: boolean;
+      shuffle_questions?: boolean;
+      time_limit_seconds?: number;
+      title?: string;
+    };
+    UpdateTrainingProgramDto: {
+      is_active?: boolean;
+      name?: string;
+      /** @description Internally approved practice minutes; not a government certificate */
+      required_minutes?: number;
+    };
     UpdateUserDto: {
       branchId?: string;
       fullName?: string;
@@ -1955,12 +4757,69 @@ export interface components {
       /** @enum {string} */
       specialization?: 'THEORY' | 'PRACTICE';
     };
+    UpdateVehicleDocumentDto: {
+      /** Format: date */
+      expires_on?: Record<string, never> | null;
+      label?: string;
+      reference?: string;
+      /** @enum {string} */
+      type?: 'registration' | 'insurance' | 'technical_inspection' | 'other';
+    };
+    UpdateVehicleDto: {
+      categories?: (
+        | 'A1'
+        | 'A'
+        | 'B'
+        | 'C'
+        | 'D'
+        | 'BE'
+        | 'CE'
+        | 'DE'
+        | 'TRAM'
+        | 'TROLLEYBUS'
+      )[];
+      /**
+       * Format: uuid
+       * @description Directly assigned instructor / custodian ID
+       */
+      current_custodian_id?: Record<string, never> | null;
+      make?: string;
+      manufacture_year?: number;
+      model?: string;
+      odometer_km?: number;
+      /** @example 01 A 123 BC */
+      plate_number?: string;
+      /** @enum {string} */
+      status?: 'active' | 'out_of_service' | 'retired';
+      /** @example WVWZZZ1JZXW000001 */
+      vin?: string;
+    };
+    UpdateVehicleMaintenanceDto: {
+      /** Format: date-time */
+      completed_at?: Record<string, never> | null;
+      description?: string;
+      next_due_odometer_km?: Record<string, never> | null;
+      /** Format: date */
+      next_due_on?: Record<string, never> | null;
+      /** Format: date-time */
+      started_at?: string;
+    };
     UpsertAttendanceDto: {
       lessonId: string;
       notes?: string;
       /** @enum {string} */
       status: 'present' | 'absent' | 'late' | 'excused';
       studentId: string;
+    };
+    UpsertLearnerAccountDto: {
+      /** @description Min 8 chars, must contain a digit */
+      password: string;
+    };
+    VoidExpensePaymentDto: {
+      /** @description Version returned by the expense API */
+      expected_version: number;
+      /** @example Duplicate payment recorded in error */
+      reason: string;
     };
   };
   responses: never;
@@ -2035,21 +4894,24 @@ export interface operations {
   };
   AuditController_findAll: {
     parameters: {
-      query: {
-        action: string;
+      query?: {
+        action?: string;
         /** @description dev only — view-as company */
         company_id?: string;
-        end_date: string;
-        endDate: string;
-        entity: string;
+        end_date?: string;
+        /** @deprecated */
+        endDate?: string;
+        entity?: string;
         /** @description Filter to audit logs for a single entity id */
         entity_id?: string;
-        limit: string;
-        page: string;
-        start_date: string;
-        startDate: string;
-        user_id: string;
-        userId: string;
+        limit?: number;
+        page?: number;
+        start_date?: string;
+        /** @deprecated */
+        startDate?: string;
+        user_id?: string;
+        /** @deprecated */
+        userId?: string;
       };
       header?: never;
       path?: never;
@@ -2105,6 +4967,23 @@ export interface operations {
       };
     };
   };
+  AuthController_demo: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   AuthController_login: {
     parameters: {
       query?: never;
@@ -2144,6 +5023,23 @@ export interface operations {
     };
   };
   AuthController_me: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AuthController_completeCrmTour: {
     parameters: {
       query?: never;
       header?: never;
@@ -2592,7 +5488,7 @@ export interface operations {
         branch_id?: string;
         /** @description dev only — view-as company */
         company_id?: string;
-        course_type?: string;
+        course_type?: 'tezkor' | 'avto_maktab';
       };
       header?: never;
       path?: never;
@@ -2617,6 +5513,57 @@ export interface operations {
         course_type?: 'tezkor' | 'avto_maktab';
         from?: string;
         granularity?: 'day' | 'week';
+        to?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DashboardController_getExpenseBreakdown: {
+    parameters: {
+      query?: {
+        branch_id?: string;
+        /** @description Inclusive Tashkent calendar start date (YYYY-MM-DD) */
+        from?: string;
+        /** @description Inclusive Tashkent calendar end date (YYYY-MM-DD) */
+        to?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['ExpenseBreakdownResponse'];
+            success: boolean;
+          };
+        };
+      };
+    };
+  };
+  DashboardController_getFinanceSummary: {
+    parameters: {
+      query?: {
+        branch_id?: string;
+        /** @description Inclusive Tashkent calendar start date (YYYY-MM-DD) */
+        from?: string;
+        /** @description Inclusive Tashkent calendar end date (YYYY-MM-DD) */
         to?: string;
       };
       header?: never;
@@ -2810,6 +5757,209 @@ export interface operations {
       };
     };
   };
+  DrivingSessionsController_findAll: {
+    parameters: {
+      query?: {
+        branch_id?: string;
+        enrollment_id?: string;
+        from?: string;
+        instructor_id?: string;
+        limit?: number;
+        page?: number;
+        status?:
+          'planned' | 'submitted' | 'approved' | 'rejected' | 'cancelled';
+        student_id?: string;
+        to?: string;
+        vehicle_id?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DrivingSessionsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateDrivingSessionDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DrivingSessionsController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DrivingSessionsController_approve: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ApproveDrivingSessionDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DrivingSessionsController_cancel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReasonDrivingSessionDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DrivingSessionsController_correct: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CorrectDrivingSessionDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DrivingSessionsController_reject: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReasonDrivingSessionDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DrivingSessionsController_submit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SubmitDrivingSessionDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DrivingSessionsController_summary: {
+    parameters: {
+      query: {
+        enrollment_id: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   ExamsController_create: {
     parameters: {
       query?: never;
@@ -2843,6 +5993,499 @@ export interface operations {
     requestBody?: never;
     responses: {
       200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ExpensesController_findAll: {
+    parameters: {
+      query?: {
+        attention?: 'overdue';
+        branch_id?: string;
+        category?:
+          | 'rent'
+          | 'utilities'
+          | 'vehicle'
+          | 'marketing'
+          | 'supplies'
+          | 'administrative'
+          | 'teacher_settlement'
+          | 'other';
+        date_from?: string;
+        date_to?: string;
+        limit?: number;
+        page?: number;
+        scope?: 'company';
+        search?: string;
+        status?: 'planned' | 'partially_paid' | 'paid' | 'cancelled';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ExpensesController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateExpenseDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ExpensesController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ExpensesController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteExpenseDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ExpensesController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateExpenseDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ExpensesController_cancel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelExpenseDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ExpensesController_getHistory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ExpensesController_recordPayment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateExpensePaymentDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ExpensesController_voidPayment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        paymentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['VoidExpensePaymentDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ExpensesController_getBranchOptions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ExpensesController_listDeletedHistory: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+        search?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              data: components['schemas']['DeletedExpenseHistoryListItemResponse'][];
+              meta: Record<string, never>;
+            };
+            success: boolean;
+          };
+        };
+      };
+    };
+  };
+  ExpensesController_exportMonthClose: {
+    parameters: {
+      query: {
+        branch_id?: string;
+        month: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ExpensesController_review: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReviewExpensesDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['ExpenseResponse'][];
+            success: boolean;
+          };
+        };
+      };
+    };
+  };
+  ExpensesController_getTeacherOptions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ExpensesController_getTriageCounts: {
+    parameters: {
+      query?: {
+        branch_id?: string;
+        /** @description scope=company returns company-wide branchless expenses (branch_id IS NULL) for finance roles only; omit it to include all company rows for owner/accountant. */
+        scope?: 'company';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['ExpenseTriageCountsResponse'];
+            success: boolean;
+          };
+        };
+      };
+    };
+  };
+  ExpensesController_getVehicleOptions: {
+    parameters: {
+      query: {
+        branch_id: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  FuelStationsController_list: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  FuelStationsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FuelStationDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  FuelStationsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FuelStationUpdateDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  FuelStationsController_balance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  FuelStationsController_reconciliations: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  FuelStationsController_reconcile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FuelReconciliationDto'];
+      };
+    };
+    responses: {
+      201: {
         headers: {
           [name: string]: unknown;
         };
@@ -3014,11 +6657,735 @@ export interface operations {
       };
     };
   };
+  LeadSourcesController_findAll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadSourcesController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateLeadSourceDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadSourcesController_delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadStagesController_findAll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadStagesController_updateStages: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateLeadStagesDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_findAll: {
+    parameters: {
+      query?: {
+        /** @description Assignee user ID */
+        assigneeId?: string;
+        /** @description Branch ID */
+        branchId?: string;
+        category?:
+          | 'A1'
+          | 'A'
+          | 'B'
+          | 'BC'
+          | 'C'
+          | 'D'
+          | 'BE'
+          | 'CE'
+          | 'DE'
+          | 'TRAM'
+          | 'TROLLEYBUS';
+        courseType?: 'tezkor' | 'avto_maktab';
+        limit?: number;
+        /** @description Filter only leads assigned to current user */
+        mine?: boolean;
+        /** @description Filter only leads with overdue nextStepAt */
+        overdueOnly?: boolean;
+        page?: number;
+        period?: '7d' | '30d' | '60d' | 'all';
+        /** @description Search term for name or phone */
+        q?: string;
+        source?:
+          | 'referral'
+          | 'instagram'
+          | 'directory_map'
+          | 'telegram'
+          | 'walk_in'
+          | 'olx'
+          | 'other';
+        /** @description Stage ID */
+        stageId?: string;
+        tab?: 'new' | 'in_progress' | 'won' | 'lost' | 'all';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateLeadDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_findById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateLeadDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_getActivities: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_createActivity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateLeadActivityDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_deleteActivity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        aid: string;
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_updateActivity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        aid: string;
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateLeadActivityDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_assign: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AssignLeadDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_assignPatch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AssignLeadDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_convert: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ConvertLeadDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_transitionStage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LeadStageTransitionDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_transitionStagePatch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LeadStageTransitionDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_getBoard: {
+    parameters: {
+      query?: {
+        /** @description Assignee user ID */
+        assigneeId?: string;
+        /** @description Branch ID */
+        branchId?: string;
+        category?:
+          | 'A1'
+          | 'A'
+          | 'B'
+          | 'BC'
+          | 'C'
+          | 'D'
+          | 'BE'
+          | 'CE'
+          | 'DE'
+          | 'TRAM'
+          | 'TROLLEYBUS';
+        courseType?: 'tezkor' | 'avto_maktab';
+        limit?: number;
+        /** @description Filter only leads assigned to current user */
+        mine?: boolean;
+        /** @description Filter only leads with overdue nextStepAt */
+        overdueOnly?: boolean;
+        page?: number;
+        period?: '7d' | '30d' | '60d' | 'all';
+        /** @description Search term for name or phone */
+        q?: string;
+        source?:
+          | 'referral'
+          | 'instagram'
+          | 'directory_map'
+          | 'telegram'
+          | 'walk_in'
+          | 'olx'
+          | 'other';
+        /** @description Stage ID */
+        stageId?: string;
+        tab?: 'new' | 'in_progress' | 'won' | 'lost' | 'all';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_checkDuplicateGet: {
+    parameters: {
+      query: {
+        /** @description Phone number to check for duplicates (+998XXXXXXXXX) */
+        phone: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_checkDuplicate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckLeadDuplicateDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_exportLeads: {
+    parameters: {
+      query?: {
+        /** @description Assignee user ID */
+        assigneeId?: string;
+        /** @description Branch ID */
+        branchId?: string;
+        category?:
+          | 'A1'
+          | 'A'
+          | 'B'
+          | 'BC'
+          | 'C'
+          | 'D'
+          | 'BE'
+          | 'CE'
+          | 'DE'
+          | 'TRAM'
+          | 'TROLLEYBUS';
+        courseType?: 'tezkor' | 'avto_maktab';
+        limit?: number;
+        /** @description Filter only leads assigned to current user */
+        mine?: boolean;
+        /** @description Filter only leads with overdue nextStepAt */
+        overdueOnly?: boolean;
+        page?: number;
+        period?: '7d' | '30d' | '60d' | 'all';
+        /** @description Search term for name or phone */
+        q?: string;
+        source?:
+          | 'referral'
+          | 'instagram'
+          | 'directory_map'
+          | 'telegram'
+          | 'walk_in'
+          | 'olx'
+          | 'other';
+        /** @description Stage ID */
+        stageId?: string;
+        tab?: 'new' | 'in_progress' | 'won' | 'lost' | 'all';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LeadsController_getMetrics: {
+    parameters: {
+      query?: {
+        /** @description Filter metrics by branch ID */
+        branchId?: string;
+        period?: '7d' | '30d' | '60d' | 'all';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LearnerProgressController_listAssignments: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LearnerController_login: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LoginLearnerDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LearnerController_logout: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LearnerController_me: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LearnerProgressController_listTopics: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LearnerProgressController_listResults: {
+    parameters: {
+      query?: {
+        /** @description Omit to include this learner’s school attempts and their own public practice. Guest practice without this learner id is never listed. */
+        kind?: 'public_practice' | 'school_assignment';
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   AttendanceController_findAll: {
     parameters: {
       query?: {
         limit?: number;
         page?: number;
+        /** @description Search lesson title, group name, or type */
+        search?: string;
       };
       header?: never;
       path?: never;
@@ -3260,8 +7627,8 @@ export interface operations {
   };
   PaymentsController_getSnapshot: {
     parameters: {
-      query: {
-        branch_id: string;
+      query?: {
+        branch_id?: string;
         /** @description dev only — view-as company */
         company_id?: string;
       };
@@ -3558,7 +7925,7 @@ export interface operations {
         limit?: number;
         page?: number;
         role?:
-          'dev' | 'owner' | 'manager' | 'accountant' | 'operator' | 'teacher';
+          'dev' | 'owner' | 'accountant' | 'manager' | 'operator' | 'teacher';
         /** @description Matches name, email, or phone (case-insensitive) */
         search?: string;
       };
@@ -3948,7 +8315,7 @@ export interface operations {
         limit?: number;
         page?: number;
         role?:
-          'dev' | 'owner' | 'manager' | 'accountant' | 'operator' | 'teacher';
+          'dev' | 'owner' | 'accountant' | 'manager' | 'operator' | 'teacher';
         /** @description Matches name, email, or phone (case-insensitive) */
         search?: string;
       };
@@ -4047,6 +8414,404 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['ResetPasswordDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  QuestionsController_findAll: {
+    parameters: {
+      query?: {
+        branch_id?: string;
+        company_id?: string;
+        limit?: number;
+        page?: number;
+        status?: 'draft' | 'in_review' | 'published' | 'retired' | 'disputed';
+        topic?:
+          | 'traffic_signs'
+          | 'road_markings'
+          | 'right_of_way'
+          | 'speed_and_distance'
+          | 'signals'
+          | 'overtaking'
+          | 'pedestrian_crossings'
+          | 'first_aid'
+          | 'vehicle_safety'
+          | 'liability'
+          | 'general_rules';
+        visibility?: 'platform_public' | 'school_private';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  QuestionsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateQuestionDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuestionResponse'];
+        };
+      };
+    };
+  };
+  QuestionsController_findById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuestionResponse'];
+        };
+      };
+    };
+  };
+  QuestionsController_updateDraft: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateQuestionDraftDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  QuestionsController_dispute: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  QuestionsController_uploadMedia: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'multipart/form-data': {
+          alt_text: string;
+          /** Format: binary */
+          file: string;
+          /** @enum {string} */
+          rights_basis: 'original' | 'licensed' | 'public_domain';
+          rights_confirmed: boolean;
+          rights_holder: string;
+        };
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuestionMediaResponse'];
+        };
+      };
+    };
+  };
+  QuestionsController_getMedia: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        mediaId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  QuestionsController_publish: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PublishQuestionDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  QuestionsController_retire: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  QuestionsController_listAvailableForNewTests: {
+    parameters: {
+      query?: {
+        limit?: number;
+        locale?: 'uz' | 'ru' | 'en';
+        page?: number;
+        ticket?: number;
+        topic?:
+          | 'traffic_signs'
+          | 'road_markings'
+          | 'right_of_way'
+          | 'speed_and_distance'
+          | 'signals'
+          | 'overtaking'
+          | 'pedestrian_crossings'
+          | 'first_aid'
+          | 'vehicle_safety'
+          | 'liability'
+          | 'general_rules';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  QuestionsController_listPractice: {
+    parameters: {
+      query?: {
+        limit?: number;
+        locale?: 'uz' | 'ru' | 'en';
+        page?: number;
+        ticket?: number;
+        topic?:
+          | 'traffic_signs'
+          | 'road_markings'
+          | 'right_of_way'
+          | 'speed_and_distance'
+          | 'signals'
+          | 'overtaking'
+          | 'pedestrian_crossings'
+          | 'first_aid'
+          | 'vehicle_safety'
+          | 'liability'
+          | 'general_rules';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PracticeQuestionResponse'][];
+        };
+      };
+    };
+  };
+  QuestionsController_getPracticeQuestion: {
+    parameters: {
+      query?: {
+        locale?: 'uz' | 'ru';
+      };
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PracticeQuestionResponse'];
+        };
+      };
+    };
+  };
+  QuestionsController_checkPracticeAnswer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckPracticeAnswerDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PracticeAnswerCheckResponse'];
+        };
+      };
+    };
+  };
+  QuestionsController_getPracticeMedia: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        mediaId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  QuestionsController_listPracticeTickets: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PracticeTicketResponse'][];
+        };
+      };
+    };
+  };
+  QuestionsController_flagForReReview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FlagQuestionsForReReviewDto'];
       };
     };
     responses: {
@@ -4329,6 +9094,29 @@ export interface operations {
       };
     };
   };
+  StudentsController_upsertLearnerAccount: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpsertLearnerAccountDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   StudentsController_restore: {
     parameters: {
       query?: never;
@@ -4358,7 +9146,12 @@ export interface operations {
     /** @description CSV file containing students */
     requestBody: {
       content: {
-        'multipart/form-data': components['schemas']['BulkCreateStudentDto'];
+        'multipart/form-data': {
+          /** Format: uuid */
+          branch_id?: string;
+          /** Format: binary */
+          file: string;
+        };
       };
     };
     responses: {
@@ -4410,6 +9203,66 @@ export interface operations {
       };
     };
   };
+  TeacherSettlementsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateTeacherSettlementDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TeacherSettlementsController_listMine: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TeacherSettlementsController_findMine: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   TelegramController_setDailyReport: {
     parameters: {
       query?: never;
@@ -4424,6 +9277,44 @@ export interface operations {
     };
     responses: {
       200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TelegramController_setExpenseDigest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetExpenseDigestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TelegramController_snoozeExpenseDigest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      201: {
         headers: {
           [name: string]: unknown;
         };
@@ -4486,6 +9377,573 @@ export interface operations {
       };
     };
   };
+  TestAttemptsController_startAssignment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        assignmentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StartAssignmentAttemptDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestAttemptsController_getLearnerAttempt: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestAttemptsController_saveLearnerAnswers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SaveAttemptAnswersDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestAttemptsController_submitLearner: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestOutcomesController_list: {
+    parameters: {
+      query?: {
+        /** @description Limit to one group inside the actor’s tenant scope */
+        group_id?: string;
+        limit?: number;
+        page?: number;
+        status?: 'in_progress' | 'submitted' | 'timed_out';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestOutcomesController_listGroups: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestOutcomesController_listTopics: {
+    parameters: {
+      query?: {
+        group_id?: string;
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestAttemptsController_getPracticeAttempt: {
+    parameters: {
+      query: {
+        /** @description Opaque guest token returned by POST /tests/practice/start */
+        guest_token: string;
+      };
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestAttemptsController_savePracticeAnswers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SavePracticeAnswersDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestAttemptsController_submitPractice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SubmitPracticeAttemptDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestAttemptsController_getPreset: {
+    parameters: {
+      query: {
+        category: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PracticeExamPresetResponse'];
+        };
+      };
+    };
+  };
+  TestAttemptsController_startPractice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StartPracticeAttemptDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TestAttemptResponse'];
+        };
+      };
+    };
+  };
+  TestTemplatesController_findAll: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestTemplatesController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateTestTemplateDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TestTemplateResponse'];
+        };
+      };
+    };
+  };
+  TestTemplatesController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestTemplatesController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateTestTemplateDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestTemplatesController_listAssignments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TestTemplatesController_assign: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AssignTestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TestAssignmentResponse'];
+        };
+      };
+    };
+  };
+  TestTemplatesController_publish: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TrainingEnrollmentsController_findAll: {
+    parameters: {
+      query?: {
+        branch_id?: string;
+        limit?: number;
+        page?: number;
+        status?: 'legacy' | 'active' | 'completed' | 'cancelled';
+        student_id?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TrainingEnrollmentsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateTrainingEnrollmentDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TrainingEnrollmentsController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TrainingProgramsController_findAll: {
+    parameters: {
+      query?: {
+        branch_id?: string;
+        category?:
+          | 'A1'
+          | 'A'
+          | 'B'
+          | 'C'
+          | 'D'
+          | 'BE'
+          | 'CE'
+          | 'DE'
+          | 'TRAM'
+          | 'TROLLEYBUS';
+        is_active?: boolean;
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TrainingProgramsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateTrainingProgramDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TrainingProgramsController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TrainingProgramsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateTrainingProgramDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   UsersController_findAll: {
     parameters: {
       query?: {
@@ -4503,7 +9961,7 @@ export interface operations {
         limit?: number;
         page?: number;
         role?:
-          'dev' | 'owner' | 'manager' | 'accountant' | 'operator' | 'teacher';
+          'dev' | 'owner' | 'accountant' | 'manager' | 'operator' | 'teacher';
         search?: string;
       };
       header?: never;
@@ -4652,6 +10110,746 @@ export interface operations {
     requestBody?: never;
     responses: {
       200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleDefectsController_list: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleDefectsController_evidence: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleDefectsController_resolve: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ResolveVehicleDefectDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleFuelController_list: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleFuelController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FuelDraftDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleFuelController_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleFuelController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FuelUpdateDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleFuelController_cancel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FuelCancelDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleFuelController_upload: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FuelEvidenceDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleFuelController_download: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        evidenceId: string;
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleFuelController_review: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FuelReviewDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleFuelController_submit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleFuelController_lookup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FuelLookupDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleFuelController_types: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FuelTypesDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleFuelController_vehicles: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleInspectionsController_list: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleInspectionsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateInspectionDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleInspectionsController_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleInspectionsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateInspectionDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleInspectionsController_upload: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InspectionEvidenceDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleInspectionsController_download: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        evidenceId: string;
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleInspectionsController_review: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReviewInspectionDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleInspectionsController_submit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SubmitInspectionDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleInspectionsController_receivers: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehicleInspectionsController_summary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehiclesController_findAll: {
+    parameters: {
+      query?: {
+        branch_id?: string;
+        category?:
+          | 'A1'
+          | 'A'
+          | 'B'
+          | 'C'
+          | 'D'
+          | 'BE'
+          | 'CE'
+          | 'DE'
+          | 'TRAM'
+          | 'TROLLEYBUS';
+        limit?: number;
+        page?: number;
+        search?: string;
+        status?: 'active' | 'out_of_service' | 'retired';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehiclesController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateVehicleDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehiclesController_findById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehiclesController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateVehicleDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehiclesController_addDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateVehicleDocumentDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehiclesController_updateDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        documentId: string;
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateVehicleDocumentDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehiclesController_addMaintenance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateVehicleMaintenanceDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehiclesController_updateMaintenance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        maintenanceId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateVehicleMaintenanceDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  VehiclesController_transfer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TransferVehicleDto'];
+      };
+    };
+    responses: {
+      201: {
         headers: {
           [name: string]: unknown;
         };

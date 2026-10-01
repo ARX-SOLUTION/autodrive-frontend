@@ -6,7 +6,8 @@ import { User } from '@/features/staff/types';
 
 // Regression test for the auth-expiry coordinator (autodrive-6cq.8, AC "D"):
 // a 401 on a protected endpoint must trigger logout()+queryClient.clear(),
-// while a 401 on /auth/login or /auth/me (SKIP_LOGOUT_ON_401) must NOT --
+// while a 401 on /auth/login, /auth/demo, or /auth/me (SKIP_LOGOUT_ON_401)
+// must NOT --
 // see axiosInstance.ts's response interceptor.
 const user: User = { id: 'u1', email: 'o@x.com', role: 'owner' };
 
@@ -43,6 +44,18 @@ describe('axiosInstance 401 interceptor', () => {
       reject401(config.url ?? '/auth/login');
 
     await expect(axiosInstance.post('/auth/login', {})).rejects.toBeTruthy();
+
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(queryClient.getQueryData(['tenant-data'])).toEqual({
+      leaked: true,
+    });
+  });
+
+  it('does not log out on a /auth/demo 401 (demo retry handles it)', async () => {
+    axiosInstance.defaults.adapter = async (config) =>
+      reject401(config.url ?? '/auth/demo');
+
+    await expect(axiosInstance.post('/auth/demo')).rejects.toBeTruthy();
 
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
     expect(queryClient.getQueryData(['tenant-data'])).toEqual({

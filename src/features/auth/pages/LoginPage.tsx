@@ -18,7 +18,6 @@ import type { AuthResponse } from '@/features/staff/types';
 import { getDefaultAuthenticatedRoute } from '@/lib/defaultAuthenticatedRoute';
 import {
   DEMO_LOGIN_EMAIL,
-  getDemoLoginPassword,
   isOneClickDemoLoginEnabled,
 } from '@/lib/demoSession';
 import { getLoginCopy, readLoginLang } from '@/features/auth/lib/loginCopy';
@@ -159,26 +158,22 @@ const LoginPage = () => {
         return;
       }
 
-      const demoPassword = getDemoLoginPassword();
       setDemoIntentFailed(false);
       setFormError(null);
       setFieldErrors({});
       setEmail(DEMO_LOGIN_EMAIL);
       setPassword('');
       warmApiConnection();
-      login.mutate(
-        { email: DEMO_LOGIN_EMAIL, password: demoPassword },
-        {
-          onSuccess,
-          onError: (error) => {
-            if (automatic) {
-              setDemoIntentFailed(true);
-              return;
-            }
-            handleError(error);
-          },
+      login.mutate(undefined, {
+        onSuccess,
+        onError: (error) => {
+          if (automatic) {
+            setDemoIntentFailed(true);
+            return;
+          }
+          handleError(error);
         },
-      );
+      });
     },
     [fillDemoEmail, handleError, login, onSuccess, warmApiConnection],
   );

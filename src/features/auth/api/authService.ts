@@ -27,9 +27,9 @@ export const useLogin = () => {
   const queryClient = useQueryClient();
   const setAuth = useAuthStore((s) => s.setAuth);
   return useMutation({
-    mutationFn: async (creds: LoginRequest) => {
-      const { loginRequest } = await loadAuthApi();
-      return loginRequest(creds);
+    mutationFn: async (creds?: LoginRequest) => {
+      const { demoLoginRequest, loginRequest } = await loadAuthApi();
+      return creds ? loginRequest(creds) : demoLoginRequest();
     },
     onSuccess: (data) => {
       setAuth(data.token, data.user);
