@@ -28,12 +28,21 @@ const Command = React.forwardRef<
 ));
 Command.displayName = CommandPrimitive.displayName;
 
-type CommandDialogProps = DialogProps;
+type CommandDialogProps = DialogProps & {
+  contentProps?: React.ComponentPropsWithoutRef<typeof DialogContent>;
+};
 
-const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
+const CommandDialog = ({
+  children,
+  contentProps,
+  ...props
+}: CommandDialogProps) => {
   return (
     <Dialog {...props}>
-      <DialogContent className="overflow-hidden p-0 shadow-lg">
+      <DialogContent
+        {...contentProps}
+        className={cn('overflow-hidden p-0 shadow-lg', contentProps?.className)}
+      >
         {/* ponytail: generic primitive, hardcoded like the Close label in dialog.tsx — not page copy */}
         <DialogTitle className="sr-only">Command menu</DialogTitle>
         <DialogDescription className="sr-only">

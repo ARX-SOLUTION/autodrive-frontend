@@ -94,3 +94,17 @@ it('opens the actual existing language instead of relabeling Russian as Uzbek', 
   expect(mutate.mock.calls[0][0].locales).toHaveLength(1);
   expect(mutate.mock.calls[0][0].locales[0].locale).toBe('ru');
 });
+
+it('continues the language selected in question detail', () => {
+  render(
+    <QuestionFormDialog
+      open
+      question={question}
+      branches={[]}
+      initialLocale="ru"
+      onClose={vi.fn()}
+    />,
+  );
+  expect(screen.getByLabelText('questions.locale')).toHaveValue('ru');
+  expect(screen.getByLabelText('questions.stem')).toHaveValue('ru question');
+});

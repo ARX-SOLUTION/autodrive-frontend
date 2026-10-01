@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/store/authStore';
 import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -130,7 +131,12 @@ const PaymentModal = ({
   submitError,
 }: PaymentModalProps) => {
   const { t } = useTranslation();
+  const scopedUser = useAuthStore(
+    (state) => state.user?.permissions !== undefined,
+  );
+  const activeBranchId = useAuthStore((state) => state.activeBranchId);
   const isEdit = !!payment;
+  const [lookupBranchId, setLookupBranchId] = useState<string | undefined>();
   const form = useForm<PaymentFormInput, unknown, PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
@@ -170,10 +176,10 @@ const PaymentModal = ({
 
   const {
     data: studentPage,
-    isFetching: isStudentsFetching,
-    isError: isStudentsError,
+    isFetching: legacyStudentsFetching,
+    isError: legacyStudentsError,
   } = useStudentsPage(courseType, branchId, 1, 20, undefined, {
-    enabled: open && studentPopoverOpen,
+    enabled: open && studentPopoverOpen && !scopedUser,
     search: debouncedStudentSearch,
     sortBy: 'last_name',
     sortOrder: 'asc',
@@ -216,9 +222,15 @@ const PaymentModal = ({
   const options = useWriteOptions(
     'payments',
     payment ? 'update' : 'create',
-    branchId,
+    branchId ?? activeBranchId ?? lookupBranchId,
     open,
   );
+  const isStudentsFetching = options.scoped
+    ? options.isFetching
+    : legacyStudentsFetching;
+  const isStudentsError = options.scoped
+    ? options.isError
+    : legacyStudentsError;
   const studentOptions: Student[] = options.scoped
     ? (options.data?.students ?? [])
         .map((student) => ({
@@ -335,6 +347,35 @@ const PaymentModal = ({
 
           <Form {...form}>
             <form onSubmit={handleFormSubmit} className="space-y-4">
+              {options.scoped &&
+                !branchId &&
+                !activeBranchId &&
+                !effectiveLockedId &&
+                options.branches.length > 1 && (
+                  <label className="block space-y-2">
+                    <span className="text-sm font-medium">
+                      {t('common.select_branch')}
+                    </span>
+                    <select
+                      className="h-11 w-full rounded-md border border-input bg-background px-3"
+                      value={options.selectedBranchId ?? ''}
+                      onChange={(event) => {
+                        setLookupBranchId(event.target.value);
+                        form.setValue('student_id', '');
+                        setSelectedStudentCache(undefined);
+                        setStudentSearch('');
+                      }}
+                    >
+                      <option value="">{t('common.select_branch')}</option>
+                      {options.branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+
               <FormField
                 control={form.control}
                 name="student_id"
@@ -397,6 +438,15 @@ const PaymentModal = ({
                               ) : isStudentsError ? (
                                 <div className="px-3 py-6 text-center text-sm text-destructive">
                                   {t('common.error')}
+                                  {options.scoped && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      onClick={() => void options.refetch()}
+                                    >
+                                      {t('common.retry')}
+                                    </Button>
+                                  )}
                                 </div>
                               ) : studentOptions.length === 0 ? (
                                 <div className="px-3 py-6 text-center text-sm text-muted-foreground">
@@ -445,7 +495,8 @@ const PaymentModal = ({
                                   ))}
                                 </CommandGroup>
                               )}
-                              {!isStudentsFetching &&
+                              {!options.scoped &&
+                                !isStudentsFetching &&
                                 (studentPage?.meta.total ?? 0) >
                                   studentOptions.length && (
                                   <div className="border-t px-3 py-2 text-center text-xs text-muted-foreground">

@@ -71,7 +71,9 @@ describe('LeadMetricsView', () => {
 
     render(<LeadMetricsView />);
     expect(screen.getByText('Jami lidlar')).toBeInTheDocument();
-    expect(screen.getByText('Yutilgan lidlar')).toBeInTheDocument();
+    expect(
+      screen.getByText('Davrda yaratilganlardan aylangan'),
+    ).toBeInTheDocument();
     // Breakdown empty states
     const noDataList = screen.getAllByText('Ma’lumotlar yo‘q');
     expect(noDataList.length).toBe(3);
@@ -142,5 +144,26 @@ describe('LeadMetricsView', () => {
     const sevenDaysBtn = screen.getByRole('button', { name: /7 kun/i });
     fireEvent.click(sevenDaysBtn);
     expect(onPeriodChange).toHaveBeenCalledWith('7d');
+  });
+  it('uses the current open snapshot rather than period-created count for stage shares', () => {
+    mockUseLeadMetricsQuery.mockReturnValue({
+      data: {
+        totalLeads: 1,
+        wonLeads: 0,
+        lostLeads: 0,
+        conversionRate: 0,
+        avgTimeToWonDays: null,
+        bySource: {},
+        byLostReason: {},
+        byStage: { Existing: 10 },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    render(<LeadMetricsView />);
+    expect(
+      screen.getByRole('progressbar', { name: 'Existing: 10 (100%)' }),
+    ).toHaveAttribute('aria-valuenow', '100');
   });
 });

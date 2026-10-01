@@ -38,6 +38,7 @@ export interface DateRangePickerProps {
   to?: string;
   onChange: (from: string | undefined, to: string | undefined) => void;
   max?: string;
+  allowFuture?: boolean;
   'aria-label'?: string;
   className?: string;
   disabled?: boolean;
@@ -97,6 +98,7 @@ export const DateRangePicker = ({
   to,
   onChange,
   max,
+  allowFuture = false,
   'aria-label': ariaLabel,
   className,
   disabled,
@@ -109,8 +111,9 @@ export const DateRangePicker = ({
   const locale: CalendarDateLocale =
     lang === 'ru' || lang === 'en' ? lang : 'uz';
 
-  const effectiveMax = max ?? tashkentTodayCalendarDate();
-  const maxDate = parseCalendarDate(effectiveMax);
+  const effectiveMax =
+    max ?? (allowFuture ? undefined : tashkentTodayCalendarDate());
+  const maxDate = effectiveMax ? parseCalendarDate(effectiveMax) : undefined;
   const committedFrom = from ? parseCalendarDate(from) : undefined;
   const committedTo = to ? parseCalendarDate(to) : undefined;
   const hasCommitted = Boolean(committedFrom && committedTo);

@@ -70,6 +70,7 @@
     "dev": "Platforma administratori"
   },
   "common": {
+    "select_branch": "Filialni tanlang",
     "save": "Saqlash",
     "cancel": "Bekor qilish",
     "back": "Orqaga",
@@ -453,6 +454,10 @@
     }
   },
   "training": {
+    "add_enrollment_desc": "Talabani tanlang va o‘quv dasturiga biriktiring",
+    "find_student": "Talabani qidirish",
+    "search_student_placeholder": "Talaba ismi bo‘yicha qidiring",
+    "select_program": "O‘quv dasturini tanlang",
     "title": "Amaliy o'quv dasturlari",
     "subtitle": "Filial va toifa bo'yicha tasdiqlangan amaliy daqiqalar",
     "add_program": "Dastur qo'shish",
@@ -691,6 +696,8 @@
     "panel_note": "Avtopark holati GPS signali yoki avtomobil harakatini tasdiqlamaydi."
   },
   "branches": {
+    "phone": "Telefon",
+    "name_placeholder": "Filial nomini kiriting",
     "title": "Filiallar",
     "add": "Yangi filial qo'shish",
     "edit": "Filialni tahrirlash",
@@ -793,6 +800,7 @@
     "confirm_delete_desc": "\"{{name}}\" kursini o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
   },
   "students": {
+    "student": "Talaba",
     "title": "Talabalar",
     "add": "Yangi talaba qo'shish",
     "edit": "Talabani tahrirlash",
@@ -2117,6 +2125,7 @@
     "distance_travelled": "Bosib o'tilgan masofa"
   },
   "operations": {
+    "unavailable_description": "Operatsion radar hali ma’lumot manbalariga ulanmagan. Haqiqiy ma’lumotlarni jadval, davomat va yoqilg‘i bo‘limlaridan ko‘ring.",
     "live_center": "Markaz Rahbari Operatsion Radari",
     "title": "Instruktorlar Yuklamasi va Avtopark Yoqilg‘i Nazorati",
     "subtitle": "Filiallar kesimida amaliyot soatlari, toliqish xavfi va yoqilg‘i sarfi me’yorlari monitoringi",
@@ -2192,6 +2201,11 @@
     "filter_excess_only": "Faqat ortiqcha sarf"
   },
   "leads": {
+    "cohort_converted": "Davrda yaratilganlardan aylangan",
+    "cohort_conversion": "Davrda yaratilganlarning konversiyasi",
+    "updated_lost": "Davrda yangilangan yo‘qotilgan lidlar",
+    "open_stage_shares": "Hozirgi ochiq lidlarning bosqichlari",
+    "updated_lost_reasons": "Davrda yangilangan yo‘qotilgan lidlar sabablari",
     "title": "Lidlar va voronka",
     "subtitle": "Bo'lajak talabalar, lid bosqichlari va bog'lanish vazifalarini boshqaring",
     "search_placeholder": "Ism yoki telefon...",

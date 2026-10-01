@@ -112,6 +112,8 @@ export default function InspectionsPage() {
   });
 
   const [create, setCreate] = useState(false);
+  const activeBranchId = useAuthStore((state) => state.activeBranchId);
+  const [lookupBranchId, setLookupBranchId] = useState<string>();
   const [vehicleSearch, setVehicleSearch] = useState('');
   const [vehiclePage, setVehiclePage] = useState(1);
   const [receiverSearch, setReceiverSearch] = useState('');
@@ -137,7 +139,7 @@ export default function InspectionsPage() {
   const options = useWriteOptions(
     'vehicle_inspections',
     'create',
-    undefined,
+    branchId || activeBranchId || lookupBranchId,
     create,
   );
   const vehicleChoices = options.scoped
@@ -268,6 +270,52 @@ export default function InspectionsPage() {
               }
             })}
           >
+            {options.scoped &&
+              !branchId &&
+              !activeBranchId &&
+              options.branches.length > 1 && (
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium">
+                    {t('common.select_branch')}
+                  </span>
+                  <select
+                    className={selectClass}
+                    value={options.selectedBranchId ?? ''}
+                    onChange={(event) => {
+                      setLookupBranchId(event.target.value);
+                      form.setValue('vehicle_id', '');
+                      form.setValue('receiver_id', '');
+                    }}
+                  >
+                    <option value="">{t('common.select_branch')}</option>
+                    {options.branches.map((branch) => (
+                      <option key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            {options.scoped && options.isFetching && (
+              <p role="status">{t('common.loading')}</p>
+            )}
+            {options.scoped && options.isError && (
+              <p role="alert">
+                {t('common.error')}{' '}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void options.refetch()}
+                >
+                  {t('common.retry')}
+                </Button>
+              </p>
+            )}
+            {options.scoped &&
+              options.selectedBranchId &&
+              !options.isFetching &&
+              !options.isError &&
+              vehicleChoices.length === 0 && <p>{t('common.no_data')}</p>}
             <Input
               aria-label={t('inspections.vehicle_search')}
               placeholder={t('inspections.vehicle_search')}
@@ -306,11 +354,13 @@ export default function InspectionsPage() {
                 </FormItem>
               )}
             />
-            <PaginationControls
-              currentPage={vehiclePage}
-              totalPages={vehicles.data?.meta.totalPages ?? 1}
-              onPageChange={setVehiclePage}
-            />
+            {!options.scoped && (
+              <PaginationControls
+                currentPage={vehiclePage}
+                totalPages={vehicles.data?.meta.totalPages ?? 1}
+                onPageChange={setVehiclePage}
+              />
+            )}
             <Input
               aria-label={t('inspections.receiver_search')}
               placeholder={t('inspections.receiver_search')}

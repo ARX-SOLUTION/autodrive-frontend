@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { formatTashkentDateTime } from '@/lib/calendarDateTime';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,7 +43,7 @@ interface ExpenseHistoryPanelProps {
 export const ExpenseHistoryPanel = ({
   expenseId,
 }: ExpenseHistoryPanelProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const timelineQuery = useExpenseHistory(expenseId);
   const eventsMissing =
     timelineQuery.data != null && !Array.isArray(timelineQuery.data.events);
@@ -102,7 +103,10 @@ export const ExpenseHistoryPanel = ({
                 {formatActor(event, t)}
               </div>
               <div className="text-xs text-muted-foreground">
-                {event.created_at}
+                {formatTashkentDateTime(
+                  event.created_at,
+                  i18n?.language ?? 'uz',
+                )}
               </div>
               {event.action === 'soft_deleted' && deletionReason(event) && (
                 <div className="mt-2 break-words rounded-md bg-destructive/10 p-2 text-xs text-destructive">

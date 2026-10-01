@@ -64,6 +64,17 @@ const events: ExpenseEvent[] = [
 ];
 
 describe('ExpenseHistoryPanel', () => {
+  it('shows history instants in Tashkent rather than raw ISO', () => {
+    timelineState.data = {
+      expense: {} as ExpenseHistory['expense'],
+      payments: [],
+      events,
+    };
+    wrap(<ExpenseHistoryPanel expenseId="expense-1" />);
+    expect(screen.queryByText(events[0].created_at)).toBeNull();
+    expect(screen.getByText('31.08.2026 17:00')).toBeDefined();
+  });
+
   beforeEach(() => {
     timelineState.data = null;
     timelineState.isLoading = false;

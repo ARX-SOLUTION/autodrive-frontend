@@ -96,6 +96,15 @@ describe('DateRangePicker', () => {
     vi.useRealTimers();
   });
 
+  it('allows future planning ranges when explicitly enabled', () => {
+    const onChange = vi.fn();
+    render(<DateRangePicker allowFuture onChange={onChange} />);
+    fireEvent.click(screen.getByRole('button', { name: 'daterange.open' }));
+    clickDay('26');
+    clickDay('28');
+    expect(onChange).toHaveBeenCalledWith('2026-07-26', '2026-07-28');
+  });
+
   it('commits a fresh inclusive range on the second day click', () => {
     const onChange = vi.fn();
     render(<DateRangePicker max="2026-12-31" onChange={onChange} />);

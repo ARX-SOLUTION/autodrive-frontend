@@ -83,7 +83,7 @@ export const useWriteOptions = (
 ) => {
   const user = useAuthStore((state) => state.user);
   const activeBranchId = useAuthStore((state) => state.activeBranchId);
-  const selectedBranchId =
+  const requestedBranchId =
     branchId ?? activeBranchId ?? user?.branch_ids?.[0] ?? user?.branch_id;
   const scoped = user?.permissions !== undefined;
   const client = useContext(QueryClientContext) ?? queryClient;
@@ -99,6 +99,12 @@ export const useWriteOptions = (
     },
     client,
   );
+  const branches =
+    catalogue.data?.branches.filter((branch) =>
+      userCan(user, `${resource}.${action}`, branch.id),
+    ) ?? [];
+  const selectedBranchId =
+    requestedBranchId ?? (branches.length === 1 ? branches[0].id : undefined);
   const query = useQuery(
     {
       queryKey: [
@@ -128,12 +134,11 @@ export const useWriteOptions = (
   );
   return {
     ...query,
+    isFetching: query.isFetching || catalogue.isFetching,
+    isError: query.isError || catalogue.isError,
+    refetch: catalogue.isError ? catalogue.refetch : query.refetch,
     scoped,
-    branches:
-      catalogue.data?.branches.filter((branch) =>
-        userCan(user, `${resource}.${action}`, branch.id),
-      ) ??
-      query.data?.branches ??
-      [],
+    selectedBranchId,
+    branches: catalogue.data ? branches : (query.data?.branches ?? []),
   };
 };

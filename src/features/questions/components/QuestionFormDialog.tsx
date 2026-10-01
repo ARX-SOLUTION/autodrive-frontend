@@ -39,19 +39,21 @@ export const QuestionFormDialog = ({
   question,
   branches,
   defaultBranchId,
+  initialLocale,
   onClose,
 }: {
   open: boolean;
   question: Question | null;
   branches: Array<{ id: string; name: string }>;
   defaultBranchId?: string;
+  initialLocale?: QuestionLocale;
   onClose: () => void;
 }) => {
   const { t } = useTranslation();
   const create = useCreateQuestion();
   const update = useUpdateQuestionDraft();
   const existing = question
-    ? localeContent(activeQuestionVersion(question), 'uz')
+    ? localeContent(activeQuestionVersion(question), initialLocale ?? 'uz')
     : null;
 
   const [branchId, setBranchId] = useState(

@@ -93,6 +93,10 @@ vi.mock('@/features/attendance/api/attendanceService', () => ({
 
 describe('SchedulePage', () => {
   beforeEach(() => {
+    vi.mocked(useScheduleTemplates).mockReturnValue({
+      data: mockTemplates,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useScheduleTemplates>);
     tSpy.mockImplementation((key: string) => key);
     vi.mocked(useCalendarLessons).mockImplementation(
       () =>
@@ -101,6 +105,27 @@ describe('SchedulePage', () => {
           isLoading: false,
         }) as unknown as ReturnType<typeof useCalendarLessons>,
     );
+  });
+
+  it('keeps a template fetch failure distinct from a genuine empty schedule', async () => {
+    vi.mocked(useGenerateLessons).mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof useGenerateLessons>);
+    const refetch = vi.fn();
+    vi.mocked(useScheduleTemplates).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      refetch,
+    } as unknown as ReturnType<typeof useScheduleTemplates>);
+    await renderWithRouter(<SchedulePage />);
+    fireEvent.mouseDown(
+      screen.getByRole('tab', { name: 'schedule.tab_templates' }),
+    );
+    expect(await screen.findByText('common.error')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(refetch).toHaveBeenCalled();
   });
 
   it('enables only the active tab and opens group queries when a form needs them', async () => {

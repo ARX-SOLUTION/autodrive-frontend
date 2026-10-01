@@ -95,6 +95,8 @@ export default function FuelCreateDialog({
   const navigate = useNavigate();
   const qc = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const [lookupBranchId, setLookupBranchId] = useState<string>();
 
   // 5-Step Clean UX Flow:
   // 1: Moshina tanlash (Vehicle Selection)
@@ -151,7 +153,12 @@ export default function FuelCreateDialog({
 
   const vehiclesQuery = useFuelVehicles({ limit: 100 });
   const stationsQuery = useStations({ limit: 100, active: true });
-  const options = useWriteOptions('fuel', 'create', undefined, true);
+  const options = useWriteOptions(
+    'fuel',
+    'create',
+    activeBranchId ?? lookupBranchId,
+    open,
+  );
   const vehicleChoices = useMemo(
     () =>
       options.scoped
@@ -691,6 +698,52 @@ export default function FuelCreateDialog({
             </div>
 
             <div className="space-y-3">
+              {options.scoped &&
+                !activeBranchId &&
+                options.branches.length > 1 && (
+                  <label className="block space-y-1.5">
+                    <span className="text-sm font-medium">
+                      {t('common.select_branch')}
+                    </span>
+                    <select
+                      className="h-11 w-full rounded-md border border-input bg-background px-3"
+                      value={options.selectedBranchId ?? ''}
+                      onChange={(event) => {
+                        setLookupBranchId(event.target.value);
+                        setVehicleId('');
+                        setStationId('');
+                      }}
+                    >
+                      <option value="">{t('common.select_branch')}</option>
+                      {options.branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              {options.scoped && options.isFetching && (
+                <p role="status">{t('common.loading')}</p>
+              )}
+              {options.scoped && options.isError && (
+                <p role="alert">
+                  {t('common.error')}{' '}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void options.refetch()}
+                  >
+                    {t('common.retry')}
+                  </Button>
+                </p>
+              )}
+              {options.scoped &&
+                options.selectedBranchId &&
+                !options.isFetching &&
+                !options.isError &&
+                vehicleChoices.length === 0 && <p>{t('common.no_data')}</p>}
+
               <label
                 htmlFor="fuel-vehicle-select"
                 className="block space-y-1.5"

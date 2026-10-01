@@ -296,7 +296,7 @@ const BranchesPage = () => {
           },
         }),
         branchColumnHelper.accessor('location', {
-          header: t('branches.location'),
+          header: t('branches.address'),
           meta: { cellClassName: 'text-muted-foreground' },
           cell: ({ getValue }) => (
             <span className="inline-flex items-center gap-1.5">
@@ -612,7 +612,7 @@ const BranchesPage = () => {
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('branches.location')}</FormLabel>
+                    <FormLabel>{t('branches.address')}</FormLabel>
                     <FormControl>
                       <Input placeholder={t('branches.address')} {...field} />
                     </FormControl>

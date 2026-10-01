@@ -448,6 +448,7 @@ const DrivingSessionsPage = () => {
                         {t('common.date')}
                       </Label>
                       <DateRangePicker
+                        allowFuture
                         from={dateFrom}
                         to={dateTo}
                         onChange={handleDateChange}
@@ -547,6 +548,7 @@ const DrivingSessionsPage = () => {
             </div>
 
             <DateRangePicker
+              allowFuture
               from={dateFrom}
               to={dateTo}
               onChange={handleDateChange}

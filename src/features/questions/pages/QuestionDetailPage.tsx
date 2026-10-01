@@ -54,6 +54,11 @@ const QuestionDetailPage = () => {
   }
 
   const version = activeQuestionVersion(question);
+  const effectiveLocale = version?.locales.some(
+    (content) => content.locale === locale,
+  )
+    ? locale
+    : (version?.locales[0]?.locale ?? locale);
   const isPrivate = question.visibility === 'school_private';
   const canPublish =
     mayPublish &&
@@ -132,7 +137,11 @@ const QuestionDetailPage = () => {
           <Button
             key={value}
             size="sm"
-            variant={locale === value ? 'default' : 'outline'}
+            variant={effectiveLocale === value ? 'default' : 'outline'}
+            aria-pressed={effectiveLocale === value}
+            disabled={
+              !version?.locales.some((content) => content.locale === value)
+            }
             onClick={() => setLocale(value)}
           >
             {value.toUpperCase()}
@@ -144,7 +153,7 @@ const QuestionDetailPage = () => {
         <QuestionPreview
           question={question}
           version={version}
-          locale={locale}
+          locale={effectiveLocale}
         />
       ) : (
         <p className="text-sm text-muted-foreground">
@@ -214,6 +223,7 @@ const QuestionDetailPage = () => {
         <QuestionFormDialog
           open={editOpen}
           question={question}
+          initialLocale={effectiveLocale}
           branches={branches}
           onClose={() => setEditOpen(false)}
         />

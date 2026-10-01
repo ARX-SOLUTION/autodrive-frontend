@@ -2,7 +2,10 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import AttendancePage from '@/features/attendance/pages/AttendancePage';
 import { useAuthStore } from '@/store/authStore';
-import { useCreateLesson } from '@/features/attendance/api/attendanceService';
+import {
+  useLessons,
+  useCreateLesson,
+} from '@/features/attendance/api/attendanceService';
 import { LessonSummary } from '@/features/attendance/types';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
@@ -23,10 +26,12 @@ const lesson: LessonSummary = {
 };
 
 vi.mock('@/features/attendance/api/attendanceService', () => ({
-  useLessons: () => ({
+  useLessons: vi.fn(() => ({
     data: { data: [lesson], total: 1 },
     isLoading: false,
-  }),
+    isError: false,
+    refetch: vi.fn(),
+  })),
   useLessonById: () => ({ data: undefined, isError: false, refetch: vi.fn() }),
   useCreateLesson: vi.fn(),
   useBatchAttendance: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -54,6 +59,12 @@ function renderAsRole(role: string) {
 }
 
 beforeEach(() => {
+  vi.mocked(useLessons).mockReturnValue({
+    data: { data: [lesson], total: 1 },
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  } as unknown as ReturnType<typeof useLessons>);
   vi.mocked(useCreateLesson).mockReturnValue({
     mutateAsync: vi.fn(),
     isPending: false,
@@ -64,6 +75,20 @@ beforeEach(() => {
 // operator, but the backend's DELETE /lessons/:id is
 // @Roles(owner, manager) only -- operator always got a 403.
 describe('AttendancePage delete-lesson gate', () => {
+  it('shows a retryable fetch error instead of an empty attendance list', async () => {
+    const refetch = vi.fn();
+    vi.mocked(useLessons).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      refetch,
+    } as unknown as ReturnType<typeof useLessons>);
+    await renderAsRole('owner');
+    expect(screen.getByText('common.error')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(refetch).toHaveBeenCalled();
+  });
+
   it('hides the delete button for operator (backend would 403)', async () => {
     await renderAsRole('operator');
     expect(
