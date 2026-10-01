@@ -23,6 +23,7 @@ import {
   localeContent,
   type Question,
   type QuestionLocale,
+  type QuestionLocaleInput,
   type QuestionOptionKey,
   type QuestionTopic,
 } from '@/features/questions/types';
@@ -59,7 +60,9 @@ export const QuestionFormDialog = ({
   const [topic, setTopic] = useState<QuestionTopic>(
     question?.topic ?? 'general_rules',
   );
-  const [locale, setLocale] = useState<QuestionLocale>('uz');
+  const [locale, setLocale] = useState<QuestionLocale>(
+    existing?.locale ?? 'uz',
+  );
   const [stem, setStem] = useState(existing?.stem ?? '');
   const [explanation, setExplanation] = useState(existing?.explanation ?? '');
   const [correctKey, setCorrectKey] = useState<QuestionOptionKey>(
@@ -81,6 +84,46 @@ export const QuestionFormDialog = ({
   const [legalProvision, setLegalProvision] = useState(
     activeQuestionVersion(question)?.legal_provision ?? '',
   );
+  const [savedLocales, setSavedLocales] = useState<QuestionLocaleInput[]>(() =>
+    (activeQuestionVersion(question)?.locales ?? []).map((content) => ({
+      ...content,
+      options: content.options.map((option) => ({
+        option_key: option.option_key as QuestionOptionKey,
+        text: option.text,
+      })),
+    })),
+  );
+
+  const currentLocale = (): QuestionLocaleInput => ({
+    locale,
+    stem: stem.trim(),
+    explanation: explanation.trim(),
+    options: options
+      .filter((option) => option.text.trim())
+      .map((option) => ({
+        ...option,
+        text: option.text.trim(),
+      })),
+  });
+  const changeLocale = (next: QuestionLocale) => {
+    const updated = [
+      ...savedLocales.filter((row) => row.locale !== locale),
+      currentLocale(),
+    ];
+    setSavedLocales(updated);
+    const content = updated.find((row) => row.locale === next);
+    setLocale(next);
+    setStem(content?.stem ?? '');
+    setExplanation(content?.explanation ?? '');
+    setOptions(
+      QUESTION_OPTION_KEYS.map((key) => ({
+        option_key: key,
+        text:
+          content?.options.find((option) => option.option_key === key)?.text ??
+          '',
+      })),
+    );
+  };
 
   const pending = create.isPending || update.isPending;
 
@@ -96,16 +139,29 @@ export const QuestionFormDialog = ({
       return;
     }
     const locales = [
-      {
-        locale,
-        stem: stem.trim(),
-        explanation: explanation.trim(),
-        options: filled.map((o) => ({
-          option_key: o.option_key,
-          text: o.text.trim(),
-        })),
-      },
-    ];
+      ...savedLocales.filter((row) => row.locale !== locale),
+      currentLocale(),
+    ].filter(
+      (row) => row.stem.trim() || row.explanation.trim() || row.options.length,
+    );
+    if (
+      locales.some(
+        (row) =>
+          !row.stem.trim() || !row.explanation.trim() || row.options.length < 2,
+      )
+    ) {
+      toast.error(t('questions.validation_min'));
+      return;
+    }
+    if (
+      locales.some(
+        (row) =>
+          !row.options.some((option) => option.option_key === correctKey),
+      )
+    ) {
+      toast.error(t('questions.validation_correct'));
+      return;
+    }
     const handlers = {
       onSuccess: () => {
         toast.success(t(question ? 'questions.updated' : 'questions.created'));
@@ -196,7 +252,7 @@ export const QuestionFormDialog = ({
               <select
                 className={selectClass}
                 value={locale}
-                onChange={(e) => setLocale(e.target.value as QuestionLocale)}
+                onChange={(e) => changeLocale(e.target.value as QuestionLocale)}
               >
                 <option value="uz">Oʻzbek</option>
                 <option value="ru">Русский</option>
