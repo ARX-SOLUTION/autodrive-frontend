@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { ColumnFiltersState, SortingState } from '@tanstack/react-table';
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
@@ -469,11 +469,20 @@ const UsersPage = () => {
         })}
         icon={<UserGear className="h-3.5 w-3.5" aria-hidden="true" />}
         actions={
-          <RoleGate cap="staff.create">
-            <Button className="gap-2" onClick={openCreate}>
-              <Plus className="h-4 w-4" /> {t('users.add')}
-            </Button>
-          </RoleGate>
+          <div className="flex flex-wrap gap-2">
+            {isOwner && (
+              <Button variant="outline" asChild>
+                <Link to="/permission-templates">
+                  {t('access.manage_templates')}
+                </Link>
+              </Button>
+            )}
+            <RoleGate cap="staff.create">
+              <Button className="gap-2" onClick={openCreate}>
+                <Plus className="h-4 w-4" /> {t('users.add')}
+              </Button>
+            </RoleGate>
+          </div>
         }
       />
 

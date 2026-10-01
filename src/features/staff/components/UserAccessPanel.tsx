@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useBlocker } from '@tanstack/react-router';
+import { Link, useBlocker } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import type { AxiosError } from 'axios';
 import { toast } from 'sonner';
@@ -15,8 +15,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { extractErrorMessage } from '@/lib/errors';
+import PermissionMatrix from './PermissionMatrix';
 
-const CRUD = ['read', 'create', 'update', 'delete'];
 const scopeKey = (grant: Pick<PermissionAssignment, 'scope' | 'branch_id'>) =>
   `${grant.scope}:${grant.branch_id ?? ''}`;
 const same = (a: string[], b: string[]) =>
@@ -31,6 +31,7 @@ export default function UserAccessPanel({ user }: { user: User }) {
   const [delegation, setDelegation] = useState(false);
   const [pendingMode, setPendingMode] = useState<boolean | null>(null);
   const [scope, setScope] = useState('company:');
+  const [templateSkipped, setTemplateSkipped] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, string[]>>({});
   const [memberships, setMemberships] = useState<Record<string, boolean>>({});
   const [saveOpen, setSaveOpen] = useState(false);
@@ -84,7 +85,15 @@ export default function UserAccessPanel({ user }: { user: User }) {
 
   const branches = catalogue.data.branches;
   const allPermissions = catalogue.data.permissions;
+  const customTemplates = catalogue.data.custom_templates ?? [];
   const selected = drafts[scope] ?? original(scope);
+  const label = (permission: string) => {
+    const [resource, ...actions] = permission.split('.');
+    const action = actions.join('_');
+    return t(`access.permissions.${resource}_${action}`, {
+      defaultValue: `${t(`access.resources.${resource}`, { defaultValue: resource })} · ${t(`access.actions.${action}`, { defaultValue: action.replaceAll('_', ' ') })}`,
+    });
+  };
   const [scopeType, branchId] = scope.split(':') as [
     PermissionAssignment['scope'],
     string,
@@ -128,13 +137,6 @@ export default function UserAccessPanel({ user }: { user: User }) {
         label: `${t('access.own')} · ${branches.find((branch) => branch.id === grant.branch_id)?.name ?? grant.branch_id}`,
       });
   }
-  const resources = [
-    ...new Set(allPermissions.map((permission) => permission.split('.')[0])),
-  ];
-  const label = (key: string) =>
-    t(`access.permissions.${key.replaceAll('.', '_')}`, {
-      defaultValue: `${t(`access.resources.${key.split('.')[0]}`, { defaultValue: key.split('.')[0] })} · ${t(`access.actions.${key.split('.').slice(1).join('_')}`, { defaultValue: key.split('.').slice(1).join(' ') })}`,
-    });
   const toggle = (permission: string, checked: boolean) =>
     setDrafts((value) => ({
       ...value,
@@ -142,9 +144,25 @@ export default function UserAccessPanel({ user }: { user: User }) {
         ? [...new Set([...selected, permission])]
         : selected.filter((key) => key !== permission),
     }));
+  const applyTemplate = (permissionSet: string[]) => {
+    const allowed = permissionSet.filter((permission) =>
+      canDelegate(permission),
+    );
+    setTemplateSkipped(permissionSet.length - allowed.length);
+    setDrafts((value) => ({
+      ...value,
+      [scope]: [
+        ...new Set([
+          ...selected.filter((permission) => !canDelegate(permission)),
+          ...allowed,
+        ]),
+      ],
+    }));
+  };
   const reset = () => {
     setDrafts({});
     setMemberships({});
+    setTemplateSkipped(0);
     setConflict(false);
   };
   const save = async () => {
@@ -179,13 +197,22 @@ export default function UserAccessPanel({ user }: { user: User }) {
 
   return (
     <div className="glass-card space-y-5 p-5">
-      <div className="space-y-1">
-        <h2 className="font-heading text-lg font-semibold">
-          {t('access.title')}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {t(delegation ? 'access.delegation_help' : 'access.help')}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h2 className="font-heading text-lg font-semibold">
+            {t('access.title')}
+          </h2>
+          <p className="max-w-3xl text-sm text-muted-foreground">
+            {t(delegation ? 'access.delegation_help' : 'access.help')}
+          </p>
+        </div>
+        {isOwner && (
+          <Button variant="outline" asChild>
+            <Link to="/permission-templates">
+              {t('access.manage_templates')}
+            </Link>
+          </Button>
+        )}
       </div>
       {isOwner && user.role === 'manager' && (
         <div className="flex flex-wrap gap-2">
@@ -249,7 +276,10 @@ export default function UserAccessPanel({ user }: { user: User }) {
           <select
             className="h-10 rounded-md border border-input bg-background px-3"
             value={scope}
-            onChange={(event) => setScope(event.target.value)}
+            onChange={(event) => {
+              setScope(event.target.value);
+              setTemplateSkipped(0);
+            }}
             disabled={mutation.isPending}
           >
             {scopeOptions.map((option) => (
@@ -266,28 +296,42 @@ export default function UserAccessPanel({ user }: { user: User }) {
             value=""
             disabled={mutation.isPending}
             onChange={(event) => {
-              const template = catalogue.data!.templates[event.target.value];
-              if (template)
-                setDrafts((value) => ({
-                  ...value,
-                  [scope]: [
-                    ...new Set([
-                      ...selected.filter((key) => !canDelegate(key)),
-                      ...template.filter((key) => canDelegate(key)),
-                    ]),
-                  ],
-                }));
+              const [kind, id] = event.target.value.split(':');
+              const template =
+                kind === 'system'
+                  ? catalogue.data!.templates[id]
+                  : customTemplates.find((item) => item.id === id)?.permissions;
+              if (template) applyTemplate(template);
             }}
           >
             <option value="">{t('access.choose_template')}</option>
-            {Object.keys(catalogue.data.templates).map((key) => (
-              <option key={key} value={key}>
-                {t(`roles.${key}`, { defaultValue: key })}
-              </option>
-            ))}
+            <optgroup label={t('access.system_templates')}>
+              {Object.keys(catalogue.data.templates).map((key) => (
+                <option key={key} value={`system:${key}`}>
+                  {t(`roles.${key}`, { defaultValue: key })}
+                </option>
+              ))}
+            </optgroup>
+            {customTemplates.length > 0 && (
+              <optgroup label={t('access.company_templates')}>
+                {customTemplates.map((template) => (
+                  <option key={template.id} value={`custom:${template.id}`}>
+                    {template.name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </label>
       </div>
+      {templateSkipped > 0 && (
+        <p
+          role="status"
+          className="rounded-md border border-border bg-muted p-3 text-sm"
+        >
+          {t('access.template_limited', { count: templateSkipped })}
+        </p>
+      )}
       {scopeType === 'own' && (
         <p className="rounded-md bg-muted p-3 text-sm">
           {t('access.own_help')}
@@ -301,106 +345,14 @@ export default function UserAccessPanel({ user }: { user: User }) {
             {t('access.inactive_branch')}
           </p>
         )}
-      <div className="md:overflow-x-auto">
-        <table className="block w-full text-sm md:table">
-          <caption className="sr-only">{t('access.matrix')}</caption>
-          <thead className="hidden md:table-header-group">
-            <tr className="border-b border-border text-left">
-              <th className="py-3 pr-4" scope="col">
-                {t('access.resource')}
-              </th>
-              {CRUD.map((action) => (
-                <th className="p-3 text-center" scope="col" key={action}>
-                  {t(`access.actions.${action}`)}
-                </th>
-              ))}
-              <th className="p-3" scope="col">
-                {t('access.business_actions')}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="grid gap-3 md:table-row-group">
-            {resources.map((resource) => (
-              <tr
-                key={resource}
-                className="grid grid-cols-4 rounded-md border border-border p-3 md:table-row md:rounded-none md:border-0 md:border-b md:p-0 md:last:border-0"
-              >
-                <th
-                  className="col-span-4 pb-3 text-left font-medium md:table-cell md:py-3 md:pr-4"
-                  scope="row"
-                >
-                  {t(`access.resources.${resource}`, {
-                    defaultValue: resource,
-                  })}
-                </th>
-                {CRUD.map((action) => {
-                  const permission = `${resource}.${action}`;
-                  return (
-                    <td
-                      key={action}
-                      className="flex flex-col items-center gap-2 p-2 text-center md:table-cell md:p-3"
-                    >
-                      <span className="text-xs text-muted-foreground md:hidden">
-                        {t(`access.actions.${action}`)}
-                      </span>
-                      {allPermissions.includes(permission) ? (
-                        <Checkbox
-                          aria-label={label(permission)}
-                          checked={selected.includes(permission)}
-                          disabled={
-                            mutation.isPending || !canDelegate(permission)
-                          }
-                          onCheckedChange={(checked) =>
-                            toggle(permission, checked === true)
-                          }
-                        />
-                      ) : (
-                        <span aria-hidden="true">—</span>
-                      )}
-                    </td>
-                  );
-                })}
-                <td className="col-span-4 p-2 md:table-cell md:p-3">
-                  {allPermissions.some(
-                    (permission) =>
-                      permission.startsWith(`${resource}.`) &&
-                      !CRUD.includes(permission.slice(resource.length + 1)),
-                  ) && (
-                    <span className="mb-2 block text-xs text-muted-foreground md:hidden">
-                      {t('access.business_actions')}
-                    </span>
-                  )}
-                  <div className="flex flex-wrap gap-3">
-                    {allPermissions
-                      .filter(
-                        (permission) =>
-                          permission.startsWith(`${resource}.`) &&
-                          !CRUD.includes(permission.slice(resource.length + 1)),
-                      )
-                      .map((permission) => (
-                        <label
-                          className="flex items-center gap-2"
-                          key={permission}
-                        >
-                          <Checkbox
-                            checked={selected.includes(permission)}
-                            disabled={
-                              mutation.isPending || !canDelegate(permission)
-                            }
-                            onCheckedChange={(checked) =>
-                              toggle(permission, checked === true)
-                            }
-                          />
-                          {label(permission)}
-                        </label>
-                      ))}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <PermissionMatrix
+        permissions={allPermissions}
+        selected={selected}
+        disabled={(permission) =>
+          mutation.isPending || !canDelegate(permission)
+        }
+        onToggle={toggle}
+      />
       {conflict && (
         <div
           role="alert"

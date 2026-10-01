@@ -16,6 +16,7 @@ import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
 import { Route as AuthenticatedOperatorsRouteImport } from './routes/_authenticated.operators'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated.payments'
+import { Route as AuthenticatedPermissionTemplatesRouteImport } from './routes/_authenticated.permission-templates'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated.schedule'
 import { Route as AuthenticatedTeachersRouteImport } from './routes/_authenticated.teachers'
@@ -89,6 +90,12 @@ const AuthenticatedPaymentsRoute = AuthenticatedPaymentsRouteImport.update({
   path: '/payments',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedPermissionTemplatesRoute =
+  AuthenticatedPermissionTemplatesRouteImport.update({
+    id: '/permission-templates',
+    path: '/permission-templates',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -310,6 +317,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/operators': typeof AuthenticatedOperatorsRoute
   '/payments': typeof AuthenticatedPaymentsRoute
+  '/permission-templates': typeof AuthenticatedPermissionTemplatesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/teachers': typeof AuthenticatedTeachersRoute
@@ -356,6 +364,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/operators': typeof AuthenticatedOperatorsRoute
   '/payments': typeof AuthenticatedPaymentsRoute
+  '/permission-templates': typeof AuthenticatedPermissionTemplatesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/teachers': typeof AuthenticatedTeachersRoute
@@ -404,6 +413,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/operators': typeof AuthenticatedOperatorsRoute
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
+  '/_authenticated/permission-templates': typeof AuthenticatedPermissionTemplatesRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/teachers': typeof AuthenticatedTeachersRoute
@@ -452,6 +462,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/operators'
     | '/payments'
+    | '/permission-templates'
     | '/profile'
     | '/schedule'
     | '/teachers'
@@ -498,6 +509,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/operators'
     | '/payments'
+    | '/permission-templates'
     | '/profile'
     | '/schedule'
     | '/teachers'
@@ -545,6 +557,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/operators'
     | '/_authenticated/payments'
+    | '/_authenticated/permission-templates'
     | '/_authenticated/profile'
     | '/_authenticated/schedule'
     | '/_authenticated/teachers'
@@ -640,6 +653,13 @@ declare module '@tanstack/react-router' {
       path: '/payments'
       fullPath: '/payments'
       preLoaderRoute: typeof AuthenticatedPaymentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/permission-templates': {
+      id: '/_authenticated/permission-templates'
+      path: '/permission-templates'
+      fullPath: '/permission-templates'
+      preLoaderRoute: typeof AuthenticatedPermissionTemplatesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/profile': {
@@ -916,6 +936,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOperatorsRoute: typeof AuthenticatedOperatorsRoute
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
+  AuthenticatedPermissionTemplatesRoute: typeof AuthenticatedPermissionTemplatesRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedTeachersRoute: typeof AuthenticatedTeachersRoute
@@ -961,6 +982,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOperatorsRoute: AuthenticatedOperatorsRoute,
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
+  AuthenticatedPermissionTemplatesRoute: AuthenticatedPermissionTemplatesRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedTeachersRoute: AuthenticatedTeachersRoute,

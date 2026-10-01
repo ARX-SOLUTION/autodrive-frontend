@@ -16,10 +16,24 @@ export interface StaffAccess {
   delegations: PermissionAssignment[];
 }
 
+export interface PermissionTemplate {
+  id: string;
+  name: string;
+  permissions: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavePermissionTemplate {
+  name: string;
+  permissions: string[];
+}
+
 export interface PermissionCatalogue {
   own_resources: string[];
   permissions: string[];
   templates: Record<string, string[]>;
+  custom_templates?: PermissionTemplate[];
   branches: { id: string; name: string }[];
   delegations: PermissionAssignment[];
 }

@@ -10,6 +10,8 @@ import {
   User,
   type StaffAccess,
   type PermissionCatalogue,
+  type PermissionTemplate,
+  type SavePermissionTemplate,
   type UpdateStaffAccess,
 } from '@/features/staff/types';
 import type { ListResponse } from '@/shared/types/list';
@@ -69,6 +71,48 @@ export const useUpdateStaffAccess = (id: string, delegation = false) => {
         qc.setQueryData(authKeys.me(), user);
       }
     },
+  });
+};
+
+export const useCreatePermissionTemplate = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (template: SavePermissionTemplate) => {
+      const { data } = await axiosInstance.post<unknown>(
+        '/permissions/templates',
+        template,
+      );
+      return parseItemEnvelope<PermissionTemplate>(data, 'permission-template');
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['permissions'] }),
+  });
+};
+
+export const useUpdatePermissionTemplate = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      ...template
+    }: SavePermissionTemplate & { id: string }) => {
+      const { data } = await axiosInstance.patch<unknown>(
+        `/permissions/templates/${id}`,
+        template,
+      );
+      return parseItemEnvelope<PermissionTemplate>(data, 'permission-template');
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['permissions'] }),
+  });
+};
+
+export const useDeletePermissionTemplate = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await axiosInstance.delete(`/permissions/templates/${id}`);
+      return id;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['permissions'] }),
   });
 };
 import type {

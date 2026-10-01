@@ -64,3 +64,14 @@ export function requireCapability(
     throw redirect({ to: '/training-enrollments', replace: true });
   }
 }
+
+export function requireCompanyOwner(location: GuardLocation): void {
+  requireAuthenticated(location);
+  const auth = useAuthStore.getState();
+  if (auth.hasHydrated && auth.isAuthenticated && auth.user?.role !== 'owner') {
+    throw redirect({
+      to: getDefaultAuthenticatedRoute(auth.user),
+      replace: true,
+    });
+  }
+}
