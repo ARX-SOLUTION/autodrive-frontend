@@ -36,6 +36,74 @@ describe('leadsApi', () => {
     expect(result.total).toBe(1);
   });
 
+  it('sends backend lead filter params for list, board, and export', async () => {
+    const query = {
+      q: 'Ali',
+      branch_id: 'branch-1',
+      stage_id: 'stage-1',
+      source: 'telegram' as const,
+      course_type: 'tezkor' as const,
+      category: 'B' as const,
+      assigned_to_me: false,
+      assignee_user_id: 'user-1',
+      overdue_only: false,
+      has_task: true,
+      period: '30d' as const,
+      tab: 'new' as const,
+      page: 2,
+      limit: 50,
+    };
+    const expectedParams = {
+      q: 'Ali',
+      branchId: 'branch-1',
+      stageId: 'stage-1',
+      source: 'telegram',
+      courseType: 'tezkor',
+      category: 'B',
+      mine: false,
+      assigneeId: 'user-1',
+      overdueOnly: false,
+      period: '30d',
+      tab: 'new',
+      page: 2,
+      limit: 50,
+    };
+    const originalQuery = { ...query };
+    const createObjectURL = vi.fn(() => 'blob:leads-export');
+    const revokeObjectURL = vi.fn();
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
+    vi.mocked(axiosInstance.get)
+      .mockResolvedValueOnce({
+        data: { items: [], total: 0, page: 1, limit: 20 },
+      })
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({ data: new Blob(['csv']) });
+
+    await leadsApi.getLeads(query);
+    await leadsApi.getLeadBoard(query);
+    await leadsApi.exportLeads(query);
+
+    expect(axiosInstance.get).toHaveBeenNthCalledWith(1, '/leads', {
+      params: expectedParams,
+      signal: undefined,
+    });
+    expect(axiosInstance.get).toHaveBeenNthCalledWith(2, '/leads/board', {
+      params: expectedParams,
+      signal: undefined,
+    });
+    expect(axiosInstance.get).toHaveBeenNthCalledWith(3, '/leads/export.xlsx', {
+      params: expectedParams,
+      responseType: 'blob',
+    });
+    expect(query).toEqual(originalQuery);
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:leads-export');
+    expect(click).toHaveBeenCalledOnce();
+  });
+
   it('fetches lead board', async () => {
     const mockBoard = [
       {
@@ -53,6 +121,39 @@ describe('leadsApi', () => {
     });
     expect(result).toHaveLength(1);
     expect(result[0].stage.name).toBe('Yangi');
+  });
+
+  it('filters normalized board columns by explicit stage filter', async () => {
+    const mockBoard = [
+      {
+        stageId: 'stage-new',
+        stageName: 'Yangi',
+        stageColor: '#111111',
+        items: [
+          { id: 'l1', name: 'Ali', phone: '+998901', source: 'telegram' },
+        ],
+        total: 1,
+      },
+      {
+        stageId: 'stage-work',
+        stageName: 'Aloqa',
+        stageColor: '#222222',
+        items: [
+          { id: 'l2', name: 'Vali', phone: '+998902', source: 'instagram' },
+        ],
+        total: 1,
+      },
+    ];
+    vi.mocked(axiosInstance.get)
+      .mockResolvedValueOnce({ data: mockBoard })
+      .mockResolvedValueOnce({ data: mockBoard });
+
+    const filtered = await leadsApi.getLeadBoard({ stage_id: 'stage-work' });
+    const unfiltered = await leadsApi.getLeadBoard();
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].stage.id).toBe('stage-work');
+    expect(unfiltered).toHaveLength(2);
   });
 
   it('creates a new lead', async () => {

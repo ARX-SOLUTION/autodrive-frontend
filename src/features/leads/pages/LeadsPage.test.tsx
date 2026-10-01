@@ -13,19 +13,24 @@ const queryState = vi.hoisted(() => ({
   search: '',
   board: vi.fn(),
   list: vi.fn(),
+  metrics: vi.fn(),
+  filterBar: vi.fn(),
+  setParams: vi.fn(),
+  setSearchParams: vi.fn(),
+  user: { role: 'owner', branch_id: undefined as string | undefined },
 }));
 
 vi.mock('@/hooks/useUrlParams', () => ({
   useUrlParams: () => ({
     searchParams: new URLSearchParams(queryState.search),
-    setParams: vi.fn(),
-    setSearchParams: vi.fn(),
+    setParams: queryState.setParams,
+    setSearchParams: queryState.setSearchParams,
   }),
 }));
 
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
-    selector({ user: { role: 'owner' } }),
+    selector({ user: queryState.user }),
 }));
 
 const mockStages = [
@@ -112,15 +117,32 @@ vi.mock('../components/LeadsTable', () => ({
 }));
 
 vi.mock('../components/LeadsFilterBar', () => ({
-  LeadsFilterBar: ({ filters }: { filters: ListLeadsQuery }) => (
-    <div data-testid="mock-leads-filter-bar">
-      {filters.q || 'LeadsFilterBar'}
-    </div>
-  ),
+  LeadsFilterBar: ({
+    filters,
+    isBoardView,
+    onClearAll,
+  }: {
+    filters: ListLeadsQuery;
+    isBoardView: boolean;
+    onClearAll: () => void;
+  }) => {
+    queryState.filterBar({ filters, isBoardView });
+    return (
+      <div data-testid="mock-leads-filter-bar">
+        {filters.q || 'LeadsFilterBar'}
+        <button type="button" onClick={onClearAll}>
+          clear all
+        </button>
+      </div>
+    );
+  },
 }));
 
 vi.mock('../components/LeadMetricsView', () => ({
-  LeadMetricsView: () => <div data-testid="mock-lead-metrics">LeadMetrics</div>,
+  LeadMetricsView: (props: { branchId?: string; period?: string }) => {
+    queryState.metrics(props);
+    return <div data-testid="mock-lead-metrics">LeadMetrics</div>;
+  },
 }));
 
 vi.mock('../components/CreateLeadDialog', () => ({
@@ -131,6 +153,7 @@ describe('LeadsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     queryState.search = '';
+    queryState.user = { role: 'owner', branch_id: undefined };
   });
 
   afterEach(() => {
@@ -149,6 +172,7 @@ describe('LeadsPage', () => {
       name: /leads\.manage_stages/i,
     });
     expect(settingsBtn).toBeInTheDocument();
+    expect(queryState.filterBar.mock.lastCall?.[0].isBoardView).toBe(true);
   });
 
   it('opens stage settings dialog when configure stages button is clicked', () => {
@@ -193,5 +217,67 @@ describe('LeadsPage', () => {
       q: 'Aziz',
     });
     expect(queryState.list.mock.lastCall?.[0].q).toBe('Aziz');
+  });
+
+  it('ignores tab filters on board while keeping them on list', () => {
+    queryState.search = 'tab=won';
+
+    const { rerender } = render(<LeadsPage />);
+
+    expect(queryState.filterBar.mock.lastCall?.[0].filters.tab).toBeUndefined();
+    expect(queryState.board.mock.lastCall?.[0].tab).toBeUndefined();
+
+    queryState.search = 'tab=won&view=list';
+    rerender(<LeadsPage />);
+
+    expect(queryState.filterBar.mock.lastCall?.[0].filters.tab).toBe('won');
+    expect(queryState.list.mock.lastCall?.[0].tab).toBe('won');
+  });
+
+  it('clears only lead filter params in one URL update', () => {
+    queryState.search =
+      'q=Aziz&branch_id=branch-b&stage_id=s-1&source=telegram&course_type=tezkor&category=B&assigned_to_me=true&assignee_user_id=user-1&overdue_only=true&has_task=true&period=7d&tab=new&page=4&view=list&limit=50&company_id=company-1';
+
+    render(<LeadsPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'clear all' }));
+
+    expect(queryState.setSearchParams).toHaveBeenCalledTimes(1);
+    expect(queryState.filterBar.mock.lastCall?.[0].isBoardView).toBe(false);
+    const [updater, options] = queryState.setSearchParams.mock.lastCall ?? [];
+    expect(options).toEqual({ replace: true });
+    const next = updater(new URLSearchParams(queryState.search));
+
+    expect(next.toString()).toBe('view=list&limit=50&company_id=company-1');
+  });
+
+  it.each(['manager', 'operator'])(
+    'uses the signed-in branch for %s users',
+    (role) => {
+      queryState.user = { role, branch_id: `branch-${role}` };
+      queryState.search = 'branch_id=branch-url&view=metrics';
+
+      render(<LeadsPage />);
+
+      expect(queryState.board.mock.lastCall?.[0].branch_id).toBe(
+        `branch-${role}`,
+      );
+      expect(queryState.list.mock.lastCall?.[0].branch_id).toBe(
+        `branch-${role}`,
+      );
+      expect(queryState.metrics.mock.lastCall?.[0].branchId).toBe(
+        `branch-${role}`,
+      );
+    },
+  );
+
+  it('lets owners use an explicit branch from the URL', () => {
+    queryState.user = { role: 'owner', branch_id: 'branch-owner' };
+    queryState.search = 'branch_id=branch-url&view=metrics';
+
+    render(<LeadsPage />);
+
+    expect(queryState.board.mock.lastCall?.[0].branch_id).toBe('branch-url');
+    expect(queryState.list.mock.lastCall?.[0].branch_id).toBe('branch-url');
+    expect(queryState.metrics.mock.lastCall?.[0].branchId).toBe('branch-url');
   });
 });

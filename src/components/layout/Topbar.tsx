@@ -37,7 +37,7 @@ const langLabels: Record<string, string> = {
 };
 
 const iconButtonClass =
-  'inline-flex h-11 w-11 items-center justify-center rounded-md border border-border bg-background text-muted-foreground shadow-[0_1px_2px_hsl(var(--foreground)/0.05)] transition-[background-color,color,box-shadow,scale] duration-150 ease-out hover:bg-accent hover:text-foreground active:scale-[0.96]';
+  'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-[background-color,color,box-shadow,scale] duration-150 ease-out hover:bg-accent hover:text-foreground active:scale-[0.96] motion-reduce:transition-none motion-reduce:transform-none';
 
 const isMac =
   typeof navigator !== 'undefined' &&
@@ -87,17 +87,17 @@ export const Topbar = ({
   ) as string;
 
   return (
-    <header className="flex h-16 items-center gap-3 border-b border-hair bg-background/[88%] px-4 backdrop-blur-[14px] sm:px-6 lg:px-8">
+    <header className="flex h-16 items-center gap-2 border-b border-hair bg-surface px-4 sm:gap-3 lg:px-6">
       <button
         type="button"
         aria-label={t('actions.sidebar') as string}
         title={t('actions.sidebar') as string}
         onClick={onMobileMenuClick}
-        className="-ml-2 inline-flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-accent hover:text-foreground active:scale-[0.96] lg:hidden"
+        className="-ml-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-accent hover:text-foreground active:scale-[0.96] lg:hidden"
       >
         <List className="h-5 w-5" />
       </button>
-      <span className="lg:hidden">
+      <span className="min-w-0 flex-1 lg:hidden">
         <Brand size="sm" />
       </span>
 
@@ -109,7 +109,7 @@ export const Topbar = ({
               disabled={branchesLoading}
               className="group hidden h-11 min-w-52 max-w-72 cursor-pointer items-center gap-2.5 rounded-md border border-border bg-card px-3 text-left transition-[background-color,border-color,box-shadow] duration-150 ease-out hover:border-primary/50 hover:bg-accent/70 active:bg-accent data-[state=open]:border-primary/60 data-[state=open]:bg-accent data-[state=open]:shadow-[0_0_0_3px_hsl(var(--ring)/0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60 lg:flex"
             >
-              <Buildings className="h-4 w-4 shrink-0 text-primary" />
+              <Buildings className="h-4 w-4 shrink-0 text-info" />
               <span className="min-w-0 flex-1 leading-tight">
                 <span className="block text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
                   {t('dashboard.v2.branch', 'Filial')}
@@ -155,7 +155,7 @@ export const Topbar = ({
           </div>
         ))}
 
-      <div className="flex-1" />
+      <div className="hidden flex-1 lg:block" />
 
       {canAccessOperations && (
         <button
@@ -220,7 +220,7 @@ export const Topbar = ({
               },
             })
           }
-          className="hidden h-10 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground shadow-[0_2px_6px_hsl(var(--primary)/0.24)] transition-[background-color,box-shadow,scale] duration-150 ease-out hover:bg-primary/90 active:scale-[0.96] lg:inline-flex"
+          className="hidden h-10 shrink-0 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-[background-color,box-shadow,scale] duration-150 ease-out hover:bg-primary/90 active:scale-[0.96] lg:inline-flex"
         >
           <Plus className="h-4 w-4" />
           {t('actions.quick_payment', "To'lov")}

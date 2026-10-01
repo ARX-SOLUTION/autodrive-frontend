@@ -22,19 +22,21 @@ export const SummaryCard = ({
   isLoading,
 }: SummaryCardProps) => (
   <div className={cn('glass-card p-4', className)}>
-    <div className="flex items-center justify-between gap-2">
-      <p className="truncate text-sm text-muted-foreground">{title}</p>
+    <div className="flex items-start justify-between gap-3">
+      <p className="min-w-0 break-words text-xs font-medium leading-relaxed text-muted-foreground">
+        {title}
+      </p>
       {/* ponytail: icon is non-text, so WCAG 1.4.11 wants 3:1, not 4.5:1.
           --primary on its own /10 tint was 2.02:1; --warning-strong keeps the
           brand amber and reaches 5.99:1. */}
-      <div className="rounded-lg bg-primary/10 p-2.5 text-warning-strong">
+      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-primary/10 text-warning-strong [&_svg]:h-4 [&_svg]:w-4">
         {icon}
       </div>
     </div>
     {isLoading ? (
-      <Skeleton className="mt-1.5 h-7 w-24" />
+      <Skeleton className="mt-3 h-7 w-24" />
     ) : (
-      <p className="mt-1.5 whitespace-nowrap font-heading text-xl font-bold text-foreground tabular-nums">
+      <p className="mt-3 break-words font-heading text-lg font-bold leading-tight text-foreground tabular-nums sm:text-xl">
         {value}
       </p>
     )}

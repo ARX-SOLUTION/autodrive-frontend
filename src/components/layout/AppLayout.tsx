@@ -160,7 +160,9 @@ export const AppLayout = () => {
           )}
         >
           <div className={cn(!isMapWorkspace && 'sticky top-0 z-30')}>
-            <DemoSessionBanner />
+            <div className="[&>p]:border-border [&>p]:bg-muted/50 [&>p]:text-left [&>p]:text-muted-foreground [&>p]:lg:px-6">
+              <DemoSessionBanner />
+            </div>
             {!isMapWorkspace && (
               <Topbar
                 onMobileMenuClick={() => setMobileSidebarOpen(true)}

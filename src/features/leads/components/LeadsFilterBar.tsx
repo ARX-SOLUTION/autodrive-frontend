@@ -9,6 +9,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Label } from '@/components/ui/label';
 import { SearchWithHotkey } from '@/components/filter/SearchWithHotkey';
 import { ActiveFilterChips } from '@/components/filter/ActiveFilterChips';
 import { MobileFilterSheet } from '@/components/filter/MobileFilterSheet';
@@ -30,6 +36,7 @@ export interface LeadsFilterBarProps {
   filters: ListLeadsQuery;
   onChange: (next: Partial<ListLeadsQuery>) => void;
   onClearAll: () => void;
+  isBoardView?: boolean;
 }
 
 const SOURCES: LeadSource[] = [
@@ -48,13 +55,28 @@ export const LeadsFilterBar = ({
   filters,
   onChange,
   onClearAll,
+  isBoardView = false,
 }: LeadsFilterBarProps) => {
   const { t } = useTranslation();
   const canViewAllBranches = useCan('viewAllBranches');
   const { data: branches = [] } = useBranches();
   const { data: stages = [] } = useLeadStagesQuery();
 
-  // Active filter chip items
+  // ponytail: has_task is unsupported by the API; expose it after backend filtering exists.
+  const countableFilters = [
+    Boolean(filters.stage_id),
+    Boolean(filters.source),
+    Boolean(filters.category),
+    Boolean(filters.assigned_to_me),
+    Boolean(filters.overdue_only),
+    Boolean(canViewAllBranches && filters.branch_id),
+    Boolean(filters.course_type),
+    Boolean(filters.assignee_user_id),
+    Boolean(filters.period && filters.period !== 'all'),
+    Boolean(!isBoardView && filters.tab && filters.tab !== 'all'),
+  ];
+  const localActiveCount = countableFilters.filter(Boolean).length;
+
   const chipItems = useMemo<(ActiveFilterChipItem | null)[]>(() => {
     const list: (ActiveFilterChipItem | null)[] = [];
 
@@ -67,7 +89,7 @@ export const LeadsFilterBar = ({
       });
     }
 
-    if (filters.branch_id) {
+    if (canViewAllBranches && filters.branch_id) {
       const branchName =
         branches.find((b) => b.id === filters.branch_id)?.name ||
         filters.branch_id;
@@ -112,7 +134,7 @@ export const LeadsFilterBar = ({
       list.push({
         id: 'assigned_to_me',
         label: t('leads.assignee', 'Biriktirilgan'),
-        value: t('leads.assign_to_me', 'Menga biriktirilgan'),
+        value: t('leads.assigned_to_me', 'Menga biriktirilgan'),
         onRemove: () => onChange({ assigned_to_me: undefined }),
       });
     }
@@ -120,23 +142,53 @@ export const LeadsFilterBar = ({
     if (filters.overdue_only) {
       list.push({
         id: 'overdue_only',
-        label: t('leads.status', 'Holat'),
+        label: t('common.status', 'Holat'),
         value: t('leads.overdue', 'Kechikkan vazifalar'),
         onRemove: () => onChange({ overdue_only: undefined }),
       });
     }
 
-    return list;
-  }, [filters, branches, stages, t, onChange]);
+    if (filters.course_type) {
+      list.push({
+        id: 'course_type',
+        label: t('common.course_type', 'Kurs turi'),
+        value: t(`courses.types.${filters.course_type}`, filters.course_type),
+        onRemove: () => onChange({ course_type: undefined }),
+      });
+    }
 
-  const {
-    chips,
-    activeCount,
-    isMobileOpen,
-    openMobile,
-    closeMobile,
-    clearAll,
-  } = useFilterBarState({
+    if (filters.assignee_user_id) {
+      list.push({
+        id: 'assignee_user_id',
+        label: t('leads.assignee', 'Biriktirilgan xodim'),
+        value: filters.assignee_user_id,
+        onRemove: () => onChange({ assignee_user_id: undefined }),
+      });
+    }
+
+    if (filters.period && filters.period !== 'all') {
+      list.push({
+        id: 'period',
+        label: t('dashboard.v2.period', 'Davr'),
+        value: t(`leads.period_${filters.period}`, filters.period),
+        onRemove: () => onChange({ period: undefined }),
+      });
+    }
+
+    // ponytail: board ignores tab; expose its chip there once the backend honors it.
+    if (!isBoardView && filters.tab && filters.tab !== 'all') {
+      list.push({
+        id: 'tab',
+        label: t('common.status', 'Holat'),
+        value: t(`leads.tab_${filters.tab}`, filters.tab),
+        onRemove: () => onChange({ tab: undefined }),
+      });
+    }
+
+    return list;
+  }, [filters, branches, stages, t, onChange, canViewAllBranches, isBoardView]);
+
+  const { chips, isMobileOpen, setIsMobileOpen, clearAll } = useFilterBarState({
     filters: chipItems,
     onClearAll,
   });
@@ -149,366 +201,254 @@ export const LeadsFilterBar = ({
     }
   };
 
-  return (
-    <div className="flex flex-col gap-2.5">
-      {/* Desktop Filter Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[280px]">
-          {/* Search input with / hotkey */}
-          <div className="w-full sm:w-64">
-            <SearchWithHotkey
-              value={filters.q || ''}
-              onChange={(val) => onChange({ q: val || undefined })}
-              placeholder={t('leads.search_placeholder', 'Ism yoki telefon...')}
-            />
-          </div>
+  const renderExport = () => (
+    <Button
+      type="button"
+      variant="outline"
+      onClick={handleExport}
+      className="h-11 gap-1.5"
+      aria-label={t('leads.export_csv', 'Eksport (CSV)')}
+    >
+      <DownloadSimple className="h-4 w-4" aria-hidden="true" />
+      {t('leads.export_csv', 'CSV')}
+    </Button>
+  );
 
-          {/* Branch filter (if multi-branch user) */}
-          {canViewAllBranches && branches.length > 0 && (
-            <div className="hidden lg:block w-44">
-              <Select
-                value={filters.branch_id || 'ALL'}
-                onValueChange={(val) =>
-                  onChange({ branch_id: val === 'ALL' ? undefined : val })
-                }
-              >
-                <SelectTrigger className="h-9 w-full">
-                  <SelectValue
-                    placeholder={t('common.all_branches', 'Barcha filiallar')}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">
-                    {t('common.all_branches', 'Barcha filiallar')}
-                  </SelectItem>
-                  {branches.map((b) => (
-                    <SelectItem key={b.id} value={b.id}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+  const renderSearch = (className?: string) => (
+    <SearchWithHotkey
+      value={filters.q || ''}
+      onChange={(val) => onChange({ q: val || undefined })}
+      placeholder={t('leads.search_placeholder', 'Ism yoki telefon...')}
+      aria-label={t('leads.search_placeholder', 'Ism yoki telefon...')}
+      className={className}
+      inputClassName="h-11"
+    />
+  );
 
-          {/* Stage filter */}
-          <div className="hidden md:block w-40">
-            <Select
-              value={filters.stage_id || 'ALL'}
-              onValueChange={(val) =>
-                onChange({ stage_id: val === 'ALL' ? undefined : val })
-              }
-            >
-              <SelectTrigger className="h-9 w-full">
-                <SelectValue
-                  placeholder={t('leads.all_stages', 'Barcha bosqichlar')}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t('leads.all_stages', 'Barcha bosqichlar')}
-                </SelectItem>
-                {stages.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="h-2 w-2 rounded-full"
-                        style={{ backgroundColor: s.color }}
-                      />
-                      <span>{s.name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+  const renderStageFilter = (triggerClassName: string) => (
+    <Select
+      value={filters.stage_id || 'ALL'}
+      onValueChange={(val) =>
+        onChange({ stage_id: val === 'ALL' ? undefined : val })
+      }
+    >
+      <SelectTrigger
+        className={triggerClassName}
+        aria-label={t('leads.stage', 'Bosqich')}
+      >
+        <SelectValue placeholder={t('leads.all_stages', 'Barcha bosqichlar')} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="ALL">
+          {t('leads.all_stages', 'Barcha bosqichlar')}
+        </SelectItem>
+        {stages.map((s) => (
+          <SelectItem key={s.id} value={s.id}>
+            {s.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 
-          {/* Source filter */}
-          <div className="hidden xl:block w-36">
-            <Select
-              value={filters.source || 'ALL'}
-              onValueChange={(val) =>
-                onChange({
-                  source: val === 'ALL' ? undefined : (val as LeadSource),
-                })
-              }
-            >
-              <SelectTrigger className="h-9 w-full">
-                <SelectValue
-                  placeholder={t('leads.all_sources', 'Barcha manbalar')}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t('leads.all_sources', 'Barcha manbalar')}
-                </SelectItem>
-                {SOURCES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {t(`leads.sources.${s}`, s)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+  const renderQuickToggle = (
+    key: 'assigned_to_me' | 'overdue_only',
+    label: string,
+    activeVariant: 'secondary' | 'destructive',
+  ) => {
+    const active = Boolean(filters[key]);
+    return (
+      <Button
+        type="button"
+        variant={active ? activeVariant : 'outline'}
+        aria-pressed={active}
+        onClick={() => onChange({ [key]: active ? undefined : true })}
+        className="min-h-11 text-xs"
+      >
+        {label}
+      </Button>
+    );
+  };
 
-          {/* Category filter */}
-          <div className="hidden xl:block w-28">
-            <Select
-              value={filters.category || 'ALL'}
-              onValueChange={(val) =>
-                onChange({
-                  category: val === 'ALL' ? undefined : (val as Category),
-                })
-              }
-            >
-              <SelectTrigger className="h-9 w-full">
-                <SelectValue placeholder={t('vehicles.category', 'Toifa')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t('common.all_categories', 'Barchasi')}
-                </SelectItem>
-                {CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Quick toggle: Assigned to me */}
-          <Button
-            type="button"
-            variant={filters.assigned_to_me ? 'secondary' : 'outline'}
-            size="sm"
-            onClick={() =>
-              onChange({
-                assigned_to_me: filters.assigned_to_me ? undefined : true,
-              })
+  const renderAdvancedFilters = () => (
+    <>
+      {canViewAllBranches && branches.length > 0 && (
+        <div>
+          <Label className="mb-1.5 block text-xs text-muted-foreground">
+            {t('common.branch', 'Filial')}
+          </Label>
+          <Select
+            value={filters.branch_id || 'ALL'}
+            onValueChange={(val) =>
+              onChange({ branch_id: val === 'ALL' ? undefined : val })
             }
-            className="hidden sm:inline-flex h-9 text-xs"
           >
-            {t('leads.assigned_to_me', 'Menga biriktirilgan')}
-          </Button>
-
-          {/* Quick toggle: Overdue tasks */}
-          <Button
-            type="button"
-            variant={filters.overdue_only ? 'destructive' : 'outline'}
-            size="sm"
-            onClick={() =>
-              onChange({
-                overdue_only: filters.overdue_only ? undefined : true,
-              })
-            }
-            className="hidden sm:inline-flex h-9 text-xs"
-          >
-            {t('leads.overdue_tasks', 'Kechikkanlar')}
-          </Button>
-
-          {/* Mobile Filter Button */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={openMobile}
-            className="sm:hidden h-9 gap-1.5"
-            aria-label={t('common.filter', 'Filterlar')}
-          >
-            <Funnel className="h-4 w-4" />
-            <span>{t('common.filter', 'Filter')}</span>
-            {activeCount > 0 && (
-              <span className="rounded-full bg-primary px-1.5 py-0.2 text-[10px] text-primary-foreground font-bold">
-                {activeCount}
-              </span>
-            )}
-          </Button>
+            <SelectTrigger
+              className="h-11 w-full border-border bg-secondary"
+              aria-label={t('common.branch', 'Filial')}
+            >
+              <SelectValue
+                placeholder={t('common.all_branches', 'Barcha filiallar')}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">
+                {t('common.all_branches', 'Barcha filiallar')}
+              </SelectItem>
+              {branches.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+      )}
 
-        {/* Right side: CSV Export button */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExport}
-            className="h-9 gap-1.5"
-            aria-label={t('leads.export_csv', 'Eksport (CSV)')}
+      <div>
+        <Label className="mb-1.5 block text-xs text-muted-foreground">
+          {t('leads.source', 'Manba')}
+        </Label>
+        <Select
+          value={filters.source || 'ALL'}
+          onValueChange={(val) =>
+            onChange({
+              source: val === 'ALL' ? undefined : (val as LeadSource),
+            })
+          }
+        >
+          <SelectTrigger
+            className="h-11 w-full border-border bg-secondary"
+            aria-label={t('leads.source', 'Manba')}
           >
-            <DownloadSimple className="h-4 w-4" />
-            <span className="hidden sm:inline">
-              {t('leads.export_csv', 'CSV')}
-            </span>
-          </Button>
+            <SelectValue
+              placeholder={t('leads.all_sources', 'Barcha manbalar')}
+            />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">
+              {t('leads.all_sources', 'Barcha manbalar')}
+            </SelectItem>
+            {SOURCES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {t(`leads.sources.${s}`, s)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="mb-1.5 block text-xs text-muted-foreground">
+          {t('vehicles.category', 'Toifa')}
+        </Label>
+        <Select
+          value={filters.category || 'ALL'}
+          onValueChange={(val) =>
+            onChange({
+              category: val === 'ALL' ? undefined : (val as Category),
+            })
+          }
+        >
+          <SelectTrigger
+            className="h-11 w-full border-border bg-secondary"
+            aria-label={t('vehicles.category', 'Toifa')}
+          >
+            <SelectValue placeholder={t('common.all_categories', 'Barchasi')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">
+              {t('common.all_categories', 'Barchasi')}
+            </SelectItem>
+            {CATEGORIES.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {cat}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="space-y-2">
+      <div className="flex w-full flex-col gap-2 md:hidden">
+        <div className="flex w-full items-center gap-2">
+          {renderSearch()}
+          <MobileFilterSheet
+            open={isMobileOpen}
+            onOpenChange={setIsMobileOpen}
+            activeCount={localActiveCount}
+            onClearAll={clearAll}
+            applyLabel={t('common.close')}
+            title={t('filters.title', { defaultValue: 'Filters' })}
+          >
+            <div className="flex flex-col gap-4">{renderAdvancedFilters()}</div>
+          </MobileFilterSheet>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {renderStageFilter('h-11 w-full border-border bg-secondary')}
+          {renderExport()}
+          {renderQuickToggle(
+            'assigned_to_me',
+            t('leads.assigned_to_me', 'Menga biriktirilgan'),
+            'secondary',
+          )}
+          {renderQuickToggle(
+            'overdue_only',
+            t('leads.overdue_tasks', 'Kechikkanlar'),
+            'destructive',
+          )}
         </div>
       </div>
 
-      {/* Active Filter Chips */}
-      <ActiveFilterChips chips={chips} onClearAll={clearAll} />
-
-      {/* Mobile Filter Drawer / Sheet */}
-      <MobileFilterSheet
-        open={isMobileOpen}
-        onOpenChange={(open) => (open ? openMobile() : closeMobile())}
-        activeCount={activeCount}
-        onClearAll={clearAll}
-        title={t('common.filter', 'Filterlar')}
-      >
-        <div className="space-y-4 py-2">
-          {/* Branch filter in mobile */}
-          {canViewAllBranches && branches.length > 0 && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">
-                {t('common.branch', 'Filial')}
-              </label>
-              <Select
-                value={filters.branch_id || 'ALL'}
-                onValueChange={(val) =>
-                  onChange({ branch_id: val === 'ALL' ? undefined : val })
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue
-                    placeholder={t('common.all_branches', 'Barcha filiallar')}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">
-                    {t('common.all_branches', 'Barcha filiallar')}
-                  </SelectItem>
-                  {branches.map((b) => (
-                    <SelectItem key={b.id} value={b.id}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <div className="hidden flex-wrap items-center justify-between gap-2 md:flex">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          {renderSearch('max-w-sm')}
+          <div className="w-44">
+            {renderStageFilter('h-11 w-full border-border bg-secondary')}
+          </div>
+          {renderQuickToggle(
+            'assigned_to_me',
+            t('leads.assigned_to_me', 'Menga biriktirilgan'),
+            'secondary',
           )}
-
-          {/* Stage filter in mobile */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground">
-              {t('leads.stage', 'Bosqich')}
-            </label>
-            <Select
-              value={filters.stage_id || 'ALL'}
-              onValueChange={(val) =>
-                onChange({ stage_id: val === 'ALL' ? undefined : val })
-              }
+          {renderQuickToggle(
+            'overdue_only',
+            t('leads.overdue_tasks', 'Kechikkanlar'),
+            'destructive',
+          )}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="relative h-11 border-border bg-secondary"
+              >
+                <Funnel className="h-4 w-4" aria-hidden="true" />
+                {t('filters.title', { defaultValue: 'Filters' })}
+                {localActiveCount > 0 ? (
+                  <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[11px] font-semibold text-primary-foreground">
+                    {localActiveCount}
+                  </span>
+                ) : null}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              collisionPadding={16}
+              className="max-h-[min(75vh,var(--radix-popover-content-available-height))] w-[min(24rem,calc(100vw-2rem))] overflow-y-auto p-4"
             >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={t('leads.all_stages', 'Barcha bosqichlar')}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t('leads.all_stages', 'Barcha bosqichlar')}
-                </SelectItem>
-                {stages.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Source filter in mobile */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground">
-              {t('leads.source', 'Manba')}
-            </label>
-            <Select
-              value={filters.source || 'ALL'}
-              onValueChange={(val) =>
-                onChange({
-                  source: val === 'ALL' ? undefined : (val as LeadSource),
-                })
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={t('leads.all_sources', 'Barcha manbalar')}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t('leads.all_sources', 'Barcha manbalar')}
-                </SelectItem>
-                {SOURCES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {t(`leads.sources.${s}`, s)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Category filter in mobile */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground">
-              {t('vehicles.category', 'Toifa')}
-            </label>
-            <Select
-              value={filters.category || 'ALL'}
-              onValueChange={(val) =>
-                onChange({
-                  category: val === 'ALL' ? undefined : (val as Category),
-                })
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={t('common.all_categories', 'Barchasi')}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t('common.all_categories', 'Barchasi')}
-                </SelectItem>
-                {CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Quick checkboxes */}
-          <div className="pt-2 space-y-3">
-            <label className="flex items-center gap-2.5 text-sm cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={Boolean(filters.assigned_to_me)}
-                onChange={(e) =>
-                  onChange({
-                    assigned_to_me: e.target.checked ? true : undefined,
-                  })
-                }
-                className="rounded border-border"
-              />
-              <span>{t('leads.assigned_to_me', 'Menga biriktirilgan')}</span>
-            </label>
-
-            <label className="flex items-center gap-2.5 text-sm cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={Boolean(filters.overdue_only)}
-                onChange={(e) =>
-                  onChange({
-                    overdue_only: e.target.checked ? true : undefined,
-                  })
-                }
-                className="rounded border-border"
-              />
-              <span>{t('leads.overdue_tasks', 'Kechikkan vazifalar')}</span>
-            </label>
-          </div>
+              <div className="space-y-4">{renderAdvancedFilters()}</div>
+            </PopoverContent>
+          </Popover>
         </div>
-      </MobileFilterSheet>
+
+        <div className="flex items-center gap-2">{renderExport()}</div>
+      </div>
+
+      <ActiveFilterChips chips={chips} onClearAll={clearAll} />
     </div>
   );
 };

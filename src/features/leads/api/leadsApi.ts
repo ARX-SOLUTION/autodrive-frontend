@@ -119,13 +119,49 @@ function normalizeLeadSource(source?: LeadSource): LeadSource | undefined {
   return source;
 }
 
+type LeadsRequestQuery = {
+  q?: ListLeadsQuery['q'];
+  branchId?: ListLeadsQuery['branch_id'];
+  stageId?: ListLeadsQuery['stage_id'];
+  source?: ListLeadsQuery['source'];
+  courseType?: ListLeadsQuery['course_type'];
+  category?: ListLeadsQuery['category'];
+  mine?: ListLeadsQuery['assigned_to_me'];
+  assigneeId?: ListLeadsQuery['assignee_user_id'];
+  overdueOnly?: ListLeadsQuery['overdue_only'];
+  period?: ListLeadsQuery['period'];
+  tab?: ListLeadsQuery['tab'];
+  page?: ListLeadsQuery['page'];
+  limit?: ListLeadsQuery['limit'];
+};
+
+function toLeadsRequestQuery(query: ListLeadsQuery): LeadsRequestQuery {
+  const params: LeadsRequestQuery = {};
+  if (query.q !== undefined) params.q = query.q;
+  if (query.branch_id !== undefined) params.branchId = query.branch_id;
+  if (query.stage_id !== undefined) params.stageId = query.stage_id;
+  if (query.source !== undefined) params.source = query.source;
+  if (query.course_type !== undefined) params.courseType = query.course_type;
+  if (query.category !== undefined) params.category = query.category;
+  if (query.assigned_to_me !== undefined) params.mine = query.assigned_to_me;
+  if (query.assignee_user_id !== undefined) {
+    params.assigneeId = query.assignee_user_id;
+  }
+  if (query.overdue_only !== undefined) params.overdueOnly = query.overdue_only;
+  if (query.period !== undefined) params.period = query.period;
+  if (query.tab !== undefined) params.tab = query.tab;
+  if (query.page !== undefined) params.page = query.page;
+  if (query.limit !== undefined) params.limit = query.limit;
+  return params;
+}
+
 export const leadsApi = {
   getLeads: async (
     query: ListLeadsQuery = {},
     signal?: AbortSignal,
   ): Promise<PaginatedLeadsResponse> => {
     const { data } = await axiosInstance.get<unknown>('/leads', {
-      params: query,
+      params: toLeadsRequestQuery(query),
       signal,
     });
     const unwrapped = unwrapData<unknown>(data);
@@ -146,77 +182,85 @@ export const leadsApi = {
     signal?: AbortSignal,
   ): Promise<LeadBoardColumn[]> => {
     const { data } = await axiosInstance.get<unknown>('/leads/board', {
-      params: query,
+      params: toLeadsRequestQuery(query),
       signal,
     });
     const unwrapped = unwrapData<unknown>(data);
     if (!Array.isArray(unwrapped)) return [];
 
-    return (unwrapped as RawBoardColumn[]).map((col): LeadBoardColumn => {
-      // Backwards-compatibility for mock/frontend shaped data
-      if (col.stage && Array.isArray(col.leads)) {
-        return col as unknown as LeadBoardColumn;
-      }
+    const columns = (unwrapped as RawBoardColumn[]).map(
+      (col): LeadBoardColumn => {
+        // Backwards-compatibility for mock/frontend shaped data
+        if (col.stage && Array.isArray(col.leads)) {
+          return col as unknown as LeadBoardColumn;
+        }
 
-      const stage: LeadStage = {
-        id: col.stageId ?? col.stage?.id ?? '',
-        companyId: col.companyId ?? col.stage?.companyId ?? '',
-        name: col.stageName ?? col.stage?.name ?? '',
-        color: col.stageColor ?? col.stage?.color ?? '#3B82F6',
-        position: col.position ?? col.stage?.position ?? 0,
-        kind: col.kind ?? col.stage?.kind ?? 'WORK',
-        isSystem: col.isSystem ?? col.stage?.isSystem ?? false,
-        isActive: col.isActive ?? col.stage?.isActive ?? true,
-        createdAt: col.createdAt ?? col.stage?.createdAt ?? '',
-        updatedAt: col.updatedAt ?? col.stage?.updatedAt ?? '',
-      };
+        const stage: LeadStage = {
+          id: col.stageId ?? col.stage?.id ?? '',
+          companyId: col.companyId ?? col.stage?.companyId ?? '',
+          name: col.stageName ?? col.stage?.name ?? '',
+          color: col.stageColor ?? col.stage?.color ?? '#3B82F6',
+          position: col.position ?? col.stage?.position ?? 0,
+          kind: col.kind ?? col.stage?.kind ?? 'WORK',
+          isSystem: col.isSystem ?? col.stage?.isSystem ?? false,
+          isActive: col.isActive ?? col.stage?.isActive ?? true,
+          createdAt: col.createdAt ?? col.stage?.createdAt ?? '',
+          updatedAt: col.updatedAt ?? col.stage?.updatedAt ?? '',
+        };
 
-      const rawItems: RawLeadCardItem[] = Array.isArray(col.items)
-        ? col.items
-        : Array.isArray(col.leads)
-          ? (col.leads as unknown as RawLeadCardItem[])
-          : [];
+        const rawItems: RawLeadCardItem[] = Array.isArray(col.items)
+          ? col.items
+          : Array.isArray(col.leads)
+            ? (col.leads as unknown as RawLeadCardItem[])
+            : [];
 
-      const leads: LeadCard[] = rawItems.map((item): LeadCard => {
-        const fullName = (item.name || '').trim();
-        const firstSpaceIndex = fullName.indexOf(' ');
-        const firstName =
-          item.firstName ??
-          (firstSpaceIndex > 0 ? fullName.slice(0, firstSpaceIndex) : fullName);
-        const lastName =
-          item.lastName ??
-          (firstSpaceIndex > 0 ? fullName.slice(firstSpaceIndex + 1) : null);
+        const leads: LeadCard[] = rawItems.map((item): LeadCard => {
+          const fullName = (item.name || '').trim();
+          const firstSpaceIndex = fullName.indexOf(' ');
+          const firstName =
+            item.firstName ??
+            (firstSpaceIndex > 0
+              ? fullName.slice(0, firstSpaceIndex)
+              : fullName);
+          const lastName =
+            item.lastName ??
+            (firstSpaceIndex > 0 ? fullName.slice(firstSpaceIndex + 1) : null);
+
+          return {
+            id: item.id,
+            firstName,
+            lastName,
+            phone: item.phone,
+            branchId: item.branchId ?? '',
+            branchName: item.branchName,
+            source: item.source,
+            category: item.category ?? null,
+            assigneeUserId: item.assigneeUserId ?? item.assignee?.id ?? null,
+            assigneeName: item.assigneeName ?? item.assignee?.name ?? null,
+            stageId: item.stageId ?? stage.id,
+            nextStepAt: item.nextStepAt ? String(item.nextStepAt) : null,
+            lastTouchAt: item.lastTouchAt
+              ? String(item.lastTouchAt)
+              : item.createdAt
+                ? String(item.createdAt)
+                : '',
+            version: item.version ?? 1,
+            createdAt: item.createdAt ? String(item.createdAt) : '',
+            isOverdue: Boolean(item.isOverdue),
+          };
+        });
 
         return {
-          id: item.id,
-          firstName,
-          lastName,
-          phone: item.phone,
-          branchId: item.branchId ?? '',
-          branchName: item.branchName,
-          source: item.source,
-          category: item.category ?? null,
-          assigneeUserId: item.assigneeUserId ?? item.assignee?.id ?? null,
-          assigneeName: item.assigneeName ?? item.assignee?.name ?? null,
-          stageId: item.stageId ?? stage.id,
-          nextStepAt: item.nextStepAt ? String(item.nextStepAt) : null,
-          lastTouchAt: item.lastTouchAt
-            ? String(item.lastTouchAt)
-            : item.createdAt
-              ? String(item.createdAt)
-              : '',
-          version: item.version ?? 1,
-          createdAt: item.createdAt ? String(item.createdAt) : '',
-          isOverdue: Boolean(item.isOverdue),
+          stage,
+          leads,
+          count: typeof col.total === 'number' ? col.total : leads.length,
         };
-      });
+      },
+    );
 
-      return {
-        stage,
-        leads,
-        count: typeof col.total === 'number' ? col.total : leads.length,
-      };
-    });
+    return query.stage_id
+      ? columns.filter((col) => col.stage.id === query.stage_id)
+      : columns;
   },
 
   getLead: async (id: string, signal?: AbortSignal): Promise<Lead> => {
@@ -507,8 +551,8 @@ export const leadsApi = {
   },
 
   exportLeads: async (query: ListLeadsQuery = {}): Promise<void> => {
-    const response = await axiosInstance.get<Blob>('/leads/export', {
-      params: query,
+    const response = await axiosInstance.get<Blob>('/leads/export.xlsx', {
+      params: toLeadsRequestQuery(query),
       responseType: 'blob',
     });
     const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });

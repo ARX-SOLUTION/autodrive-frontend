@@ -85,7 +85,7 @@ const ExpenseBreakdownPanel = ({
                     'dashboard.finance_summary.expense_breakdown.drill_down',
                     { label: branch.branch_name },
                   )}
-                  className="flex min-h-11 items-center justify-between gap-3 py-2 text-sm hover:text-primary"
+                  className="flex min-h-11 items-center justify-between gap-3 py-2 text-sm hover:text-info"
                 >
                   <span className="font-medium">{branch.branch_name}</span>
                   <span className="flex items-center gap-1 whitespace-nowrap font-semibold tabular-nums">
@@ -107,7 +107,7 @@ const ExpenseBreakdownPanel = ({
                       ),
                     },
                   )}
-                  className="flex min-h-11 items-center justify-between gap-3 py-2 text-sm hover:text-primary"
+                  className="flex min-h-11 items-center justify-between gap-3 py-2 text-sm hover:text-info"
                 >
                   <span className="font-medium">
                     {t(
@@ -142,7 +142,7 @@ const ExpenseBreakdownPanel = ({
                     'dashboard.finance_summary.expense_breakdown.drill_down',
                     { label: t(`expenses.category.${category.category}`) },
                   )}
-                  className="flex min-h-11 items-center justify-between gap-3 py-2 text-sm hover:text-primary"
+                  className="flex min-h-11 items-center justify-between gap-3 py-2 text-sm hover:text-info"
                 >
                   <span className="font-medium">
                     {t(`expenses.category.${category.category}`)}
@@ -244,7 +244,7 @@ export const FinanceSummarySection = ({
     >
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold tracking-tight">
+          <h2 className="text-lg font-semibold tracking-tight">
             {t('dashboard.finance_summary.title', 'Moliya ko‘rsatkichlari')}
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -262,12 +262,12 @@ export const FinanceSummarySection = ({
           <Card
             key={key}
             data-testid={`finance-kpi-${key}`}
-            className="border-border bg-card p-4 shadow-none"
+            className="min-w-0 border-border bg-card p-4 shadow-none"
           >
-            <p className="text-[11px] font-semibold text-muted-foreground">
+            <p className="text-xs font-medium leading-relaxed text-muted-foreground">
               {t(`dashboard.finance_summary.${key}`)}
             </p>
-            <p className="mt-2 whitespace-nowrap font-heading text-lg font-bold tabular-nums">
+            <p className="mt-2 break-words font-heading text-base font-bold leading-snug tabular-nums [overflow-wrap:anywhere] sm:text-lg">
               {formatMoney(data[key])}
             </p>
           </Card>

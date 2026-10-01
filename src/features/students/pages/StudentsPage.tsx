@@ -88,7 +88,9 @@ const StudentsPage = () => {
   const defaultBranchId = isCrossTenant
     ? undefined
     : user?.branch_id || undefined;
-  const branchId = searchParams.get('branch_id') ?? defaultBranchId;
+  const branchId = isCrossTenant
+    ? (searchParams.get('branch_id') ?? undefined)
+    : defaultBranchId;
   const setBranchId = (v: string | undefined) => setParam('branch_id', v);
 
   const search = searchParams.get('q') ?? '';
@@ -126,7 +128,9 @@ const StudentsPage = () => {
       { replace: true },
     );
 
-  const operatorId = searchParams.get('operator_id') ?? undefined;
+  const operatorId = canManageStaff
+    ? (searchParams.get('operator_id') ?? undefined)
+    : undefined;
   const setOperatorId = (v: string | undefined) => setParam('operator_id', v);
 
   const hasGroup = searchParams.get('has_group')
@@ -147,6 +151,7 @@ const StudentsPage = () => {
     setParam('has_debt', v === undefined ? undefined : String(v));
 
   const clearAllFilters = () => {
+    setIncludeDeleted(false);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);

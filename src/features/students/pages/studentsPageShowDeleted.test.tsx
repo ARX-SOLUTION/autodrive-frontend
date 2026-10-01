@@ -94,8 +94,22 @@ const renderPage = () =>
     routePattern: '/students',
   });
 
+const openFiltersIfPanelExists = () => {
+  const trigger = screen.queryAllByRole('button', {
+    name: 'filters.open_filters',
+  })[0];
+  if (trigger) fireEvent.click(trigger);
+};
+
+const closeFiltersIfPanelOpen = () => {
+  const close =
+    screen.queryAllByRole('button', { name: 'common.close' }).at(0) ??
+    screen.queryByRole('button', { name: 'filters.apply' });
+  if (close) fireEvent.click(close);
+};
+
 const emptyResult = {
-  data: { data: [], meta: { total: 0, totalPages: 1 } },
+  data: { data: [], meta: { total: 0, totalPages: 4 } },
   isLoading: false,
   isFetching: false,
   isError: false,
@@ -114,6 +128,7 @@ describe('StudentsPage "show deleted" toggle visibility (autodrive-cg9)', () => 
     role = 'manager';
     h.useStudentsPage.mockReturnValue(emptyResult);
     await renderPage();
+    openFiltersIfPanelExists();
     expect(screen.queryByRole('switch')).toBeNull();
     expect(screen.queryByText('common.show_deleted')).toBeNull();
   });
@@ -122,6 +137,7 @@ describe('StudentsPage "show deleted" toggle visibility (autodrive-cg9)', () => 
     role = 'operator';
     h.useStudentsPage.mockReturnValue(emptyResult);
     await renderPage();
+    openFiltersIfPanelExists();
     expect(screen.queryByRole('switch')).toBeNull();
   });
 
@@ -129,6 +145,7 @@ describe('StudentsPage "show deleted" toggle visibility (autodrive-cg9)', () => 
     role = 'teacher';
     h.useStudentsPage.mockReturnValue(emptyResult);
     await renderPage();
+    openFiltersIfPanelExists();
     expect(screen.queryByRole('switch')).toBeNull();
   });
 
@@ -136,14 +153,16 @@ describe('StudentsPage "show deleted" toggle visibility (autodrive-cg9)', () => 
     role = 'owner';
     h.useStudentsPage.mockReturnValue(emptyResult);
     await renderPage();
-    expect(screen.getByRole('switch')).toBeInTheDocument();
+    openFiltersIfPanelExists();
+    expect(screen.getAllByRole('switch')[0]).toBeInTheDocument();
   });
 
   it('is present for dev (owner is a strict subset of dev)', async () => {
     role = 'dev';
     h.useStudentsPage.mockReturnValue(emptyResult);
     await renderPage();
-    expect(screen.getByRole('switch')).toBeInTheDocument();
+    openFiltersIfPanelExists();
+    expect(screen.getAllByRole('switch')[0]).toBeInTheDocument();
   });
 });
 
@@ -153,13 +172,49 @@ describe('StudentsPage "show deleted" toggle wiring (autodrive-cg9)', () => {
     h.useStudentsPage.mockReturnValue(emptyResult);
     await renderPage();
 
-    fireEvent.click(screen.getByRole('switch'));
+    openFiltersIfPanelExists();
+    fireEvent.click(screen.getAllByRole('switch')[0]);
+    closeFiltersIfPanelOpen();
 
     const lastCall =
       h.useStudentsPage.mock.calls[h.useStudentsPage.mock.calls.length - 1];
     // Options object is the 6th positional arg (courseType, branchId, page,
     // limit, operatorId, options).
     expect(lastCall[5]).toMatchObject({ includeDeleted: true });
+  });
+
+  it('clears local includeDeleted with URL filters while preserving referral context and limit', async () => {
+    role = 'owner';
+    h.useStudentsPage.mockReturnValue(emptyResult);
+    const { router } = await renderWithRouter(<StudentsPage />, {
+      initialEntry:
+        '/students?has_group=false&page=2&limit=25&referred_by_user_id=u7',
+      routePattern: '/students',
+    });
+
+    openFiltersIfPanelExists();
+    fireEvent.click(screen.getAllByRole('switch')[0]);
+    closeFiltersIfPanelOpen();
+    fireEvent.click(screen.getByRole('button', { name: 'common.next' }));
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'common.clear_all' }).at(-1)!,
+    );
+
+    await waitFor(() => {
+      const lastCall = h.useStudentsPage.mock.calls.at(-1)!;
+      expect(lastCall[2]).toBe(1);
+      expect(lastCall[3]).toBe(25);
+      expect(lastCall[5]).toMatchObject({
+        includeDeleted: false,
+        referredByUserId: 'u7',
+      });
+      expect(router.state.location.searchStr).toContain(
+        'referred_by_user_id=u7',
+      );
+      expect(router.state.location.searchStr).toContain('limit=25');
+      expect(router.state.location.searchStr).not.toContain('has_group=');
+      expect(router.state.location.searchStr).not.toContain('page=');
+    });
   });
 });
 

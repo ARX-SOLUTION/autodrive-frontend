@@ -183,7 +183,7 @@ const DesktopSidebar = ({
         aria-expanded={expanded}
         title={sidebarLabel}
         onClick={() => onExpandedChange(!expanded)}
-        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar active:scale-[0.96]"
+        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-[background-color,color,scale] duration-150 ease-out hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar active:scale-[0.96]"
       >
         <SidebarSimple className="h-5 w-5" aria-hidden="true" />
       </button>
@@ -438,7 +438,7 @@ export const Sidebar = ({
               ? railItemClass(active)
               : cn(
                   ACTIVE_MARKER_CLASS,
-                  'relative flex h-10 w-full items-center gap-3 rounded-[10px] py-0 pl-4 pr-3 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 ease-out before:left-1.5',
+                  'relative flex h-10 w-full items-center gap-3 rounded-md py-0 pl-4 pr-3 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 ease-out before:left-1.5',
                   active
                     ? 'before:scale-100 before:opacity-100 bg-sidebar-accent text-sidebar-foreground shadow-[0_1px_2px_hsl(var(--foreground)/0.05)]'
                     : 'before:scale-75 before:opacity-0 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground',
@@ -543,7 +543,7 @@ export const Sidebar = ({
           onPointerLeave={(event) => {
             if (isMousePointer(event)) scheduleHoverClose();
           }}
-          className="w-60 rounded-2xl border-sidebar-border p-2 shadow-[0_16px_40px_-12px_hsl(var(--foreground)/0.22)]"
+          className="w-60 rounded-lg border-sidebar-border p-2 shadow-sm"
         >
           <p className="px-3 pb-1.5 pt-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
             {label}
