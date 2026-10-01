@@ -197,9 +197,12 @@ const SchedulePage = () => {
     null,
   );
 
-  const { data: templates, isLoading: templatesLoading } = useScheduleTemplates(
-    tab === 'templates',
-  );
+  const {
+    data: templates,
+    isLoading: templatesLoading,
+    isError: templatesError,
+    refetch: refetchTemplates,
+  } = useScheduleTemplates(tab === 'templates');
   const {
     data: lessons,
     isLoading: lessonsLoading,
@@ -489,7 +492,12 @@ const SchedulePage = () => {
             <div className="flex items-center justify-between border-b px-4 py-3">
               <h2 className="font-semibold">{t('schedule.templates')}</h2>
               <span className="text-sm text-muted-foreground">
-                {t('schedule.count_label', { count: (templates || []).length })}
+                {templatesLoading
+                  ? t('common.loading')
+                  : !templatesError &&
+                    t('schedule.count_label', {
+                      count: (templates || []).length,
+                    })}
               </span>
             </div>
             {templatesLoading ? (
@@ -498,6 +506,14 @@ const SchedulePage = () => {
                   <Skeleton key={i} className="h-10 w-full" />
                 ))}
               </div>
+            ) : templatesError ? (
+              <EmptyState
+                title={t('common.error')}
+                action={{
+                  label: t('common.retry'),
+                  onClick: () => void refetchTemplates(),
+                }}
+              />
             ) : !templates?.length ? (
               <EmptyState
                 title={t('schedule.not_found')}

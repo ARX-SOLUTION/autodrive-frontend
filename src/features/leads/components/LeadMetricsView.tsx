@@ -92,20 +92,23 @@ export const LeadMetricsView = ({
       color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-400',
     },
     {
-      title: t('leads.won_leads', 'Yutilgan lidlar'),
+      title: t('leads.cohort_converted', 'Davrda yaratilganlardan aylangan'),
       value: metrics.wonLeads ?? 0,
       icon: CheckCircle,
       color:
         'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400',
     },
     {
-      title: t('leads.lost_leads', 'Yo‘qotilgan lidlar'),
+      title: t('leads.updated_lost', 'Davrda yangilangan yo‘qotilgan lidlar'),
       value: metrics.lostLeads ?? 0,
       icon: XCircle,
       color: 'text-rose-600 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-400',
     },
     {
-      title: t('leads.conversion_rate', 'Konversiya darajasi'),
+      title: t(
+        'leads.cohort_conversion',
+        'Davrda yaratilganlarning konversiyasi',
+      ),
       value: `${metrics.conversionRate ?? 0}%`,
       icon: ChartLineUp,
       color:
@@ -233,7 +236,10 @@ export const LeadMetricsView = ({
             id="metrics-stages-heading"
             className="font-semibold text-sm text-foreground"
           >
-            {t('leads.stages', 'Bosqichlar bo‘yicha')}
+            {t(
+              'leads.open_stage_shares',
+              'Hozirgi ochiq lidlarning bosqichlari',
+            )}
           </h3>
           <div className="mt-4 flex-1 space-y-3">
             {byStageEntries.length === 0 ? (
@@ -242,7 +248,10 @@ export const LeadMetricsView = ({
               </p>
             ) : (
               byStageEntries.map(([stageName, count]) => {
-                const total = metrics.totalLeads ?? 0;
+                const total = byStageEntries.reduce(
+                  (sum, [, stageCount]) => sum + stageCount,
+                  0,
+                );
                 const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                 return (
                   <div key={stageName} className="space-y-1">
@@ -326,7 +335,10 @@ export const LeadMetricsView = ({
             id="metrics-lost-heading"
             className="font-semibold text-sm text-foreground"
           >
-            {t('leads.lost_reasons_breakdown', 'Yo‘qotish sabablari')}
+            {t(
+              'leads.updated_lost_reasons',
+              'Davrda yangilangan yo‘qotilgan lidlar sabablari',
+            )}
           </h3>
           <div className="mt-4 flex-1 space-y-3">
             {byLostReasonEntries.length === 0 ? (

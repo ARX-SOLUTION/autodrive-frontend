@@ -90,6 +90,7 @@ const SchoolTestsPage = () => {
                 template.question_count
               } ${t('school_tests.questions_short')}`}
               fields={[
+                { label: 'ID', value: template.id.slice(0, 8) },
                 {
                   label: t('school_tests.passing_percent'),
                   value: `${template.passing_threshold_percent}%`,

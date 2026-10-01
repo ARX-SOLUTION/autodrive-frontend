@@ -2,7 +2,7 @@ import { useAuthStore } from '@/store/authStore';
 import { canAccessRoute } from '@/app/routeAccess';
 /* eslint-disable react-refresh/only-export-components */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { GraduationCap, Stack, UserGear } from '@phosphor-icons/react';
@@ -62,11 +62,14 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
         : canAccessRoute(user, n.path, n.cap, activeBranchId)),
   );
 
+  const opener = useRef<HTMLElement | null>(null);
+  const navigating = useRef(false);
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
   const { data: results, isFetching } = useGlobalSearch(debouncedQuery);
 
   const go = (path: string) => {
+    navigating.current = true;
     onOpenChange(false);
     void navigate({ to: path });
   };
@@ -110,7 +113,24 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
   ];
 
   return (
-    <CommandDialog open={open} onOpenChange={handleOpenChange}>
+    <CommandDialog
+      open={open}
+      onOpenChange={handleOpenChange}
+      contentProps={{
+        onOpenAutoFocus: () => {
+          navigating.current = false;
+          opener.current =
+            document.activeElement instanceof HTMLElement
+              ? document.activeElement
+              : null;
+        },
+        onCloseAutoFocus: (event) => {
+          event.preventDefault();
+          if (!navigating.current && opener.current?.isConnected)
+            opener.current.focus();
+        },
+      }}
+    >
       <CommandInput
         value={query}
         onValueChange={setQuery}

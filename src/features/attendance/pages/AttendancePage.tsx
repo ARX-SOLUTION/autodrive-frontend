@@ -200,11 +200,12 @@ const AttendancePage = () => {
     setPageSize,
     setSearch,
   } = useListQueryState();
-  const { data: lessonsData, isLoading } = useLessons(
-    currentPage,
-    pageSize,
-    debouncedSearch,
-  );
+  const {
+    data: lessonsData,
+    isLoading,
+    isError,
+    refetch,
+  } = useLessons(currentPage, pageSize, debouncedSearch);
   // Memoised so the reference is stable: the `|| []` fallback would otherwise
   // allocate a new array every render, re-firing the deep-link effect below on
   // each one (its ref guard hid the symptom, but the work was still repeated).
@@ -429,6 +430,11 @@ const AttendancePage = () => {
             <Skeleton key={i} className="h-28 w-full" />
           ))}
         </div>
+      ) : isError ? (
+        <EmptyState
+          title={t('common.error')}
+          action={{ label: t('common.retry'), onClick: () => void refetch() }}
+        />
       ) : !lessons.length ? (
         <EmptyState
           title={t(debouncedSearch ? 'common.no_data' : 'attendance.not_found')}

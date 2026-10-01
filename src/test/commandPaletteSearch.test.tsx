@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   screen,
   fireEvent,
@@ -64,6 +65,29 @@ describe('CommandPalette global search', () => {
     searchSpy.mockClear();
     mockQueryState.isFetching = false;
     mockQueryState.hasData = true;
+  });
+
+  it('restores the opener focus after cancelling search', async () => {
+    vi.useRealTimers();
+    const ControlledPalette = () => {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button onClick={() => setOpen(true)}>Open search</button>
+          <CommandPalette open={open} onOpenChange={setOpen} />
+        </>
+      );
+    };
+    await renderWithRouter(<ControlledPalette />, {
+      initialEntry: '/dashboard',
+      routePattern: '/$',
+    });
+    const opener = screen.getByRole('button', { name: 'Open search' });
+    opener.focus();
+    fireEvent.click(opener);
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(opener).toHaveFocus();
   });
 
   it('debounces the query by 300ms before it reaches useGlobalSearch', async () => {

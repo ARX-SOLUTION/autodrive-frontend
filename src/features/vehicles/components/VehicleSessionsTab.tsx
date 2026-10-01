@@ -285,7 +285,7 @@ export default function VehicleSessionsTab({
                   className="h-8 w-8 p-0"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  aria-label={t('common.prev')}
+                  aria-label={t('common.previous')}
                 >
                   <CaretLeft className="h-4 w-4" />
                 </Button>

@@ -11,6 +11,8 @@ import { matchesListQuery } from '@/lib/listQuery';
 import { ListSearchField } from '@/components/ui/ListSearchField';
 import {
   QUESTION_TOPICS,
+  activeQuestionVersion,
+  localeContent,
   type Question,
   type QuestionStatus,
   type QuestionTopic,
@@ -26,7 +28,12 @@ const selectClass =
   'h-10 w-full rounded-md border border-input bg-background px-3 text-sm';
 
 const QuestionsPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language?.startsWith('ru')
+    ? 'ru'
+    : i18n.language?.startsWith('en')
+      ? 'en'
+      : 'uz';
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const canManage = useCan('questions.create');
@@ -172,11 +179,17 @@ const QuestionsPage = () => {
             <DataCard
               key={question.id}
               className="cursor-pointer"
-              title={t(`questions.topics.${question.topic}`)}
-              subtitle={`${t(`questions.status.${question.status}`)} · ${t(
+              title={
+                localeContent(
+                  activeQuestionVersion(question),
+                  locale,
+                )?.stem.slice(0, 160) || t(`questions.topics.${question.topic}`)
+              }
+              subtitle={`${t(`questions.topics.${question.topic}`)} · ${t(`questions.status.${question.status}`)} · ${t(
                 `questions.visibility.${question.visibility}`,
               )}`}
               fields={[
+                { label: 'ID', value: question.id.slice(0, 8) },
                 {
                   label: t('questions.category'),
                   value: question.category,

@@ -70,6 +70,7 @@
     "dev": "Platform administrator"
   },
   "common": {
+    "select_branch": "Select a branch",
     "save": "Save",
     "cancel": "Cancel",
     "back": "Back",
@@ -453,6 +454,10 @@
     }
   },
   "training": {
+    "add_enrollment_desc": "Select a student and enroll them in a training program",
+    "find_student": "Find a student",
+    "search_student_placeholder": "Search by student name",
+    "select_program": "Select a training program",
     "title": "Practical training programs",
     "subtitle": "Approved practice minutes by branch and category",
     "add_program": "Add program",
@@ -691,6 +696,8 @@
     "panel_note": "Fleet status does not prove GPS connectivity or vehicle movement."
   },
   "branches": {
+    "phone": "Phone",
+    "name_placeholder": "Enter branch name",
     "title": "Branches",
     "add": "Add branch",
     "edit": "Edit branch",
@@ -793,6 +800,7 @@
     "confirm_delete_desc": "Delete course \"{{name}}\"? This action cannot be undone."
   },
   "students": {
+    "student": "Student",
     "title": "Students",
     "add": "Add student",
     "detailed_toggle": "Detailed",
@@ -2117,6 +2125,7 @@
     "distance_travelled": "Distance travelled"
   },
   "operations": {
+    "unavailable_description": "The operational radar is not connected to data sources yet. View actual data in the schedule, attendance, and fuel sections.",
     "live_center": "Center Director Operational Radar",
     "title": "Instructor Workload & Fleet Fuel Control",
     "subtitle": "Branch-level monitoring of driving hours, fatigue risks, and fuel consumption standards",
@@ -2192,6 +2201,11 @@
     "filter_excess_only": "Fuel excess only"
   },
   "leads": {
+    "cohort_converted": "Converted from leads created in period",
+    "cohort_conversion": "Conversion of leads created in period",
+    "updated_lost": "Lost leads updated in period",
+    "open_stage_shares": "Stages of currently open leads",
+    "updated_lost_reasons": "Reasons for lost leads updated in period",
     "title": "Leads & CRM Funnel",
     "subtitle": "Manage potential students, track funnel stages, and schedule follow-ups",
     "search_placeholder": "Name or phone...",

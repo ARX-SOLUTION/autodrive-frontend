@@ -158,7 +158,7 @@ const VehiclesPage = () => {
           cell: ({ row }) => startIndex + row.getDisplayIndex() + 1,
         }),
         vehicleColumnHelper.accessor('plate_number', {
-          header: t('vehicles.plate'),
+          header: t('vehicles.plate_number'),
           meta: { cellClassName: 'font-mono font-semibold' },
           cell: ({ row }) => (
             <button
