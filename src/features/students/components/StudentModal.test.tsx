@@ -157,3 +157,42 @@ describe('StudentModal calendar-date wiring (autodrive-qsgc.3)', () => {
     expect(payload.completion_date).toBeUndefined();
   });
 });
+
+describe('StudentModal current group on edit', () => {
+  it('keeps the assigned group while group options are empty or loading', async () => {
+    const onSubmit = vi.fn();
+    render(
+      <StudentModal
+        open
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+        loading={false}
+        courseType="avto_maktab"
+        student={{
+          id: 's1',
+          first_name: 'Ivan',
+          last_name: 'Ivanov',
+          phone: '+998901234567',
+          course_type: 'avto_maktab',
+          branch_id: 'b1',
+          payment_method: 'naqd',
+          has_document: false,
+          result: 'oqimoqda',
+          created_at: '2026-07-01T00:00:00.000Z',
+          total_price: 1000,
+          debt: 0,
+          group_id: 'g9',
+          group_name: 'T-25',
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('combobox', { name: 'students.group' }),
+    ).toHaveTextContent('T-25');
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({ group_id: 'g9' });
+  });
+});

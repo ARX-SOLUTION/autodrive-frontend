@@ -126,7 +126,19 @@ const GroupFormDialog = ({
     branchIdValue,
     open,
   );
-  const teachers = options.scoped ? options.data?.teachers : readTeachers;
+  const loadedTeachers =
+    (options.scoped ? options.data?.teachers : readTeachers) ?? [];
+  // The saved teacher stays selectable while options load or omit it, so an
+  // unrelated edit never clears the assignment.
+  const teachers =
+    editGroup?.teacher_id &&
+    editGroup.teacher_name &&
+    !loadedTeachers.some((teacher) => teacher.id === editGroup.teacher_id)
+      ? [
+          { id: editGroup.teacher_id, name: editGroup.teacher_name },
+          ...loadedTeachers,
+        ]
+      : loadedTeachers;
   const branchOptions = options.scoped ? options.branches : branches;
   const debouncedName = useDebounce(nameValue, 300);
   const [dupWarningDismissed, setDupWarningDismissed] = useState(false);
@@ -293,7 +305,7 @@ const GroupFormDialog = ({
                         <SelectItem value="none">
                           {t('groups.form.teacher_none')}
                         </SelectItem>
-                        {(teachers || []).map((teacher) => (
+                        {teachers.map((teacher) => (
                           <SelectItem key={teacher.id} value={teacher.id}>
                             {teacher.name}
                           </SelectItem>
