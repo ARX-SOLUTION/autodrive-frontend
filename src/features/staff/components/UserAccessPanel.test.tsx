@@ -31,9 +31,17 @@ const catalogue = {
     'students.delete',
     'attendance.mark',
     'documents.read',
+    'payments.read',
   ],
   own_resources: ['students', 'attendance'],
   templates: {},
+  custom_templates: [
+    {
+      id: 'acct-template',
+      name: 'Filial hisobi',
+      permissions: ['students.read', 'payments.read'],
+    },
+  ],
   branches: [
     { id: 'a', name: 'Branch A' },
     { id: 'b', name: 'Branch B' },
@@ -76,6 +84,97 @@ beforeEach(() => {
 });
 
 describe('staff scoped access editor', () => {
+  it('applies a company template to the selected scope as a reviewable draft', async () => {
+    vi.mocked(axiosInstance.patch).mockResolvedValue({ data: snapshot });
+    await mount();
+    const scope = await screen.findByLabelText('access.scope');
+    fireEvent.change(scope, { target: { value: 'branch:a' } });
+    fireEvent.change(screen.getByLabelText('access.template'), {
+      target: { value: 'custom:acct-template' },
+    });
+    expect(
+      screen.getByRole('checkbox', {
+        name: 'access.permissions.students_read',
+      }),
+    ).toBeChecked();
+    fireEvent.click(
+      screen.getByRole('button', { name: /access\.groups\.finance/ }),
+    );
+    expect(
+      screen.getByRole('checkbox', {
+        name: 'access.permissions.payments_read',
+      }),
+    ).toBeChecked();
+    expect(axiosInstance.patch).not.toHaveBeenCalled();
+    await confirmSave();
+    await waitFor(() =>
+      expect(axiosInstance.patch).toHaveBeenCalledWith('/users/target/access', {
+        version: 7,
+        scopes: [
+          {
+            scope: 'branch',
+            branchId: 'a',
+            permissions: ['students.read', 'payments.read'],
+          },
+        ],
+      }),
+    );
+  });
+
+  it('explains and skips template permissions outside a manager delegation ceiling', async () => {
+    useAuthStore.setState({
+      user: {
+        id: 'manager',
+        email: 'manager@example.com',
+        role: 'manager',
+        permissions: [],
+        branch_ids: ['a'],
+      },
+    });
+    vi.mocked(axiosInstance.get).mockImplementation(async (url) => ({
+      data:
+        url === '/permissions'
+          ? {
+              ...catalogue,
+              custom_templates: [
+                {
+                  id: 'restricted',
+                  name: 'Cheklangan',
+                  permissions: ['students.read', 'students.update'],
+                },
+              ],
+              delegations: [
+                {
+                  permission: 'students.read',
+                  scope: 'branch',
+                  branch_id: 'a',
+                },
+              ],
+            }
+          : snapshot,
+    }));
+    await mount();
+    fireEvent.change(await screen.findByLabelText('access.scope'), {
+      target: { value: 'branch:a' },
+    });
+    fireEvent.change(screen.getByLabelText('access.template'), {
+      target: { value: 'custom:restricted' },
+    });
+    expect(
+      screen.getByRole('checkbox', {
+        name: 'access.permissions.students_read',
+      }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole('checkbox', {
+        name: 'access.permissions.students_update',
+      }),
+    ).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'access.template_limited',
+    );
+  });
+
   it('saves an independent update grant only in the changed branch scope', async () => {
     vi.mocked(axiosInstance.patch).mockResolvedValue({
       data: {
@@ -130,6 +229,9 @@ describe('staff scoped access editor', () => {
       within(scopes).getByRole('option', { name: 'access.own · Branch B' }),
     ).toHaveValue('own:b');
     fireEvent.change(scopes, { target: { value: 'own:a' } });
+    fireEvent.click(
+      screen.getByRole('button', { name: /access\.groups\.management/ }),
+    );
     expect(
       screen.getByRole('checkbox', {
         name: 'access.permissions.documents_read',
