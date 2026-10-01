@@ -99,13 +99,13 @@ export const groupsListQueryOptions = (
 // keep getting the full tenant-scoped list, unchanged. GroupsPage passes
 // search/branchId/courseType so GET /groups filters server-side instead of
 // the page re-filtering the full list client-side (autodrive-b85.5).
-export const useGroups = (params: GroupListParams = {}) => {
+export const useGroups = (params: GroupListParams = {}, enabled = true) => {
   const authBranchId = useAuthStore((s) => s.user?.branch_id ?? undefined);
   const isCrossTenant = useIsCrossTenant();
   return useQuery(
     groupsListQueryOptions(
       { ...params, authBranchId },
-      !!authBranchId || isCrossTenant,
+      enabled && (!!authBranchId || isCrossTenant),
     ),
   );
 };

@@ -37,11 +37,14 @@ export const scheduleTemplatesQueryOptions = (
     enabled,
   });
 
-export const useScheduleTemplates = () => {
+export const useScheduleTemplates = (enabled = true) => {
   const branchId = useAuthStore((s) => s.user?.branch_id ?? undefined);
   const isCrossTenant = useIsCrossTenant();
   return useQuery(
-    scheduleTemplatesQueryOptions(branchId, !!branchId || isCrossTenant),
+    scheduleTemplatesQueryOptions(
+      branchId,
+      enabled && (!!branchId || isCrossTenant),
+    ),
   );
 };
 
@@ -118,13 +121,17 @@ export const calendarLessonsQueryOptions = (
     enabled,
   });
 
-export const useCalendarLessons = (dateFrom: string, dateTo: string) => {
+export const useCalendarLessons = (
+  dateFrom: string,
+  dateTo: string,
+  enabled = true,
+) => {
   const branchId = useAuthStore((s) => s.user?.branch_id ?? undefined);
   const isCrossTenant = useIsCrossTenant();
   return useQuery(
     calendarLessonsQueryOptions(
       { dateFrom, dateTo, branchId },
-      (!!branchId || isCrossTenant) && !!dateFrom && !!dateTo,
+      enabled && (!!branchId || isCrossTenant) && !!dateFrom && !!dateTo,
     ),
   );
 };

@@ -47,6 +47,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useCan } from '@/hooks/useCan';
 import { CourseType } from '@/features/students/types';
 import { cn } from '@/lib/utils';
+import { nowTashkentParts } from '@/lib/calendarDateTime';
 import { formatMoney, groupDigits } from '@/lib/money';
 import { FinanceSummarySection } from '@/features/dashboard/components/FinanceSummarySection';
 
@@ -92,7 +93,7 @@ const formatDate = (
 
 // Keep the v2 chunk independent from the legacy DashboardPage module.
 const greetingKey = () => {
-  const h = new Date().getHours();
+  const h = Number(nowTashkentParts().time.slice(0, 2));
   if (h < 12) return 'dashboard.greeting_morning';
   if (h < 18) return 'dashboard.greeting_afternoon';
   return 'dashboard.greeting_evening';
@@ -422,12 +423,12 @@ const FreshnessCaption = ({
     >
       <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       <span>
-        {t('dashboard.v2.updated', 'Yangilandi')} ·{' '}
+        {t('dashboard.v2.updated', 'Hisobot tuzildi')} ·{' '}
         {formatFreshnessTimestamp(generatedAt)}
         {showDataThrough && (
           <>
             {' '}
-            · {t('dashboard.v2.to', 'Gacha')}{' '}
+            · {t('dashboard.v2.data_through', "Ma'lumotlar sanasi")}{' '}
             {formatFreshnessTimestamp(dataThrough)}
           </>
         )}

@@ -1,12 +1,20 @@
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { toast } from 'sonner';
 import SchedulePage from '@/features/schedule/pages/SchedulePage';
-import { useGenerateLessons } from '@/features/schedule/api/scheduleService';
+import {
+  useCalendarLessons,
+  useGenerateLessons,
+  useScheduleTemplates,
+} from '@/features/schedule/api/scheduleService';
+import { useGroups } from '@/features/groups/api/groupService';
 import { useBatchAttendance } from '@/features/attendance/api/attendanceService';
 import { ScheduleTemplate, CalendarLesson } from '@/features/schedule/types';
 import { Group } from '@/features/groups/types';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
+import uz from '@/i18n/locales/uz.json';
+import ru from '@/i18n/locales/ru.json';
+import en from '@/i18n/locales/en.json';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
@@ -20,7 +28,7 @@ const tSpy = vi.hoisted(() => vi.fn((key: string) => key));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: tSpy,
-    i18n: { changeLanguage: () => new Promise(() => {}) },
+    i18n: { language: 'ru', changeLanguage: () => new Promise(() => {}) },
   }),
   initReactI18next: { type: '3rdParty', init: () => {} },
 }));
@@ -63,15 +71,18 @@ vi.mock('@/store/authStore', () => ({
 }));
 
 vi.mock('@/features/schedule/api/scheduleService', () => ({
-  useScheduleTemplates: () => ({ data: mockTemplates, isLoading: false }),
-  useCalendarLessons: () => ({ data: [mockLesson], isLoading: false }),
+  useScheduleTemplates: vi.fn(() => ({
+    data: mockTemplates,
+    isLoading: false,
+  })),
+  useCalendarLessons: vi.fn(() => ({ data: [mockLesson], isLoading: false })),
   useCreateTemplate: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeleteTemplate: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useGenerateLessons: vi.fn(),
 }));
 
 vi.mock('@/features/groups/api/groupService', () => ({
-  useGroups: () => ({ data: [], isLoading: false }),
+  useGroups: vi.fn(() => ({ data: [], isLoading: false })),
   useGroup: () => ({ data: mockGroup }),
 }));
 
@@ -81,6 +92,175 @@ vi.mock('@/features/attendance/api/attendanceService', () => ({
 }));
 
 describe('SchedulePage', () => {
+  beforeEach(() => {
+    tSpy.mockImplementation((key: string) => key);
+    vi.mocked(useCalendarLessons).mockImplementation(
+      () =>
+        ({
+          data: [mockLesson],
+          isLoading: false,
+        }) as unknown as ReturnType<typeof useCalendarLessons>,
+    );
+  });
+
+  it('enables only the active tab and opens group queries when a form needs them', async () => {
+    vi.mocked(useGenerateLessons).mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof useGenerateLessons>);
+    await renderWithRouter(<SchedulePage />);
+
+    expect(useScheduleTemplates).toHaveBeenLastCalledWith(false);
+    expect(vi.mocked(useCalendarLessons).mock.calls.at(-1)?.[2]).toBe(true);
+    expect(useGroups).toHaveBeenLastCalledWith({}, false);
+    fireEvent.mouseDown(
+      screen.getByRole('tab', { name: 'schedule.tab_templates' }),
+    );
+    await waitFor(() =>
+      expect(useScheduleTemplates).toHaveBeenLastCalledWith(true),
+    );
+    expect(vi.mocked(useCalendarLessons).mock.calls.at(-1)?.[2]).toBe(false);
+
+    fireEvent.click(screen.getByText('schedule.generate_lessons'));
+    expect(useGroups).toHaveBeenLastCalledWith({}, true);
+  });
+
+  it('explains an empty week and lets the user move to the next week', async () => {
+    vi.mocked(useCalendarLessons).mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useCalendarLessons>);
+    vi.mocked(useGenerateLessons).mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof useGenerateLessons>);
+    await renderWithRouter(<SchedulePage />);
+
+    expect(screen.getByText('schedule.week_empty')).toBeInTheDocument();
+    const previousFrom = vi.mocked(useCalendarLessons).mock.calls.at(-1)![0];
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'schedule.next_week' }).at(-1)!,
+    );
+    const nextFrom = vi.mocked(useCalendarLessons).mock.calls.at(-1)![0];
+    expect(
+      new Date(nextFrom).getTime() - new Date(previousFrom).getTime(),
+    ).toBe(7 * 24 * 60 * 60 * 1000);
+  });
+
+  it('shows a retry action instead of an empty week when the calendar query fails', async () => {
+    const refetch = vi.fn();
+    vi.mocked(useCalendarLessons).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      refetch,
+    } as unknown as ReturnType<typeof useCalendarLessons>);
+    vi.mocked(useGenerateLessons).mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof useGenerateLessons>);
+
+    await renderWithRouter(<SchedulePage />);
+
+    expect(screen.queryByText('schedule.week_empty')).not.toBeInTheDocument();
+    expect(screen.getByText('common.error')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(refetch).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the current week, Today action and early lessons in Tashkent time', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-09-27T20:00:00.000Z'));
+    vi.mocked(useCalendarLessons).mockReturnValue({
+      data: [
+        {
+          ...mockLesson,
+          date: '2026-09-27T20:00:00.000Z',
+          group_name: 'Early Tashkent group',
+        },
+      ],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useCalendarLessons>);
+    vi.mocked(useGenerateLessons).mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof useGenerateLessons>);
+
+    try {
+      await renderWithRouter(<SchedulePage />);
+
+      expect(useCalendarLessons).toHaveBeenLastCalledWith(
+        '2026-09-28',
+        '2026-10-04',
+        true,
+      );
+      expect(screen.getByText('Early Tashkent group')).toBeInTheDocument();
+      expect(screen.getByText('01:00')).toBeInTheDocument();
+      fireEvent.click(
+        screen.getByRole('button', { name: 'schedule.prev_week' }),
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'schedule.today' }));
+      expect(useCalendarLessons).toHaveBeenLastCalledWith(
+        '2026-09-28',
+        '2026-10-04',
+        true,
+      );
+      expect(screen.getByText('Early Tashkent group')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each([
+    ['uz', uz],
+    ['ru', ru],
+    ['en', en],
+  ] as const)(
+    'renders %s weekday translations in both calendar and template labels',
+    async (_language, locale) => {
+      const labels: Record<string, string> = locale.schedule;
+      tSpy.mockImplementation((key: string) =>
+        key.startsWith('schedule.day_')
+          ? labels[key.slice('schedule.'.length)]
+          : key,
+      );
+      vi.mocked(useGenerateLessons).mockReturnValue({
+        mutateAsync: vi.fn(),
+        isPending: false,
+      } as unknown as ReturnType<typeof useGenerateLessons>);
+      await renderWithRouter(<SchedulePage />);
+
+      expect(
+        screen.getByText(new RegExp(`^${locale.schedule.day_monday}`)),
+      ).toBeInTheDocument();
+      fireEvent.mouseDown(
+        screen.getByRole('tab', { name: 'schedule.tab_templates' }),
+      );
+      await waitFor(() =>
+        expect(
+          screen.getByText(locale.schedule.day_monday),
+        ).toBeInTheDocument(),
+      );
+    },
+  );
+
+  it('requests the complete calendar week using date-only API parameters', async () => {
+    vi.mocked(useGenerateLessons).mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof useGenerateLessons>);
+
+    await renderWithRouter(<SchedulePage />);
+
+    const [from, to] = vi.mocked(useCalendarLessons).mock.calls.at(-1)!;
+    expect(from).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(to).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(
+      new Date(`${to}T00:00:00Z`).getTime() -
+        new Date(`${from}T00:00:00Z`).getTime(),
+    ).toBe(6 * 24 * 60 * 60 * 1000);
+  });
+
   it('renders the templates list without crashing when templates exist', async () => {
     vi.mocked(useGenerateLessons).mockReturnValue({
       mutateAsync: vi.fn(),

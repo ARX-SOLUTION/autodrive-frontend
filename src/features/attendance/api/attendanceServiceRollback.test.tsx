@@ -73,8 +73,17 @@ describe('useBatchAttendance optimistic rollback', () => {
       dateTo: '2026-08-31',
     });
     const historyKey = attendanceKeys.history('student-1', { limit: 20 });
+    const { attendance, ...metadata } = lesson;
     const originalPage: PaginatedLessons = {
-      data: [lesson],
+      data: [
+        {
+          ...metadata,
+          present_count: attendance.filter(
+            (record) => record.status === 'present',
+          ).length,
+          total_count: attendance.length,
+        },
+      ],
       total: 1,
       page: 1,
       limit: 50,
@@ -111,6 +120,8 @@ describe('useBatchAttendance optimistic rollback', () => {
         queryClient.getQueryData<CalendarLesson[]>(calendarKey)?.[0]
           .present_count,
       ).toBe(1);
+      // Counts cannot be inferred from a partial batch without the old roster.
+      expect(queryClient.getQueryData(lessonPageKey)).toEqual(originalPage);
     });
 
     rejectRequest(new Error('network down'));

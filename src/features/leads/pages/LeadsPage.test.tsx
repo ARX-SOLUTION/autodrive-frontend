@@ -1,10 +1,23 @@
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+  act,
+} from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { LeadsPage } from './LeadsPage';
+import type { ListLeadsQuery } from '../types/leads.types';
+
+const queryState = vi.hoisted(() => ({
+  search: '',
+  board: vi.fn(),
+  list: vi.fn(),
+}));
 
 vi.mock('@/hooks/useUrlParams', () => ({
   useUrlParams: () => ({
-    searchParams: new URLSearchParams(''),
+    searchParams: new URLSearchParams(queryState.search),
     setParams: vi.fn(),
     setSearchParams: vi.fn(),
   }),
@@ -42,17 +55,20 @@ vi.mock('../queries/leadsQueries', () => ({
     data: mockStages,
     isLoading: false,
   }),
-  useLeadBoardQuery: () => ({
-    data: mockBoard,
-    isLoading: false,
-  }),
-  useLeadsQuery: () => ({
-    data: mockListData,
-    isLoading: false,
-    isFetching: false,
-    isError: false,
-    refetch: vi.fn(),
-  }),
+  useLeadBoardQuery: (query: ListLeadsQuery) => {
+    queryState.board(query);
+    return { data: mockBoard, isLoading: false, isFetching: false };
+  },
+  useLeadsQuery: (query: ListLeadsQuery) => {
+    queryState.list(query);
+    return {
+      data: mockListData,
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      refetch: vi.fn(),
+    };
+  },
   useLeadMetricsQuery: () => ({
     data: mockMetrics,
     isLoading: false,
@@ -96,8 +112,10 @@ vi.mock('../components/LeadsTable', () => ({
 }));
 
 vi.mock('../components/LeadsFilterBar', () => ({
-  LeadsFilterBar: () => (
-    <div data-testid="mock-leads-filter-bar">LeadsFilterBar</div>
+  LeadsFilterBar: ({ filters }: { filters: ListLeadsQuery }) => (
+    <div data-testid="mock-leads-filter-bar">
+      {filters.q || 'LeadsFilterBar'}
+    </div>
   ),
 }));
 
@@ -112,10 +130,12 @@ vi.mock('../components/CreateLeadDialog', () => ({
 describe('LeadsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    queryState.search = '';
   });
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
   });
 
   it('renders page header and configure stages button for owner', () => {
@@ -143,5 +163,35 @@ describe('LeadsPage', () => {
     expect(screen.getAllByText('leads.manage_stages').length).toBeGreaterThan(
       1,
     );
+  });
+
+  it('debounces only the requested search while updating the input and branch immediately', () => {
+    vi.useFakeTimers();
+    const { rerender } = render(<LeadsPage />);
+    queryState.search = 'q=A';
+    rerender(<LeadsPage />);
+    act(() => vi.advanceTimersByTime(150));
+    queryState.search = 'q=Aziz';
+    rerender(<LeadsPage />);
+
+    expect(screen.getByTestId('mock-leads-filter-bar')).toHaveTextContent(
+      'Aziz',
+    );
+    expect(queryState.board.mock.lastCall?.[0].q).toBeUndefined();
+    expect(queryState.list.mock.lastCall?.[0].q).toBeUndefined();
+    act(() => vi.advanceTimersByTime(299));
+    queryState.search = 'q=Aziz&branch_id=branch-b';
+    rerender(<LeadsPage />);
+    expect(queryState.board.mock.lastCall?.[0]).toMatchObject({
+      branch_id: 'branch-b',
+      q: undefined,
+    });
+
+    act(() => vi.advanceTimersByTime(1));
+    expect(queryState.board.mock.lastCall?.[0]).toMatchObject({
+      branch_id: 'branch-b',
+      q: 'Aziz',
+    });
+    expect(queryState.list.mock.lastCall?.[0].q).toBe('Aziz');
   });
 });

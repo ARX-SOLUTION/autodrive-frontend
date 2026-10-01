@@ -54,6 +54,10 @@ const PaymentsPage = () => {
   const setSearch = (v: string) => setParam('q', v || undefined);
 
   const [modalOpen, setModalOpen] = useState(false);
+  const closePaymentModal = () => {
+    setModalOpen(false);
+    setParam('action', undefined);
+  };
 
   const paymentStatus = searchParams.get('status') ?? 'all';
   const setPaymentStatus = (v: string) =>
@@ -228,7 +232,7 @@ const PaymentsPage = () => {
     createPayment.mutate(data, {
       onSuccess: () => {
         toast.success(t('payments.added'));
-        setModalOpen(false);
+        closePaymentModal();
       },
       onError: (err) =>
         mutationErrorToast(err, t, () => createPayment.mutate(data)),
@@ -350,8 +354,11 @@ const PaymentsPage = () => {
       </section>
 
       <PaymentModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        open={
+          canRecordPayment &&
+          (modalOpen || searchParams.get('action') === 'create')
+        }
+        onClose={closePaymentModal}
         onSubmit={handlePaymentSubmit}
         loading={createPayment.isPending}
         branchId={branchId}

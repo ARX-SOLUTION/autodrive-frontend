@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { cn } from '@/lib/utils';
+import { nowTashkentParts } from '@/lib/calendarDateTime';
 import { Card } from '@/components/ui/card';
 import { Sparkline } from '@/features/dashboard/components/Sparkline';
 import { ArrowDownRight, ArrowUpRight } from '@phosphor-icons/react';
@@ -17,7 +18,7 @@ export const formatNumber = (n: number) =>
   new Intl.NumberFormat('uz-UZ').format(Math.round(n || 0));
 
 export const greetingKey = () => {
-  const h = new Date().getHours();
+  const h = Number(nowTashkentParts().time.slice(0, 2));
   if (h < 12) return 'dashboard.greeting_morning';
   if (h < 18) return 'dashboard.greeting_afternoon';
   return 'dashboard.greeting_evening';

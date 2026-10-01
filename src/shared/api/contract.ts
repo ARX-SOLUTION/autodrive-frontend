@@ -38,7 +38,7 @@ export type CoursesQuery = NonNullable<
 >;
 export type LessonsQuery = NonNullable<
   operations['AttendanceController_findAll']['parameters']['query']
->;
+> & { search?: string };
 export type AttendanceHistoryQuery = NonNullable<
   operations['AttendanceController_findHistoryForStudent']['parameters']['query']
 >;

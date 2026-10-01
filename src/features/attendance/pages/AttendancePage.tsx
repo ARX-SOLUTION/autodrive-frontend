@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useUrlParams } from '@/hooks/useUrlParams';
-import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,7 +8,6 @@ import { z } from 'zod';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { ListSearchField } from '@/components/ui/ListSearchField';
 import { useListQueryState } from '@/hooks/useListQueryState';
-import { matchesListQuery } from '@/lib/listQuery';
 import {
   useLessons,
   useCreateLesson,
@@ -17,7 +15,7 @@ import {
   useDeleteLesson,
 } from '@/features/attendance/api/attendanceService';
 import { useGroups } from '@/features/groups/api/groupService';
-import { Lesson, LessonType } from '@/features/attendance/types';
+import { LessonSummary, LessonType } from '@/features/attendance/types';
 import { CalendarLesson } from '@/features/schedule/types';
 import AttendanceDrawer from '@/features/attendance/api/AttendanceDrawer';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -56,10 +54,11 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useAuthStore } from '@/store/authStore';
 import { extractErrorMessage } from '@/lib/errors';
 import { cn } from '@/lib/utils';
+import { formatTashkentDateTime } from '@/lib/calendarDateTime';
 
-const formatDate = (d: string) => {
+const formatDate = (d: string, locale: string) => {
   try {
-    return format(new Date(d), 'dd.MM.yyyy HH:mm');
+    return formatTashkentDateTime(d, locale);
   } catch {
     return d;
   }
@@ -83,7 +82,7 @@ const createLessonSchema = z.object({
 type CreateLessonFormValues = z.infer<typeof createLessonSchema>;
 
 interface LessonCardProps {
-  lesson: Lesson;
+  lesson: LessonSummary;
   typeLabel: string;
   teacherName?: string | null;
   canEdit: boolean;
@@ -112,11 +111,11 @@ const LessonCard = ({
   onDelete,
   onNavigateGroup,
 }: LessonCardProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // Lessons only get AttendanceLog rows once someone saves attendance for
-  // them (see AttendanceDrawer's ponytail note), so a non-empty array means
+  // them (see AttendanceDrawer's ponytail note), so a positive count means
   // this lesson has been marked at least once.
-  const marked = lesson.attendance.length > 0;
+  const marked = lesson.total_count > 0;
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 text-sm motion-safe:transition-colors duration-150 hover:border-primary/[40%]">
       <button
@@ -125,7 +124,7 @@ const LessonCard = ({
         className="flex w-full flex-col gap-1 text-left"
       >
         <span className="num font-mono text-xs text-muted-foreground">
-          {formatDate(lesson.date)}
+          {formatDate(lesson.date, i18n.language)}
         </span>
         <span className="font-semibold">{lesson.title}</span>
         <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
@@ -200,23 +199,15 @@ const AttendancePage = () => {
     setPageSize,
     setSearch,
   } = useListQueryState();
-  const { data: lessonsData, isLoading } = useLessons(currentPage, pageSize);
+  const { data: lessonsData, isLoading } = useLessons(
+    currentPage,
+    pageSize,
+    debouncedSearch,
+  );
   // Memoised so the reference is stable: the `|| []` fallback would otherwise
   // allocate a new array every render, re-firing the deep-link effect below on
   // each one (its ref guard hid the symptom, but the work was still repeated).
   const lessons = useMemo(() => lessonsData?.data || [], [lessonsData]);
-  const visibleLessons = useMemo(
-    () =>
-      lessons.filter((lesson) =>
-        matchesListQuery(
-          debouncedSearch,
-          lesson.title,
-          lesson.group_name,
-          lesson.lesson_type,
-        ),
-      ),
-    [lessons, debouncedSearch],
-  );
   const totalPages = lessonsData?.total
     ? Math.ceil(lessonsData.total / pageSize)
     : Math.max(1, lessons.length < pageSize ? currentPage : currentPage + 1);
@@ -247,14 +238,14 @@ const AttendancePage = () => {
   // (backend: owner/manager unconditionally, else the creator if teacher).
   // manageOwnLesson deliberately excludes operator, so an operator-created
   // lesson never shows a delete button the backend would still 403.
-  const canDeleteLesson = (lesson: Lesson) =>
+  const canDeleteLesson = (lesson: LessonSummary) =>
     canDeleteAny || (canManageOwnLesson && lesson.created_by_id === userId);
   // PATCH /lessons/:id is @Roles(teacher) ONLY on the backend -- unlike
   // manageOwnLesson above (which also grants dev/owner/manager for the
   // delete-own affordance), edit must gate on role === 'teacher' directly.
   // Gating on manageOwnLesson here would show owner/manager an edit button
   // this teacher-only endpoint would 403 on.
-  const canEditLesson = (lesson: Lesson) =>
+  const canEditLesson = (lesson: LessonSummary) =>
     role === 'teacher' && lesson.created_by_id === userId;
   const groupOptions = groups || [];
 
@@ -270,7 +261,9 @@ const AttendancePage = () => {
   // SLICE B (autodrive-vh0.4): non-null while the create dialog above is
   // reused in edit mode -- see openEdit/handleSave. groupId is pre-filled
   // from the lesson but never user-editable (Select is disabled below).
-  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+  const [editingLesson, setEditingLesson] = useState<LessonSummary | null>(
+    null,
+  );
   const [selectedLesson, setSelectedLesson] = useState<CalendarLesson | null>(
     null,
   );
@@ -288,7 +281,7 @@ const AttendancePage = () => {
     setCreateOpen(true);
   };
 
-  const openEdit = (lesson: Lesson) => {
+  const openEdit = (lesson: LessonSummary) => {
     setEditingLesson(lesson);
     form.reset({
       title: lesson.title,
@@ -302,11 +295,11 @@ const AttendancePage = () => {
   const { attemptClose, confirmOpen, confirmDiscard, cancelDiscard } =
     useConfirmedClose(form.formState.isDirty, () => setCreateOpen(false));
 
-  // Adapts this page's Lesson (attendanceService) into the CalendarLesson
+  // Adapts this page's list summary into the CalendarLesson
   // shape AttendanceDrawer expects (built for SchedulePage's calendar
-  // query) -- no backend/type change needed, the fields line up.
+  // query). The drawer fetches the full roster separately.
   const openLesson = useCallback(
-    (lesson: Lesson) => {
+    (lesson: LessonSummary) => {
       setSelectedLesson({
         id: lesson.id,
         title: lesson.title,
@@ -316,9 +309,8 @@ const AttendancePage = () => {
         group_name: lesson.group_name || '',
         branch_id: lesson.branch_id,
         teacher_name: groupTeacherMap.get(lesson.group_id) || undefined,
-        present_count: lesson.attendance.filter((a) => a.status === 'present')
-          .length,
-        total_count: lesson.attendance.length,
+        present_count: lesson.present_count,
+        total_count: lesson.total_count,
       });
     },
     [groupTeacherMap],
@@ -428,36 +420,34 @@ const AttendancePage = () => {
         </div>
       ) : !lessons.length ? (
         <EmptyState
-          title={t('attendance.not_found')}
-          description={t('attendance.not_found_desc')}
+          title={t(debouncedSearch ? 'common.no_data' : 'attendance.not_found')}
+          description={
+            debouncedSearch ? undefined : t('attendance.not_found_desc')
+          }
         />
       ) : (
         <div className="space-y-4">
-          {visibleLessons.length === 0 ? (
-            <EmptyState title={t('common.no_data')} />
-          ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {visibleLessons.map((lesson) => (
-                <LessonCard
-                  key={lesson.id}
-                  lesson={lesson}
-                  typeLabel={lessonTypeLabel[lesson.lesson_type]}
-                  teacherName={groupTeacherMap.get(lesson.group_id)}
-                  canEdit={canEditLesson(lesson)}
-                  canDelete={canDeleteLesson(lesson)}
-                  onOpen={() => openLesson(lesson)}
-                  onEdit={() => openEdit(lesson)}
-                  onDelete={() => setDeleteId(lesson.id)}
-                  onNavigateGroup={() =>
-                    navigate({
-                      to: '/groups/$id',
-                      params: { id: lesson.group_id },
-                    })
-                  }
-                />
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {lessons.map((lesson) => (
+              <LessonCard
+                key={lesson.id}
+                lesson={lesson}
+                typeLabel={lessonTypeLabel[lesson.lesson_type]}
+                teacherName={groupTeacherMap.get(lesson.group_id)}
+                canEdit={canEditLesson(lesson)}
+                canDelete={canDeleteLesson(lesson)}
+                onOpen={() => openLesson(lesson)}
+                onEdit={() => openEdit(lesson)}
+                onDelete={() => setDeleteId(lesson.id)}
+                onNavigateGroup={() =>
+                  navigate({
+                    to: '/groups/$id',
+                    params: { id: lesson.group_id },
+                  })
+                }
+              />
+            ))}
+          </div>
           <PaginationControls
             currentPage={currentPage}
             totalPages={totalPages}

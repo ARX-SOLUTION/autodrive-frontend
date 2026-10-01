@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import CompanyRevenueDashboard from '@/features/dashboard/components/CompanyRevenueDashboard';
 import { formatMoney } from '@/lib/money';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
+import { greetingKey as sharedGreetingKey } from '@/features/dashboard/lib/dashboardCards';
 
 class ResizeObserverStub {
   observe() {}
@@ -240,6 +241,29 @@ const renderDashboard = (initialEntry = '/dashboard') =>
   });
 
 describe('CompanyRevenueDashboard', () => {
+  it.each([
+    ['2026-07-10T07:00:00.000Z', 7, 'dashboard.greeting_afternoon'],
+    ['2026-07-10T13:00:00.000Z', 13, 'dashboard.greeting_evening'],
+    ['2026-07-10T21:00:00.000Z', 21, 'dashboard.greeting_morning'],
+  ])(
+    'uses the Tashkent greeting at %s regardless of browser clock',
+    async (instant, browserHour, greeting) => {
+      const now = vi.spyOn(Date, 'now').mockReturnValue(Date.parse(instant));
+      const localHour = vi
+        .spyOn(Date.prototype, 'getHours')
+        .mockReturnValue(browserHour);
+
+      try {
+        expect(sharedGreetingKey()).toBe(greeting);
+        await renderDashboard();
+        expect(screen.getByText(new RegExp(greeting))).toBeInTheDocument();
+      } finally {
+        localHour.mockRestore();
+        now.mockRestore();
+      }
+    },
+  );
+
   it('shows a loading skeleton while overview data is fetching', async () => {
     overviewState.isLoading = true;
     const { container } = await renderDashboard();
@@ -326,8 +350,9 @@ describe('CompanyRevenueDashboard', () => {
       await renderDashboard();
 
       const freshness = screen.getByTestId('dashboard-freshness-caption');
-      expect(freshness).toHaveTextContent('dashboard.v2.to');
-      expect(freshness).toHaveTextContent('09.07.2026');
+      expect(freshness).toHaveTextContent('dashboard.v2.data_through');
+      expect(freshness).toHaveTextContent('09.07.2026 13:30');
+      expect(freshness).toHaveTextContent('10.07.2026 15:00');
     } finally {
       overview.data.freshness.data_through = originalDataThrough;
     }

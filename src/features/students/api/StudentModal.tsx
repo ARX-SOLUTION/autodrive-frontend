@@ -134,7 +134,8 @@ const StudentModal = ({
   const submitModeRef = useRef<'close' | 'add'>('close');
   // One key per edit session: a retried save must not record amount_paid twice.
   const idempotencyKeyRef = useRef('');
-  const getIdempotencyKey = () => (idempotencyKeyRef.current ||= newRequestId());
+  const getIdempotencyKey = () =>
+    (idempotencyKeyRef.current ||= newRequestId());
 
   const resetForNext = () => {
     const current = form.getValues();
@@ -554,7 +555,9 @@ const StudentModal = ({
                           name="course_id"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t('students.course')}</FormLabel>
+                              <FormLabel>
+                                {t('students.sections.course')}
+                              </FormLabel>
                               <Select
                                 value={field.value || ''}
                                 onValueChange={(v) => {

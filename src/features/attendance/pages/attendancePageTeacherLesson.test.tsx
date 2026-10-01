@@ -5,8 +5,9 @@ import { useAuthStore } from '@/store/authStore';
 import {
   useCreateLesson,
   useUpdateLesson,
+  useLessons,
 } from '@/features/attendance/api/attendanceService';
-import { Lesson } from '@/features/attendance/types';
+import { LessonSummary } from '@/features/attendance/types';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 // autodrive-vh0.4: a teacher adds an ad-hoc lesson for their own
@@ -17,7 +18,7 @@ import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 vi.mock('@/store/authStore', () => ({ useAuthStore: vi.fn() }));
 
-const ownLesson: Lesson = {
+const ownLesson: LessonSummary = {
   id: 'l1',
   title: 'Ad-hoc practice',
   date: '2026-07-10T09:00:00.000Z',
@@ -27,10 +28,11 @@ const ownLesson: Lesson = {
   branch_id: 'b1',
   created_by_id: 'teacher-1',
   created_at: '2026-07-01T00:00:00.000Z',
-  attendance: [],
+  present_count: 0,
+  total_count: 0,
 };
 
-const othersLesson: Lesson = {
+const othersLesson: LessonSummary = {
   ...ownLesson,
   id: 'l2',
   title: 'Scheduled theory',
@@ -43,7 +45,7 @@ const othersLesson: Lesson = {
 // either" admin-created or schedule-generated). Modeled here with a
 // manager's id standing in for the schedule-generation actor -- same shape
 // as othersLesson, kept separate to document the scenario explicitly.
-const scheduleGeneratedLesson: Lesson = {
+const scheduleGeneratedLesson: LessonSummary = {
   ...ownLesson,
   id: 'l3',
   title: 'Generated theory',
@@ -51,13 +53,13 @@ const scheduleGeneratedLesson: Lesson = {
 };
 
 vi.mock('@/features/attendance/api/attendanceService', () => ({
-  useLessons: () => ({
+  useLessons: vi.fn(() => ({
     data: {
       data: [ownLesson, othersLesson, scheduleGeneratedLesson],
       total: 3,
     },
     isLoading: false,
-  }),
+  })),
   useLessonById: () => ({ data: undefined, isError: false, refetch: vi.fn() }),
   useCreateLesson: vi.fn(),
   useUpdateLesson: vi.fn(),
@@ -100,6 +102,18 @@ beforeEach(() => {
 });
 
 describe('AttendancePage add-lesson affordance for a teacher (autodrive-vh0.4)', () => {
+  it('forwards the debounced list search to the server query', async () => {
+    await renderAsRole('teacher', 'teacher-1', '/attendance?q=Group%20A');
+    await waitFor(() =>
+      expect(useLessons).toHaveBeenLastCalledWith(
+        1,
+        expect.any(Number),
+        'Group A',
+      ),
+    );
+    expect(screen.getByText(ownLesson.title)).toBeInTheDocument();
+  });
+
   it('shows the add-lesson button for a teacher', async () => {
     await renderAsRole('teacher');
     expect(screen.getByText('attendance.add_lesson')).toBeInTheDocument();

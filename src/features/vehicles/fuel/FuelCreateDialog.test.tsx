@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import FuelCreateDialog from './FuelCreateDialog';
 
@@ -153,6 +159,141 @@ describe('FuelCreateDialog component', () => {
     });
     fireEvent.click(continueBtn);
   };
+
+  it('preserves a selected vehicle when discard is cancelled and resets only after confirmation', async () => {
+    vehiclesState.data.push({
+      id: 'v-2',
+      plate_number: '01B111BB',
+      model: 'Nexia',
+      fuel_types: ['petrol'],
+      current_custodian_id: null,
+    });
+    const onOpenChange = vi.fn();
+    render(<FuelCreateDialog open={true} onOpenChange={onOpenChange} />);
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: 'v-2' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    const confirmation = screen.getByRole('dialog', {
+      name: 'common.discard_changes_title',
+    });
+    fireEvent.click(
+      within(confirmation).getByRole('button', { name: 'common.cancel' }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByText('common.discard_changes_title'),
+      ).not.toBeInTheDocument(),
+    );
+    expect(screen.getByRole('combobox')).toHaveValue('v-2');
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.discard' }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(screen.getByRole('combobox')).toHaveValue('');
+  });
+
+  it('closes a pristine pre-bound vehicle without asking to discard', () => {
+    const onOpenChange = vi.fn();
+    render(
+      <FuelCreateDialog
+        open={true}
+        initialVehicleId="v-1"
+        onOpenChange={onOpenChange}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(
+      screen.queryByText('common.discard_changes_title'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('preserves durable draft fields after backtracking and replacing a receipt with an oversized file', async () => {
+    const onOpenChange = vi.fn();
+    render(
+      <FuelCreateDialog
+        open={true}
+        initialVehicleId="v-1"
+        onOpenChange={onOpenChange}
+      />,
+    );
+    goToStep2();
+    const receipt = new File(['receipt'], 'receipt.jpg', {
+      type: 'image/jpeg',
+    });
+    fireEvent.change(screen.getByLabelText('fuel.scan_receipt_btn'), {
+      target: { files: [receipt] },
+    });
+    await screen.findByText('QK MCHJ TATNEFT-UNG');
+    fireEvent.click(screen.getByRole('button', { name: 'common.continue' }));
+    fireEvent.change(screen.getByLabelText(/fuel.funding_source/), {
+      target: { value: 'personal' },
+    });
+    fireEvent.change(screen.getByLabelText(/fuel.quantity/), {
+      target: { value: '60' },
+    });
+    fireEvent.change(screen.getByLabelText(/fuel.date/), {
+      target: { value: '2026-09-24T10:30' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'common.continue' }));
+    fireEvent.change(screen.getByLabelText(/fuel.odometer_km/), {
+      target: { value: '50250' },
+    });
+    const odometerPhoto = new File(['odometer'], 'odo.jpg', {
+      type: 'image/jpeg',
+    });
+    fireEvent.change(screen.getByLabelText(/fuel.odometer_photo_label/), {
+      target: { files: [odometerPhoto] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'common.back' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.back' }));
+    const oversizedReceipt = new File(
+      [new Uint8Array(8 * 1024 * 1024 + 1)],
+      'large.jpg',
+      {
+        type: 'image/jpeg',
+      },
+    );
+    fireEvent.change(screen.getByLabelText('fuel.scan_receipt_btn'), {
+      target: { files: [oversizedReceipt] },
+    });
+    expect(screen.getByText('fuel.qr_too_large')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.back' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    const confirmation = screen.getByRole('dialog', {
+      name: 'common.discard_changes_title',
+    });
+    fireEvent.click(
+      within(confirmation).getByRole('button', { name: 'common.cancel' }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByText('common.discard_changes_title'),
+      ).not.toBeInTheDocument(),
+    );
+    goToStep2();
+    lookupState.decodeFails = true;
+    fireEvent.change(screen.getByLabelText('fuel.scan_receipt_btn'), {
+      target: { files: [receipt] },
+    });
+    await screen.findByText('fuel.qr_fallback');
+    fireEvent.click(screen.getByRole('button', { name: 'common.continue' }));
+
+    expect(screen.getByLabelText(/fuel.station/)).toHaveValue('s-1');
+    expect(screen.getByLabelText(/fuel.funding_source/)).toHaveValue(
+      'personal',
+    );
+    expect(screen.getByLabelText(/fuel.quantity/)).toHaveValue(60);
+    expect(screen.getByLabelText(/fuel.date/)).toHaveValue('2026-09-24T10:30');
+    fireEvent.click(screen.getByRole('button', { name: 'common.continue' }));
+    expect(screen.getByLabelText(/fuel.odometer_km/)).toHaveValue(50250);
+    expect(screen.getByRole('button', { name: 'odo.jpg' })).toBeInTheDocument();
+  });
 
   it('pre-binds the vehicle passed via initialVehicleId', () => {
     vehiclesState.data = [

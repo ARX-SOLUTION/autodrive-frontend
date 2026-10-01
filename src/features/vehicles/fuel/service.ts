@@ -57,6 +57,9 @@ export interface Lookup {
   }[];
   qr_url?: string;
 }
+export type FuelSummary = Omit<Fuel, 'evidence' | 'history'> & {
+  evidence_count: number;
+};
 export interface Balance {
   total_purchased?: string;
   purchased: string;
@@ -75,7 +78,7 @@ export function useFuelList(params: Record<string, unknown>) {
   return useQuery({
     queryKey: ['vehicle-fuel', scope, 'list', params],
     queryFn: async ({ signal }) =>
-      parseListEnvelope<Fuel>(
+      parseListEnvelope<FuelSummary>(
         (await axios.get('/vehicle-fuel', { params, signal })).data,
         'fuel',
       ),

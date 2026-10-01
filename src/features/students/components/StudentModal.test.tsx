@@ -6,9 +6,22 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createInstance } from 'i18next';
 import StudentModal, {
   type CreateStudentPayload,
 } from '@/features/students/api/StudentModal';
+import uz from '@/i18n/locales/uz.json';
+import ru from '@/i18n/locales/ru.json';
+import en from '@/i18n/locales/en.json';
+
+const translation = vi.hoisted(() => ({ t: (key: string) => key }));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => translation.t(key),
+    i18n: { language: 'uz' },
+  }),
+}));
 
 // autodrive-qsgc.3: avto_maktab's completion_date went through
 // <Input type="date">. It's now the shared DatePicker (@/lib/calendarDate),
@@ -40,10 +53,48 @@ vi.mock('@/features/students/api/studentService', () => ({
   useStudentsPage: () => ({ data: undefined }),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  translation.t = (key) => key;
+});
 
 const q = (name: string) =>
   document.querySelector(`input[name="${name}"]`) as HTMLInputElement;
+
+describe('StudentModal course label', () => {
+  it.each([
+    ['uz', uz],
+    ['ru', ru],
+    ['en', en],
+  ] as const)(
+    'renders a translated course label in %s',
+    async (locale, resource) => {
+      const i18n = createInstance();
+      await i18n.init({
+        lng: locale,
+        resources: { [locale]: { translation: resource } },
+      });
+      translation.t = (key) => i18n.t(key);
+      render(
+        <StudentModal
+          open
+          onClose={vi.fn()}
+          onSubmit={vi.fn()}
+          courseType="tezkor"
+        />,
+      );
+
+      expect(
+        screen.getByRole('combobox', {
+          name: resource.students.sections.course,
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(/returned an object instead of string/),
+      ).toBeNull();
+    },
+  );
+});
 
 describe('StudentModal calendar-date wiring (autodrive-qsgc.3)', () => {
   it('submits completion_date as a YYYY-MM-DD string, never a Date', async () => {

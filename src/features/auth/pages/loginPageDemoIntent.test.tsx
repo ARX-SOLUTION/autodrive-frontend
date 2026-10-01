@@ -25,6 +25,8 @@ const copy = getLoginCopy('uz');
 
 describe('LoginPage demo intent', () => {
   beforeEach(() => {
+    vi.stubEnv('VITE_ENABLE_DEMO_LOGIN', 'false');
+    vi.stubEnv('VITE_DEMO_PASSWORD', '');
     queryClient.clear();
     vi.clearAllMocks();
     loginMutation.isPending = false;
@@ -205,7 +207,11 @@ describe('LoginPage demo intent', () => {
       routePattern: '/login',
     });
 
-    fireEvent.click(screen.getByRole('button', { name: copy.demoSignIn }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Roʻyxatdan oʻtmasdan demoga kiring',
+      }),
+    );
 
     expect(loginMutation.mutate).toHaveBeenCalledWith(
       { email: 'demo@automaktab.uz', password: 'env-demo-secret' },

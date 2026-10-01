@@ -3,7 +3,7 @@ import { AttendanceStatus } from '@/features/attendance/types';
 import { statusTone } from '@/lib/attendanceStatus';
 import { cn } from '@/lib/utils';
 
-const TOGGLE_STATUSES = ['present', 'late', 'absent'] as const;
+const TOGGLE_STATUSES = ['present', 'late', 'absent', 'excused'] as const;
 
 interface AttendanceStatusToggleProps {
   value: AttendanceStatus | null;
@@ -12,12 +12,11 @@ interface AttendanceStatusToggleProps {
   className?: string;
 }
 
-// One-click 3-way toggle (Keldi/Kech/Yo'q) replacing the per-row Select
+// One-click status toggle replacing the per-row Select
 // dropdown (autodrive-38m.3). Shared by AttendancePage and AttendanceDrawer
-// so both surfaces mark attendance the same way. 'excused' has no button --
-// it's legacy-only and simply shows no segment highlighted. exec-dash 8:
+// so both surfaces mark attendance the same way. exec-dash 8:
 // restyled to the mock's segmented row (solid status color when active);
-// same 3-status props contract.
+// same attendance-status props contract.
 const AttendanceStatusToggle = ({
   value,
   onChange,
@@ -29,6 +28,7 @@ const AttendanceStatusToggle = ({
     present: t('attendance.toggle_present'),
     late: t('attendance.toggle_late'),
     absent: t('attendance.toggle_absent'),
+    excused: t('attendance.status_excused'),
   };
 
   return (

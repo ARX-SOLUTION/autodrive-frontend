@@ -27,6 +27,9 @@ vi.mock('@/hooks/useCan', () => ({
     if (capability === 'accessOperations') {
       return state.user.role !== 'accountant';
     }
+    if (capability === 'recordPayment') {
+      return ['dev', 'owner', 'manager', 'operator'].includes(state.user.role);
+    }
     return capability === 'viewAllBranches' && state.user.role === 'owner';
   },
 }));
@@ -159,4 +162,62 @@ describe('Topbar global search access', () => {
     );
     expect(onCommandPaletteOpen).toHaveBeenCalledOnce();
   });
+});
+
+describe('Topbar quick payment', () => {
+  it('opens the create-payment route with the selected branch', async () => {
+    const { router } = await renderWithRouter(
+      <Topbar onMobileMenuClick={vi.fn()} onCommandPaletteOpen={vi.fn()} />,
+      {
+        initialEntry: '/dashboard?branch_id=branch-2',
+        routePattern: '/$',
+      },
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'actions.quick_payment' }),
+    );
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/payments');
+      const search = new URLSearchParams(router.state.location.searchStr);
+      expect(search.get('action')).toBe('create');
+      expect(search.get('branch_id')).toBe('branch-2');
+    });
+  });
+
+  it('does not forward a cross-branch filter for a branch-scoped role', async () => {
+    state.user = {
+      name: 'Demo Manager',
+      role: 'manager',
+      branch_id: 'branch-1',
+      branch_name: 'Toshkent Markaziy',
+    };
+    const { router } = await renderWithRouter(
+      <Topbar onMobileMenuClick={vi.fn()} onCommandPaletteOpen={vi.fn()} />,
+      { initialEntry: '/dashboard?branch_id=branch-2', routePattern: '/$' },
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'actions.quick_payment' }),
+    );
+    await waitFor(() => {
+      const search = new URLSearchParams(router.state.location.searchStr);
+      expect(search.get('action')).toBe('create');
+      expect(search.has('branch_id')).toBe(false);
+    });
+  });
+
+  it.each(['teacher', 'accountant'])(
+    'hides quick payment from %s',
+    async (role) => {
+      state.user.role = role;
+      await renderWithRouter(
+        <Topbar onMobileMenuClick={vi.fn()} onCommandPaletteOpen={vi.fn()} />,
+        { initialEntry: '/profile', routePattern: '/profile' },
+      );
+      expect(
+        screen.queryByRole('button', { name: 'actions.quick_payment' }),
+      ).toBeNull();
+    },
+  );
 });

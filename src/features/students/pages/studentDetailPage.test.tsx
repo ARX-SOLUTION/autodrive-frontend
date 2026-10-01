@@ -132,7 +132,7 @@ const capturedPaymentModalProps = vi.hoisted(() => ({
 }));
 vi.mock('@/features/payments/api/PaymentModal', () => ({
   default: (props: Record<string, unknown>) => {
-    capturedPaymentModalProps.current = props;
+    if (props.open) capturedPaymentModalProps.current = props;
     return null;
   },
 }));
@@ -400,6 +400,18 @@ describe('StudentDetailPage payments-tab row actions', () => {
     await renderPage();
     fireEvent.mouseDown(screen.getByText('students.detail.tab_payments'));
   };
+
+  it('passes the current pinned student context when adding a payment', async () => {
+    await openPaymentsTab();
+    fireEvent.click(screen.getByRole('button', { name: 'payments.add' }));
+
+    expect(capturedPaymentModalProps.current?.open).toBe(true);
+    expect(capturedPaymentModalProps.current?.lockedStudentId).toBe(STUDENT.id);
+    expect(capturedPaymentModalProps.current?.lockedStudentName).toBe(
+      'Karimov Aziz',
+    );
+    expect(capturedPaymentModalProps.current?.students).toEqual([STUDENT]);
+  });
 
   it('confirms, then calls useDeletePayment.mutate with the row id', async () => {
     await openPaymentsTab();
