@@ -55,7 +55,9 @@ const SchoolTestDetailPage = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams({ from: '/_authenticated/school-tests/$id' });
-  const canManage = useCan('manageSchoolLearning');
+  const canManage = useCan('test_templates.update');
+  const mayPublish = useCan('tests.publish');
+  const mayAssign = useCan('tests.assign');
   const { data: template, isLoading } = useTestTemplate(id);
   const assignments = useTemplateAssignments(id);
   const { data: branches = [] } = useBranches(canManage);
@@ -75,8 +77,8 @@ const SchoolTestDetailPage = () => {
     );
   }
 
-  const canPublish = canManage && template.status === 'draft';
-  const canAssign = canManage && template.status === 'published';
+  const canPublish = mayPublish && template.status === 'draft';
+  const canAssign = mayAssign && template.status === 'published';
 
   return (
     <div className="space-y-4">
@@ -97,11 +99,13 @@ const SchoolTestDetailPage = () => {
         )}`}
         icon={<ClipboardText className="h-3.5 w-3.5" />}
         actions={
-          canManage ? (
+          canManage || canPublish || canAssign ? (
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => setEditOpen(true)}>
-                {t('school_tests.edit')}
-              </Button>
+              {canManage && (
+                <Button variant="outline" onClick={() => setEditOpen(true)}>
+                  {t('school_tests.edit')}
+                </Button>
+              )}
               {canPublish ? (
                 <Button
                   onClick={() =>

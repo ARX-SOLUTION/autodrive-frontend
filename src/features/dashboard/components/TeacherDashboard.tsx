@@ -85,9 +85,16 @@ const TeacherDashboard = () => {
     LESSONS_FETCH_LIMIT,
   );
   const { data: owingStudentsPage, isLoading: studentsLoading } =
-    useStudentsPage(undefined, user?.branch_id ?? undefined, 1, 1, undefined, {
-      hasDebt: true,
-    });
+    useStudentsPage(
+      undefined,
+      useAuthStore.getState?.()?.activeBranchId ?? user?.branch_id ?? undefined,
+      1,
+      1,
+      undefined,
+      {
+        hasDebt: true,
+      },
+    );
 
   const todayUZ = uzNumericDateFormatter.format(new Date());
   const lessons = useMemo(() => lessonsPage?.data ?? [], [lessonsPage]);

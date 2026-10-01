@@ -43,7 +43,6 @@ import { useAttendanceHistory } from '@/features/attendance/api/attendanceServic
 import { useAuditLogs } from '@/features/audit/api/auditService';
 import { useGroups } from '@/features/groups/api/groupService';
 import { useCan } from '@/hooks/useCan';
-import { useAuthStore } from '@/store/authStore';
 import { statusColors } from '@/lib/attendanceStatus';
 import { extractErrorMessage } from '@/lib/errors';
 import { formatMoney } from '@/lib/money';
@@ -63,23 +62,15 @@ const StudentDetailPage = () => {
   const { data: student, isLoading, isError } = useStudent(id);
   const canRecordPayment = useCan('recordPayment');
   const { data: operators } = useOperators();
-  // Matches backend /audit-logs @Roles(owner, manager, dev) guard — no
-  // matching useCan capability exists (viewAudit is owner/dev only, for the
-  // standalone AuditLogPage's cross-tenant-only OwnerRoute), so this embedded
-  // tab checks the role directly, same pattern as ProfilePage's canEditProfile.
-  const role = useAuthStore((s) => s.user?.role);
-  const canViewGroupHistory =
-    role === 'owner' || role === 'manager' || role === 'dev';
+  const canReadPayments = useCan('payments.read');
+  const mayUpdate = useCan('students.update');
+  const canViewGroupHistory = useCan('audit.read');
   const activeTab =
-    (urlTab === 'payments' && !canRecordPayment) ||
+    (urlTab === 'payments' && !canReadPayments) ||
     (urlTab === 'group-history' && !canViewGroupHistory)
       ? 'info'
       : urlTab;
-  const canManageLearnerLogin =
-    role === 'owner' ||
-    role === 'manager' ||
-    role === 'operator' ||
-    role === 'dev';
+  const canManageLearnerLogin = useCan('students.update');
 
   const [editOpen, setEditOpen] = useState(false);
   const [learnerLoginOpen, setLearnerLoginOpen] = useState(false);
@@ -248,13 +239,15 @@ const StudentDetailPage = () => {
                 <Key className="h-4 w-4" /> {t('students.detail.login_button')}
               </Button>
             )}
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => setEditOpen(true)}
-            >
-              <PencilSimple className="h-4 w-4" /> {t('common.edit')}
-            </Button>
+            {mayUpdate && (
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => setEditOpen(true)}
+              >
+                <PencilSimple className="h-4 w-4" /> {t('common.edit')}
+              </Button>
+            )}
           </div>
         </div>
       }
@@ -262,7 +255,7 @@ const StudentDetailPage = () => {
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
-          {canRecordPayment && (
+          {canReadPayments && (
             <TabsTrigger value="payments">
               {t('students.detail.tab_payments')}
             </TabsTrigger>
@@ -295,13 +288,13 @@ const StudentDetailPage = () => {
               label={t('students.detail.course')}
               value={t(`students.course.${student.course_type}`)}
             />
-            {canRecordPayment && student.total_price !== undefined && (
+            {canReadPayments && student.total_price !== undefined && (
               <Field
                 label={t('students.detail.total_price')}
                 value={formatMoney(student.total_price)}
               />
             )}
-            {canRecordPayment && student.debt !== undefined && (
+            {canReadPayments && student.debt !== undefined && (
               <Field
                 label={t('students.detail.debt')}
                 value={
@@ -357,7 +350,7 @@ const StudentDetailPage = () => {
           </dl>
         </TabsContent>
 
-        {canRecordPayment && (
+        {canReadPayments && (
           <TabsContent value="payments">
             <PaymentsTab
               studentId={student.id}
@@ -512,6 +505,8 @@ const PaymentsTab = ({
   };
 }) => {
   const { t } = useTranslation();
+  const mayUpdatePayment = useCan('payments.update');
+  const mayDeletePayment = useCan('payments.delete');
   const [pagination, setPagination] = useState({ studentId, page: 1 });
   const currentPage = pagination.studentId === studentId ? pagination.page : 1;
   const { data, isLoading, isError, refetch } = useStudentPayments(
@@ -595,22 +590,26 @@ const PaymentsTab = ({
                     {canManage && (
                       <td className="px-4 py-2">
                         <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => onEdit(p)}
-                            aria-label={t('common.edit')}
-                            title={t('common.edit')}
-                            className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                          >
-                            <PencilSimple className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => onDelete(p)}
-                            aria-label={t('common.delete')}
-                            title={t('common.delete')}
-                            className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                          >
-                            <Trash className="h-3.5 w-3.5" />
-                          </button>
+                          {mayUpdatePayment && (
+                            <button
+                              onClick={() => onEdit(p)}
+                              aria-label={t('common.edit')}
+                              title={t('common.edit')}
+                              className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            >
+                              <PencilSimple className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          {mayDeletePayment && (
+                            <button
+                              onClick={() => onDelete(p)}
+                              aria-label={t('common.delete')}
+                              title={t('common.delete')}
+                              className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                            >
+                              <Trash className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     )}

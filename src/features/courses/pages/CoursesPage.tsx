@@ -1,3 +1,4 @@
+import { useCan } from '@/hooks/useCan';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
@@ -23,6 +24,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 
 const CoursesPage = () => {
   const { t } = useTranslation();
+  const canCreate = useCan('courses.create');
   const navigate = useNavigate();
   const {
     page,
@@ -79,9 +81,11 @@ const CoursesPage = () => {
         title={coursesTitle}
         icon={<BookOpen className="h-3.5 w-3.5" aria-hidden="true" />}
         actions={
-          <Button className="gap-2" onClick={openCreate}>
-            <Plus className="h-4 w-4" /> {t('courses.add')}
-          </Button>
+          canCreate && (
+            <Button className="gap-2" onClick={openCreate}>
+              <Plus className="h-4 w-4" /> {t('courses.add')}
+            </Button>
+          )
         }
       />
 

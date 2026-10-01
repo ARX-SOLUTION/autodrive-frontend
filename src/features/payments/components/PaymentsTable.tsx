@@ -65,7 +65,9 @@ export const PaymentsTable = ({
   const goToStudent = useViewTransitionNavigate();
   // Matches the backend's PATCH/DELETE /payments/:id @Roles(owner, dev,
   // manager, operator) guard exactly (bd 9e4.4).
-  const canManagePayments = useCan('recordPayment');
+  const mayUpdate = useCan('payments.update');
+  const mayDelete = useCan('payments.delete');
+  const canManagePayments = mayUpdate || mayDelete;
   // Accountant views payments but has no /students/$id route.
   const canOpenStudent = useCan('accessOperations');
   const [deleteTarget, setDeleteTarget] = useState<Payment | null>(null);
@@ -187,30 +189,34 @@ export const PaymentsTable = ({
               const payment = row.original;
               return (
                 <div className="flex items-center justify-center gap-1">
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setEditTarget(payment);
-                    }}
-                    aria-label={t('common.edit')}
-                    title={t('common.edit')}
-                    className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                  >
-                    <PencilSimple className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setDeleteTarget(payment);
-                    }}
-                    aria-label={t('common.delete')}
-                    title={t('common.delete')}
-                    className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <Trash className="h-3.5 w-3.5" />
-                  </button>
+                  {mayUpdate && (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setEditTarget(payment);
+                      }}
+                      aria-label={t('common.edit')}
+                      title={t('common.edit')}
+                      className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                      <PencilSimple className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  {mayDelete && (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setDeleteTarget(payment);
+                      }}
+                      aria-label={t('common.delete')}
+                      title={t('common.delete')}
+                      className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               );
             },

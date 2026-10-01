@@ -1,3 +1,4 @@
+import { useCan } from '@/hooks/useCan';
 import { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +49,7 @@ const STATUS_BADGE: Record<
 
 export default function FuelPage() {
   const { t, i18n } = useTranslation();
+  const mayCreate = useCan('fuel.create');
   const [createOpen, setCreateOpen] = useState(false);
   const { searchParams, setParams } = useUrlParams();
   const status = searchParams.get('status') ?? '';
@@ -163,13 +165,15 @@ export default function FuelPage() {
               {t('fuel.stations')}
             </Link>
 
-            <Button
-              onClick={() => setCreateOpen(true)}
-              className="min-h-11 gap-2 bg-primary text-primary-foreground shadow-sm"
-            >
-              <Plus className="h-4 w-4" weight="bold" />
-              {t('fuel.create')}
-            </Button>
+            {mayCreate && (
+              <Button
+                onClick={() => setCreateOpen(true)}
+                className="min-h-11 gap-2 bg-primary text-primary-foreground shadow-sm"
+              >
+                <Plus className="h-4 w-4" weight="bold" />
+                {t('fuel.create')}
+              </Button>
+            )}
           </div>
         }
       />

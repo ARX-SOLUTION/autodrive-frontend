@@ -1,3 +1,4 @@
+import { requestBranchId } from '@/lib/permissions';
 import { useTranslation } from 'react-i18next';
 import PaymentModal, {
   CreatePaymentPayload,
@@ -46,7 +47,8 @@ const PaymentsPage = () => {
 
   const defaultBranchId = isCrossTenant
     ? undefined
-    : user?.branch_id || undefined;
+    : requestBranchId(user, useAuthStore.getState?.()?.activeBranchId) ||
+      undefined;
   const branchId = searchParams.get('branch_id') ?? defaultBranchId;
   const setBranchId = (v: string | undefined) => setParam('branch_id', v);
 

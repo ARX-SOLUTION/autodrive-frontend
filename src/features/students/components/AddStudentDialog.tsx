@@ -1,3 +1,9 @@
+import { requestBranchId } from '@/lib/permissions';
+import {
+  useWriteOptions,
+  type CourseOption,
+  type GroupOption,
+} from '@/hooks/useWriteOptions';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -22,9 +28,6 @@ import {
   todayCalendarDate,
 } from '@/lib/calendarDate';
 import type { LeadSource } from '@/features/students/types';
-import type { Branch } from '@/features/branches/types';
-import type { Course } from '@/features/courses/types';
-import type { Group } from '@/features/groups/types';
 import ReferralFields from '@/features/students/components/ReferralFields';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useConfirmedClose } from '@/hooks/useConfirmedClose';
@@ -277,9 +280,9 @@ interface WizardSummaryProps {
   control: Control<AddStudentFormData>;
   courseId: string;
   branchId: string;
-  courseList: Course[];
-  branchList: Branch[];
-  filteredGroups: Group[];
+  courseList: CourseOption[];
+  branchList: { id: string; name: string }[];
+  filteredGroups: GroupOption[];
   t: (key: string) => string;
 }
 
@@ -356,16 +359,15 @@ const AddStudentDialog = ({
   onDirtyChange,
 }: AddStudentDialogProps) => {
   const { t } = useTranslation();
-  const canAssignBranch = useCan('assignBranch');
+  const legacyCanAssignBranch = useCan('assignBranch');
   const user = useAuthStore((s) => s.user);
+  const canAssignBranch =
+    user?.permissions !== undefined || legacyCanAssignBranch;
   const { data: branches } = useBranches();
   const { data: groups } = useGroups();
   const { data: courses } = useCourses();
 
   const allFormSchema = useMemo(() => buildSchemas(t).all, [t]);
-
-  const branchList = branches || [];
-  const courseList = courses || [];
 
   const [activeStep, setActiveStep] = useState(1);
   const [stepValidated, setStepValidated] = useState<Record<number, boolean>>(
@@ -389,7 +391,8 @@ const AddStudentDialog = ({
       address: '',
       branch_id: canAssignBranch
         ? defaultBranchId || ''
-        : user?.branch_id || '',
+        : requestBranchId(user, useAuthStore.getState?.()?.activeBranchId) ||
+          '',
       course_id: defaultCourseId || '',
       group_id: '',
       start_date: todayCalendarDate(),
@@ -455,11 +458,19 @@ const AddStudentDialog = ({
     control: form.control,
     name: 'course_id',
   });
+  const options = useWriteOptions('students', 'create', watchedBranchId, open);
+  const branchList = options.scoped ? options.branches : branches || [];
+  const courseList = options.scoped
+    ? (options.data?.courses ?? [])
+    : courses || [];
+  const groupList = options.scoped
+    ? (options.data?.groups ?? [])
+    : groups || [];
   const watchedCourse = courseList.find(
     (course) => course.id === watchedCourseId,
   );
 
-  const filteredGroups = (groups || []).filter(
+  const filteredGroups = groupList.filter(
     (g) =>
       g.course_type === watchedCourse?.course_type &&
       (!watchedBranchId || g.branch_id === watchedBranchId) &&
@@ -569,7 +580,7 @@ const AddStudentDialog = ({
     defaultBranchId,
     defaultCourseId,
     canAssignBranch,
-    userBranchId: user?.branch_id,
+    userBranchId: useAuthStore.getState?.()?.activeBranchId ?? user?.branch_id,
   });
   if (
     open &&
@@ -577,14 +588,18 @@ const AddStudentDialog = ({
       wizardResetKey.defaultBranchId !== defaultBranchId ||
       wizardResetKey.defaultCourseId !== defaultCourseId ||
       wizardResetKey.canAssignBranch !== canAssignBranch ||
-      wizardResetKey.userBranchId !== user?.branch_id)
+      wizardResetKey.userBranchId !==
+        requestBranchId(user, useAuthStore.getState?.()?.activeBranchId))
   ) {
     setWizardResetKey({
       open,
       defaultBranchId,
       defaultCourseId,
       canAssignBranch,
-      userBranchId: user?.branch_id,
+      userBranchId: requestBranchId(
+        user,
+        useAuthStore.getState?.()?.activeBranchId,
+      ),
     });
     setActiveStep(1);
     setStepValidated({});
@@ -592,21 +607,21 @@ const AddStudentDialog = ({
 
   useEffect(() => {
     if (open) {
-      if (!defaultBranchId && !canAssignBranch && user?.branch_id) {
-        form.setValue('branch_id', user.branch_id);
+      if (
+        !defaultBranchId &&
+        !canAssignBranch &&
+        requestBranchId(user, useAuthStore.getState?.()?.activeBranchId)
+      ) {
+        form.setValue(
+          'branch_id',
+          useAuthStore.getState?.()?.activeBranchId ?? user?.branch_id ?? '',
+        );
       }
       if (defaultCourseId) {
         form.setValue('course_id', defaultCourseId);
       }
     }
-  }, [
-    open,
-    defaultBranchId,
-    defaultCourseId,
-    canAssignBranch,
-    user?.branch_id,
-    form,
-  ]);
+  }, [open, defaultBranchId, defaultCourseId, canAssignBranch, user, form]);
 
   return (
     <>

@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import axios from '@/api/axiosInstance';
 import { parseItemEnvelope, parseListEnvelope } from '@/lib/apiEnvelope';
 import { useAuthStore } from '@/store/authStore';
@@ -38,7 +39,13 @@ export interface Inspection {
 }
 export const useInspectionScope = () =>
   useAuthStore((s) =>
-    [s.user?.company_id, s.user?.branch_id, s.user?.id, s.user?.role].join(':'),
+    [
+      s.user?.company_id,
+      s.activeBranchId,
+      s.user?.id,
+      s.user?.role,
+      s.user?.access_version,
+    ].join(':'),
   );
 export function useInspections(params: Record<string, unknown>) {
   const scope = useInspectionScope();

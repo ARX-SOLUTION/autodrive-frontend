@@ -115,7 +115,9 @@ const DrivingSessionsPage = () => {
 
   const effectiveBranch = canViewAll
     ? branchId || undefined
-    : (user?.branch_id ?? undefined);
+    : (useAuthStore.getState?.()?.activeBranchId ??
+      user?.branch_id ??
+      undefined);
 
   const { data: branchVehicles } = useVehiclesPage({
     branchId: effectiveBranch,

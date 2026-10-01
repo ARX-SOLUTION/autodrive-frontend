@@ -1,3 +1,4 @@
+import { requestBranchId } from '@/lib/permissions';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -116,7 +117,9 @@ const FleetMapPage = () => {
   const vehicles = useVehiclesPage({
     branchId: canViewAllBranches
       ? branchId || undefined
-      : (user?.branch_id ?? undefined),
+      : (useAuthStore.getState?.()?.activeBranchId ??
+        user?.branch_id ??
+        undefined),
     search: searchTerm || undefined,
     status: status || undefined,
     category: category || undefined,
@@ -134,7 +137,9 @@ const FleetMapPage = () => {
   );
   const branchName = (id: string) =>
     branchNames.get(id) ??
-    (id === user?.branch_id ? user?.branch_name : null) ??
+    (id === requestBranchId(user, useAuthStore.getState?.()?.activeBranchId)
+      ? user?.branch_name
+      : null) ??
     id;
   const denied =
     axios.isAxiosError(vehicles.error) &&

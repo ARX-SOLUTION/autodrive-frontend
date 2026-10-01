@@ -1,3 +1,6 @@
+import { useAuthStore } from '@/store/authStore';
+import { userCan } from '@/lib/permissions';
+import { useCan } from '@/hooks/useCan';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -46,8 +49,6 @@ export const StudentsMobileList = ({
   isLoading,
   isError,
   onRetry,
-  canManageStudents,
-  isCrossTenant,
   canViewPayments,
   onOpenStudent,
   onEdit,
@@ -57,6 +58,16 @@ export const StudentsMobileList = ({
   onRestore,
 }: StudentsMobileListProps) => {
   const { t } = useTranslation();
+  const canCreate = useCan('students.create');
+  const canUpdate = useCan('students.update');
+  const canDelete = useCan('students.delete');
+  const actor = useAuthStore((state) => state.user);
+  const canAt = (action: 'update' | 'delete', branchId: string) =>
+    actor?.permissions === undefined
+      ? action === 'update'
+        ? canUpdate
+        : canDelete
+      : userCan(actor, `students.${action}`, branchId);
   const localizedResultLabels = resultLabels(t);
 
   return (
@@ -167,7 +178,7 @@ export const StudentsMobileList = ({
                   )
                 ) : (
                   <>
-                    {canManageStudents && (
+                    {canAt('update', s.branch_id) && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -180,7 +191,7 @@ export const StudentsMobileList = ({
                         <PencilSimple className="h-3.5 w-3.5" />
                       </button>
                     )}
-                    {isCrossTenant && (
+                    {canAt('delete', s.branch_id) && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -205,7 +216,7 @@ export const StudentsMobileList = ({
           title={t('students.not_found')}
           description={t('students.not_found_desc')}
           action={
-            canManageStudents ? (
+            canCreate ? (
               <Button size="sm" className="gap-2" onClick={onCreate}>
                 <Plus className="h-4 w-4" /> {t('students.add')}
               </Button>

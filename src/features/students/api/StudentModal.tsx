@@ -1,3 +1,5 @@
+import { requestBranchId } from '@/lib/permissions';
+import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
@@ -101,8 +103,10 @@ const StudentModal = ({
   onDirtyChange,
 }: StudentModalProps) => {
   const { t } = useTranslation();
-  const canAssignBranch = useCan('assignBranch');
+  const legacyCanAssignBranch = useCan('assignBranch');
   const user = useAuthStore((s) => s.user);
+  const canAssignBranch =
+    user?.permissions !== undefined || legacyCanAssignBranch;
   const { data: branches } = useBranches();
   const { data: groups } = useGroups();
 
@@ -111,14 +115,13 @@ const StudentModal = ({
     [t, student],
   );
 
-  const branchList = branches || [];
-
   const defaultFormValues = () =>
     getCreateStudentFormValues({
       courseType,
       canAssignBranch,
       defaultBranchId,
-      userBranchId: user?.branch_id,
+      userBranchId:
+        useAuthStore.getState?.()?.activeBranchId ?? user?.branch_id,
     });
 
   const form = useForm<StudentFormInput, unknown, StudentFormValues>({
@@ -200,7 +203,10 @@ const StudentModal = ({
     setDupQueryForDismissal(debouncedDupQuery);
     setDupWarningDismissed(false);
   }
-  const activeBranchId = watchedBranchId || user?.branch_id || undefined;
+  const activeBranchId =
+    watchedBranchId ||
+    requestBranchId(user, useAuthStore.getState?.()?.activeBranchId) ||
+    undefined;
 
   const { data: dupMatchesPage } = useStudentsPage(
     undefined,
@@ -218,10 +224,17 @@ const StudentModal = ({
   // autodrive-0d6: total_price used to be a hardcoded constant per
   // courseType. Real prices now live on Course rows, scoped by branch +
   // course_type — fetch them and let the picker below drive the pre-fill.
-  const { data: courses } = useCourses({
+  const options = useWriteOptions(
+    'students',
+    student ? 'update' : 'create',
+    activeBranchId,
+    open,
+  );
+  const { data: readCourses } = useCourses({
     branchId: activeBranchId,
     courseType,
   });
+  const courses = options.scoped ? options.data?.courses : readCourses;
   const activeCourseList = (courses || []).filter((c) => c.is_active);
 
   useEffect(() => {
@@ -241,7 +254,10 @@ const StudentModal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCourseList, student, watchedCourseId]);
 
-  const groupList = (groups || []).filter(
+  const branchList = options.scoped ? options.branches : branches || [];
+  const groupList = (
+    options.scoped ? (options.data?.groups ?? []) : groups || []
+  ).filter(
     (g) =>
       (g.course_type === courseType || !g.course_type) &&
       (!watchedBranchId || g.branch_id === watchedBranchId),

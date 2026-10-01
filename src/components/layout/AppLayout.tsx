@@ -43,6 +43,7 @@ const readDesktopSidebarExpanded = () => {
 export const AppLayout = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const activeBranchId = useAuthStore((state) => state.activeBranchId);
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const sessionValidated = useAuthStore((state) => state.sessionValidated);
@@ -197,7 +198,9 @@ export const AppLayout = () => {
               {!isMapWorkspace && <Breadcrumbs />}
               <div className={isMapWorkspace ? 'h-full' : undefined}>
                 <Suspense fallback={<PageLoader />}>
-                  <Outlet />
+                  <Outlet
+                    key={`${user?.id}:${user?.company_id}:${user?.access_version}:${activeBranchId}`}
+                  />
                 </Suspense>
               </div>
             </div>

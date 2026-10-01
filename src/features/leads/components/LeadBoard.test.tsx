@@ -1,3 +1,5 @@
+// These interaction tests exercise an actor with the necessary mutation grants.
+vi.mock('@/hooks/useCan', () => ({ useCan: () => true }));
 import {
   render,
   screen,

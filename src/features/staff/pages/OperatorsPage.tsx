@@ -6,7 +6,7 @@ import { useSearchSortFilters } from '@/hooks/useSearchSortFilters';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { useFilterBarState } from '@/hooks/useFilterBarState';
-import { useIsCrossTenant } from '@/hooks/useCan';
+import { useCan, useIsCrossTenant } from '@/hooks/useCan';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { SearchWithHotkey } from '@/components/filter/SearchWithHotkey';
@@ -51,6 +51,9 @@ const OperatorsPage = () => {
   const navigate = useNavigate();
   const { pageSize, setPageSize } = usePageSize();
   const isCrossTenant = useIsCrossTenant();
+  const mayCreate = useCan('staff.create');
+  const mayUpdate = useCan('staff.update');
+  const mayDelete = useCan('staff.delete');
   const { searchParams, setParams } = useUrlParams();
   const branchId = searchParams.get('branch_id') ?? '';
   const status = searchParams.get('status') ?? '';
@@ -315,36 +318,40 @@ const OperatorsPage = () => {
           meta: { align: 'center' },
           cell: ({ row }) => (
             <div className="flex items-center justify-center gap-1">
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setEditItem(row.original);
-                  setModalOpen(true);
-                }}
-                aria-label={t('common.edit')}
-                title={t('common.edit')}
-                className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <PencilSimple className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setDeleteId(row.original.id);
-                }}
-                aria-label={t('common.delete')}
-                title={t('common.delete')}
-                className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-              >
-                <Trash className="h-3.5 w-3.5" />
-              </button>
+              {mayUpdate && (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setEditItem(row.original);
+                    setModalOpen(true);
+                  }}
+                  aria-label={t('common.edit')}
+                  title={t('common.edit')}
+                  className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <PencilSimple className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {mayDelete && (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setDeleteId(row.original.id);
+                  }}
+                  aria-label={t('common.delete')}
+                  title={t('common.delete')}
+                  className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           ),
         }),
       ]),
-    [branches, startIndex, t],
+    [branches, startIndex, t, mayUpdate, mayDelete],
   );
 
   return (
@@ -358,9 +365,11 @@ const OperatorsPage = () => {
           }
           icon={<Headphones className="h-3.5 w-3.5" aria-hidden="true" />}
           actions={
-            <Button className="gap-2" onClick={openCreate}>
-              <Plus className="h-4 w-4" /> {t('operators.add')}
-            </Button>
+            mayCreate && (
+              <Button className="gap-2" onClick={openCreate}>
+                <Plus className="h-4 w-4" /> {t('operators.add')}
+              </Button>
+            )
           }
         />
         {isLoading && <Skeleton className="h-4 w-24 mt-1" />}
@@ -561,30 +570,34 @@ const OperatorsPage = () => {
                 ]}
                 actions={
                   <>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        openEdit(operator);
-                      }}
-                      aria-label={t('common.edit')}
-                      title={t('common.edit')}
-                      className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    >
-                      <PencilSimple className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setDeleteId(operator.id);
-                      }}
-                      aria-label={t('common.delete')}
-                      title={t('common.delete')}
-                      className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash className="h-3.5 w-3.5" />
-                    </button>
+                    {mayUpdate && (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openEdit(operator);
+                        }}
+                        aria-label={t('common.edit')}
+                        title={t('common.edit')}
+                        className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      >
+                        <PencilSimple className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    {mayDelete && (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setDeleteId(operator.id);
+                        }}
+                        aria-label={t('common.delete')}
+                        title={t('common.delete')}
+                        className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </>
                 }
               />

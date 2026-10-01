@@ -1,3 +1,4 @@
+import { requestBranchId } from '@/lib/permissions';
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -72,10 +73,11 @@ export const LeadsPage = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
   const canViewAllBranches = useCan('viewAllBranches');
-  const canManageStages =
-    user?.role === 'owner' || user?.role === 'manager' || user?.role === 'dev';
+  const canManageStages = useCan('lead_stages.update');
+  const mayCreate = useCan('leads.create');
 
   const handleOpenCreate = (stageId?: string) => {
+    if (!mayCreate) return;
     setCreateDefaultStageId(stageId);
     setIsCreateOpen(true);
   };
@@ -93,7 +95,8 @@ export const LeadsPage = () => {
       q: searchParams.get('q') || undefined,
       branch_id: canViewAllBranches
         ? searchParams.get('branch_id') || undefined
-        : user?.branch_id || undefined,
+        : requestBranchId(user, useAuthStore.getState?.()?.activeBranchId) ||
+          undefined,
       stage_id: searchParams.get('stage_id') || undefined,
       source: (searchParams.get('source') as LeadSource) || undefined,
       course_type: (searchParams.get('course_type') as CourseType) || undefined,
@@ -115,7 +118,7 @@ export const LeadsPage = () => {
       page: Number(searchParams.get('page')) || 1,
       limit: Number(searchParams.get('limit')) || 20,
     }),
-    [searchParams, canViewAllBranches, user?.branch_id, viewMode],
+    [searchParams, canViewAllBranches, user, viewMode],
   );
 
   const handleFilterChange = (next: Partial<ListLeadsQuery>) => {
@@ -228,16 +231,18 @@ export const LeadsPage = () => {
               </Button>
             )}
 
-            <Button
-              className="h-9 gap-1.5"
-              aria-label={t('leads.create_lead', 'New Lead')}
-              onClick={() => handleOpenCreate()}
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">
-                {t('leads.create_lead', 'New Lead')}
-              </span>
-            </Button>
+            {mayCreate && (
+              <Button
+                className="h-9 gap-1.5"
+                aria-label={t('leads.create_lead', 'New Lead')}
+                onClick={() => handleOpenCreate()}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {t('leads.create_lead', 'New Lead')}
+                </span>
+              </Button>
+            )}
           </div>
         }
       />

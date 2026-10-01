@@ -1,3 +1,4 @@
+import { requestBranchId } from '@/lib/permissions';
 import { useState } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useUrlTab } from '@/hooks/useUrlTab';
@@ -41,7 +42,10 @@ const CourseDetailPage = () => {
   // FE value. Cross-tenant roles (owner/dev) leave it unset and see every
   // branch; a branch-scoped role (manager/operator/teacher) is pinned to
   // their own branch, which is also this course's branch.
-  const branchId = isCrossTenant ? undefined : authUser?.branch_id || undefined;
+  const branchId = isCrossTenant
+    ? undefined
+    : requestBranchId(authUser, useAuthStore.getState?.()?.activeBranchId) ||
+      undefined;
   const {
     data: students,
     isLoading: studentsLoading,

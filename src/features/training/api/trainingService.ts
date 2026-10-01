@@ -1,9 +1,9 @@
 import {
   queryOptions,
   useMutation,
-  useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import axiosInstance from '@/api/axiosInstance';
 import { parseItemEnvelope, parseListEnvelope } from '@/lib/apiEnvelope';
 import { trainingEnrollmentKeys, trainingProgramKeys } from '@/lib/queryKeys';

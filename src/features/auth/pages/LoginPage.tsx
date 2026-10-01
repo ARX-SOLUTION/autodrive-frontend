@@ -113,7 +113,7 @@ const LoginPage = () => {
       const target =
         data.user.role !== 'accountant' && from && from !== '/login'
           ? from
-          : getDefaultAuthenticatedRoute(data.user.role);
+          : getDefaultAuthenticatedRoute(data.user);
       void ensureI18n()
         .catch(() => undefined)
         .then(() => {

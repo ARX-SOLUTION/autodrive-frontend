@@ -1,5 +1,6 @@
 import { screen, cleanup } from '@testing-library/react';
-import { vi, describe, it, expect, afterEach } from 'vitest';
+import { vi, describe, it, expect, afterEach, beforeEach } from 'vitest';
+import { useAuthStore } from '@/store/authStore';
 import UserDetailPage from '@/features/staff/pages/UserDetailPage';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
@@ -15,6 +16,10 @@ const userQuery = vi.hoisted(() => ({
 
 vi.mock('@/features/staff/api/userService', () => ({
   useUser: () => userQuery,
+}));
+
+vi.mock('@/features/staff/components/UserAccessPanel', () => ({
+  default: () => <div>Permission editor</div>,
 }));
 
 const USER = {
@@ -67,5 +72,68 @@ describe('UserDetailPage error vs not-found (autodrive-d4j)', () => {
     await renderPage();
     expect(screen.getByText('common.error')).toBeTruthy();
     expect(screen.queryByText('common.not_found')).toBeNull();
+  });
+});
+
+describe('staff access management visibility', () => {
+  beforeEach(() =>
+    useAuthStore.setState({
+      user: {
+        id: 'actor',
+        email: 'actor@example.com',
+        role: 'manager',
+        branch_ids: ['a'],
+        permissions: [
+          { permission: 'staff.read', scope: 'branch', branch_id: 'a' },
+        ],
+        delegations: [],
+      },
+      activeBranchId: 'a',
+    }),
+  );
+  afterEach(() => useAuthStore.setState({ user: null, activeBranchId: null }));
+  const renderAccessPage = () =>
+    renderWithRouter(<UserDetailPage />, {
+      routePattern: '/users/$id',
+      initialEntry: '/users/u1?tab=access',
+      params: { id: 'u1' },
+    });
+  it('opens the editor for a reader with delegation rights but no execution manage grant', async () => {
+    useAuthStore.setState({
+      user: {
+        ...useAuthStore.getState().user!,
+        delegations: [
+          { permission: 'students.update', scope: 'branch', branch_id: 'a' },
+        ],
+      },
+    });
+    await renderAccessPage();
+    expect(
+      await screen.findByRole('tab', { name: 'access.title' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Permission editor')).toBeInTheDocument();
+  });
+  it('hides manager controls when execution manage has no delegation ceiling', async () => {
+    useAuthStore.setState({
+      user: {
+        ...useAuthStore.getState().user!,
+        permissions: [
+          ...useAuthStore.getState().user!.permissions!,
+          {
+            permission: 'staff.permissions.manage',
+            scope: 'branch',
+            branch_id: 'a',
+          },
+        ],
+      },
+    });
+    await renderAccessPage();
+    expect(
+      await screen.findByRole('heading', { name: USER.name }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('tab', { name: 'access.title' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Permission editor')).not.toBeInTheDocument();
   });
 });

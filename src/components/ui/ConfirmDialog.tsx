@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -16,6 +17,7 @@ interface ConfirmDialogProps {
   title?: string;
   description?: string;
   loading?: boolean;
+  children?: ReactNode;
   // Overrides the confirm button's label (default "Delete"/"Deleting...").
   // Non-destructive reuses (e.g. the discard-unsaved-changes guard) should
   // pass their own label -- t('common.discard') -- instead of a "Delete"
@@ -31,6 +33,7 @@ export const ConfirmDialog = ({
   title,
   description,
   loading,
+  children,
   confirmLabel,
   confirmVariant = 'destructive',
 }: ConfirmDialogProps) => {
@@ -47,6 +50,7 @@ export const ConfirmDialog = ({
             {description ?? t('common.confirm_delete_desc')}
           </DialogDescription>
         </DialogHeader>
+        {children}
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose}>
             {t('common.cancel')}

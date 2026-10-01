@@ -1,3 +1,4 @@
+import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm, useWatch } from 'react-hook-form';
@@ -189,9 +190,13 @@ const PersonModal = ({
   description,
 }: PersonModalProps) => {
   const { t } = useTranslation();
-  const canAssignBranch = useCan('assignBranch');
+  const legacyCanAssignBranch = useCan('assignBranch');
+  const scopedActor = useAuthStore(
+    (state) => state.user?.permissions !== undefined,
+  );
+  const canAssignBranch = scopedActor || legacyCanAssignBranch;
   const isOwner = useAuthStore((state) => state.user?.role === 'owner');
-  const { data: branches } = useBranches();
+  const { data: readBranches } = useBranches();
 
   const visibleSelectableRoles = isOwner
     ? selectableRoles
@@ -213,6 +218,17 @@ const PersonModal = ({
     resolver: zodResolver(personFormSchema),
     defaultValues: defaultFormValues(),
   });
+  const selectedBranchId = useWatch({
+    control: form.control,
+    name: 'branchId',
+  });
+  const options = useWriteOptions(
+    'staff',
+    person ? 'update' : 'create',
+    selectedBranchId,
+    open,
+  );
+  const branches = options.scoped ? options.branches : readBranches;
   const selectedRole = useWatch({ control: form.control, name: 'role' });
 
   useEffect(() => {

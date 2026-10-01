@@ -1,6 +1,7 @@
+import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -88,6 +89,17 @@ const CourseFormDialog = ({
     defaultValues: defaultFormValues(),
   });
 
+  const selectedBranchId = useWatch({
+    control: form.control,
+    name: 'branchId',
+  });
+  const options = useWriteOptions(
+    'courses',
+    editCourse ? 'update' : 'create',
+    selectedBranchId,
+    open,
+  );
+  const branchChoices = options.scoped ? options.branches : branches;
   useEffect(() => {
     if (!open) return;
     form.reset(
@@ -193,7 +205,7 @@ const CourseFormDialog = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {branches.map((b) => (
+                        {branchChoices.map((b) => (
                           <SelectItem key={b.id} value={b.id}>
                             {b.name}
                           </SelectItem>

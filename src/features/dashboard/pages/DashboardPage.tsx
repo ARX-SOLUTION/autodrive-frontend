@@ -1,3 +1,4 @@
+import { requestBranchId } from '@/lib/permissions';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
@@ -95,7 +96,10 @@ const LegacyMainDashboard = () => {
   const user = useAuthStore((s) => s.user);
   const [courseType, setCourseType] = useState<CourseType | undefined>();
   const [branchId, setBranchId] = useState<string | undefined>(
-    isCrossTenant ? undefined : user?.branch_id || undefined,
+    isCrossTenant
+      ? undefined
+      : requestBranchId(user, useAuthStore.getState?.()?.activeBranchId) ||
+          undefined,
   );
 
   const { data: analytics, isLoading } = useDashboardAnalytics(

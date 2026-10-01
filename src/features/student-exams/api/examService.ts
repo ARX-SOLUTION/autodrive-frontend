@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import axiosInstance from '@/api/axiosInstance';
 import { ExamResult, CreateExamPayload } from '@/features/student-exams/types';
 import { parseListEnvelope, parseItemEnvelope } from '@/lib/apiEnvelope';

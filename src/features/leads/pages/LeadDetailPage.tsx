@@ -1,3 +1,4 @@
+import { useCan } from '@/hooks/useCan';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from '@tanstack/react-router';
@@ -35,6 +36,9 @@ import type { LeadLostReason } from '../types/leads.types';
 
 export const LeadDetailPage = () => {
   const { t } = useTranslation();
+  const mayUpdate = useCan('leads.update');
+  const mayDelete = useCan('leads.delete');
+  const mayConvert = useCan('students.create');
   const navigate = useNavigate();
   const { id } = useParams({ strict: false }) as { id?: string };
 
@@ -198,7 +202,7 @@ export const LeadDetailPage = () => {
               <Select
                 value={lead.stageId}
                 onValueChange={handleStageSelect}
-                disabled={transitionMutation.isPending}
+                disabled={!mayUpdate || transitionMutation.isPending}
               >
                 <SelectTrigger
                   aria-label={t('leads.stage', 'Bosqich')}
@@ -223,7 +227,7 @@ export const LeadDetailPage = () => {
             </div>
 
             {/* Convert to Student Button */}
-            {!isConverted && (
+            {mayConvert && mayUpdate && !isConverted && (
               <Button
                 size="sm"
                 aria-label={t(
@@ -241,26 +245,30 @@ export const LeadDetailPage = () => {
             )}
 
             {/* Edit Lead Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label={t('leads.edit_lead', 'Lidni tahrirlash')}
-              onClick={() => setIsEditOpen(true)}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            >
-              <PencilSimple className="h-3.5 w-3.5" />
-            </Button>
+            {mayUpdate && (
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label={t('leads.edit_lead', 'Lidni tahrirlash')}
+                onClick={() => setIsEditOpen(true)}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <PencilSimple className="h-3.5 w-3.5" />
+              </Button>
+            )}
 
             {/* Delete Lead Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label={t('leads.delete_lead', 'Lidni o‘chirish')}
-              onClick={() => setIsDeleteOpen(true)}
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            >
-              <Trash className="h-3.5 w-3.5" />
-            </Button>
+            {mayDelete && (
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label={t('leads.delete_lead', 'Lidni o‘chirish')}
+                onClick={() => setIsDeleteOpen(true)}
+                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              >
+                <Trash className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
         }
       />

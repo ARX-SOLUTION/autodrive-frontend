@@ -1,9 +1,9 @@
 import {
   queryOptions,
   useMutation,
-  useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import axiosInstance from '@/api/axiosInstance';
 import { useCan } from '@/hooks/useCan';
 import { useAuthStore } from '@/store/authStore';
@@ -143,6 +143,12 @@ const expenseIdentity = (branchId?: string) => {
     companyId: user?.company_id,
     branchId,
     jwtBranchId: user?.branch_id,
+    ...(user?.permissions !== undefined
+      ? {
+          activeBranchId: useAuthStore.getState().activeBranchId,
+          accessVersion: user.access_version,
+        }
+      : {}),
     viewerRole: user?.role,
   };
 };

@@ -3,6 +3,37 @@ export type UserRole =
 export type Specialization = 'THEORY' | 'PRACTICE';
 export type CompanyStatus = 'pending' | 'active' | 'suspended';
 
+export interface PermissionAssignment {
+  permission: string;
+  scope: 'company' | 'branch' | 'own';
+  branch_id: string | null;
+}
+
+export interface StaffAccess {
+  access_version: number;
+  branch_ids: string[];
+  permissions: PermissionAssignment[];
+  delegations: PermissionAssignment[];
+}
+
+export interface PermissionCatalogue {
+  own_resources: string[];
+  permissions: string[];
+  templates: Record<string, string[]>;
+  branches: { id: string; name: string }[];
+  delegations: PermissionAssignment[];
+}
+
+export interface UpdateStaffAccess {
+  version: number;
+  branches?: { branchId: string; active: boolean }[];
+  scopes: {
+    scope: PermissionAssignment['scope'];
+    branchId?: string;
+    permissions: string[];
+  }[];
+}
+
 // Matches UserResponse's `groups`/`registered_students` extras (backend
 // users.service.ts findById) — id + display name only, no full Group/Student.
 export interface UserRelationSummary {
@@ -15,6 +46,10 @@ export interface User {
   name?: string;
   email: string;
   role: UserRole;
+  access_version?: number;
+  branch_ids?: string[];
+  permissions?: PermissionAssignment[];
+  delegations?: PermissionAssignment[];
   branch_id?: string | null;
   branch_name?: string;
   company_id?: string;

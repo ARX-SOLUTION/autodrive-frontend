@@ -1,3 +1,4 @@
+import { useWriteOptions } from '@/hooks/useWriteOptions';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm, useWatch } from 'react-hook-form';
@@ -107,10 +108,22 @@ const VehicleFormDialog = ({
   });
 
   const watchedBranchId = useWatch({ control: form.control, name: 'branchId' });
+  const options = useWriteOptions(
+    'vehicles',
+    vehicle ? 'update' : 'create',
+    watchedBranchId,
+    open,
+  );
+  const branchChoices = options.scoped ? options.branches : branches;
   const selectedBranchId =
     watchedBranchId || vehicle?.branch_id || defaultBranchId;
-  const branchTeachers = teachers.filter(
-    (tc) => !selectedBranchId || tc.branch_id === selectedBranchId,
+  const branchTeachers = (
+    options.scoped ? (options.data?.custodians ?? []) : teachers
+  ).filter(
+    (tc) =>
+      !selectedBranchId ||
+      !('branch_id' in tc) ||
+      tc.branch_id === selectedBranchId,
   );
 
   useEffect(() => {
@@ -217,7 +230,7 @@ const VehicleFormDialog = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {branches.map((branch) => (
+                          {branchChoices.map((branch) => (
                             <SelectItem key={branch.id} value={branch.id}>
                               {branch.name}
                             </SelectItem>

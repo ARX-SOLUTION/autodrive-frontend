@@ -40,6 +40,18 @@ vi.mock('@/store/authStore', () => ({
 
 vi.mock('@/hooks/useCan', () => ({
   useCan: (capability: string) => {
+    if (capability === 'expenses.create') return state.canViewExpenses;
+    if (capability === 'expenses.update') return state.canViewExpenses;
+    if (
+      [
+        'expenses.delete',
+        'expenses.cancel',
+        'expenses.pay',
+        'expense_payments.delete',
+        'expense_payments.read',
+      ].includes(capability)
+    )
+      return state.canManageFinance;
     if (capability === 'viewExpenses') return state.canViewExpenses;
     if (capability === 'manageCompanyFinance') return state.canManageFinance;
     return false;

@@ -1,3 +1,4 @@
+import { requestBranchId } from '@/lib/permissions';
 /* eslint-disable react-refresh/only-export-components */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -87,7 +88,8 @@ const StudentsPage = () => {
 
   const defaultBranchId = isCrossTenant
     ? undefined
-    : user?.branch_id || undefined;
+    : requestBranchId(user, useAuthStore.getState?.()?.activeBranchId) ||
+      undefined;
   const branchId = isCrossTenant
     ? (searchParams.get('branch_id') ?? undefined)
     : defaultBranchId;
@@ -458,7 +460,9 @@ const StudentsPage = () => {
           setOperatorId={setOperatorId}
           operators={operators || []}
           operatorsLoading={isOperatorsLoading}
-          userBranchId={user?.branch_id}
+          userBranchId={
+            useAuthStore.getState?.()?.activeBranchId ?? user?.branch_id
+          }
           hasGroup={hasGroup}
           setHasGroup={setHasGroup}
           dateFrom={dateFrom}

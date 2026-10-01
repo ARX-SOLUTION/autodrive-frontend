@@ -1,3 +1,4 @@
+import { useCan } from '@/hooks/useCan';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PencilSimple, Trash, BookOpen } from '@phosphor-icons/react';
@@ -34,6 +35,7 @@ export function CoursesGrid({
   onDelete,
 }: CoursesGridProps) {
   const { t } = useTranslation();
+  const canCreate = useCan('courses.create');
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const courseTypeLabel = (type: Course['course_type']) =>
@@ -101,7 +103,9 @@ export function CoursesGrid({
       icon={BookOpen}
       title={t('courses.not_found')}
       description={t('courses.not_found_desc')}
-      action={{ label: t('courses.add'), onClick: onCreate }}
+      action={
+        canCreate ? { label: t('courses.add'), onClick: onCreate } : undefined
+      }
     />
   );
 
@@ -177,33 +181,39 @@ interface CourseActionsProps {
 
 function CourseActions({ course, onEdit, onDelete }: CourseActionsProps) {
   const { t } = useTranslation();
+  const canUpdate = useCan('courses.update', course.branch_id);
+  const canDelete = useCan('courses.delete', course.branch_id);
 
   return (
     <div className="flex items-center justify-center gap-1">
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          onEdit(course);
-        }}
-        aria-label={t('common.edit')}
-        title={t('common.edit')}
-        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-      >
-        <PencilSimple className="h-3.5 w-3.5" />
-      </button>
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          onDelete(course.id);
-        }}
-        aria-label={t('common.delete')}
-        title={t('common.delete')}
-        className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-      >
-        <Trash className="h-3.5 w-3.5" />
-      </button>
+      {canUpdate && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onEdit(course);
+          }}
+          aria-label={t('common.edit')}
+          title={t('common.edit')}
+          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        >
+          <PencilSimple className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {canDelete && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDelete(course.id);
+          }}
+          aria-label={t('common.delete')}
+          title={t('common.delete')}
+          className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+        >
+          <Trash className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   );
 }

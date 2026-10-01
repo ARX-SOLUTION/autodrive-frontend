@@ -8,6 +8,8 @@ import { EntityDetailShell } from '@/components/ui/EntityDetailShell';
 import { DataCard } from '@/components/ui/DataCard';
 import { useUser } from '@/features/staff/api/userService';
 import { useUrlTab } from '@/hooks/useUrlTab';
+import { useCanManageStaffAccess } from '@/hooks/useCan';
+import UserAccessPanel from '@/features/staff/components/UserAccessPanel';
 
 // Which list page a given role's users are managed from — used for the back
 // link and the row-click origin, since one UserDetailPage serves all three.
@@ -23,8 +25,9 @@ const UserDetailPage = () => {
   const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const canManageAccess = useCanManageStaffAccess();
   const [tab, setTab] = useUrlTab(
-    ['info', 'groups', 'students'] as const,
+    ['info', 'groups', 'students', 'access'] as const,
     'info',
   );
 
@@ -51,11 +54,13 @@ const UserDetailPage = () => {
   }
 
   const visibleTab =
-    tab === 'groups' && user.role !== 'teacher'
+    tab === 'access' && !canManageAccess
       ? 'info'
-      : tab === 'students' && user.role !== 'operator'
+      : tab === 'groups' && user.role !== 'teacher'
         ? 'info'
-        : tab;
+        : tab === 'students' && user.role !== 'operator'
+          ? 'info'
+          : tab;
 
   return (
     <EntityDetailShell
@@ -88,6 +93,9 @@ const UserDetailPage = () => {
       <Tabs value={visibleTab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="info">{t('common.tab_info')}</TabsTrigger>
+          {canManageAccess && (
+            <TabsTrigger value="access">{t('access.title')}</TabsTrigger>
+          )}
           {user.role === 'teacher' && (
             <TabsTrigger value="groups">{t('groups.title')}</TabsTrigger>
           )}
@@ -124,6 +132,12 @@ const UserDetailPage = () => {
             />
           </dl>
         </TabsContent>
+
+        {canManageAccess && (
+          <TabsContent value="access">
+            <UserAccessPanel key={user.id} user={user} />
+          </TabsContent>
+        )}
 
         {user.role === 'teacher' && (
           <TabsContent value="groups">

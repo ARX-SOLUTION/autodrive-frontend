@@ -1,3 +1,6 @@
+import { useAuthStore } from '@/store/authStore';
+import { userCan } from '@/lib/permissions';
+import { useCan } from '@/hooks/useCan';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -77,6 +80,15 @@ const GroupsTable = ({
   onRestore,
 }: GroupsTableProps) => {
   const { t } = useTranslation();
+  const canUpdate = useCan('groups.update');
+  const canDelete = useCan('groups.delete');
+  const actor = useAuthStore((state) => state.user);
+  const canAt = (action: 'update' | 'delete', branchId: string) =>
+    actor?.permissions === undefined
+      ? action === 'update'
+        ? canUpdate
+        : canDelete
+      : userCan(actor, `groups.${action}`, branchId);
 
   const columns = columnHelper.columns([
     columnHelper.display({
@@ -169,30 +181,34 @@ const GroupsTable = ({
           </div>
         ) : (
           <div className="flex items-center justify-center gap-1">
-            {canManageGroups && (
+            {(canUpdate || canDelete) && (
               <>
-                <button
-                  aria-label={t('common.edit')}
-                  title={t('common.edit')}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(g);
-                  }}
-                  className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                >
-                  <PencilSimple className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  aria-label={t('common.delete')}
-                  title={t('common.delete')}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(g.id);
-                  }}
-                  className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                >
-                  <Trash className="h-3.5 w-3.5" />
-                </button>
+                {canAt('update', row.original.branch_id) && (
+                  <button
+                    aria-label={t('common.edit')}
+                    title={t('common.edit')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(g);
+                    }}
+                    className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  >
+                    <PencilSimple className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {canAt('delete', row.original.branch_id) && (
+                  <button
+                    aria-label={t('common.delete')}
+                    title={t('common.delete')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(g.id);
+                    }}
+                    className="flex h-11 w-11 items-center pointer-fine:h-8 pointer-fine:w-8 justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                  >
+                    <Trash className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </>
             )}
           </div>

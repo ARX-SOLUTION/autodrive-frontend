@@ -1,3 +1,4 @@
+import { useCan } from '@/hooks/useCan';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -273,6 +274,8 @@ export default function InspectionDetailPage() {
   const { id } = useParams({ strict: false }) as { id: string };
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const mayUpdate = useCan('vehicle_inspections.update');
+  const mayApprove = useCan('vehicle_inspections.approve');
   const query = useInspection(id);
   const [reason, setReason] = useState('');
   const [busySlots, setBusySlots] = useState<string[]>([]);
@@ -287,8 +290,10 @@ export default function InspectionDetailPage() {
     );
   const row = query.data;
   const manager = inspectionManager(user?.role);
-  const editable = row.status === 'draft' && row.author_id === user?.id;
-  const maySubmit = row.status === 'draft' && (editable || manager);
+  const editable =
+    mayUpdate && row.status === 'draft' && row.author_id === user?.id;
+  const maySubmit =
+    mayUpdate && row.status === 'draft' && (editable || manager);
   const send = (decision?: string) =>
     action.mutate({
       action: decision ? 'review' : 'submit',
@@ -345,7 +350,8 @@ export default function InspectionDetailPage() {
           </section>
         ))}
       </div>
-      {(maySubmit || canReviewInspection(row, user?.role, user?.id)) && (
+      {(maySubmit ||
+        (mayApprove && canReviewInspection(row, user?.role, user?.id))) && (
         <div className="glass-card space-y-3 p-4">
           <label className="block">
             {t('inspections.reason')}
@@ -379,7 +385,7 @@ export default function InspectionDetailPage() {
               </Button>
             </>
           )}
-          {canReviewInspection(row, user?.role, user?.id) && (
+          {mayApprove && canReviewInspection(row, user?.role, user?.id) && (
             <div className="flex flex-wrap gap-2">
               {(manager
                 ? ['approve', 'retake', 'service', 'stop']

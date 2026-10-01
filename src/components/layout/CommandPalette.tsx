@@ -1,3 +1,5 @@
+import { useAuthStore } from '@/store/authStore';
+import { canAccessRoute } from '@/app/routeAccess';
 /* eslint-disable react-refresh/only-export-components */
 
 import { useState } from 'react';
@@ -50,7 +52,15 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
     accessLeads: useCan('accessLeads'),
   };
 
-  const visibleNav = NAV_ITEMS.filter((n) => !n.cap || gate[n.cap]);
+  const user = useAuthStore((state) => state.user);
+  const activeBranchId = useAuthStore((state) => state.activeBranchId);
+  const visibleNav = NAV_ITEMS.filter(
+    (n) =>
+      !n.cap ||
+      (user?.permissions === undefined
+        ? gate[n.cap]
+        : canAccessRoute(user, n.path, n.cap, activeBranchId)),
+  );
 
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);

@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { useIsCrossTenant } from '@/hooks/useCan';
@@ -16,7 +17,7 @@ import type {
 export type Specialization = 'THEORY' | 'PRACTICE';
 
 export const useTeachers = () => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const branchId = useAuthStore((s) => s.activeBranchId ?? s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
     queryKey: teacherKeys.list({ branchId, page: 1, limit: 100 }),
@@ -45,7 +46,9 @@ export const useTeachersPage = (
   branchId?: string,
   isActive?: boolean,
 ) => {
-  const userBranchId = useAuthStore((s) => s.user?.branch_id);
+  const userBranchId = useAuthStore(
+    (s) => s.activeBranchId ?? s.user?.branch_id,
+  );
   const isCrossTenant = useIsCrossTenant();
   const effectiveBranchId = isCrossTenant ? branchId : userBranchId;
   return useQuery<ListResponse<User>>({

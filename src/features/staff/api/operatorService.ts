@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { usePermissionQuery as useQuery } from '@/hooks/usePermissionQuery';
 import axiosInstance from '@/api/axiosInstance';
 import { useAuthStore } from '@/store/authStore';
 import { useIsCrossTenant } from '@/hooks/useCan';
@@ -14,7 +15,7 @@ import type {
 } from '@/shared/api/contract';
 
 export const useOperators = () => {
-  const branchId = useAuthStore((s) => s.user?.branch_id);
+  const branchId = useAuthStore((s) => s.activeBranchId ?? s.user?.branch_id);
   const isCrossTenant = useIsCrossTenant();
   return useQuery<User[]>({
     queryKey: operatorKeys.list({ branchId, page: 1, limit: 100 }),
@@ -43,7 +44,9 @@ export const useOperatorsPage = (
   branchId?: string,
   isActive?: boolean,
 ) => {
-  const userBranchId = useAuthStore((s) => s.user?.branch_id);
+  const userBranchId = useAuthStore(
+    (s) => s.activeBranchId ?? s.user?.branch_id,
+  );
   const isCrossTenant = useIsCrossTenant();
   const effectiveBranchId = isCrossTenant ? branchId : userBranchId;
   return useQuery<ListResponse<User>>({

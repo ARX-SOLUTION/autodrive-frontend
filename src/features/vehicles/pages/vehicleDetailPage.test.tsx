@@ -55,7 +55,14 @@ vi.mock('@/features/staff/api/teacherService', () => ({
 
 const access = vi.hoisted(() => ({ canManage: false }));
 vi.mock('@/hooks/useCan', () => ({
-  useCan: (cap: string) => cap === 'manageVehicles' && access.canManage,
+  useCan: (cap: string) =>
+    [
+      'vehicles.update',
+      'vehicle_documents.create',
+      'vehicle_documents.update',
+      'vehicle_maintenance.create',
+      'vehicle_maintenance.update',
+    ].includes(cap) && access.canManage,
   useIsCrossTenant: () => false,
 }));
 

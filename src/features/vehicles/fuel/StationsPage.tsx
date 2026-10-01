@@ -1,3 +1,5 @@
+import { requestBranchId } from '@/lib/permissions';
+import { useCan } from '@/hooks/useCan';
 import { useExpenseBranchOptions } from '@/features/expenses/api/expenseService';
 import { selectClass } from './FuelForm';
 import { useState } from 'react';
@@ -29,7 +31,6 @@ import {
   useFuelMutation,
   type Station,
 } from './service';
-import { canReviewFuel } from './policy';
 
 function StationEditor({
   station,
@@ -42,7 +43,10 @@ function StationEditor({
   const user = useAuthStore((s) => s.user);
   const branches = useExpenseBranchOptions();
   const [branchId, setBranchId] = useState(
-    station?.branch_id ?? user?.branch_id ?? '',
+    station?.branch_id ??
+      useAuthStore.getState?.()?.activeBranchId ??
+      user?.branch_id ??
+      '',
   );
   const [name, setName] = useState(station?.name ?? '');
   const [taxId, setTaxId] = useState(station?.stir ?? '');
@@ -82,13 +86,27 @@ function StationEditor({
             onChange={(e) => setBranchId(e.target.value)}
           >
             <option value="">{t('fuel.choose')}</option>
-            {user?.branch_id && (
-              <option value={user.branch_id}>
-                {user.branch_name ?? user.branch_id}
+            {requestBranchId(
+              user,
+              useAuthStore.getState?.()?.activeBranchId,
+            ) && (
+              <option
+                value={
+                  useAuthStore.getState?.()?.activeBranchId ??
+                  user?.branch_id ??
+                  ''
+                }
+              >
+                {user?.branch_name ?? user?.branch_id}
               </option>
             )}
             {branches.data
-              ?.filter((b) => b.id !== user?.branch_id)
+              ?.filter(
+                (b) =>
+                  b.id !==
+                  (useAuthStore.getState?.()?.activeBranchId ??
+                    user?.branch_id),
+              )
               .map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
@@ -297,7 +315,8 @@ function StationAccounts({ id }: { id: string }) {
 
 export default function StationsPage() {
   const { t } = useTranslation();
-  const role = useAuthStore((s) => s.user?.role);
+  const mayCreate = useCan('fuel_stations.create');
+  const mayUpdate = useCan('fuel_stations.update');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [create, setCreate] = useState(false);
@@ -325,7 +344,7 @@ export default function StationsPage() {
         title={t('fuel.stations')}
         icon={<Buildings className="h-3.5 w-3.5" aria-hidden="true" />}
         actions={
-          canReviewFuel(role) ? (
+          mayCreate ? (
             <Button
               onClick={() => setCreate(!create)}
               className="min-h-11 gap-2"
@@ -406,7 +425,7 @@ export default function StationsPage() {
           title={t('fuel.no_stations')}
           description={t('fuel.no_stations_description')}
           action={
-            canReviewFuel(role)
+            mayCreate
               ? {
                   label: t('fuel.add_station'),
                   onClick: () => setCreate(true),
@@ -453,7 +472,7 @@ export default function StationsPage() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {canReviewFuel(role) && (
+                {mayUpdate && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -467,7 +486,7 @@ export default function StationsPage() {
                     {t('common.edit')}
                   </Button>
                 )}
-                {['owner', 'accountant'].includes(role ?? '') && (
+                {mayUpdate && (
                   <Button
                     variant="outline"
                     size="sm"

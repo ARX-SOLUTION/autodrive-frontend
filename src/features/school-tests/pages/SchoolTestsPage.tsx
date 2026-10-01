@@ -20,7 +20,7 @@ const SchoolTestsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const canManage = useCan('manageSchoolLearning');
+  const canManage = useCan('test_templates.create');
   const canViewAll = useCan('viewAllBranches');
   const { data: branches = [] } = useBranches(canViewAll || canManage);
   const [createOpen, setCreateOpen] = useState(false);
@@ -126,7 +126,11 @@ const SchoolTestsPage = () => {
           open={createOpen}
           template={null}
           branches={branches}
-          defaultBranchId={user?.branch_id ?? undefined}
+          defaultBranchId={
+            useAuthStore.getState?.()?.activeBranchId ??
+            user?.branch_id ??
+            undefined
+          }
           onClose={() => setCreateOpen(false)}
         />
       ) : null}
