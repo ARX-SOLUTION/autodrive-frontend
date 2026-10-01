@@ -6,8 +6,13 @@ import type {
 } from '@/shared/api/contract';
 import type { CourseType, Student } from '@/features/students/types';
 
-// idempotency_key is only set in edit mode (PATCH /students/:id).
-export type CreateStudentPayload = CreateStudentRequest &
+// Shared by create and edit: create validation supplies learner_password,
+// while edit mode omits it and only adds idempotency_key.
+export type CreateStudentPayload = Omit<
+  CreateStudentRequest,
+  'learner_password'
+> &
+  Partial<Pick<CreateStudentRequest, 'learner_password'>> &
   Pick<UpdateStudentRequest, 'idempotency_key'>;
 
 export const makeStudentFormSchema = (

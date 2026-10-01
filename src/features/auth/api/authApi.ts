@@ -16,6 +16,11 @@ export const loginRequest = async (
   return parseItemEnvelope<AuthResponse>(data, 'auth');
 };
 
+export const demoLoginRequest = async (): Promise<AuthResponse> => {
+  const { data } = await axiosInstance.post<unknown>('/auth/demo');
+  return parseItemEnvelope<AuthResponse>(data, 'auth');
+};
+
 export const fetchCurrentUser = async (signal?: AbortSignal): Promise<User> => {
   const { data } = await axiosInstance.get<unknown>('/auth/me', { signal });
   return parseItemEnvelope<User>(data, 'auth-me');

@@ -3,15 +3,9 @@ import type { User } from '@/features/staff/types';
 export const DEMO_LOGIN_EMAIL = 'demo@automaktab.uz';
 export const DEMO_COMPANY_SLUG = 'automaktab-demo-2026';
 
-const demoPassword = () => import.meta.env.VITE_DEMO_PASSWORD?.trim() ?? '';
-
-/** One-click sign-in only when production sets both public env vars. */
+/** One-click sign-in only when production enables the public flag. */
 export const isOneClickDemoLoginEnabled = () =>
-  import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true' &&
-  demoPassword().length > 0;
-
-export const getDemoLoginPassword = () =>
-  isOneClickDemoLoginEnabled() ? demoPassword() : '';
+  import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true';
 
 export const isDemoCompanyUser = (
   user: Pick<User, 'email' | 'company_slug'> | null | undefined,

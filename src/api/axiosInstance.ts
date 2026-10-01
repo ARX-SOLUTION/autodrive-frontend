@@ -24,9 +24,10 @@ axiosInstance.interceptors.request.use((config) => {
 //   - /auth/login: the form needs to show "wrong credentials" and keep
 //     the fields filled. Redirecting to /login (where the user already
 //     is) just reloads the page and wipes the form.
+//   - /auth/demo:  same as login; failed one-click demo should show retry.
 //   - /auth/me:    useRestoreSession handles 401 itself by calling
 //     logout(), so the interceptor would only double-fire.
-const SKIP_LOGOUT_ON_401 = /\/auth\/(login|me)(?:\?|$)/;
+const SKIP_LOGOUT_ON_401 = /\/auth\/(login|demo|me)(?:\?|$)/;
 
 axiosInstance.interceptors.response.use(
   (res) => res,
