@@ -207,7 +207,7 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background px-5 py-6 sm:px-10 sm:py-8 lg:px-14">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 border-b border-hair pb-5">
         <BrandMark size="sm" title={copy.appTitle} />
         <Button
           variant="ghost"
@@ -237,7 +237,7 @@ const LoginPage = () => {
           </p>
           <h2
             id="login-workspace-title"
-            className="max-w-sm text-3xl font-medium leading-tight tracking-tight"
+            className="max-w-md text-4xl font-semibold leading-tight tracking-tight"
           >
             {copy.workspaceTitle}
           </h2>
@@ -246,11 +246,11 @@ const LoginPage = () => {
           </p>
         </section>
 
-        <div className="mx-auto w-full max-w-md rounded-2xl border border-border/70 bg-card px-6 py-8 sm:px-10 sm:py-10">
-          <div className="mb-8">
+        <div className="mx-auto w-full max-w-md rounded-lg border border-border bg-card p-6 sm:p-8">
+          <div className="mb-6">
             <h1
               id="login-title"
-              className="text-3xl font-semibold leading-tight tracking-tight"
+              className="text-2xl font-semibold leading-tight tracking-tight sm:text-3xl"
             >
               {copy.title}
             </h1>

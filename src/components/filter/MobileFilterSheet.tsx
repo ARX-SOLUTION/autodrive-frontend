@@ -22,6 +22,7 @@ export interface MobileFilterSheetProps {
   trigger?: ReactNode;
   title?: string;
   description?: string;
+  applyLabel?: string;
   side?: 'bottom' | 'right';
   className?: string;
 }
@@ -35,6 +36,7 @@ export const MobileFilterSheet = ({
   trigger,
   title,
   description,
+  applyLabel,
   side = 'bottom',
   className,
 }: MobileFilterSheetProps) => {
@@ -77,8 +79,9 @@ export const MobileFilterSheet = ({
 
       <SheetContent
         side={side}
+        closeLabel={t('common.close')}
         className={cn(
-          'flex flex-col gap-4 border-border bg-background p-6',
+          'flex flex-col gap-4 border-border bg-background p-6 [&>button]:flex [&>button]:min-h-11 [&>button]:min-w-11 [&>button]:items-center [&>button]:justify-center',
           side === 'bottom' && 'max-h-[85vh] rounded-t-xl',
           side === 'right' && 'w-full sm:max-w-md',
         )}
@@ -113,7 +116,7 @@ export const MobileFilterSheet = ({
             onClick={() => onOpenChange(false)}
             className="min-h-[44px] flex-1 text-sm font-medium"
           >
-            {t('filters.apply', { defaultValue: 'Apply' })}
+            {applyLabel ?? t('filters.apply', { defaultValue: 'Apply' })}
           </Button>
         </SheetFooter>
       </SheetContent>

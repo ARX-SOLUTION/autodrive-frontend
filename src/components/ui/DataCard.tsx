@@ -48,7 +48,7 @@ export const DataCard = ({
           }
         : {})}
       className={cn(
-        'relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-warm transition-colors [contain-intrinsic-size:auto_180px] [content-visibility:auto]',
+        'relative overflow-hidden rounded-lg border border-border bg-card p-4 transition-colors motion-reduce:transition-none [contain-intrinsic-size:auto_180px] [content-visibility:auto]',
         accent && 'pl-5',
         interactive &&
           'cursor-pointer motion-safe:transition-colors hover:border-primary/50 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
@@ -64,25 +64,27 @@ export const DataCard = ({
       )}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="truncate font-heading text-sm font-semibold text-foreground text-balance">
+          <div className="break-words font-heading text-sm font-semibold leading-snug text-foreground text-balance">
             {title}
           </div>
           {subtitle && (
-            <div className="mt-0.5 truncate text-xs text-muted-foreground">
+            <div className="mt-1 break-words text-xs leading-relaxed text-muted-foreground">
               {subtitle}
             </div>
           )}
         </div>
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+        {actions && (
+          <div className="flex shrink-0 items-center gap-2">{actions}</div>
+        )}
       </div>
       {fields && fields.length > 0 && (
         <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
           {fields.map((f, i) => (
             <div key={i} className="min-w-0">
-              <dt className="truncate text-[10px] uppercase tracking-wider text-muted-foreground">
+              <dt className="break-words text-xs font-medium leading-snug text-muted-foreground">
                 {f.label}
               </dt>
-              <dd className="mt-0.5 truncate text-foreground tabular-nums">
+              <dd className="mt-1 break-words text-sm font-medium leading-snug text-foreground tabular-nums">
                 {f.value}
               </dd>
             </div>

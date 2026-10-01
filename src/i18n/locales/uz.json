@@ -2194,6 +2194,11 @@
   "leads": {
     "title": "Lidlar va voronka",
     "subtitle": "Bo'lajak talabalar, lid bosqichlari va bog'lanish vazifalarini boshqaring",
+    "search_placeholder": "Ism yoki telefon...",
+    "assigned_to_me": "Menga biriktirilgan",
+    "overdue_tasks": "Kechikkanlar",
+    "all_stages": "Barcha bosqichlar",
+    "all_sources": "Barcha manbalar",
     "lead": "Lid",
     "leads": "Lidlar",
     "create_lead": "Yangi lid qo'shish",

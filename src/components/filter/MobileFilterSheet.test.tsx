@@ -30,6 +30,9 @@ describe('MobileFilterSheet', () => {
     );
 
     expect(screen.getByTestId('filter-child')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'common.close' }),
+    ).toBeInTheDocument();
   });
 
   it('triggers onClearAll when clear all button is clicked', () => {
@@ -67,5 +70,25 @@ describe('MobileFilterSheet', () => {
     fireEvent.click(applyBtn);
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('closes with a supplied label without clearing active filters', () => {
+    const onOpenChange = vi.fn();
+    const onClearAll = vi.fn();
+    render(
+      <MobileFilterSheet
+        open={true}
+        onOpenChange={onOpenChange}
+        onClearAll={onClearAll}
+        activeCount={2}
+        applyLabel="Close filters"
+      >
+        <div>Selected filters</div>
+      </MobileFilterSheet>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close filters' }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onClearAll).not.toHaveBeenCalled();
   });
 });

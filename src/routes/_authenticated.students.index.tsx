@@ -41,11 +41,17 @@ export const Route = createFileRoute('/_authenticated/students/')({
       typeof search.date_from === 'string' ? search.date_from : undefined,
     date_to: typeof search.date_to === 'string' ? search.date_to : undefined,
     has_debt:
-      search.has_debt === 'true' || search.has_debt === true ? true : undefined,
+      search.has_debt === 'true' || search.has_debt === true
+        ? true
+        : search.has_debt === 'false' || search.has_debt === false
+          ? false
+          : undefined,
     has_group:
       search.has_group === 'true' || search.has_group === true
         ? true
-        : undefined,
+        : search.has_group === 'false' || search.has_group === false
+          ? false
+          : undefined,
     include_deleted:
       search.include_deleted === 'true' || search.include_deleted === true
         ? true

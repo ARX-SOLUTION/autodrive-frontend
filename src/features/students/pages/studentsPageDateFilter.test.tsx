@@ -2,6 +2,7 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, vi, describe, it, expect } from 'vitest';
 import StudentsPage from '@/features/students/pages/StudentsPage';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
+import { Route } from '@/routes/_authenticated.students.index';
 
 // DateRangePicker: two calendar clicks write date_from/date_to.
 vi.mock('@/store/authStore', () => ({
@@ -60,6 +61,20 @@ vi.mock('@/features/groups/api/groupService', () => ({
 }));
 
 describe('StudentsPage date-range filter', () => {
+  it.each([false, 'false'])(
+    'preserves explicit false route filters (%s)',
+    (value) => {
+      const validateSearch = Route.options.validateSearch;
+      if (typeof validateSearch !== 'function')
+        throw new Error('Missing student search validator');
+      expect(
+        validateSearch({ has_group: value, has_debt: value }),
+      ).toMatchObject({
+        has_group: false,
+        has_debt: false,
+      });
+    },
+  );
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-07-25T10:00:00.000Z'));
@@ -78,6 +93,12 @@ describe('StudentsPage date-range filter', () => {
     const scrollSpy = vi.spyOn(window, 'scrollTo');
     scrollSpy.mockClear();
 
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'filters.title' }).at(-1)!,
+    );
+    expect(
+      screen.getByRole('combobox', { name: 'common.branch' }),
+    ).toBeInTheDocument();
     fireEvent.click(
       screen.getByTestId('date-range-picker').querySelector('button')!,
     );
@@ -104,5 +125,33 @@ describe('StudentsPage date-range filter', () => {
       expect(router.state.location.pathname).toBe('/students');
     });
     expect(scrollSpy).not.toHaveBeenCalled();
+  });
+
+  it('keeps search and course visible without counting them in the filter badge', async () => {
+    await renderWithRouter(<StudentsPage />, {
+      initialEntry: '/students?q=aziz&course_type=tezkor',
+      routePattern: '/students',
+    });
+
+    expect(screen.getAllByDisplayValue('aziz')).toHaveLength(2);
+    expect(
+      screen.getAllByRole('combobox', { name: 'common.group' }),
+    ).toHaveLength(1);
+    expect(
+      screen
+        .getAllByRole('button', { name: 'students.course_fast' })
+        .every((button) => button.getAttribute('aria-pressed') === 'true'),
+    ).toBe(true);
+    expect(screen.queryByText('1')).not.toBeInTheDocument();
+  });
+
+  it('counts only additional student filters as logical badge items', async () => {
+    await renderWithRouter(<StudentsPage />, {
+      initialEntry:
+        '/students?q=aziz&course_type=tezkor&branch_id=b9&operator_id=op7&has_group=false&date_from=2026-07-10&date_to=2026-07-12&status=active&has_debt=false',
+      routePattern: '/students',
+    });
+
+    expect(screen.getAllByText('6')).toHaveLength(2);
   });
 });

@@ -13,6 +13,7 @@ import {
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAuthStore } from '@/store/authStore';
+import { useCan } from '@/hooks/useCan';
 import {
   useLeadBoardQuery,
   useLeadStagesQuery,
@@ -32,6 +33,22 @@ import type {
 } from '../types/leads.types';
 
 export type LeadsViewMode = 'board' | 'list' | 'metrics';
+
+const LEAD_FILTER_PARAM_KEYS = [
+  'q',
+  'branch_id',
+  'stage_id',
+  'source',
+  'course_type',
+  'category',
+  'assigned_to_me',
+  'assignee_user_id',
+  'overdue_only',
+  'has_task',
+  'period',
+  'tab',
+  'page',
+] as const;
 
 export const LeadsPage = () => {
   const { t } = useTranslation();
@@ -54,6 +71,7 @@ export const LeadsPage = () => {
   // Stage settings dialog state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
+  const canViewAllBranches = useCan('viewAllBranches');
   const canManageStages =
     user?.role === 'owner' || user?.role === 'manager' || user?.role === 'dev';
 
@@ -73,7 +91,9 @@ export const LeadsPage = () => {
   const currentFilters: ListLeadsQuery = useMemo(
     () => ({
       q: searchParams.get('q') || undefined,
-      branch_id: searchParams.get('branch_id') || undefined,
+      branch_id: canViewAllBranches
+        ? searchParams.get('branch_id') || undefined
+        : user?.branch_id || undefined,
       stage_id: searchParams.get('stage_id') || undefined,
       source: (searchParams.get('source') as LeadSource) || undefined,
       course_type: (searchParams.get('course_type') as CourseType) || undefined,
@@ -88,12 +108,14 @@ export const LeadsPage = () => {
         (searchParams.get('period') as '7d' | '30d' | '60d' | 'all') ||
         undefined,
       tab:
-        (searchParams.get('tab') as
-          'new' | 'in_progress' | 'won' | 'lost' | 'all') || undefined,
+        viewMode === 'board'
+          ? undefined
+          : (searchParams.get('tab') as
+              'new' | 'in_progress' | 'won' | 'lost' | 'all') || undefined,
       page: Number(searchParams.get('page')) || 1,
       limit: Number(searchParams.get('limit')) || 20,
     }),
-    [searchParams],
+    [searchParams, canViewAllBranches, user?.branch_id, viewMode],
   );
 
   const handleFilterChange = (next: Partial<ListLeadsQuery>) => {
@@ -113,8 +135,14 @@ export const LeadsPage = () => {
   };
 
   const handleClearAll = () => {
-    const currentView = searchParams.get('view');
-    setSearchParams(currentView ? { view: currentView } : {});
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        LEAD_FILTER_PARAM_KEYS.forEach((key) => next.delete(key));
+        return next;
+      },
+      { replace: true },
+    );
   };
 
   const debouncedSearch = useDebounce(currentFilters.q, 300);
@@ -218,6 +246,7 @@ export const LeadsPage = () => {
       {viewMode !== 'metrics' && (
         <LeadsFilterBar
           filters={currentFilters}
+          isBoardView={viewMode === 'board'}
           onChange={handleFilterChange}
           onClearAll={handleClearAll}
         />

@@ -183,6 +183,35 @@ describe('StudentsPage characterization', () => {
     expect(screen.getByText('students.o83')).toBeInTheDocument();
   });
 
+  it('scopes a manager to their own branch while preserving authorized operator filters', async () => {
+    h.user = { role: 'manager', branch_id: 'b1' };
+
+    await renderPage('/students?branch_id=b9&operator_id=op7');
+
+    const last = h.useStudentsPage.mock.calls.at(-1)!;
+    expect(last[1]).toBe('b1');
+    expect(last[4]).toBe('op7');
+    expect(screen.queryByTestId('active-filter-chip-branch')).toBeNull();
+    expect(screen.getByTestId('active-filter-chip-operator')).toHaveTextContent(
+      'op7',
+    );
+  });
+
+  it.each(['operator', 'teacher'] as const)(
+    'scopes %s to their own branch and drops unauthorized operator URL filters',
+    async (role) => {
+      h.user = { role, branch_id: 'b1' };
+
+      await renderPage('/students?branch_id=b9&operator_id=op7');
+
+      const last = h.useStudentsPage.mock.calls.at(-1)!;
+      expect(last[1]).toBe('b1');
+      expect(last[4]).toBeUndefined();
+      expect(screen.queryByTestId('active-filter-chip-branch')).toBeNull();
+      expect(screen.queryByTestId('active-filter-chip-operator')).toBeNull();
+    },
+  );
+
   it('renders the explicit empty state, not a blank table', async () => {
     await renderPage();
 

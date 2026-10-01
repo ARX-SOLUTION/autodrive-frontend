@@ -5,6 +5,7 @@ import type { Student } from '@/features/students/types';
 import { renderWithRouter } from '@/test/utils/renderWithRouter';
 
 const h = vi.hoisted(() => ({
+  user: { role: 'owner', branch_id: null as string | null },
   fetchAllStudents: vi.fn(),
   useStudentsPage: vi.fn(),
   jsonToSheet: vi.fn(() => ({})),
@@ -15,7 +16,7 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({ user: { role: 'owner', branch_id: null } }),
+    selector({ user: h.user }),
 }));
 
 vi.mock('@/features/students/api/studentService', async (importOriginal) => {
@@ -78,7 +79,21 @@ const STUDENT: Student = {
   debt: 500_000,
 };
 
+const openFilters = () => {
+  fireEvent.click(
+    screen.getAllByRole('button', { name: 'filters.open_filters' })[0],
+  );
+};
+
+const closeFilters = () => {
+  const close =
+    screen.queryAllByRole('button', { name: 'common.close' }).at(0) ??
+    screen.queryAllByRole('button', { name: 'filters.apply' }).at(0);
+  if (close) fireEvent.click(close);
+};
+
 beforeEach(() => {
+  h.user = { role: 'owner', branch_id: null };
   h.fetchAllStudents.mockReset().mockResolvedValue([STUDENT]);
   h.useStudentsPage.mockReset().mockReturnValue({
     data: {
@@ -108,7 +123,9 @@ describe('StudentsPage Excel export filters', () => {
       routePattern: '/students',
     });
 
+    openFilters();
     fireEvent.click(screen.getByRole('switch'));
+    closeFilters();
     fireEvent.click(screen.getByRole('button', { name: 'common.date' }));
     fireEvent.click(
       screen.getByRole('button', { name: 'students.export_excel' }),
@@ -143,5 +160,32 @@ describe('StudentsPage Excel export filters', () => {
       includeDeleted: true,
     });
     expect(h.writeFile).toHaveBeenCalledTimes(1);
+  });
+
+  it('exports with restricted branch and operator filters for a branch-scoped role', async () => {
+    h.user = { role: 'operator', branch_id: 'branch-1' };
+
+    await renderWithRouter(<StudentsPage />, {
+      initialEntry:
+        '/students?branch_id=branch-9&operator_id=operator-7&q=aziz',
+      routePattern: '/students',
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'students.export_excel' }),
+    );
+
+    await waitFor(() => expect(h.fetchAllStudents).toHaveBeenCalledTimes(1));
+
+    const listCall = h.useStudentsPage.mock.calls.at(-1)!;
+    const exportFilters = h.fetchAllStudents.mock.calls[0][0];
+
+    expect(listCall[1]).toBe('branch-1');
+    expect(listCall[4]).toBeUndefined();
+    expect(exportFilters).toMatchObject({
+      branchId: 'branch-1',
+      search: 'aziz',
+    });
+    expect(exportFilters.operatorId).toBeUndefined();
   });
 });
