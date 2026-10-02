@@ -557,6 +557,8 @@
     }
   },
   "vehicles": {
+    "no_eligible": "Bu filialda tanlash mumkin bo‘lgan avtomobil yo‘q",
+    "no_eligible_desc": "“Avtopark” bo‘limida shu filialga avtomobil qo‘shing yoki boshqa filialni tanlang.",
     "title": "Avtopark",
     "subtitle": "Filiallardagi o‘quv avtomobillari, hujjatlar va servis holati",
     "add": "Avtomobil qo‘shish",
@@ -1916,6 +1918,7 @@
     "save_error": "Yoʻriqnoma yopildi, lekin bu saqlanmadi. Keyingi kirishda yana chiqishi mumkin."
   },
   "inspections": {
+    "receiver_needs_vehicle": "Qabul qiluvchilar avtomobil tanlangandan keyin chiqadi.",
     "defects_title": "Avtomobil nuqsonlari",
     "defect_open": "Ochiq",
     "defect_resolved": "Bartaraf etilgan",

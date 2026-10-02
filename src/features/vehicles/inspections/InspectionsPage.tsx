@@ -315,7 +315,19 @@ export default function InspectionsPage() {
               options.selectedBranchId &&
               !options.isFetching &&
               !options.isError &&
-              vehicleChoices.length === 0 && <p>{t('common.no_data')}</p>}
+              vehicleChoices.length === 0 &&
+              ((options.data?.vehicles ?? []).length === 0 ? (
+                <div className="rounded-md border border-dashed p-3 text-sm">
+                  <p className="font-medium">{t('vehicles.no_eligible')}</p>
+                  <p className="text-muted-foreground">
+                    {t('vehicles.no_eligible_desc')}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {t('vehicles.no_filter_results')}
+                </p>
+              ))}
             <Input
               aria-label={t('inspections.vehicle_search')}
               placeholder={t('inspections.vehicle_search')}
@@ -364,6 +376,7 @@ export default function InspectionsPage() {
             <Input
               aria-label={t('inspections.receiver_search')}
               placeholder={t('inspections.receiver_search')}
+              disabled={!vehicleId}
               value={receiverSearch}
               onChange={(e) => {
                 setReceiverSearch(e.target.value);
@@ -377,7 +390,14 @@ export default function InspectionsPage() {
                 <FormItem>
                   <FormLabel>{t('inspections.receiver')}</FormLabel>
                   <FormControl>
-                    <select {...field} className={selectClass}>
+                    <select
+                      {...field}
+                      className={selectClass}
+                      disabled={!vehicleId}
+                      aria-describedby={
+                        vehicleId ? undefined : 'inspection-receiver-hint'
+                      }
+                    >
                       <option value="">{t('inspections.choose')}</option>
                       {receivers.data?.data
                         .filter((u) => u.id !== user?.id)
@@ -388,6 +408,14 @@ export default function InspectionsPage() {
                         ))}
                     </select>
                   </FormControl>
+                  {!vehicleId && (
+                    <p
+                      id="inspection-receiver-hint"
+                      className="text-xs text-muted-foreground"
+                    >
+                      {t('inspections.receiver_needs_vehicle')}
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}

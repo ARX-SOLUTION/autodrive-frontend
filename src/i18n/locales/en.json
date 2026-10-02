@@ -557,6 +557,8 @@
     }
   },
   "vehicles": {
+    "no_eligible": "No vehicles to choose from in this branch",
+    "no_eligible_desc": "Add a vehicle to this branch under Fleet, or pick another branch.",
     "title": "Fleet",
     "subtitle": "Training vehicles, documents, and service across branches",
     "add": "Add vehicle",
@@ -1916,6 +1918,7 @@
     "save_error": "The tour closed, but we could not save that. It may show again the next time you sign in."
   },
   "inspections": {
+    "receiver_needs_vehicle": "Receivers appear after you pick a vehicle.",
     "defects_title": "Vehicle defects",
     "defect_open": "Open",
     "defect_resolved": "Resolved",
