@@ -918,11 +918,11 @@ const AddStudentDialog = ({
                             <FormLabel>
                               {t('students.wizard.gender')} *
                             </FormLabel>
-                            <FormControl>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
                                 <SelectTrigger>
                                   <SelectValue
                                     placeholder={t(
@@ -930,16 +930,16 @@ const AddStudentDialog = ({
                                     )}
                                   />
                                 </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="male">
-                                    {t('students.wizard.gender_male')}
-                                  </SelectItem>
-                                  <SelectItem value="female">
-                                    {t('students.wizard.gender_female')}
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="male">
+                                  {t('students.wizard.gender_male')}
+                                </SelectItem>
+                                <SelectItem value="female">
+                                  {t('students.wizard.gender_female')}
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}

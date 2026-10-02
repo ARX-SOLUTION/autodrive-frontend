@@ -65,4 +65,18 @@ describe('UsersPage filter chips and URL hydration', () => {
     fireEvent.click(removeBtn);
     expect(screen.queryByTestId('active-filter-chip-status')).toBeNull();
   });
+
+  it('names the branch and status filters independently of their value', async () => {
+    await renderWithRouter(<UsersPage />, {
+      initialEntry: '/users',
+      routePattern: '/users',
+    });
+
+    expect(
+      screen.getByRole('combobox', { name: 'common.branch' }),
+    ).toHaveTextContent('common.all');
+    expect(
+      screen.getByRole('combobox', { name: 'common.status' }),
+    ).toHaveTextContent('common.all');
+  });
 });

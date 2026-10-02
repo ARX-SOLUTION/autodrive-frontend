@@ -170,3 +170,20 @@ describe('AddStudentDialog calendar-date wiring (autodrive-qsgc.3)', () => {
     expect(wire.completion_date).toBe('2026-02-01');
   });
 });
+
+describe('AddStudentDialog gender field', () => {
+  it('names the gender select by its visible label', () => {
+    render(
+      <AddStudentDialog
+        open
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        defaultBranchId={BRANCH_ID}
+      />,
+    );
+
+    expect(
+      screen.getByRole('combobox', { name: /students\.wizard\.gender/ }),
+    ).toBeInTheDocument();
+  });
+});
