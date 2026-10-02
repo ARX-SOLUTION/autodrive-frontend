@@ -18,6 +18,7 @@ import { DAY_LABELS, CalendarLesson } from '@/features/schedule/types';
 import { LessonType } from '@/features/attendance/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUrlTab } from '@/hooks/useUrlTab';
@@ -64,6 +65,7 @@ import { parseCalendarDate } from '@/lib/calendarDate';
 import { isoToParts, nowTashkentParts } from '@/lib/calendarDateTime';
 import AttendanceDrawer from '@/features/attendance/api/AttendanceDrawer';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { useAuthStore } from '@/store/authStore';
 
 const formatTime = (iso: string) => {
   try {
@@ -213,10 +215,12 @@ const SchedulePage = () => {
     {},
     canEdit && (createOpen || generateOpen),
   );
+  const activeBranchId = useAuthStore((s) => s.activeBranchId);
+  const [lookupBranchId, setLookupBranchId] = useState<string>();
   const options = useWriteOptions(
     'schedule',
     'create',
-    undefined,
+    activeBranchId ?? lookupBranchId,
     createOpen || generateOpen,
   );
   const groups = options.scoped ? (options.data?.groups ?? []) : readGroups;
@@ -241,6 +245,66 @@ const SchedulePage = () => {
     resolver: zodResolver(makeGenerateFormSchema(t)),
     defaultValues: { weeks: '4', groupId: '' },
   });
+
+  // Scoped group lookups need one branch. Without it, or when the lookup
+  // fails, an empty group list must not look like "no groups".
+  const groupLookupState = options.scoped ? (
+    <div className="space-y-2">
+      {!activeBranchId && options.branches.length > 1 && (
+        <div className="space-y-1.5">
+          <Label htmlFor="schedule-lookup-branch">{t('common.branch')}</Label>
+          <Select
+            value={options.selectedBranchId ?? ''}
+            onValueChange={(branchId) => {
+              setLookupBranchId(branchId);
+              templateForm.setValue('groupId', '');
+              generateForm.setValue('groupId', '');
+            }}
+          >
+            <SelectTrigger id="schedule-lookup-branch">
+              <SelectValue placeholder={t('common.select_branch')} />
+            </SelectTrigger>
+            <SelectContent>
+              {options.branches.map((branch) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      {options.isFetching && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {t('common.loading')}
+        </p>
+      )}
+      {options.isError && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-2 text-sm text-destructive"
+        >
+          {t('common.error')}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => void options.refetch()}
+          >
+            {t('common.retry')}
+          </Button>
+        </div>
+      )}
+      {options.selectedBranchId &&
+        !options.isFetching &&
+        !options.isError &&
+        (groups ?? []).length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            {t('groups.not_found')}
+          </p>
+        )}
+    </div>
+  ) : null;
 
   // Build week days array
   const weekDays = useMemo(() => {
@@ -590,13 +654,18 @@ const SchedulePage = () => {
               onSubmit={templateForm.handleSubmit(handleCreateTemplate)}
               className="space-y-4"
             >
+              {groupLookupState}
               <FormField
                 control={templateForm.control}
                 name="groupId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('schedule.group_label')}</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={options.scoped && !options.selectedBranchId}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue
@@ -749,6 +818,7 @@ const SchedulePage = () => {
                   </FormItem>
                 )}
               />
+              {groupLookupState}
               <FormField
                 control={generateForm.control}
                 name="groupId"
