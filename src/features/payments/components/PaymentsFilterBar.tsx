@@ -159,7 +159,10 @@ export const PaymentsFilterBar = ({
                       onBranchChange(v === 'all' ? undefined : v)
                     }
                   >
-                    <SelectTrigger className="w-full bg-secondary border-border">
+                    <SelectTrigger
+                      aria-label={t('common.branch')}
+                      className="w-full bg-secondary border-border"
+                    >
                       <SelectValue placeholder={t('common.branch')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -181,7 +184,10 @@ export const PaymentsFilterBar = ({
                   {t('common.status')}
                 </Label>
                 <Select value={paymentStatus} onValueChange={onStatusChange}>
-                  <SelectTrigger className="w-full bg-secondary border-border">
+                  <SelectTrigger
+                    aria-label={t('common.status')}
+                    className="w-full bg-secondary border-border"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -201,7 +207,10 @@ export const PaymentsFilterBar = ({
                   {t('payments.payment_method')}
                 </Label>
                 <Select value={paymentMethod} onValueChange={onMethodChange}>
-                  <SelectTrigger className="w-full bg-secondary border-border">
+                  <SelectTrigger
+                    aria-label={t('payments.payment_method')}
+                    className="w-full bg-secondary border-border"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -261,7 +270,10 @@ export const PaymentsFilterBar = ({
             value={branchId || 'all'}
             onValueChange={(v) => onBranchChange(v === 'all' ? undefined : v)}
           >
-            <SelectTrigger className="w-40 bg-secondary border-border">
+            <SelectTrigger
+              aria-label={t('common.branch')}
+              className="w-40 bg-secondary border-border"
+            >
               <SelectValue placeholder={t('common.branch')} />
             </SelectTrigger>
             <SelectContent>
@@ -276,7 +288,10 @@ export const PaymentsFilterBar = ({
         )}
 
         <Select value={paymentStatus} onValueChange={onStatusChange}>
-          <SelectTrigger className="w-40 bg-secondary border-border">
+          <SelectTrigger
+            aria-label={t('common.status')}
+            className="w-40 bg-secondary border-border"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -287,7 +302,10 @@ export const PaymentsFilterBar = ({
         </Select>
 
         <Select value={paymentMethod} onValueChange={onMethodChange}>
-          <SelectTrigger className="w-40 bg-secondary border-border">
+          <SelectTrigger
+            aria-label={t('payments.payment_method')}
+            className="w-40 bg-secondary border-border"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

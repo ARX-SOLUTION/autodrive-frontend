@@ -546,7 +546,10 @@ const UsersPage = () => {
                             setBranchId(v === 'all' ? undefined : v)
                           }
                         >
-                          <SelectTrigger className="w-full bg-secondary border-border h-11">
+                          <SelectTrigger
+                            aria-label={t('common.branch')}
+                            className="w-full bg-secondary border-border h-11"
+                          >
                             <SelectValue placeholder={t('common.branch')} />
                           </SelectTrigger>
                           <SelectContent>
@@ -571,7 +574,10 @@ const UsersPage = () => {
                         value={isActiveParam ?? 'all'}
                         onValueChange={setIsActive}
                       >
-                        <SelectTrigger className="w-full bg-secondary border-border h-11">
+                        <SelectTrigger
+                          aria-label={t('common.status')}
+                          className="w-full bg-secondary border-border h-11"
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -634,7 +640,10 @@ const UsersPage = () => {
                 value={branchId || 'all'}
                 onValueChange={(v) => setBranchId(v === 'all' ? undefined : v)}
               >
-                <SelectTrigger className="w-40 bg-secondary border-border">
+                <SelectTrigger
+                  aria-label={t('common.branch')}
+                  className="w-40 bg-secondary border-border"
+                >
                   <SelectValue placeholder={t('common.branch')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -649,7 +658,10 @@ const UsersPage = () => {
             )}
 
             <Select value={isActiveParam ?? 'all'} onValueChange={setIsActive}>
-              <SelectTrigger className="w-36 bg-secondary border-border">
+              <SelectTrigger
+                aria-label={t('common.status')}
+                className="w-36 bg-secondary border-border"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

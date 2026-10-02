@@ -18,6 +18,7 @@ import {
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { extractErrorMessage } from '@/lib/errors';
 import { QuestionPreview } from '@/shared/ui/QuestionPreview';
 import { QuestionFormDialog } from '@/features/questions/components/QuestionFormDialog';
@@ -164,22 +165,34 @@ const QuestionDetailPage = () => {
       {mayUpload && isPrivate ? (
         <div className="glass-card space-y-3 p-4">
           <h3 className="font-medium">{t('questions.upload_media')}</h3>
-          <p className="text-xs text-muted-foreground">
+          <p id="question-media-hint" className="text-xs text-muted-foreground">
             {t('questions.media_hint')}
           </p>
+          <div className="space-y-1.5">
+            <Label htmlFor="question-media-alt-text">
+              {t('questions.alt_text')}
+            </Label>
+            <Input
+              id="question-media-alt-text"
+              value={altText}
+              onChange={(e) => setAltText(e.target.value)}
+              maxLength={500}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="question-media-rights-holder">
+              {t('questions.rights_holder')}
+            </Label>
+            <Input
+              id="question-media-rights-holder"
+              value={rightsHolder}
+              onChange={(e) => setRightsHolder(e.target.value)}
+              maxLength={200}
+            />
+          </div>
           <Input
-            placeholder={t('questions.alt_text')}
-            value={altText}
-            onChange={(e) => setAltText(e.target.value)}
-            maxLength={500}
-          />
-          <Input
-            placeholder={t('questions.rights_holder')}
-            value={rightsHolder}
-            onChange={(e) => setRightsHolder(e.target.value)}
-            maxLength={200}
-          />
-          <Input
+            aria-label={t('questions.upload_media')}
+            aria-describedby="question-media-hint"
             type="file"
             accept="image/png,image/jpeg,image/webp"
             onChange={(e) => {

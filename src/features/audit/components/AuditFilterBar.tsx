@@ -108,7 +108,10 @@ export const AuditFilterBar = ({
                       {t('audit.table_entity')}
                     </Label>
                     <Select value={entityFilter} onValueChange={onEntityChange}>
-                      <SelectTrigger className="w-full bg-secondary border-border h-11">
+                      <SelectTrigger
+                        aria-label={t('audit.table_entity')}
+                        className="w-full bg-secondary border-border h-11"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -137,7 +140,10 @@ export const AuditFilterBar = ({
                       {t('audit.table_action')}
                     </Label>
                     <Select value={actionFilter} onValueChange={onActionChange}>
-                      <SelectTrigger className="w-full bg-secondary border-border h-11">
+                      <SelectTrigger
+                        aria-label={t('audit.table_action')}
+                        className="w-full bg-secondary border-border h-11"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -182,7 +188,10 @@ export const AuditFilterBar = ({
         {/* Desktop Controls */}
         <div className="hidden md:flex flex-wrap items-center gap-3">
           <Select value={entityFilter} onValueChange={onEntityChange}>
-            <SelectTrigger className="w-40 bg-secondary border-border">
+            <SelectTrigger
+              aria-label={t('audit.table_entity')}
+              className="w-40 bg-secondary border-border"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -200,7 +209,10 @@ export const AuditFilterBar = ({
           </Select>
 
           <Select value={actionFilter} onValueChange={onActionChange}>
-            <SelectTrigger className="w-40 bg-secondary border-border">
+            <SelectTrigger
+              aria-label={t('audit.table_action')}
+              className="w-40 bg-secondary border-border"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
