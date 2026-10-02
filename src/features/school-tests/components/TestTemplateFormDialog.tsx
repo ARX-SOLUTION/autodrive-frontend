@@ -56,6 +56,8 @@ export const TestTemplateFormDialog = ({
   const questionChoices = options.scoped
     ? (options.data?.questions ?? [])
     : (available.data?.data ?? []);
+  const questionLookup = options.scoped ? options : available;
+  const questionsNeedBranch = options.scoped && !options.selectedBranchId;
   const branchChoices = options.scoped ? options.branches : branches;
   const [title, setTitle] = useState(template?.title ?? '');
   const [description, setDescription] = useState(template?.description ?? '');
@@ -85,6 +87,10 @@ export const TestTemplateFormDialog = ({
     [template],
   );
   const [selected, setSelected] = useState<Set<string>>(initialSelected);
+  // Already chosen questions stay visible even when the lookup fails or no
+  // longer lists them, so the count above never contradicts the list.
+  const listedIds = new Set(questionChoices.map((question) => question.id));
+  const unlistedSelected = [...selected].filter((id) => !listedIds.has(id));
 
   const toggle = (id: string) => {
     setSelected((prev) => {
@@ -305,6 +311,24 @@ export const TestTemplateFormDialog = ({
               {t('school_tests.select_questions')} ({selected.size})
             </div>
             <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-border p-2">
+              {unlistedSelected.map((id) => (
+                <label
+                  key={id}
+                  className="flex cursor-pointer items-start gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted/60"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked
+                    onChange={() => toggle(id)}
+                  />
+                  <span className="text-muted-foreground">
+                    {t('school_tests.selected_question_fallback', {
+                      id: id.slice(0, 8),
+                    })}
+                  </span>
+                </label>
+              ))}
               {questionChoices.map((question) => (
                 <label
                   key={question.id}
@@ -324,11 +348,37 @@ export const TestTemplateFormDialog = ({
                   </span>
                 </label>
               ))}
-              {!questionChoices.length ? (
+              {questionChoices.length ? null : questionsNeedBranch ? (
+                <p className="px-2 py-3 text-xs text-muted-foreground">
+                  {t('common.select_branch')}
+                </p>
+              ) : questionLookup.isFetching ? (
+                <p
+                  role="status"
+                  className="px-2 py-3 text-xs text-muted-foreground"
+                >
+                  {t('common.loading')}
+                </p>
+              ) : questionLookup.isError ? (
+                <div
+                  role="alert"
+                  className="flex items-center justify-between gap-2 px-2 py-2 text-xs text-destructive"
+                >
+                  {t('common.error')}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void questionLookup.refetch()}
+                  >
+                    {t('common.retry')}
+                  </Button>
+                </div>
+              ) : (
                 <p className="px-2 py-3 text-xs text-muted-foreground">
                   {t('school_tests.no_available_questions')}
                 </p>
-              ) : null}
+              )}
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">

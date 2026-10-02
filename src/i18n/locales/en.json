@@ -1863,6 +1863,7 @@
     "shuffle_questions": "Shuffle questions",
     "shuffle_options": "Shuffle options",
     "select_questions": "Published questions for this school",
+    "selected_question_fallback": "Selected question · {{id}}",
     "no_available_questions": "No published questions available. Publish school-private questions first.",
     "empty": "No school tests yet",
     "empty_desc": "Create a draft template, select published questions, then publish and assign.",
