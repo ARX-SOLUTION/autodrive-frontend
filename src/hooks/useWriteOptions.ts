@@ -40,9 +40,14 @@ export interface WriteOptions {
     first_name: string;
     last_name: string;
     branch_id: string;
+    course_type?: 'tezkor' | 'avto_maktab';
+    group_name?: string | null;
+    phone_last4?: string | null;
     total_price?: number;
     amount_paid?: number;
   }[];
+  /** Matching students before `limit` (payments and training enrollments). */
+  students_total?: number;
   programs?: {
     id: string;
     name: string;
@@ -74,12 +79,20 @@ export interface WriteOptions {
   }[];
 }
 
+/** Server-side narrowing for student lookups (backend #277). */
+export interface WriteOptionsLookup {
+  search?: string;
+  course_type?: 'tezkor' | 'avto_maktab';
+  limit?: number;
+}
+
 /** Write lookups are minimal and independently authorized; they never grant read access. */
 export const useWriteOptions = (
   resource: string,
   action: 'create' | 'update',
   branchId?: string | null,
   enabled = true,
+  lookup?: WriteOptionsLookup,
 ) => {
   const user = useAuthStore((state) => state.user);
   const activeBranchId = useAuthStore((state) => state.activeBranchId);
@@ -105,6 +118,12 @@ export const useWriteOptions = (
     ) ?? [];
   const selectedBranchId =
     requestedBranchId ?? (branches.length === 1 ? branches[0].id : undefined);
+  const search = lookup?.search?.trim();
+  const lookupParams = {
+    ...(search ? { search } : {}),
+    ...(lookup?.course_type ? { course_type: lookup.course_type } : {}),
+    ...(lookup?.limit ? { limit: lookup.limit } : {}),
+  };
   const query = useQuery(
     {
       queryKey: [
@@ -112,6 +131,7 @@ export const useWriteOptions = (
         resource,
         action,
         selectedBranchId,
+        lookupParams,
         ...accessQueryScope(),
       ],
       enabled:
@@ -123,12 +143,21 @@ export const useWriteOptions = (
         parseItemEnvelope<WriteOptions>(
           (
             await axios.get('/permissions/options', {
-              params: { resource, action, branchId: selectedBranchId },
+              params: {
+                resource,
+                action,
+                branchId: selectedBranchId,
+                ...lookupParams,
+              },
               signal,
             })
           ).data,
           'permission-options',
         ),
+      // Keep the current rows while a new search loads, but never show one
+      // branch's rows under another branch.
+      placeholderData: (previous, previousQuery) =>
+        previousQuery?.queryKey[3] === selectedBranchId ? previous : undefined,
     },
     client,
   );

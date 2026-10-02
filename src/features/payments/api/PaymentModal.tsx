@@ -63,10 +63,13 @@ interface Student {
   first_name: string;
   last_name: string;
   phone?: string;
+  phone_last4?: string | null;
   branch_name?: string;
-  group_name?: string;
+  group_name?: string | null;
   debt?: number;
 }
+
+const STUDENT_LOOKUP_LIMIT = 50;
 
 interface PaymentModalProps {
   open: boolean;
@@ -224,6 +227,11 @@ const PaymentModal = ({
     payment ? 'update' : 'create',
     branchId ?? activeBranchId ?? lookupBranchId,
     open,
+    {
+      search: debouncedStudentSearch,
+      course_type: courseType,
+      limit: STUDENT_LOOKUP_LIMIT,
+    },
   );
   const isStudentsFetching = options.scoped
     ? options.isFetching
@@ -232,21 +240,17 @@ const PaymentModal = ({
     ? options.isError
     : legacyStudentsError;
   const studentOptions: Student[] = options.scoped
-    ? (options.data?.students ?? [])
-        .map((student) => ({
-          ...student,
-          debt:
-            student.total_price === undefined ||
-            student.amount_paid === undefined
-              ? undefined
-              : student.total_price - student.amount_paid,
-        }))
-        .filter((student) =>
-          `${student.last_name} ${student.first_name}`
-            .toLowerCase()
-            .includes(debouncedStudentSearch.toLowerCase()),
-        )
+    ? (options.data?.students ?? []).map((student) => ({
+        ...student,
+        debt:
+          student.total_price === undefined || student.amount_paid === undefined
+            ? undefined
+            : student.total_price - student.amount_paid,
+      }))
     : (studentPage?.data ?? students);
+  const studentsTotal = options.scoped
+    ? options.data?.students_total
+    : studentPage?.meta.total;
   const selectedStudent =
     students.find((s) => s.id === studentId) ??
     studentOptions.find((s) => s.id === studentId) ??
@@ -476,9 +480,21 @@ const PaymentModal = ({
                                         <span>
                                           {s.last_name} {s.first_name}
                                         </span>
-                                        <span className="text-xs text-muted-foreground">
-                                          {formatPhone(s.phone)}
-                                        </span>
+                                        {(s.phone ||
+                                          s.phone_last4 ||
+                                          s.group_name) && (
+                                          <span className="text-xs text-muted-foreground">
+                                            {[
+                                              s.phone
+                                                ? formatPhone(s.phone)
+                                                : s.phone_last4 &&
+                                                  `•• ${s.phone_last4}`,
+                                              s.group_name,
+                                            ]
+                                              .filter(Boolean)
+                                              .join(' · ')}
+                                          </span>
+                                        )}
                                       </div>
                                       {s.debt !== undefined && s.debt > 0 && (
                                         <span className="ml-auto text-xs text-destructive tabular-nums">
@@ -495,13 +511,12 @@ const PaymentModal = ({
                                   ))}
                                 </CommandGroup>
                               )}
-                              {!options.scoped &&
-                                !isStudentsFetching &&
-                                (studentPage?.meta.total ?? 0) >
+                              {!isStudentsFetching &&
+                                !isStudentsError &&
+                                (studentsTotal ?? 0) >
                                   studentOptions.length && (
                                   <div className="border-t px-3 py-2 text-center text-xs text-muted-foreground">
-                                    {studentOptions.length} /{' '}
-                                    {studentPage?.meta.total}
+                                    {studentOptions.length} / {studentsTotal}
                                   </div>
                                 )}
                             </CommandList>

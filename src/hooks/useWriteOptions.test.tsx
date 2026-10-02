@@ -172,4 +172,68 @@ describe('minimal write options', () => {
       expect(result.current.data?.vehicles?.[0].id).toBe('b'),
     );
   });
+  it('sends student lookup filters to the server and keys the cache by them', async () => {
+    useAuthStore.setState({
+      user: {
+        id: 'owner',
+        email: 'owner@example.com',
+        role: 'owner',
+        permissions: [],
+      },
+      activeBranchId: 'a',
+    });
+    vi.mocked(axios.get).mockClear();
+    vi.mocked(axios.get).mockImplementation(async (url, config) => ({
+      data:
+        url === '/permissions'
+          ? {
+              branches: [{ id: 'a', name: 'A' }],
+              permissions: [],
+              templates: {},
+              delegations: [],
+              own_resources: [],
+            }
+          : {
+              students: [],
+              students_total: config?.params?.search === 'ali' ? 3 : 90,
+            },
+    }));
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const wrapper = ({ children }: PropsWithChildren) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const { result, rerender } = renderHook(
+      ({ search }) =>
+        useWriteOptions('payments', 'create', undefined, true, {
+          search,
+          course_type: 'tezkor',
+          limit: 50,
+        }),
+      { wrapper, initialProps: { search: '  ' } },
+    );
+    await waitFor(() => expect(result.current.data?.students_total).toBe(90));
+    expect(axios.get).toHaveBeenLastCalledWith(
+      '/permissions/options',
+      expect.objectContaining({
+        params: {
+          resource: 'payments',
+          action: 'create',
+          branchId: 'a',
+          course_type: 'tezkor',
+          limit: 50,
+        },
+      }),
+    );
+
+    rerender({ search: ' ali ' });
+    await waitFor(() => expect(result.current.data?.students_total).toBe(3));
+    expect(axios.get).toHaveBeenLastCalledWith(
+      '/permissions/options',
+      expect.objectContaining({
+        params: expect.objectContaining({ search: 'ali' }),
+      }),
+    );
+  });
 });
