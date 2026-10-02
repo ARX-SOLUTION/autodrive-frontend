@@ -127,4 +127,24 @@ describe('GroupFormDialog teacher assignment', () => {
       ),
     );
   });
+
+  it('keeps a current teacher that is missing from the loaded options', async () => {
+    await renderDialog({
+      ...GROUP,
+      teacher_id: 't9',
+      teacher_name: 'Dilshod Rahimov',
+    });
+
+    expect(
+      screen.getByRole('combobox', { name: /groups\.form\.teacher_label/ }),
+    ).toHaveTextContent('Dilshod Rahimov');
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+
+    await waitFor(() =>
+      expect(h.updateMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'g1', teacherId: 't9' }),
+        expect.anything(),
+      ),
+    );
+  });
 });

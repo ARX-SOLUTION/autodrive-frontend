@@ -255,13 +255,23 @@ const StudentModal = ({
   }, [activeCourseList, student, watchedCourseId]);
 
   const branchList = options.scoped ? options.branches : branches || [];
-  const groupList = (
+  const scopedGroups = (
     options.scoped ? (options.data?.groups ?? []) : groups || []
   ).filter(
     (g) =>
       (g.course_type === courseType || !g.course_type) &&
       (!watchedBranchId || g.branch_id === watchedBranchId),
   );
+  // The saved group stays selectable while options load or omit it, so an
+  // unrelated edit never clears the assignment.
+  const currentGroup =
+    student?.group_id &&
+    student.group_name &&
+    (!watchedBranchId || student.branch_id === watchedBranchId) &&
+    !scopedGroups.some((g) => g.id === student.group_id)
+      ? { id: student.group_id, name: student.group_name }
+      : null;
+  const groupList = [currentGroup, ...scopedGroups].filter((g) => g !== null);
   const operatorList = operators.filter(
     (op) => !watchedBranchId || op.branch_id === watchedBranchId,
   );
