@@ -93,4 +93,74 @@ describe('ConvertLeadDialog', () => {
       expect.any(Object),
     );
   });
+
+  it('links to the existing student only after an explicit choice', () => {
+    mockConvertMutate.mockImplementationOnce((_vars, opts) =>
+      opts.onError({
+        response: {
+          status: 409,
+          data: { message: 'O‘quvchi allaqachon mavjud: Salim Vohidov' },
+        },
+      }),
+    );
+    render(
+      <ConvertLeadDialog lead={mockLead} open={true} onOpenChange={vi.fn()} />,
+    );
+    const confirm = screen.getByRole('button', {
+      name: /leads.confirm_convert/i,
+    });
+    fireEvent.click(confirm);
+
+    expect(
+      screen.getByText('O‘quvchi allaqachon mavjud: Salim Vohidov'),
+    ).toBeInTheDocument();
+    const choice = screen.getByRole('checkbox', {
+      name: 'leads.force_convert',
+    });
+    expect(choice).toHaveAccessibleDescription('leads.force_convert_hint');
+    expect(confirm).toBeDisabled();
+
+    fireEvent.click(choice);
+    fireEvent.click(confirm);
+    expect(mockConvertMutate).toHaveBeenLastCalledWith(
+      { id: 'lead-1', payload: { force: true } },
+      expect.any(Object),
+    );
+  });
+
+  it('drops the duplicate choice when the dialog closes or the lead changes', () => {
+    mockConvertMutate.mockImplementation((_vars, opts) =>
+      opts.onError({ response: { status: 409, data: {} } }),
+    );
+    const { rerender } = render(
+      <ConvertLeadDialog lead={mockLead} open={true} onOpenChange={vi.fn()} />,
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: /leads.confirm_convert/i }),
+    );
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: 'leads.force_convert' }),
+    );
+
+    rerender(
+      <ConvertLeadDialog lead={mockLead} open={false} onOpenChange={vi.fn()} />,
+    );
+    rerender(
+      <ConvertLeadDialog
+        lead={{ ...mockLead, id: 'lead-2' }}
+        open={true}
+        onOpenChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    mockConvertMutate.mockReset();
+    fireEvent.click(
+      screen.getByRole('button', { name: /leads.confirm_convert/i }),
+    );
+    expect(mockConvertMutate).toHaveBeenCalledWith(
+      { id: 'lead-2', payload: { force: false } },
+      expect.any(Object),
+    );
+  });
 });

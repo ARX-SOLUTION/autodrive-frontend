@@ -38,6 +38,15 @@ export const ConvertLeadDialog = ({
 
   const [force, setForce] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  // A duplicate decision belongs to one open dialog for one lead. Closing or
+  // switching leads must not carry a ticked "link to existing" choice over.
+  const dialogKey = open ? lead.id : null;
+  const [decisionKey, setDecisionKey] = useState(dialogKey);
+  if (decisionKey !== dialogKey) {
+    setDecisionKey(dialogKey);
+    setForce(false);
+    setDuplicateWarning(null);
+  }
 
   const handleConvert = () => {
     convertMutation.mutate(
@@ -175,18 +184,22 @@ export const ConvertLeadDialog = ({
               >
                 <input
                   id="force-convert-checkbox"
+                  aria-describedby="force-convert-hint"
                   type="checkbox"
                   checked={force}
                   onChange={(e) => setForce(e.target.checked)}
                   className="rounded border-amber-400 text-amber-600 focus:ring-amber-500"
                 />
                 <span>
-                  {t(
-                    'leads.force_convert',
-                    'Dublikatga qaramay yangi o‘quvchi qilib aylantirish',
-                  )}
+                  {t('leads.force_convert', 'Mavjud o‘quvchiga bog‘lash')}
                 </span>
               </label>
+              <p id="force-convert-hint">
+                {t(
+                  'leads.force_convert_hint',
+                  'Yangi o‘quvchi yaratilmaydi: lid shu o‘quvchiga bog‘lanadi.',
+                )}
+              </p>
             </div>
           )}
         </div>
