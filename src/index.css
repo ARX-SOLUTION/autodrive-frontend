@@ -30,6 +30,7 @@
   --color-border: hsl(var(--border));
   --color-hair: hsl(var(--hair));
   --color-input: hsl(var(--input));
+  --color-control-border: hsl(var(--control-border));
   --color-ring: hsl(var(--ring));
 
   --color-sidebar: hsl(var(--sidebar-background));
@@ -172,6 +173,9 @@
   --border: 39 19% 82%;
   --hair: 39 26% 88%;
   --input: 39 20% 76%;
+  /* Unfocused border of editable controls that sit on --card. --border and
+     --input are 1.45:1 and 1.68:1 there; this is 3.95:1 (WCAG 2.2 SC 1.4.11). */
+  --control-border: 36 12% 48%;
   /* Darker than --brand-orange: a 2px focus ring must clear 3:1 against BOTH
      the offset colour and the adjacent surface (WCAG 2.2 SC 1.4.11). Amber at
      53% L was 1.95:1 on --background. This is 5.36:1. */
@@ -223,6 +227,8 @@
   --border: 191 23% 31%;
   --hair: 191 24% 23%;
   --input: 191 23% 34%;
+  /* 4.12:1 against dark --card; --input is 2.01:1. */
+  --control-border: 190 16% 54%;
   --ring: var(--brand-orange);
 
   --sidebar-background: 192 42% 13%;

@@ -357,7 +357,7 @@ const PaymentModal = ({
                       {t('common.select_branch')}
                     </span>
                     <select
-                      className="h-11 w-full rounded-md border border-input bg-background px-3"
+                      className="h-11 w-full rounded-md border border-control-border bg-background px-3"
                       value={options.selectedBranchId ?? ''}
                       onChange={(event) => {
                         setLookupBranchId(event.target.value);
@@ -387,7 +387,7 @@ const PaymentModal = ({
                         type="button"
                         variant="outline"
                         disabled
-                        className="w-full justify-start bg-secondary border-border font-normal opacity-100"
+                        className="w-full justify-start bg-secondary border-control-border font-normal opacity-100"
                       >
                         {effectiveLockedName ??
                           t('payments.validation.select_student')}
@@ -405,7 +405,7 @@ const PaymentModal = ({
                               role="combobox"
                               aria-label={t('payments.student_name')}
                               aria-expanded={studentPopoverOpen}
-                              className="w-full justify-between bg-secondary border-border font-normal"
+                              className="w-full justify-between bg-secondary border-control-border font-normal"
                             >
                               {selectedStudent
                                 ? `${selectedStudent.last_name} ${selectedStudent.first_name}`
@@ -571,7 +571,7 @@ const PaymentModal = ({
                         type="text"
                         inputMode="numeric"
                         placeholder="0"
-                        className="bg-secondary border-border"
+                        className="bg-secondary border-control-border"
                         {...field}
                         value={
                           field.value ? groupDigits(String(field.value)) : ''
@@ -601,7 +601,7 @@ const PaymentModal = ({
                       onValueChange={(v) => field.onChange(v as PaymentMethod)}
                     >
                       <FormControl>
-                        <SelectTrigger className="bg-secondary border-border">
+                        <SelectTrigger className="bg-secondary border-control-border">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
