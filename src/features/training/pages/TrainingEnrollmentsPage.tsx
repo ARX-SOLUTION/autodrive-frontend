@@ -87,13 +87,10 @@ const EnrollmentDialog = ({
     'create',
     effectiveBranchId,
     open,
+    { search: debouncedSearch, limit: 50 },
   );
   const studentChoices = options.scoped
-    ? (options.data?.students ?? []).filter((student) =>
-        `${student.last_name} ${student.first_name}`
-          .toLowerCase()
-          .includes(debouncedSearch.toLowerCase()),
-      )
+    ? (options.data?.students ?? [])
     : (studentsQuery.data ?? []);
   const programChoices = options.scoped
     ? (options.data?.programs ?? [])
@@ -196,11 +193,12 @@ const EnrollmentDialog = ({
                       );
                     }}
                   >
-                    {student.last_name} {student.first_name} (
+                    {student.last_name} {student.first_name}
                     {'phone' in student && typeof student.phone === 'string'
-                      ? student.phone
-                      : ''}
-                    )
+                      ? ` (${student.phone})`
+                      : 'phone_last4' in student && student.phone_last4
+                        ? ` (•• ${student.phone_last4})`
+                        : ''}
                   </button>
                 ))}
               </div>
