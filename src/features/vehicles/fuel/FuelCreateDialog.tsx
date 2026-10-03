@@ -742,7 +742,14 @@ export default function FuelCreateDialog({
                 options.selectedBranchId &&
                 !options.isFetching &&
                 !options.isError &&
-                vehicleChoices.length === 0 && <p>{t('common.no_data')}</p>}
+                vehicleChoices.length === 0 && (
+                  <div className="rounded-md border border-dashed p-3 text-sm">
+                    <p className="font-medium">{t('vehicles.no_eligible')}</p>
+                    <p className="text-muted-foreground">
+                      {t('vehicles.no_eligible_desc')}
+                    </p>
+                  </div>
+                )}
 
               <label
                 htmlFor="fuel-vehicle-select"
